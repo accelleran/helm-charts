@@ -1,0 +1,26 @@
+{{- include
+      "accelleran.common.service"
+      (fromYaml (include "accelleran.drax.smo.api.service.args" $))
+-}}
+
+
+{{- define "accelleran.drax.smo.api.service.args" -}}
+{{- $ := . -}}
+{{- $values := index $.Values "dashboard" -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ (mergeOverwrite (unset (deepCopy $values) "service") (fromYaml (include "accelleran.drax.smo.api.service.valueOverrides" $))) | toYaml | nindent 2 }}
+
+name: {{ printf "%s-smo-api" $.Release.Name | quote }}
+{{- end -}}
+
+
+{{- define "accelleran.drax.smo.api.service.valueOverrides" -}}
+{{- $ := . -}}
+{{- $values := $.Values.smo.api -}}
+
+service:
+  {{ $values.service | toYaml | nindent 2 }}
+{{- end -}}

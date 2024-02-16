@@ -49,6 +49,21 @@ bootstrap:
     port: 0
 
 
+smo:
+  api:
+    service:
+      enabled: true
+      name: ""
+      type: ClusterIP
+      ports:
+        http:
+          port: 5000
+          targetPort: 5000
+          nodePort: null
+          protocol: TCP
+          appProtocol: http
+
+
 dashboard:
   enabled: true
 
