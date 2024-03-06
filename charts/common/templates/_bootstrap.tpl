@@ -72,8 +72,19 @@ data:
 
 {{- define "accelleran.common.bootstrap.redis.hostname" -}}
 {{- $ := get . "top" | required "The top context needs to be provided to common bootstrap redis hostname" -}}
+
 {{- if (($.Values.bootstrap).redis).enabled -}}
-{{- tpl ((($.Values.bootstrap).redis).hostname | default (printf "%s-redis-master" $.Release.Name)) $ -}}
+{{- $redisHostname := tpl ((($.Values.bootstrap).redis).hostname) $ -}}
+{{- if and (eq (include "accelleran.common.bootstrap.configMap.create" .) "true") (not (($.Values.redis).enabled)) (not $redisHostname) -}}
+{{- fail (
+  printf
+  "When redis is disabled a bootstrap redis hostname needs to be provided when creating a bootstrap configmap in the %s chart (bootstrap.redis.hostname). More info at %s"
+  (include "accelleran.common.name" .)
+  "https://github.com/accelleran/helm-charts/tree/main/charts/common#bootstrap-hostnames"
+  )
+-}}
+{{- end -}}
+{{- $redisHostname | default (printf "%s-redis-master" $.Release.Name) -}}
 {{- end -}}
 {{- end -}}
 
@@ -88,8 +99,19 @@ data:
 
 {{- define "accelleran.common.bootstrap.nats.hostname" -}}
 {{- $ := get . "top" | required "The top context needs to be provided to common bootstrap nats hostname" -}}
+
 {{- if (($.Values.bootstrap).nats).enabled -}}
-{{- tpl ((($.Values.bootstrap).nats).hostname | default (printf "%s-nats" $.Release.Name)) $ -}}
+{{- $natsHostname := tpl ((($.Values.bootstrap).nats).hostname) $ -}}
+{{- if and (eq (include "accelleran.common.bootstrap.configMap.create" .) "true") (not (($.Values.nats).enabled)) (not $natsHostname) -}}
+{{- fail (
+  printf
+  "When nats is disabled a bootstrap nats hostname needs to be provided when creating a bootstrap configmap in the %s chart (bootstrap.nats.hostname). More info at %s"
+  (include "accelleran.common.name" .)
+  "https://github.com/accelleran/helm-charts/tree/main/charts/common#bootstrap-hostnames"
+  )
+-}}
+{{- end -}}
+{{- $natsHostname | default (printf "%s-nats" $.Release.Name) -}}
 {{- end -}}
 {{- end -}}
 
@@ -104,8 +126,20 @@ data:
 
 {{- define "accelleran.common.bootstrap.kafka.hostname" -}}
 {{- $ := get . "top" | required "The top context needs to be provided to common bootstrap kafka hostname" -}}
+
 {{- if (($.Values.bootstrap).kafka).enabled -}}
-{{- tpl ((($.Values.bootstrap).kafka).hostname | default (printf "%s-kafka" $.Release.Name)) $ -}}
+{{- $kafkaHostname := tpl ((($.Values.bootstrap).kafka).hostname) $ -}}
+{{- if and (eq (include "accelleran.common.bootstrap.configMap.create" .) "true") (not (($.Values.kafka).enabled)) (not $kafkaHostname) -}}
+{{- fail "When kafka is disabled a bootstrap kafka hostname needs to be provided when creating a bootstrap configmap (bootstrap.kafka.hostname). More info at https://github.com/accelleran/helm-charts/tree/main/charts/common#bootstrap-hostnames" -}}
+{{- fail (
+  printf
+  "When kafka is disabled a bootstrap kafka hostname needs to be provided when creating a bootstrap configmap in the %s chart (bootstrap.kafka.hostname). More info at %s"
+  (include "accelleran.common.name" .)
+  "https://github.com/accelleran/helm-charts/tree/main/charts/common#bootstrap-hostnames"
+  )
+-}}
+{{- end -}}
+{{- $kafkaHostname | default (printf "%s-kafka" $.Release.Name) -}}
 {{- end -}}
 {{- end -}}
 

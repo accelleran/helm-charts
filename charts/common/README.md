@@ -42,3 +42,86 @@ This structure should either be present in the root level of a chart or should b
 In the case of the image tag it will also fall back to the `.Chart.AppVersion` when providing an empty string.
 The tag in the values file is then present to allow overriding that value.
 A deeper look into the templates will be needed to know what has defaults and what they are.
+
+## Bootstrap hostnames
+
+A chart using this common library chart can have a bootstrap section as part of it's values file interface.
+Probably, it will (partially) look like this by default:
+
+```yaml
+bootstrap:
+  create: true
+  name: ""
+
+  redis:
+    hostname: ""
+    port: 0
+
+  nats:
+    hostname: ""
+    port: 0
+
+  kafka:
+    hostname: ""
+    port: 0
+
+redis:
+  enabled: true
+nats:
+  enabled: true
+kafka:
+  enabled: true
+```
+
+The hostnames have empty values here though.
+These will get default values assigned by the templates
+as if these services are deployed as part of the same chart (the release name is injected then).
+The bottom block of configuration would express this,
+as the imported charts for redis, nats and kafka are all enabled.
+In this case everything should be working perfectly fine.
+
+The moment one of these services is not installed as part of the chart, the services would not be able to be brought up in a valid way.
+This could happen when a user disables the service in the values provided at installation.
+Or when the chart developer(s) decide to not include this dependency as part of their chart.
+
+To warn for this scenario a failure message will be printed out when all of the following conditions hold true:
+
+1. The bootstrap config is configured to be created (i.e. `bootstrap.create=true`)
+1. The chart is not deploying (one of) the services (either because it's not part of the chart or because it's disabled).
+1. The hostname is empty (also after evaluating templated values)
+
+Their are two ways to handle this:
+
+1. The bootstrap configmap is created externally to the chart.
+1. The hostname is filled in.
+
+In the first case the values file disable the creation of the configmap and provide the external configmap's name:
+
+```yaml
+bootstrap:
+  create: false
+  name: "<the-external-bootstrap-configmap-name>"
+```
+
+In the second case the hostname is simply filled in for the external service provider:
+
+```yaml
+bootstrap:
+  create: true
+  name: ""
+
+  redis:
+    hostname: "<external-redis-hostname>"
+  nats:
+    hostname: "<external-nats-hostname>"
+  kafka:
+    hostname: "<external-kafka-hostname>"
+```
+
+The port is still optional here as it will fall back to the default port of the service.
+
+> Note
+>
+> It might occur that this failures happens in a nested part of the values file.
+> Therefore the chart name is included in the message to guide where the failure is happening exactly.
+> `nameOverride` might add confusion here though as it allows to change the chart name.
