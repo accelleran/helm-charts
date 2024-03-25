@@ -4,7 +4,7 @@ description: Accelleran 5G CU-UP Components
 type: application
 version: 7.0.0
 # renovate: image=accelleran/cuup-netconf
-appVersion: "R4.3.12_leffe"
+appVersion: "R4.3.14_leffe"
 dependencies:
   - name: common
     version: 0.2.2
