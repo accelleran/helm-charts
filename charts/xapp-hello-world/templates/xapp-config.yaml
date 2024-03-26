@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "xapp_core.fullname" . }}-xapp-config
+  labels:
+    {{- include "xapp_core.labels" . | nindent 4 }}
+data:
+  xapp_config.json: |-
+    {{ tpl (.Values.xappConfig | toJson) . }}
+
+
+
