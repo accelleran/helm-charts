@@ -41,6 +41,10 @@
     "charts/du-metrics-server": {
       "component": "du-metrics-server",
       "package-name": "du-metrics-server"
+    },
+    "charts/xapp-hello-world": {
+      "component": "xapp-hello-world",
+      "package-name": "xapp-hello-world"
     }
   }
 }

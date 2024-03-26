@@ -1,0 +1,18 @@
+{{- if .Values.udpService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "xapp_core.fullname" . }}-xapp-udp
+  labels:
+    {{- include "xapp_core.labels" . | nindent 4 }}
+    drax/xapp-component-name: xapp-udp
+spec:
+  type: NodePort
+  ports:
+    - port: {{ .Values.udpService.port }}
+      name:  {{ .Values.udpService.name }}
+      nodePort: {{ .Values.udpService.nodePort }}
+      protocol: UDP
+  selector:
+    {{- include "xapp_core.selectorLabels" . | nindent 4 }}
+{{- end }}
