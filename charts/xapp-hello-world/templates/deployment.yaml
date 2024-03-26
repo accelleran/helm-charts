@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "xapp_core.fullname" . }}
+  labels:
+    {{- include "xapp_core.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "xapp_core.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "xapp_core.labels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "xapp_core.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{ if or (.Values.xappEnpoints) (.Values.developerMode.enabled) }}
+      initContainers:
+        {{ if .Values.xappEnpoints }}
+        {{ if .Values.xappEnpoints.REDIS_URL }}
+        - name: {{ .Chart.Name }}-check-redis
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'until [ "$(redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} ping)" == "PONG" ]; do echo $(date) [CHECK-SERVICES] Waiting for REDIS; sleep 2; done; echo Redis online']
+        {{ end }}
+        {{ end }}
+        {{ if .Values.xappEnpoints }}
+        {{ if .Values.xappFrameworkConfig.flushOnDeployment }}
+        - name: {{ .Chart.Name }}-flush-redis
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} FLUSHALL']
+        {{ end }}
+        {{ end }}
+        {{ if .Values.xappEnpoints }}
+        {{ if .Values.xappEnpoints.KAFKA_URL }}
+        - name: {{ .Chart.Name }}-check-kafka
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'echo "KAFKA_URL=\"{{ tpl .Values.xappEnpoints.KAFKA_URL . | trimPrefix "kafka://" }}\"" > kafka_url.py && python3 kafka-test.py']
+        {{ end }}
+        {{ end }}
+      {{ end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{ if .Values.developerMode.enabled }}
+          command:
+            - sh
+            - "-c"
+            - |
+              /bin/bash <<'EOF'
+              sudo service ssh start
+              echo 'xapp:{{ .Values.developerMode.devPassword }}' | sudo chpasswd
+              git init /home/xapp/core/
+              while true; do sleep 30; done;
+              EOF
+          {{ else }}
+          command: ["/bin/bash", "-c"]
+          args: ["python3 xapp_main.py"]
+          {{ end }}
+          volumeMounts:
+            {{ if and (.Values.developerMode.enabled) (.Values.developerMode.hostPath) }}
+            - name: dev-work-dir
+              mountPath: /home/xapp/dev/
+            {{ end }}
+            - name: {{ include "xapp_core.fullname" . }}-xapp-config
+              mountPath: /home/xapp/config/xapp_config.json
+              subPath: "xapp_config.json"
+            - name: {{ include "xapp_core.fullname" . }}-xapp-endpoints
+              mountPath: /home/xapp/config/xapp_endpoints.json
+              subPath: "xapp_endpoints.json"
+          ports:
+            - containerPort: {{ .Values.restService.port }}
+            {{ if .Values.developerMode.enabled }}
+            - containerPort: {{ .Values.sshService.port }}
+            {{ end }}
+#          livenessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+#          readinessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: {{ include "xapp_core.fullname" . }}-xapp-config
+          configMap:
+            name: {{ include "xapp_core.fullname" . }}-xapp-config
+
+        - name: {{ include "xapp_core.fullname" . }}-xapp-endpoints
+          configMap:
+            name: {{ include "xapp_core.fullname" . }}-xapp-endpoints
+
+        {{ if and (.Values.developerMode.enabled) (.Values.developerMode.hostPath) }}
+        - name: dev-work-dir
+          hostPath:
+            path: {{ .Values.developerMode.hostPath }}
+        {{ end }}

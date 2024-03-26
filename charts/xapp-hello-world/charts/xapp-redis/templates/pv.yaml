@@ -1,0 +1,20 @@
+{{- if .Values.persistence.enabled }}
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: {{ include "redis.fullname" . }}
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+    type: local
+spec:
+  storageClassName: {{ include "redis.fullname" . }}
+  capacity:
+    storage: {{ .Values.persistence.size | quote }}
+  accessModes:
+    {{- range .Values.persistence.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  hostPath:
+     path: {{ .Values.persistence.hostPath }}/{{ include "redis.fullname" . }}
+     type: DirectoryOrCreate
+{{- end }}
