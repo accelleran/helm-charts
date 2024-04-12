@@ -1,0 +1,35 @@
+{{- include
+      "accelleran.common.deployment"
+      (fromYaml (include "accelleran.du-metrics-server.deployment.args" $))
+-}}
+
+{{- define "accelleran.du-metrics-server.deployment.args" -}}
+{{- $ := . -}}
+{{- $values := index $.Values "du-metrics-server" -}}
+{{- $fullname := include "accelleran.common.fullname" (dict "top" $ "values" $values) -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ $values | toYaml | nindent 2 }}
+
+initContainers:
+- {{ fromYaml (include "accelleran.du-metrics-server.init.influxdb" (dict "top" $ "values" (index $.Values "du-metrics-server"))) | toYaml | nindent 2 }}
+
+env:
+  - name: PORT
+    value: {{ (($values.service.ports).metric).containerPort | default ((($values.service).ports).metric).targetPort | default ((($values.service).ports).metric).port | quote }}
+  - name: TESTBED
+    value: {{ $values.config.testbed | quote }}
+  - name: URL
+    value: {{ printf "http://%s.%s:%v" (($.Values.influxdb).fullnameOverride | default (printf "%s-%s" $.Release.Name (($.Values.influxdb).nameOverride | default "influxdb"))) $.Release.Namespace (($.Values.influxdb).service).port }}
+  - name: ORG
+    value: {{ (($.Values.influxdb).adminUser).organization }}
+  - name: BUCKET
+    value: {{ (($.Values.influxdb).adminUser).bucket | quote }}
+  - name: TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ (($.Values.influxdb).adminUser).existingSecret | default (printf "%s-auth" (($.Values.influxdb).fullnameOverride | default (printf "%s-%s" $.Release.Name (($.Values.influxdb).nameOverride | default "influxdb")))) }}
+        key: admin-token
+{{- end -}}

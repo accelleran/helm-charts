@@ -1,0 +1,7 @@
+{{- include
+      "accelleran.common.service"
+      (dict
+        "top" $
+        "values" (index $.Values "du-metrics-server")
+      )
+-}}
