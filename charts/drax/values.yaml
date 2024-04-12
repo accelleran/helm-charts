@@ -136,6 +136,26 @@ cell-wrapper:
     enabled: false
 
 
+du-metrics-server:
+  enabled: true
+
+  influxdb:
+    nameOverride: "du-influxdb"
+
+    persistence:
+      enabled: true
+      accessMode: ReadWriteOnce
+      size: 2Gi
+
+    service:
+      annotations: {}
+      labels: {}
+      type: ClusterIP
+      portName: http
+      port: 80
+      targetPort: 8086
+
+
 e2-t:
   enabled: true
 
