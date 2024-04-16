@@ -2,7 +2,7 @@ apiVersion: v2
 name: cell-wrapper-config
 description: Accelleran's cell-wrapper config helm chart
 type: application
-version: 0.2.4
+version: 0.2.5
 # renovate: image=accelleran/ncclient
 appVersion: "0.1.0"
 dependencies:
