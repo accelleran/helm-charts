@@ -74,8 +74,8 @@ influxdb:
     bucket: "default"
     retention_policy: "0s"
     user: "admin"
-    password: "password"
-    token: "ubZW5JVsnhjaLTMeBSYVjvTc4pkJ5jPYk8Tqkj2R9j28Ern4kaZP4yPo4bHbLfYG"
+    password: ""
+    token: ""
     # existingSecret: influxdb-auth
 
   persistence:
