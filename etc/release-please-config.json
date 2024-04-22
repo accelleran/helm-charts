@@ -37,6 +37,10 @@
     "charts/drax": {
       "component": "drax",
       "package-name": "drax"
+    },
+    "charts/du-metrics-server": {
+      "component": "du-metrics-server",
+      "package-name": "du-metrics-server"
     }
   }
 }

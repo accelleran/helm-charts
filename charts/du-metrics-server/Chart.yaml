@@ -1,0 +1,15 @@
+apiVersion: v2
+name: du-metrics-server
+description: Accelleran's DU metrics server
+type: application
+version: 0.1.0
+appVersion: "edge"
+dependencies:
+  - name: common
+    version: 0.2.2
+    repository: https://accelleran.github.io/helm-charts/
+  - name: influxdb2
+    alias: influxdb
+    condition: influxdb.enabled
+    version: 2.1.2
+    repository: https://helm.influxdata.com/
