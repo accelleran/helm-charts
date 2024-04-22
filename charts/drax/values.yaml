@@ -136,6 +136,26 @@ cell-wrapper:
     enabled: false
 
 
+du-metrics-server:
+  enabled: true
+
+  influxdb:
+    nameOverride: "du-influxdb"
+
+    persistence:
+      enabled: true
+      accessMode: ReadWriteOnce
+      size: 2Gi
+
+    service:
+      annotations: {}
+      labels: {}
+      type: ClusterIP
+      portName: http
+      port: 80
+      targetPort: 8086
+
+
 e2-t:
   enabled: true
 
@@ -459,6 +479,12 @@ grafana:
       # Role for unauthenticated users, other valid values are `Editor` and `Admin`
       org_role: Viewer
 
+  envValueFrom:
+    DU_INFLUXDB_ADMIN_TOKEN:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-du-influxdb-auth"
+        key: admin-token
+
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -497,6 +523,18 @@ grafana:
           basicAuth: true
           basicAuthUser: admin
           basicAuthPassword: password
+        - name: InfluxDB-DU
+          type: influxdb
+          access: proxy
+          url: "http://{{ $.Release.Name }}-du-influxdb.{{ $.Release.Namespace }}:80"
+          uid: JOSE3g9KVz
+          secureJsonData:
+            token: ${DU_INFLUXDB_ADMIN_TOKEN}
+          jsonData:
+            version: Flux
+            organization: accelleran
+            defaultBucket: default
+            tlsSkipVerify: true
 
   dashboardProviders:
     dashboardproviders.yaml:
@@ -558,6 +596,14 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/5g-cuup-pm-counters
+        - name: "5g-du-metrics"
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/5g-du-metrics
         - name: "kafka-cluster-monitoring"
           orgId: 1
           folder: ""
@@ -583,6 +629,7 @@ grafana:
     5g-monitoring-dashboard: "{{ .Release.Name }}-grafana-5g-monitoring-dashboard"
     5g-cucp-pm-counters: "{{ .Release.Name }}-grafana-5g-cucp-pm-counters"
     5g-cuup-pm-counters: "{{ .Release.Name }}-grafana-5g-cuup-pm-counters"
+    5g-du-metrics: "{{ .Release.Name }}-grafana-5g-du-metrics"
     kafka-cluster-monitoring: "{{ .Release.Name }}-grafana-kafka-cluster-monitoring"
     nats-dashboard: "{{ .Release.Name }}-grafana-nats-dashboard"
 
