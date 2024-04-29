@@ -1,5 +1,21 @@
 # Changelog
 
+## [7.1.0](https://github.com/accelleran/helm-charts/compare/cu-cp-7.0.0...cu-cp-7.1.0) (2024-04-29)
+
+
+### Features
+
+* Add close-f1-connection-on-cell-deactivation feature flag ([#180](https://github.com/accelleran/helm-charts/issues/180)) ([c81a9f3](https://github.com/accelleran/helm-charts/commit/c81a9f353d752b5a197009fffb9e2572c276c3dd))
+
+
+### Bug Fixes
+
+* **deps:** Update helm release nats to v1.1.10 ([9fe5adc](https://github.com/accelleran/helm-charts/commit/9fe5adc45fb5e3c42227ba38abc223a8f0a8c71a))
+* **deps:** Update helm release nats to v1.1.11 ([ca65524](https://github.com/accelleran/helm-charts/commit/ca6552466091a7b8bc997f3added20ab02dea9ea))
+* **deps:** Update helm release redis to v18.19.2 ([5c9df2d](https://github.com/accelleran/helm-charts/commit/5c9df2d3438cfcb9905fadd45d61ede06669f3a0))
+* **deps:** Update helm release redis to v18.19.3 ([f695a10](https://github.com/accelleran/helm-charts/commit/f695a1095e3ee024236fe2877cf1948eded3e13d))
+* **deps:** Update helm release redis to v18.19.4 ([9f775c0](https://github.com/accelleran/helm-charts/commit/9f775c0798c23260952d7974d0a8707853cebb3d))
+
 ## [7.0.0](https://github.com/accelleran/helm-charts/compare/cu-cp-v6.0.0...cu-cp-7.0.0) (2024-03-06)
 
 
