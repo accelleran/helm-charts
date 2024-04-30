@@ -3,7 +3,7 @@ name: du-metrics-server
 description: Accelleran's DU metrics server
 type: application
 version: 0.1.0
-appVersion: "edge"
+appVersion: 1.0.0
 dependencies:
   - name: common
     version: 0.2.2
