@@ -281,6 +281,7 @@ jobs:
       - name: Generate repo html index
         run: |-
           git checkout gh-pages
+          git pull # pull index.yaml commit from chart releaser
           helm repo-html
           if ! git diff --exit-code index.html > /dev/null 2>&1 ; then
             git add index.html
