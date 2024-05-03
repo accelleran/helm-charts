@@ -650,6 +650,11 @@ loki-stack:
       drax/role: ric
       drax/component-name: loki
     nodeSelector: {}
+    service:
+      type: NodePort
+      nodePort: 31000
+      port: 3100
+      targetPort: http-metrics
     config:
       table_manager:
         # Retention polocy for logs in Loki
