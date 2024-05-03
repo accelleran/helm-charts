@@ -22,7 +22,7 @@ dependencies:
   version: 3.1.0
 - name: du-metrics-server
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.1.0
+  version: 0.1.1
 - name: e2-t
   repository: file://charts/e2-t
   version: 1.1.0
@@ -59,5 +59,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 18.19.4
-digest: sha256:1641b16bfa1b43c631990024adf4568a8e9ec8d2c9fdc923b52e53b810887399
-generated: "2024-04-25T16:51:58.170906851Z"
+digest: sha256:a928c9b4f040ef061d730179a79841cd71b60123b33892cc8b9684bbe7d803eb
+generated: "2024-05-03T10:22:08.011269827Z"
