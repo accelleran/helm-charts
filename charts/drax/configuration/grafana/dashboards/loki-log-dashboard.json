@@ -20,6 +20,7 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 12019,
   "graphTooltip": 0,
+  "id": 8,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -29,7 +30,7 @@
         "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 0
@@ -41,10 +42,10 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "\n# Instructions\nWe show two Log panels and their accompamying filtering options on the top:\n- The left \"Pod/Container Logs\" - For which you have the following available filters: namespace, Node, Pod, Container, Pod/Container_Search\n- The right \"External Source Logs\" - For which you have one available filters: External_Source, External_Source_Search\n\nThe \"Pod/Container_Search\" can be used to filter for custom text in the \"Pod/Container Logs\" panel.\nThe \"External_Source_Search\" can be used to filter for custom text in the \"External Source Logs\" panel.\nThe \"Log Timeline\" can be used to filter based on date and time for both Logs Panels.\n\nIf you want to view one of the Log Panel full screen, you can left click on the Log Panel title and select \"View\" from the drop-down menu.\n\n\n\n",
+        "content": "\n# Instructions\nWe show two Log panels and their accompamying filtering options on the top:\n- The left \"Pod/Container Logs\" - For which you have the following available filters: `Namespace`, `Node`, `Pod`, `Container`, `Pod/Container Search`\n- The right \"External Source Logs\" - For which you have the following available filters: `External Source`, `External Container`, `External Source Search`\n\nThe \"Pod/Container_Search\" can be used to filter for custom text in the \"Pod/Container Logs\" panel.\nThe \"External_Source_Search\" can be used to filter for custom text in the \"External Source Logs\" panel.\nThe \"Log Timeline\" can be used to filter based on date and time for both Logs Panels.\n\nIf you want to view one of the Log Panel full screen, you can left click on the Log Panel menu (three vertical dots) and select \"View\" from the drop-down menu.\n\nIf you want to download all the logs that are visible in one of the panels, you can click left on the Log Panel menu (three vertical dots) and select \"Inspect\" > \"Data\" from the drop-down menu. A blue button \"Download logs\" will be visible and will download a txt file.\n",
         "mode": "markdown"
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "10.4.1",
       "targets": [
         {
           "datasource": {
@@ -123,7 +124,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 10
       },
       "id": 6,
       "maxDataPoints": "",
@@ -146,7 +147,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({namespace=\"$namespace\", instance=~\"$Pod\", node=~\"$Node\", container=~\"$Container\"} |~ \"$Pod_Container_Search\"[$__interval]))",
+          "expr": "sum(count_over_time({namespace=\"$namespace\", instance=~\"$pod\", node=~\"$node\", container=~\"$container\"} |~ \"$pod_container_search\"[$__interval]))",
           "refId": "A"
         },
         {
@@ -154,7 +155,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({source=~\"$External_Source\"} |~ \"$External_Source_Search\"[$__interval]))",
+          "expr": "sum(count_over_time({source=~\"$external_source\", container=~\"$external_container\"} |~ \"$external_source_search\"[$__interval]))",
           "refId": "B"
         }
       ],
@@ -170,7 +171,7 @@
         "h": 24,
         "w": 12,
         "x": 0,
-        "y": 11
+        "y": 13
       },
       "id": 2,
       "maxDataPoints": "",
@@ -190,7 +191,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{namespace=\"$namespace\", instance=~\"$Pod\", node=~\"$Node\", container=~\"$Container\"} |~ \"$Pod_Container_Search\" ",
+          "expr": "{namespace=\"$namespace\", instance=~\"$pod\", node=~\"$node\", container=~\"$container\"} |~ \"$pod_container_search\" ",
           "hide": false,
           "refId": "A"
         }
@@ -207,7 +208,7 @@
         "h": 24,
         "w": 12,
         "x": 12,
-        "y": 11
+        "y": 13
       },
       "id": 8,
       "maxDataPoints": "",
@@ -227,7 +228,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{source=~\"$External_Source\"} |~ \"$External_Source_Search\" ",
+          "expr": "{source=~\"$external_source\", container=~\"$external_container\"} |~ \"$external_source_search\" ",
           "refId": "A"
         }
       ],
@@ -236,7 +237,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 38,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
@@ -253,6 +254,7 @@
         "definition": "label_values(kube_pod_info, namespace)",
         "hide": 0,
         "includeAll": false,
+        "label": "Namespace",
         "multi": false,
         "name": "namespace",
         "options": [],
@@ -284,8 +286,9 @@
         "definition": "label_values(kubernetes_io_hostname)",
         "hide": 0,
         "includeAll": true,
+        "label": "Node",
         "multi": true,
-        "name": "Node",
+        "name": "node",
         "options": [],
         "query": "label_values(kubernetes_io_hostname)",
         "refresh": 2,
@@ -312,13 +315,14 @@
           "type": "prometheus",
           "uid": "PBFA97CFB590B2093"
         },
-        "definition": "label_values(kube_pod_info{node=~\"^$Node$\"}, pod)",
+        "definition": "label_values(kube_pod_info{node=~\"^$node$\"}, pod)",
         "hide": 0,
         "includeAll": true,
+        "label": "Pod",
         "multi": true,
-        "name": "Pod",
+        "name": "pod",
         "options": [],
-        "query": "label_values(kube_pod_info{node=~\"^$Node$\"}, pod)",
+        "query": "label_values(kube_pod_info{node=~\"^$node$\"}, pod)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -343,13 +347,14 @@
           "type": "prometheus",
           "uid": "PBFA97CFB590B2093"
         },
-        "definition": "label_values(kube_pod_container_info{pod=\"$Pod\"}, container)",
+        "definition": "label_values(kube_pod_container_info{pod=\"$pod\"}, container)",
         "hide": 0,
         "includeAll": true,
+        "label": "Container",
         "multi": true,
-        "name": "Container",
+        "name": "container",
         "options": [],
-        "query": "label_values(kube_pod_container_info{pod=\"$Pod\"}, container)",
+        "query": "label_values(kube_pod_container_info{pod=\"$pod\"}, container)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
@@ -366,7 +371,8 @@
           "value": ""
         },
         "hide": 0,
-        "name": "Pod_Container_Search",
+        "label": "Pod/Container search",
+        "name": "pod_container_search",
         "options": [
           {
             "selected": true,
@@ -379,13 +385,82 @@
         "type": "textbox"
       },
       {
+        "allValue": ".+",
+        "current": {
+          "selected": false,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "P8E80F9AEF21F6940"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": "External Source",
+        "multi": true,
+        "name": "external_source",
+        "options": [],
+        "query": {
+          "label": "source",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "",
+          "type": 1
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query"
+      },
+      {
+        "allValue": ".+",
         "current": {
           "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "P8E80F9AEF21F6940"
+        },
+        "definition": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": "External Container",
+        "multi": true,
+        "name": "external_container",
+        "options": [],
+        "query": {
+          "label": "container",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "{source=~\"$external_source\"}",
+          "type": 1
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 5,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": false,
           "text": "",
           "value": ""
         },
         "hide": 0,
-        "name": "External_Source_Search",
+        "label": "External Source Search",
+        "name": "external_source_search",
         "options": [
           {
             "selected": true,
@@ -420,6 +495,6 @@
   "timezone": "",
   "title": "Loki Log Dashboard",
   "uid": "liz0yRCZz",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
