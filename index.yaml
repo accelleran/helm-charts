@@ -13475,6 +13475,96 @@ entries:
     - https://github.com/accelleran/helm-charts/releases/download/drax-7.2.0-rc.0/drax-7.2.0-rc.0.tgz
     version: 7.2.0-rc.0
   - apiVersion: v2
+    created: "2024-05-08T14:08:43.929434374Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.2.2
+    - condition: dashboard.enabled
+      name: dashboard
+      repository: file://charts/dashboard
+      version: 5.0.0
+    - condition: network-state-monitor.enabled
+      name: network-state-monitor
+      repository: file://charts/network-state-monitor
+      version: 0.1.0
+    - condition: service-monitor.enabled
+      name: service-monitor
+      repository: file://charts/service-monitor
+      version: 1.0.0
+    - condition: service-orchestrator.enabled
+      name: service-orchestrator
+      repository: file://charts/service-orchestrator
+      version: 1.1.1
+    - condition: config-api.enabled
+      name: config-api
+      repository: file://charts/config-api
+      version: 2.0.0
+    - condition: cell-wrapper.enabled
+      name: cell-wrapper
+      repository: https://accelleran.github.io/helm-charts/
+      version: 3.1.0
+    - condition: du-metrics-server.enabled
+      name: du-metrics-server
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.1.1
+    - condition: e2-t.enabled
+      name: e2-t
+      repository: file://charts/e2-t
+      version: 1.1.0
+    - condition: pm-counters.enabled
+      name: pm-counters
+      repository: file://charts/pm-counters
+      version: 1.1.0
+    - alias: golang-nkafka-5g
+      condition: global.enable5G
+      name: golang-nkafka
+      repository: file://charts/golang-nkafka
+      version: 1.2.2
+    - condition: grafana.enabled
+      name: grafana
+      repository: https://grafana.github.io/helm-charts
+      version: 7.3.10
+    - condition: prometheus.enabled
+      name: prometheus
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 25.20.1
+    - condition: loki-stack.enabled
+      name: loki-stack
+      repository: https://grafana.github.io/helm-charts
+      version: 2.10.1
+    - condition: influxdb.enabled
+      name: influxdb
+      repository: https://helm.influxdata.com/
+      version: 4.12.5
+    - condition: global.enable5G
+      name: vector
+      repository: https://helm.vector.dev
+      version: 0.33.0
+    - condition: kminion.enabled
+      name: kminion
+      repository: https://charts.redpanda.com
+      version: 0.12.7
+    - condition: kafka.enabled
+      name: kafka
+      repository: https://charts.bitnami.com/bitnami/
+      version: 27.1.2
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      version: 1.1.11
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami/
+      version: 18.19.4
+    description: Accelleran's dRAX helm chart
+    digest: a7c997bfa23a58ef01d13fc72f6636173c6488dbffb9d696d0c7e704c900b237
+    name: drax
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/drax-7.2.0-rc.0/drax-7.2.0-rc.0.tgz
+    version: 7.2.0-rc.0
+  - apiVersion: v2
     created: "2024-03-22T11:33:22.327659384Z"
     dependencies:
     - name: common
@@ -25955,4 +26045,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-05-07T23:19:57.90187982Z"
+generated: "2024-05-08T14:08:43.930896577Z"
