@@ -139,6 +139,10 @@ cell-wrapper:
 du-metrics-server:
   enabled: true
 
+  bootstrap:
+    create: false
+    name: "{{ $.Release.Name }}-bootstrap"
+
   influxdb:
     nameOverride: "du-influxdb"
 
