@@ -1,0 +1,6 @@
+{{- if index $.Values "du-metrics-server" "config" "kafkaPublishingEnabled" -}}
+{{- include
+      "accelleran.common.bootstrap.configMap"
+      (dict "top" $)
+-}}
+{{- end -}}
