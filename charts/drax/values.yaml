@@ -143,6 +143,11 @@ du-metrics-server:
     create: false
     name: "{{ $.Release.Name }}-bootstrap"
 
+  du-metrics-server:
+    config:
+      kafkaPublishingEnabled: true
+      topic: accelleran.drax.5g.du.metrics
+
   influxdb:
     nameOverride: "du-influxdb"
 
