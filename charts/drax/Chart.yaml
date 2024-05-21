@@ -36,7 +36,7 @@ dependencies:
     repository: https://accelleran.github.io/helm-charts/
   - name: du-metrics-server
     condition: du-metrics-server.enabled
-    version: 0.1.1
+    version: 0.1.2
     repository: https://accelleran.github.io/helm-charts/
 
   # ric
