@@ -4,8 +4,7 @@
   "dependencyDashboardApproval": false,
   "dependencyDashboardAutoclose": false,
   "reviewers": [
-    "ben-foxmoore",
-    "Wielewout"
+    "team:dRAX"
   ],
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
