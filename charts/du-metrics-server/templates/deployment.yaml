@@ -7,6 +7,7 @@
 {{- $ := . -}}
 {{- $values := index $.Values "du-metrics-server" -}}
 {{- $fullname := include "accelleran.common.fullname" (dict "top" $ "values" $values) -}}
+{{- $bootstrapConfigMapName := get . "bootstrapConfigMapName" | default (include "accelleran.common.bootstrap.configMapName" (dict "top" $ "values" $values))  -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
@@ -32,4 +33,20 @@ env:
       secretKeyRef:
         name: {{ (($.Values.influxdb).adminUser).existingSecret | default (printf "%s-auth" (($.Values.influxdb).fullnameOverride | default (printf "%s-%s" $.Release.Name (($.Values.influxdb).nameOverride | default "influxdb")))) }}
         key: admin-token
+{{- if $values.config.kafkaPublishingEnabled }}
+  - name: KAFKA_HOSTNAME
+    valueFrom:
+      configMapKeyRef:
+        name: {{ $bootstrapConfigMapName | quote }}
+        key: KAFKA_HOSTNAME
+  - name: KAFKA_PORT
+    valueFrom:
+      configMapKeyRef:
+        name: {{ $bootstrapConfigMapName | quote }}
+        key: KAFKA_PORT
+{{- with $values.config.topic }}
+  - name: TOPIC
+    value: {{ . | quote }}
+{{- end }}
+{{- end -}}
 {{- end -}}

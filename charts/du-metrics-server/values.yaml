@@ -1,6 +1,16 @@
+bootstrap:
+  create: true
+  name: ""
+  kafka:
+    enabled: true
+    hostname: ""
+    port: 0
+
 du-metrics-server:
   config:
     testbed: default
+    kafkaPublishingEnabled: false
+    topic: default_topic
 
   replicaCount: 1
 
