@@ -9,7 +9,7 @@
 
 {{- $env := get . "env" | default list -}}
 {{- with $values.extraEnvs -}}
-{{- $env = append $env . -}}
+{{- $env = concat $env . -}}
 {{- end -}}
 
 {{- $envFrom := get . "envFrom" | default list -}}
