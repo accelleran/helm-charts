@@ -7,7 +7,7 @@ version: 3.1.0
 appVersion: "CW3.1.0"
 dependencies:
   - name: common
-    version: 0.2.2
+    version: 0.2.3
     repository: https://accelleran.github.io/helm-charts/
   - name: nats
     condition: nats.enabled
