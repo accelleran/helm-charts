@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/accelleran/helm-charts/compare/common-0.2.2...common-0.2.3) (2024-05-22)
+
+
+### Bug Fixes
+
+* Fix extraEnvs ([#221](https://github.com/accelleran/helm-charts/issues/221)) ([908b5fa](https://github.com/accelleran/helm-charts/commit/908b5fadc2b829f696ae9ca77cbed46aca3897cf))
+
 ## [0.2.2](https://github.com/accelleran/helm-charts/compare/common-0.2.1...common-0.2.2) (2024-03-06)
 
 
