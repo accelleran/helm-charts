@@ -147,7 +147,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({namespace=\"$namespace\", instance=~\"$pod\", node=~\"$node\", container=~\"$container\"} |~ \"$pod_container_search\"[$__interval]))",
+          "expr": "sum(count_over_time({namespace=\"$namespace\", pod=~\"$pod\", container=~\"$container\", node_name=~\"$node\"} |~ \"$pod_container_search\"[$__interval]))",
           "refId": "A"
         },
         {
