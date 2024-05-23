@@ -643,36 +643,6 @@ grafana:
     nats-dashboard: "{{ .Release.Name }}-grafana-nats-dashboard"
 
 
-loki-stack:
-  enabled: false
-  promtail:
-    enabled: false
-    config:
-      clients:
-        - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100/loki/api/v1/push
-    nodeSelector: {}
-  loki:
-    enabled: false
-    podLabels:
-      drax/role: ric
-      drax/component-name: loki
-    serviceLabels:
-      drax/role: ric
-      drax/component-name: loki
-    nodeSelector: {}
-    service:
-      type: NodePort
-      nodePort: 31000
-      port: 3100
-      targetPort: http-metrics
-    config:
-      table_manager:
-        # Retention polocy for logs in Loki
-        retention_deletes_enabled: true
-        # Must be a multiple of 168h
-        retention_period: 672h
-
-
 loki:
   enabled: true
 
