@@ -709,6 +709,10 @@ loki:
     # https://grafana.com/docs/loki/latest/operations/authentication/
     auth_enabled: false
 
+    # -- Limits config
+    limits_config:
+      max_entries_limit_per_query: 10000
+
   tableManager:
     # -- Enable deletes by retention
     retention_deletes_enabled: true
