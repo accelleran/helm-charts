@@ -1,0 +1,53 @@
+{{- $isSingleBinary := or (eq $.Values.loki.deploymentMode "SingleBinary") (eq $.Values.loki.deploymentMode "SingleBinary<->SimpleScalable") -}}
+{{- if $isSingleBinary }}
+
+{{- $default := ternary "enterprise-logs" "loki" $.Values.loki.enterprise.enabled -}}
+{{- $lokiName := coalesce $.Values.loki.nameOverride $default | trunc 63 | trimSuffix "-" -}}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Release.Name }}-loki-external
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "loki.chart" . }}
+    app.kubernetes.io/name: {{ $lokiName }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    {{- if or ($.Chart.AppVersion) ($.Values.loki.loki.image.tag) }}
+    app.kubernetes.io/version: {{ include "loki.validLabelValue" ($.Values.loki.loki.image.tag | default $.Chart.AppVersion) | quote }}
+    {{- end }}
+    app.kubernetes.io/managed-by: {{ $.Release.Service }}
+    {{- with $.Values.loki.loki.serviceLabels }}
+    {{- toYaml . | nindent 4}}
+    {{- end }}
+    {{- with $.Values.loki.singleBinary.service.labels }}
+    {{- toYaml . | nindent 4}}
+    {{- end }}
+  annotations:
+    {{- with .Values.loki.loki.serviceAnnotations }}
+    {{- toYaml . | nindent 4}}
+    {{- end }}
+    {{- with .Values.loki.singleBinary.service.annotations }}
+    {{- toYaml . | nindent 4}}
+    {{- end }}
+spec:
+  type: {{ $.Values.loki.loki.service.type }}
+  ports:
+    - name: http-metrics
+      port: 3100
+      targetPort: http-metrics
+      protocol: TCP
+      {{- if eq $.Values.loki.loki.service.type "NodePort" -}}
+      {{- with $.Values.loki.loki.service.nodePort }}
+      nodePort: {{ . }}
+      {{- end }}
+      {{- end }}
+  selector:
+    app.kubernetes.io/name: {{ $lokiName }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+    app.kubernetes.io/component: single-binary
+    {{- with $.Values.loki.singleBinary.selectorLabels }}
+      {{- tpl (toYaml .) $ | nindent 4 }}
+    {{- end }}
+{{- end }}
