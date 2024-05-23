@@ -646,6 +646,7 @@ grafana:
 loki-stack:
   enabled: true
   promtail:
+    enabled: false
     config:
       clients:
         - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100/loki/api/v1/push
@@ -670,6 +671,18 @@ loki-stack:
         retention_deletes_enabled: true
         # Must be a multiple of 168h
         retention_period: 672h
+
+
+promtail:
+  enabled: true
+
+  config:
+    logLevel: info
+    serverPort: 3101
+    clients:
+      - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100/loki/api/v1/push
+
+  nodeSelector: {}
 
 
 influxdb:
