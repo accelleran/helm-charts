@@ -14,11 +14,10 @@ du-metrics-server:
 
   replicaCount: 1
 
-  initImage:
-    influxdb:
-      repository: accelleran/acc-generic-img
-      pullPolicy: IfNotPresent
-      tag: "0.8.0"
+  influxdbInitImage:
+    repository: accelleran/acc-generic-img
+    pullPolicy: IfNotPresent
+    tag: "0.8.0"
 
   image:
     repository: accelleran/du-metrics-server
