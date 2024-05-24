@@ -55,7 +55,7 @@ values:
 {{- $ := . -}}
 {{- $values := $.Values.netconf -}}
 
-{{- $image := ($values.initImage).netconf | required "The netconf init image needs to be provided to cell-wrapper netconf wait container value overrides" -}}
+{{- $image := $values.netconfInitImage | required "The netconf init image needs to be provided to cell-wrapper netconf wait container value overrides" -}}
 
 containerName: wait-for-netconf
 image:
