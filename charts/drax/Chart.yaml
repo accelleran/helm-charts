@@ -5,29 +5,29 @@ type: application
 version: 7.2.0-rc.2
 dependencies:
   - name: common
-    version: 0.2.3
+    version: 0.3.0
     repository: https://accelleran.github.io/helm-charts/
 
   # smo
   - name: dashboard
     condition: dashboard.enabled
-    version: 5.0.0
+    version: 6.0.0
     repository: file://charts/dashboard
   - name: network-state-monitor
     condition: network-state-monitor.enabled
-    version: 0.1.1
+    version: 0.2.0
     repository: file://charts/network-state-monitor
   - name: service-monitor
     condition: service-monitor.enabled
-    version: 1.0.0
+    version: 2.0.0
     repository: file://charts/service-monitor
   - name: service-orchestrator
     condition: service-orchestrator.enabled
-    version: 1.1.1
+    version: 2.0.0
     repository: file://charts/service-orchestrator
   - name: config-api
     condition: config-api.enabled
-    version: 2.0.0
+    version: 3.0.0
     repository: file://charts/config-api
   - name: cell-wrapper
     condition: cell-wrapper.enabled
@@ -47,14 +47,14 @@ dependencies:
   # xapps
   - name: pm-counters
     condition: pm-counters.enabled
-    version: 1.1.0
+    version: 2.0.0
     repository: file://charts/pm-counters
 
   # infrastructure
   - name: golang-nkafka
     alias: golang-nkafka-5g
     condition: global.enable5G
-    version: 1.2.2
+    version: 2.0.0
     repository: file://charts/golang-nkafka
 
   # external

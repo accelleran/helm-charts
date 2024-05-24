@@ -46,15 +46,15 @@ fullnameOverride: ""
 
 replicaCount: 1
 
-initImage:
-  nats:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
-  kafka:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
+natsInitImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.8.0"
+
+kafkaInitImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.8.0"
 
 image:
   repository: accelleran/golang-nkafka-5g

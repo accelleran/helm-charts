@@ -2,10 +2,10 @@ apiVersion: v2
 name: dashboard
 description: The Accelleran Dashboard
 type: application
-version: 5.0.0
+version: 6.0.0
 # renovate: image=accelleran/dash-front-back-end
 appVersion: 5.3.0
 dependencies:
   - name: common
-    version: 0.2.3
+    version: 0.3.0
     repository: https://accelleran.github.io/helm-charts/

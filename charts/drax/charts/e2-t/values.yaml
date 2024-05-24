@@ -47,15 +47,15 @@ drax:
 nameOverride: ""
 fullnameOverride: ""
 
-initImage:
-  redis:
-    repository: accelleran/acc-generic-img
-    tag: "0.8.0"
-    pullPolicy: IfNotPresent
-  nats:
-    repository: accelleran/acc-generic-img
-    tag: "0.8.0"
-    pullPolicy: IfNotPresent
+redisInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.8.0"
+  pullPolicy: IfNotPresent
+
+natsInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.8.0"
+  pullPolicy: IfNotPresent
 
 accelleranLicense:
   enabled: false
