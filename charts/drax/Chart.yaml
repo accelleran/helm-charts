@@ -24,7 +24,7 @@ dependencies:
     repository: file://charts/service-monitor
   - name: service-orchestrator
     condition: service-orchestrator.enabled
-    version: 1.1.1
+    version: 1.2.0
     repository: file://charts/service-orchestrator
   - name: config-api
     condition: config-api.enabled

@@ -2,7 +2,7 @@ global: {}
 
 kubeIp: "10.55.1.2"
 default5gVersion: "6"
-defaultDevEnvVersion: "2"
+defaultDevEnvVersion: "3"
 
 config:
   namespaces:
