@@ -41,6 +41,10 @@
     "charts/du-metrics-server": {
       "component": "du-metrics-server",
       "package-name": "du-metrics-server"
+    },
+    "charts/telemetry-collector": {
+      "component": "telemetry-collector",
+      "package-name": "telemetry-collector"
     }
   }
 }

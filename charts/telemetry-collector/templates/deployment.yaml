@@ -1,0 +1,29 @@
+{{- include
+      "accelleran.common.deployment"
+      (fromYaml (include "accelleran.telemetry-collector.deployment.args" $))
+-}}
+
+{{- define "accelleran.telemetry-collector.deployment.args" -}}
+{{- $ := . -}}
+{{- $fullname := include "accelleran.common.fullname" (dict "top" $) -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+
+volumes:
+- name: {{ $fullname }}-config-volume
+  emptyDir: {}
+- name: {{ $fullname }}-config
+  configMap:
+    name: {{ $fullname }}-config
+
+
+volumeMounts:
+- name: {{ $fullname }}-config
+  mountPath: /configs/config.yaml
+  subPath: "config.yaml"
+- name: {{ $fullname }}-config-volume
+  mountPath: /config
+
+{{- end -}}
+

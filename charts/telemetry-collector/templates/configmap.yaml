@@ -1,0 +1,36 @@
+{{- include
+      "accelleran.common.configMap"
+      (fromYaml (include "accelleran.telemetry-collector.configMap.args" .))
+-}}
+
+{{- define "accelleran.telemetry-collector.configMap.args" -}}
+{{- $ := . -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+
+name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
+
+data:
+  config.yaml: |-
+    internal:
+      kafka:
+        url: "{{ include "accelleran.common.bootstrap.kafka.hostname" (dict "top" .) }}:{{ include "accelleran.common.bootstrap.kafka.port" (dict "top" .) }}"
+      influxDB:
+        url: "{{ $.Values.config.influxDB.url }}"
+        bucket: "{{ $.Values.config.influxDB.bucket }}"
+        token: "{{ $.Values.config.influxDB.token }}"
+        org: "{{ $.Values.config.influxDB.org }}"
+    pipelines:
+      {{- range $pipeline := $.Values.config.pipelines }}
+      - name: "{{ $pipeline.name }}" 
+        component: "{{ $pipeline.component }}"
+        vendor: "{{ $pipeline.vendor }}"
+        enabled: {{ $pipeline.enabled }}
+        vendorConfig: 
+        {{- range $key, $value := $pipeline.vendorConfig }}
+          {{ $key }}: "{{ $value }}"
+        {{- end }}
+      {{- end }}
+    
+{{- end }}

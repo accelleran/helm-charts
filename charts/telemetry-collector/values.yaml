@@ -1,0 +1,78 @@
+global: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+bootstrap:
+  create: true
+  name: ""
+  kafka:
+    enabled: true
+    hostname: ""
+    port: 0
+
+image:
+  repository: accelleran/telemetry-collector
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"
+
+imagePullSecrets:
+  - name: accelleran-secret
+
+accelleranLicense:
+  enabled: true
+  secretName: "accelleran-license"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  # readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10000
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+config:
+  pipelines:
+    - name: "ue_measurements"
+      component: "cu"
+      vendor: "accelleran"
+      enabled: false
+      vendorConfig: 
+        natsUrl: "nats://10.0.141.3:31161"
+        natsSubjects: "*.5G_MEAS_INFO.*.*.*.*"
+        kafkaTopic: "accelleran.drax.5g.ric.o1.ves"
+
+    - name: "viavi_measurements"
+      component: "ric_tester"
+      vendor: "viavi"
+      enabled: true
+      vendorConfig:
+        udpPort: 9090
+        kafkaTopic: "accelleran.drax.5g.ric.o1.ves"
+
+  influxDB:
+    url: "localhost:8086"
+    bucket: "meas5g"
+    token: "yMq5frlbmU_0CZYqPphL0hDY35V_Z2PRpvkdySyfbl5-B70gs2zN03rJt0hPBi565HsRRF4J-RJ_nzLntNPTRA=="
+    org: "accelleran"
+
+
