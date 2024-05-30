@@ -549,7 +549,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -651,7 +651,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -759,7 +759,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -867,7 +867,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -975,7 +975,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -1083,7 +1083,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -1191,7 +1191,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -1296,7 +1296,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
             "renamePattern": "UE $2 [PCI:$1]"
           }
         }
@@ -1726,7 +1726,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -1834,7 +1834,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -1941,7 +1941,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -2047,7 +2047,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -2153,7 +2153,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -2261,7 +2261,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -2369,7 +2369,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -2478,7 +2478,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
@@ -2583,7 +2583,7 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
                 "renamePattern": "UE $2 [PCI:$1]"
               }
             }
