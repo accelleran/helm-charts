@@ -71,7 +71,7 @@ dependencies:
     repository: https://prometheus-community.github.io/helm-charts
   - name: loki-stack
     condition: loki-stack.enabled
-    version: 2.10.1
+    version: 2.10.2
     repository: https://grafana.github.io/helm-charts
   - name: influxdb
     condition: influxdb.enabled
