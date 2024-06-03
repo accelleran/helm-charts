@@ -2,7 +2,7 @@ apiVersion: v2
 name: network-state-monitor
 description: The Accelleran dRAX Network State Monitor
 type: application
-version: 0.1.0
+version: 0.1.1
 # renovate: image=accelleran/network-state-monitor
 appVersion: 1.2.0
 dependencies:

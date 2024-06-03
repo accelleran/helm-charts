@@ -16,7 +16,7 @@ bootstrap:
 config:
   brokers: "{{ .Release.Name }}-kafka.{{ .Release.Namespace }}:9092"
   group_id: "network-state-monitor"
-  topics: "accelleran.drax.5g.ric.raw.messages"
+  topics: "accelleran.drax.5g.ric.raw.messages,accelleran.drax.5g.ric.raw.cu_state"
   offset: "latest"
   kafka_client_verbose: "false"
 
@@ -43,10 +43,12 @@ initImage:
     pullPolicy: IfNotPresent
     tag: "0.8.0"
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -54,7 +56,8 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-resources: {}
+resources:
+  {}
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
