@@ -3,7 +3,6 @@ name: drax
 description: Accelleran's dRAX helm chart
 type: application
 version: 7.2.0-rc.2
-
 dependencies:
   - name: common
     version: 0.2.3
@@ -16,7 +15,7 @@ dependencies:
     repository: file://charts/dashboard
   - name: network-state-monitor
     condition: network-state-monitor.enabled
-    version: 0.1.0
+    version: 0.1.1
     repository: file://charts/network-state-monitor
   - name: service-monitor
     condition: service-monitor.enabled
