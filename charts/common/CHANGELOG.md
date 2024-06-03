@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0](https://github.com/accelleran/helm-charts/compare/common-0.2.3...common-0.3.0) (2024-06-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* give an error message when a service is disabled without setting an (external) hostname ([#142](https://github.com/accelleran/helm-charts/issues/142))
+* switch to image values that renovate automatically updates ([#246](https://github.com/accelleran/helm-charts/issues/246))
+
+### Features
+
+* Give an error message when a service is disabled without setting an (external) hostname ([#142](https://github.com/accelleran/helm-charts/issues/142)) ([e297459](https://github.com/accelleran/helm-charts/commit/e297459fc9b51007616fd3ce5b862d594c5aa05a))
+
+
+### Bug Fixes
+
+* Switch to image values that renovate automatically updates ([#246](https://github.com/accelleran/helm-charts/issues/246)) ([e45b60a](https://github.com/accelleran/helm-charts/commit/e45b60af421cb985d8f3d25a9f190f00fcddee5d))
+
 ## [0.2.3](https://github.com/accelleran/helm-charts/compare/common-0.2.2...common-0.2.3) (2024-05-22)
 
 
