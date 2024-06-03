@@ -14,7 +14,7 @@ Init container check waiting until influxdb is available
 {{- $ := get . "top" | required "The top context needs to be provided to du metrics server init influxdb args" -}}
 {{- $values := get . "values" | default $.Values -}}
 
-{{- $image := ($values.initImage).influxdb | required "The influxdb init image needs to be provided to du metrics server init influxdb args" -}}
+{{- $image := $values.influxdbInitImage | required "The influxdb init image needs to be provided to du metrics server init influxdb args" -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
