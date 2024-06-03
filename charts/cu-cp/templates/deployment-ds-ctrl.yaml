@@ -69,7 +69,7 @@ containers:
 {{- define "accelleran.cu-cp.ds-ctrl.init.container.args" -}}
 {{- $ := . -}}
 {{- $values := index $.Values "ds-ctrl" -}}
-{{- $image := $values.initImage | required "The init image needs to be provided to cu-cp ds-ctrl args" -}}
+{{- $image := $values.envInitImage | required "The env init image needs to be provided to cu-cp ds-ctrl args" -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
