@@ -90,7 +90,7 @@ To warn for this scenario a failure message will be printed out when all of the 
 1. The chart is not deploying (one of) the services (either because it's not part of the chart or because it's disabled).
 1. The hostname is empty (also after evaluating templated values)
 
-Their are two ways to handle this:
+There are two ways to handle this:
 
 1. The bootstrap configmap is created externally to the chart.
 1. The hostname is filled in.
@@ -122,6 +122,6 @@ The port is still optional here as it will fall back to the default port of the 
 
 > Note
 >
-> It might occur that this failures happens in a nested part of the values file.
+> It might occur that this failure happens in a nested part of the values file.
 > Therefore the chart name is included in the message to guide where the failure is happening exactly.
 > `nameOverride` might add confusion here though as it allows to change the chart name.
