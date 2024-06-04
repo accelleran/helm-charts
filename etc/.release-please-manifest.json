@@ -5,5 +5,5 @@
   "charts/cu-cp": "7.1.0",
   "charts/cu-up": "7.1.0",
   "charts/drax": "7.1.0",
-  "charts/du-metrics-server": "0.1.2"
+  "charts/du-metrics-server": "0.2.0"
 }
