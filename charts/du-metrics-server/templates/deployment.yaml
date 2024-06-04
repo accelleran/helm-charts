@@ -12,7 +12,7 @@
 top:
   {{ $ | toYaml | nindent 2 }}
 values:
-  {{ $values | toYaml | nindent 2 }}
+  {{ (mergeOverwrite (deepCopy $values) (fromYaml (include "accelleran.du-metrics-server.deployment.valueOverrides" .))) | toYaml | nindent 2 }}
 
 initContainers:
 - {{ fromYaml (include "accelleran.du-metrics-server.init.influxdb" (dict "top" $ "values" (index $.Values "du-metrics-server"))) | toYaml | nindent 2 }}
@@ -44,9 +44,36 @@ env:
       configMapKeyRef:
         name: {{ $bootstrapConfigMapName | quote }}
         key: KAFKA_PORT
-{{- with $values.config.topic }}
-  - name: TOPIC
-    value: {{ . | quote }}
+{{- range $key, $topic := $values.config.topics }}
+  - name: {{ upper $key }}_TOPIC
+    value: {{ $topic | quote }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+
+{{- define "accelleran.du-metrics-server.deployment.valueOverrides" -}}
+{{- $ := . -}}
+{{- $values := index $.Values "du-metrics-server" -}}
+
+args:
+  - metrics-server
+  - --port
+  - $(PORT)
+  - --testbed
+  - $(TESTBED)
+  - --bucket
+  - $(BUCKET)
+  - --db-config
+  - url=$(URL)
+  - org=$(ORG)
+  - token=$(TOKEN)
+{{- if $values.config.kafkaPublishingEnabled }}
+  - --kafka-config
+  - bootstrap.servers=$(KAFKA_HOSTNAME):$(KAFKA_PORT)
+  - --topics
+{{- range $key, $_ := $values.config.topics }}
+  - {{ $key }}=$({{ upper $key }}_TOPIC)
 {{- end }}
 {{- end -}}
 {{- end -}}
