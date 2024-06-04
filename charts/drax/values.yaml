@@ -670,6 +670,8 @@ loki-stack:
         retention_deletes_enabled: true
         # Must be a multiple of 168h
         retention_period: 672h
+      limits_config:
+        max_entries_limit_per_query: 10000
 
 
 influxdb:
