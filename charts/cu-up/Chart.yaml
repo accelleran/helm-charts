@@ -2,7 +2,7 @@ apiVersion: v2
 name: cu-up
 description: Accelleran 5G CU-UP Components
 type: application
-version: 7.1.0
+version: 8.0.0
 # renovate: image=accelleran/cuup-netconf
 appVersion: "5.0.7"
 dependencies:
