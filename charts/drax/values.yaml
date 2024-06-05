@@ -146,7 +146,11 @@ du-metrics-server:
   du-metrics-server:
     config:
       kafkaPublishingEnabled: true
-      topic: accelleran.drax.5g.du.metrics
+      topics:
+        default: accelleran.drax.5g.du_metrics
+        ue_kpis: accelleran.drax.5g.du_metrics.ue_mac
+        rlc_tx_kpis: accelleran.drax.5g.du_metrics.ue_rlc_tx
+        rlc_rx_kpis: accelleran.drax.5g.du_metrics.ue_rlc_rx
 
   influxdb:
     nameOverride: "du-influxdb"
