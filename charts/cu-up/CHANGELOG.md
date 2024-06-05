@@ -1,5 +1,25 @@
 # Changelog
 
+## [8.0.0](https://github.com/accelleran/helm-charts/compare/cu-up-7.1.0...cu-up-8.0.0) (2024-06-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* disable NATS/Redis in CU by default ([#125](https://github.com/accelleran/helm-charts/issues/125))
+* **deps:** update cu-up to common chart 0.3.0 ([#250](https://github.com/accelleran/helm-charts/issues/250))
+* **deps:** update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173))
+* **deps:** update cuup to 5.0.6 ([#243](https://github.com/accelleran/helm-charts/issues/243))
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cuup-netconf docker tag to v5.0.7 ([609f6a6](https://github.com/accelleran/helm-charts/commit/609f6a61c062cd9e09d0bd0ad6a960aec3a0e373))
+* **deps:** Update cu-up to common chart 0.3.0 ([#250](https://github.com/accelleran/helm-charts/issues/250)) ([c879d8f](https://github.com/accelleran/helm-charts/commit/c879d8f50fe97838017ce4d28f4384db5608ecd3))
+* **deps:** Update cuup to 5.0.6 ([#243](https://github.com/accelleran/helm-charts/issues/243)) ([86b1ab6](https://github.com/accelleran/helm-charts/commit/86b1ab62d69811b77e092740bab42f278b7e2140))
+* **deps:** Update helm release common to v0.2.3 ([2720172](https://github.com/accelleran/helm-charts/commit/2720172fa39bfc8c82ee656029c09200f21647aa))
+* **deps:** Update helm release nats to v1.1.12 ([da5f102](https://github.com/accelleran/helm-charts/commit/da5f1027547c83f5c68f56ce524218db3f2b35c0))
+* **deps:** Update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173)) ([979ae1e](https://github.com/accelleran/helm-charts/commit/979ae1e51d665263c457c7a9ecc30e64ac001843))
+* Disable NATS/Redis in CU by default ([#125](https://github.com/accelleran/helm-charts/issues/125)) ([7e90a3f](https://github.com/accelleran/helm-charts/commit/7e90a3f4324e71d14160cde49ab477ae455fc3d1))
+
 ## [7.1.0](https://github.com/accelleran/helm-charts/compare/cu-up-7.0.0...cu-up-7.1.0) (2024-04-30)
 
 
