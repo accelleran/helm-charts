@@ -80,7 +80,7 @@ spec:
               /bin/bash <<'EOF'
               sudo service ssh start
               echo 'xapp:{{ .Values.developerMode.devPassword }}' | sudo chpasswd
-              git init /home/xapp/xapp/core/
+              git init /home/xapp/xapp/
               while true; do sleep 30; done;
               EOF
           {{ else }}
