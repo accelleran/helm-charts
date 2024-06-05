@@ -25,10 +25,10 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podSecurityContext: 
+podSecurityContext:
   fsGroup: 0
 
-securityContext: 
+securityContext:
   # capabilities:
   #   drop:
   #   - ALL
@@ -38,7 +38,7 @@ securityContext:
 
 service:
   type: ClusterIP
-  #nodePort: 31802
+  # nodePort: 31802
   port: 6379
   name: "xapp-redis"
 
