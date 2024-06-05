@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Release please
         if: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'releases/') }}
-        uses: google-github-actions/release-please-action@v4
+        uses: googleapis/release-please-action@v4
         with:
           target-branch: ${{ github.ref_name }}
           config-file: "etc/release-please-config.json"
