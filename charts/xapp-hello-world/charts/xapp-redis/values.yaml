@@ -61,16 +61,12 @@ ingress:
   #      - chart-example.local
 
 persistence:
-  accessModes:
-    - ReadWriteMany
   enabled: true
+  storageClassName: null
+  accessModes:
+    - ReadWriteOnce
   size: 1Gi
-  #storageClassName: acc-redis
   type: pvc
-  ### TESTING
-  #hostPath: /opt/pods/acc-redis
-  ### Production
-  hostPath: /opt/pods
 
 # If you want the health check app, enabled this
 # WARNING: There is currently an error with the health check, do not enable this
