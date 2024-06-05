@@ -254,12 +254,14 @@ kafka:
     nodeSelector: {}
     persistence:
       size: 1Gi
+    resourcesPreset: medium
 
   broker:
     automountServiceAccountToken: true
     nodeSelector: {}
     persistence:
       size: 1Gi
+    resourcesPreset: medium
 
   provisioning:
     enabled: true
