@@ -4,3 +4,5 @@ description: Accelleran xApp Redis
 type: application
 version: 0.2.0
 appVersion: 6.0.4-alpine3.12
+# renovate: image=redis
+appVersion: 7.2.5-alpine3.20
