@@ -14,6 +14,13 @@ metadata:
 {{ toYaml . | indent 4 }}
   {{- end }}
 spec:
+{{- /*
+  an empty string has a special meaning for a storageClassName:
+  https://kubernetes.io/docs/concepts/storage/storage-classes/#default-storageclass
+*/ -}}
+{{- if or .Values.persistence.storageClassName (eq .Values.persistence.storageClassName "") }}
+  storageClassName: {{ .Values.persistence.storageClassName | quote }}
+{{- end }}
   accessModes:
     {{- range .Values.persistence.accessModes }}
     - {{ . | quote }}
@@ -21,5 +28,4 @@ spec:
   resources:
     requests:
       storage: {{ .Values.persistence.size | quote }}
-  storageClassName: {{ include "redis.fullname" . }}
 {{- end -}}
