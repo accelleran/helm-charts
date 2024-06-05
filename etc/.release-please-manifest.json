@@ -6,5 +6,5 @@
   "charts/cu-up": "8.0.0",
   "charts/drax": "7.1.0",
   "charts/du-metrics-server": "0.2.1",
-  "charts/xapp-hello-world": "2.1.2"
+  "charts/xapp-hello-world": "3.0.0"
 }
