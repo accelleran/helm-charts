@@ -1,5 +1,26 @@
 # Changelog
 
+## [8.0.0](https://github.com/accelleran/helm-charts/compare/cu-cp-7.1.0...cu-cp-8.0.0) (2024-06-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* disable NATS/Redis in CU by default ([#125](https://github.com/accelleran/helm-charts/issues/125))
+* **deps:** update cu-cp to common chart 0.3.0 ([#249](https://github.com/accelleran/helm-charts/issues/249))
+* **deps:** update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173))
+* **deps:** update cucp to 5.0.6 ([#242](https://github.com/accelleran/helm-charts/issues/242))
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cucp-netconf docker tag to v5.0.7 ([01884b4](https://github.com/accelleran/helm-charts/commit/01884b4e1a9ca382025ae4b8a0d6507f55dae3d2))
+* **deps:** Update cu-cp to common chart 0.3.0 ([#249](https://github.com/accelleran/helm-charts/issues/249)) ([d5c4357](https://github.com/accelleran/helm-charts/commit/d5c43575941b055a3e692e1d96833189ede5461b))
+* **deps:** Update cucp to 5.0.6 ([#242](https://github.com/accelleran/helm-charts/issues/242)) ([c8de466](https://github.com/accelleran/helm-charts/commit/c8de4664f1428c2afe9af9fb7650da6f118a16f2))
+* **deps:** Update helm release common to v0.2.3 ([2720172](https://github.com/accelleran/helm-charts/commit/2720172fa39bfc8c82ee656029c09200f21647aa))
+* **deps:** Update helm release nats to v1.1.12 ([da5f102](https://github.com/accelleran/helm-charts/commit/da5f1027547c83f5c68f56ce524218db3f2b35c0))
+* **deps:** Update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173)) ([979ae1e](https://github.com/accelleran/helm-charts/commit/979ae1e51d665263c457c7a9ecc30e64ac001843))
+* Disable NATS/Redis in CU by default ([#125](https://github.com/accelleran/helm-charts/issues/125)) ([7e90a3f](https://github.com/accelleran/helm-charts/commit/7e90a3f4324e71d14160cde49ab477ae455fc3d1))
+* Fix ds-ctrl init image not being used ([#245](https://github.com/accelleran/helm-charts/issues/245)) ([e1ccd30](https://github.com/accelleran/helm-charts/commit/e1ccd304173e56fe425c064c0d7cd753f26f6e54))
+
 ## [7.1.0](https://github.com/accelleran/helm-charts/compare/cu-cp-7.0.0...cu-cp-7.1.0) (2024-04-29)
 
 
