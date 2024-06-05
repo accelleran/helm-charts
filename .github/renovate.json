@@ -30,6 +30,13 @@
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
     },
     {
+      "datasourceTemplate": "helm",
+      "fileMatch": ["(^|/)values\\.y[a]?ml$"],
+      "matchStrings": [
+        "#\\s?renovate: repository=(?<registryUrl>.*?) chart=(?<depName>.*?)\\s?[\\w\\-]*[vV]ersion:\\s?\"?(?<currentValue>[\\w\\.\\-]*)\"?"
+      ]
+    },
+    {
       "datasourceTemplate": "github-releases",
       "fileMatch": ["(^|/)helm-charts\\.y[a]?ml$"],
       "matchStrings": [
