@@ -549,8 +549,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -651,8 +651,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -759,8 +759,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -867,8 +867,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -975,8 +975,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -1083,8 +1083,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -1191,8 +1191,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -1296,8 +1296,8 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-            "renamePattern": "UE $2 [$1]"
+            "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+            "renamePattern": "UE $2 [PCI:$1]"
           }
         }
       ],
@@ -1411,8 +1411,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -1516,8 +1516,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -1621,8 +1621,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -1726,8 +1726,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -1834,8 +1834,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -1941,8 +1941,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -2047,8 +2047,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -2153,8 +2153,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -2261,8 +2261,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -2369,8 +2369,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -2478,8 +2478,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -2583,8 +2583,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*pci=\"(\\w+).*rnti=\"(\\w+).*$",
-                "renamePattern": "UE $2 [$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -2701,8 +2701,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -2805,8 +2805,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -2909,8 +2909,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3013,8 +3013,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3117,8 +3117,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3219,8 +3219,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3323,8 +3323,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3441,8 +3441,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3545,8 +3545,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3647,8 +3647,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3751,8 +3751,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3855,8 +3855,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -3959,8 +3959,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4061,8 +4061,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4165,8 +4165,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4269,8 +4269,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4373,8 +4373,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4475,8 +4475,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4577,8 +4577,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4681,8 +4681,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
@@ -4783,8 +4783,8 @@
             {
               "id": "renameByRegex",
               "options": {
-                "regex": ".*drb=\"(\\w+).*du=\"(\\w+).*ue=\"(\\w+).*$",
-                "renamePattern": "UE $3 [DU:$2]"
+                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
               }
             }
           ],
