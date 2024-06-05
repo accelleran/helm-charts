@@ -63,3 +63,10 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Create the name of the service to use
+*/}}
+{{- define "redis.serviceName" -}}
+{{ include "redis.fullname" . }}
+{{- end -}}
