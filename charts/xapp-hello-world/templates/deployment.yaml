@@ -74,18 +74,17 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{ if .Values.developerMode.enabled }}
           command:
-            - sh
+            - "/bin/bash"
             - "-c"
             - |
-              /bin/bash <<'EOF'
               sudo service ssh start
               echo 'xapp:{{ .Values.developerMode.devPassword }}' | sudo chpasswd
               git init /home/xapp/xapp/
-              while true; do sleep 30; done;
-              EOF
+              tail -f /dev/null
           {{ else }}
-          command: ["/bin/bash", "-c"]
-          args: ["python3 xapp_main.py"]
+          command:
+            - "python3"
+            - "xapp_main.py"
           {{ end }}
           volumeMounts:
             {{ if and (.Values.developerMode.enabled) (.Values.developerMode.hostPath) }}
@@ -103,27 +102,17 @@ spec:
             {{ if .Values.developerMode.enabled }}
             - containerPort: {{ .Values.sshService.port }}
             {{ end }}
-#          livenessProbe:
-#            httpGet:
-#              path: /
-#              port: http
-#          readinessProbe:
-#            httpGet:
-#              path: /
-#              port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector: {{- . | toYaml | nindent 8 }}
       {{- end }}
-    {{- with .Values.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-    {{- with .Values.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
+      {{- with .Values.affinity }}
+      affinity: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
       volumes:
         - name: {{ include "xapp_core.fullname" . }}-xapp-config
           configMap:
