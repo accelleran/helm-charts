@@ -44,11 +44,12 @@ service:
 
 persistence:
   enabled: true
+  annotations: {}
+  finalizers: {}
   storageClassName: null
   accessModes:
     - ReadWriteOnce
   size: 1Gi
-  type: pvc
 
 # If you want the health check app, enabled this
 # WARNING: There is currently an error with the health check, do not enable this
