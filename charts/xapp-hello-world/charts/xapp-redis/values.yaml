@@ -1,3 +1,5 @@
+test: "it"
+
 replicaCount: 1
 
 image:
