@@ -25,26 +25,44 @@ spec:
       initContainers:
         {{ if .Values.xappEnpoints }}
         {{ if .Values.xappEnpoints.REDIS_URL }}
-        - name: {{ .Chart.Name }}-check-redis
+        - name: check-redis
           image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
           imagePullPolicy: {{ .Values.initImage.pullPolicy }}
-          command: ['sh', '-c', 'until [ "$(redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} ping)" == "PONG" ]; do echo $(date) [CHECK-SERVICES] Waiting for REDIS; sleep 2; done; echo Redis online']
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+                until [ "$(timeout 10s redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} ping)" == "PONG" ]
+                do
+                  echo "$(date) Waiting for redis"
+                  sleep 1
+                done
+                echo "$(date) Redis ready"
         {{ end }}
-        {{ end }}
-        {{ if .Values.xappEnpoints }}
         {{ if .Values.xappFrameworkConfig.flushOnDeployment }}
-        - name: {{ .Chart.Name }}-flush-redis
+        - name: flush-redis
           image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
           imagePullPolicy: {{ .Values.initImage.pullPolicy }}
-          command: ['sh', '-c', 'redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} FLUSHALL']
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} FLUSHALL"
         {{ end }}
-        {{ end }}
-        {{ if .Values.xappEnpoints }}
         {{ if .Values.xappEnpoints.KAFKA_URL }}
-        - name: {{ .Chart.Name }}-check-kafka
+        - name: check-kafka
           image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
           imagePullPolicy: {{ .Values.initImage.pullPolicy }}
-          command: ['sh', '-c', 'echo "KAFKA_URL=\"{{ tpl .Values.xappEnpoints.KAFKA_URL . | trimPrefix "kafka://" }}\"" > kafka_url.py && python3 kafka-test.py']
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+                KAFKA_URL="{{ tpl .Values.xappEnpoints.KAFKA_URL . | trimPrefix "kafka://" }}"
+                until kcat -b "$KAFKA_URL" -t kafka-cluster-init -C -o -1 -e
+                do
+                  echo "$(date) Waiting for kafka"
+                  sleep 1
+                done
+                echo "$(date) Kafka ready"
         {{ end }}
         {{ end }}
       {{ end }}
