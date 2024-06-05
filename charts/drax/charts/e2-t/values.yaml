@@ -256,13 +256,13 @@ e2-t-sm-rc:
 
 
 nats:
-  enabled: true
+  enabled: false
 
   natsBox:
     enabled: false
 
 redis:
-  enabled: true
+  enabled: false
 
   architecture: standalone
   auth:
