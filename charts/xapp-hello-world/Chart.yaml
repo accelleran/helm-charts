@@ -20,5 +20,5 @@ appVersion: 2.1.2
 dependencies:
   - name: xapp-redis
     condition: xapp-redis.enabled
-    version: 0.2.0
+    version: 0.3.0
     repository: file://charts/xapp-redis
