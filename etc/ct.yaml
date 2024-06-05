@@ -1,5 +1,7 @@
 chart-dirs:
   - charts
+  - charts/drax/charts
+  - charts/xapp-hello-world/charts
 check-version-increment: false
 validate-yaml: true
 lint-conf: "etc/lintconf.yaml"
