@@ -6,7 +6,7 @@ metadata:
     {{- include "xapp_core.labels" . | nindent 4 }}
 data:
   xapp_endpoints.json: |-
-    {{ tpl (.Values.xappEnpoints |toJson) . }}
+    {{ tpl (.Values.xappEndpoints |toJson) . }}
 
 
 

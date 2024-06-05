@@ -47,7 +47,7 @@ xappFrameworkConfig:
   flushOnDeployment: false
 
 ### Define the xapp_endpoints.json
-xappEnpoints:
+xappEndpoints:
   REDIS_URL: "redis://{{ .Release.Name }}-xapp-redis.{{ .Release.Namespace }}:6379"
   KAFKA_URL: "kafka://{{ .Values.global.kubeIp }}:31090"
   API_URL: "http://{{ .Values.global.kubeIp }}:31315"

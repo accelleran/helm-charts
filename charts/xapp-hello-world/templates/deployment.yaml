@@ -21,10 +21,10 @@ spec:
       serviceAccountName: {{ include "xapp_core.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{ if or (.Values.xappEnpoints) (.Values.developerMode.enabled) }}
+      {{ if or (.Values.xappEndpoints) (.Values.developerMode.enabled) }}
       initContainers:
-        {{ if .Values.xappEnpoints }}
-        {{ if .Values.xappEnpoints.REDIS_URL }}
+        {{ if .Values.xappEndpoints }}
+        {{ if .Values.xappEndpoints.REDIS_URL }}
         - name: check-redis
           image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
           imagePullPolicy: {{ .Values.initImage.pullPolicy }}
@@ -32,7 +32,7 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-                until [ "$(timeout 10s redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} ping)" == "PONG" ]
+                until [ "$(timeout 10s redis-cli -u {{ tpl .Values.xappEndpoints.REDIS_URL . }} ping)" == "PONG" ]
                 do
                   echo "$(date) Waiting for redis"
                   sleep 1
@@ -46,9 +46,9 @@ spec:
           command:
             - "/bin/sh"
             - "-c"
-            - "redis-cli -u {{ tpl .Values.xappEnpoints.REDIS_URL . }} FLUSHALL"
+            - "redis-cli -u {{ tpl .Values.xappEndpoints.REDIS_URL . }} FLUSHALL"
         {{ end }}
-        {{ if .Values.xappEnpoints.KAFKA_URL }}
+        {{ if .Values.xappEndpoints.KAFKA_URL }}
         - name: check-kafka
           image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
           imagePullPolicy: {{ .Values.initImage.pullPolicy }}
@@ -56,7 +56,7 @@ spec:
             - "/bin/sh"
             - "-c"
             - |
-                KAFKA_URL="{{ tpl .Values.xappEnpoints.KAFKA_URL . | trimPrefix "kafka://" }}"
+                KAFKA_URL="{{ tpl .Values.xappEndpoints.KAFKA_URL . | trimPrefix "kafka://" }}"
                 until kcat -b "$KAFKA_URL" -t kafka-cluster-init -C -o -1 -e
                 do
                   echo "$(date) Waiting for kafka"
