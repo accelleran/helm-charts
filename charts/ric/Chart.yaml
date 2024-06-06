@@ -86,7 +86,9 @@ dependencies:
   name: e2t
   repository: https://accelleran.github.io/helm-charts/
   version: 1.0.0
-description: A Helm chart for Kubernetes
+# The ric chart is deprecated in favor of drax.
+deprecated: true
+description: DEPRECATED A Helm chart for Kubernetes
 name: ric
 type: application
-version: 6.5.3
+version: 6.5.4
