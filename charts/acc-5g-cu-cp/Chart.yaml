@@ -68,7 +68,9 @@ dependencies:
   name: ho-tester
   repository: https://accelleran.github.io/5g-helm-charts/
   version: 0.3.1
-description: Accelleran 5G CU CP Components
+# The acc-5g-cu-cp chart is deprecated in favor of cu-cp.
+deprecated: true
+description: DEPRECATED Accelleran 5G CU CP Components
 name: acc-5g-cu-cp
 type: application
-version: 6.0.0
+version: 6.0.1

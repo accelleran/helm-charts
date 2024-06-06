@@ -1,5 +1,11 @@
 #############################################################################
 
+DEPRECATED
+
+Please switch to the cu-cp helm chart.
+
+#############################################################################
+
 Accelleran CU-CP {{ .Chart.Version }} using {{ .Values.global.tag }}
 
 Deployed Accelleran CU-CP component [{{- include "acc-common.drax.instanceId.withLengthCheck" . }}] with the following details:
