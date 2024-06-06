@@ -1,0 +1,61 @@
+{{- if .Values.provisioner.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "configurator.fullname" . }}
+  labels:
+    {{- include "configurator.labels" . | nindent 4 }}
+spec:
+  template:
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}-provisioner
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ .Values.provisioner.image }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - "-c"
+            - |
+              /bin/sh <<'EOF'
+              until curl -k https://{{ tpl .Values.provisioner.provisionerApi . }}:{{ .Values.provisioner.provisionerPort }}/get/; do sleep 5; done
+              curl --cacert /certs/ca.crt --cert /certs/client.crt --key /certs/client.key https://{{ tpl .Values.provisioner.provisionerApi . }}:{{ .Values.provisioner.provisionerPort }}/push/ --data-binary @/config/cellconfig.yaml
+              EOF
+          volumeMounts:
+            - name: prov-ca-crt
+              mountPath: /certs/ca.crt
+              subPath: "ca.crt"
+            - name: prov-client-key
+              mountPath: /certs/client.key
+              subPath: "client.key"
+            - name: prov-client-crt
+              mountPath: /certs/client.crt
+              subPath: "client.crt"
+            - name: cell-config
+              mountPath: /config/cellconfig.yaml
+              subPath: "cellconfig.yaml"
+      restartPolicy: Never
+      {{- if or (.Values.provisioner.nodeSelector) (eq (tpl .Values.provisioner.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.provisioner.nodeSelector }}
+          {{- toYaml .Values.provisioner.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.provisioner.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.provisioner.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+      volumes:
+        - name: prov-ca-crt
+          configMap:
+            name: {{ .Values.provisioner.caCrtName }}
+        - name: prov-client-key
+          configMap:
+            name: {{ .Values.provisioner.clientKeyName }}
+        - name: prov-client-crt
+          configMap:
+            name: {{ .Values.provisioner.clientCrtName }}
+        - name: cell-config
+          configMap:
+            name: cell-config
+{{- end }}

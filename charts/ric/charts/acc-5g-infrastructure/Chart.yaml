@@ -1,0 +1,22 @@
+apiVersion: v2
+dependencies:
+- condition: nats.enabled
+  name: nats
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.8.4
+- condition: redis.enabled
+  name: redis
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.7.0
+- condition: metallb.enabled
+  name: metallb
+  repository: https://charts.bitnami.com/bitnami
+  version: 2.3.5
+- condition: jaeger.enabled
+  name: jaeger
+  repository: https://jaegertracing.github.io/helm-charts
+  version: 0.46.6
+description: The infrastructure for the Accelleran 5G CU Components
+name: acc-5g-infrastructure
+type: application
+version: 3.0.0

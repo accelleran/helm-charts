@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uemeasurements-toml
+data:
+  uemeasurements.toml: |-
+    [sources.messages]
+      bootstrap_servers = "{{ tpl .Values.config.kafka.hostname . }}:{{ .Values.config.kafka.port}}"
+      group_id = "VECTOR_4G_UE_MEAS"
+      topics = ["{{ tpl .Values.config.kafka.topic . }}"]
+      type = "kafka"
+    
+    [transforms.parseMessagesUeMeas]
+      type = "json_parser"
+      inputs = ["messages"]
+      drop_field = false 
+      drop_invalid = true
+      field = "message" 
+
+    [transforms.filterUeMeasMessages]
+      # General
+      type = "filter"
+      inputs = ["parseMessagesUeMeas"]
+      # Condition
+      condition."Rc4gUeMeasurement.exists" = true
+    
+    [transforms.parseUeMeasReport]
+      inputs = ["filterUeMeasMessages"]
+      type   = "json_parser"
+      field  = "Rc4gUeMeasurement"
+      drop_field = false 
+      drop_invalid = true
+    
+    [transforms.luaUeMeas]
+      # General
+      type = "lua" # required
+      inputs = ["parseUeMeasReport"] # required
+      version = "2" # required
+    
+    # Hooks
+      hooks.process = """
+      function (event, emit)
+        m = {}
+        m.log = {
+              timestamp = "",
+              cellId = "",
+              ueId = "",
+              UeMeasurement = {},
+            }
+            
+        temp = m
+        temp.log.timestamp = event.log.timestamp
+        temp.log.ueId = event.log.ueRicId
+        temp.log.cellId = event.log.Rc4gUeMeasurement.CellId
+        temp.log.UeMeasurement.rsrp = event.log.Rc4gUeMeasurement.Rsrp
+        temp.log.UeMeasurement.rsrq = event.log.Rc4gUeMeasurement.Rsrq
+        emit(temp)
+      end
+      """
+        
+
+    [sinks.outUeMeasReport]
+      # General
+      bucket = "vector-bucket"
+      database = "{{ .Values.config.influx.database }}"
+      endpoint =  "http://{{ tpl .Values.config.influx.hostname . }}:{{ .Values.config.influx.port}}/"
+      inputs = ["luaUeMeas"]
+      namespace = "{{ .Values.config.influx.namespace }}"
+      type = "{{ .Values.config.influx.type }}"
+      username = "{{ .Values.config.influx.username }}"
+      password = "{{ .Values.config.influx.password }}"
+      tags = ["cellId", "ueId"] # optional, no default
+
+
+
+

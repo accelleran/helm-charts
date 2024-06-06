@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "accelleran-xapp-statedb.fullname" . }}-config
+  labels:
+    {{- include "accelleran-xapp-statedb.labels" . | nindent 4 }}
+data:
+  xapp_configuration.json: |-
+    {
+        "metadata": {
+            "name": "{{ .Values.xappFrameworkConfig.name }}",
+            "configName": "",
+            "namespace": "{{ .Release.Namespace }}"
+        },
+        "description": "This xApp detects changes in the state of the cells and publishes this data either on request through the REST API, or periodically through KAFKA",
+        "last_modified": "06/07/2020 23:32:00",
+        "config": {
+            "API_GATEWAY_URL":"{{ tpl .Values.xappConfig.apiGatewayUrl . }}",
+            "API_GATEWAY_PORT":"{{ .Values.xappConfig.apiGatewayPort }}",
+            "REDIS_URL": "{{ tpl .Values.xappFrameworkConfig.redisUrl . }}",
+            "REDIS_PORT": {{ .Values.xappFrameworkConfig.redisPort }},
+            "LOG_LEVEL": {{ .Values.xappConfig.logLevel }},  
+            "STATE_DB_URL": "{{ tpl .Values.xappConfig.stateDbUrl . }}",
+            "STATE_DB_PORT": {{ .Values.xappConfig.stateDbPort }},
+            "KAFKA_STATE_TOPIC": "{{ tpl .Values.xappConfig.kafkaStateTopic . }}",
+            "KAFKA_UE_MEAS_TOPIC": "{{ tpl .Values.xappConfig.kafkaUeMeasTopic . }}",
+            "KAFKA_BEACON_TOPIC": "{{ tpl .Values.xappConfig.kafkaBeaconTopic . }}",
+            "KAFKA_URL": "{{ tpl .Values.xappConfig.kafkaUrl . }}",
+            "KAFKA_PORT": "{{ .Values.xappConfig.kafkaPort }}",
+            "expire_timer": {{ .Values.xappConfig.expire_timer }}, 
+            "periodic_publish": {{ .Values.xappConfig.periodicPublish }},
+            "publish_interval": {{ .Values.xappConfig.publishInterval }}  
+        },
+        "jsonSchemaOptions": {},
+        "uiSchemaOptions": {}
+    }

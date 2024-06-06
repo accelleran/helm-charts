@@ -1,0 +1,59 @@
+affinity: {}
+config:
+  influx:
+    database: db_5G
+    hostname: 10.55.1.2
+    namespace: uemeasurement
+    password: password
+    port: 30303
+    type: influxdb_logs
+    username: admin
+  kafka:
+    hostname: 10.55.1.2
+    port: 31090
+    topic: accelleran.drax.5g.ric.raw.ue_measurements
+    pmCounterTopic: accelleran.drax.5g.ric.raw.pm_counters
+
+fullnameOverride: ""
+image:
+  pullPolicy: IfNotPresent
+  repository: accelleran/vector
+initImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.6.0"
+imagePullSecrets:
+  - name: accelleran-secret
+ingress:
+  annotations: {}
+  enabled: false
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+initConfig:
+  influxdbService: ric-influxdb-api:8086
+  kafkaUrl: ric-kafka:9092
+  kafkaTopicsCheck: "accelleran.drax.4g.ric.raw.messages,accelleran.drax.4g.ric.raw.service_discovery,accelleran.drax.4g.ric.raw.ue_measurements,accelleran.drax.5g.ric.raw.cu_state,accelleran.drax.5g.ric.raw.ue_measurements,accelleran.drax.5g.ric.raw.pm_counters,accelleran.drax.5g.ric.raw.messages"
+
+nameOverride: ""
+nodeSelector: {}
+draxNodeSelectorEnabled: "false"
+draxNodeSelector:
+  draxName: "main"
+podSecurityContext: {}
+replicaCount: 1
+resources: {}
+securityContext:
+  runAsUser: 0
+service:
+  enabled: false
+  port: 80
+  type: ClusterIP
+serviceAccount:
+  create: false
+  name: null
+tolerations: []
+version: "{{ .Chart.AppVersion }}"
+developerMode:
+  enabled: false

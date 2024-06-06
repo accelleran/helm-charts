@@ -1,0 +1,21 @@
+###############################################
+
+###############################################
+# Accelleran dRAX 4G Infrastructure           #
+###############################################
+
+# Release Notes ###############################
+
+## dRAX 5.0.0:
+### Changed
+  - Renaming to acc-4g-infrastructure
+
+# Services ####################################
+
+{{ if index .Values "acc-l2-update" "enabled" }}## E1000 Layer 2 Update Server
+{{ .Values.global.kubeIp }}:{{ index .Values "acc-l2-update" "service" "nodePort" }} {{ end }}
+
+{{ if .Values.provisioner.enabled }}## 4G dRAX Provisioner
+{{ .Values.global.kubeIp }}:{{ .Values.provisioner.nginx.service.nodePort}}{{ end }}
+
+###############################################

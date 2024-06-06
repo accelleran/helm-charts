@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "acc-kafka.fullname" . }}
+  labels:
+    {{- include "acc-kafka.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "acc-kafka.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "acc-kafka.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "acc-kafka.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: {{ .Chart.Name }}-check-zookeeper
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'until nc -z -v -w1 {{ tpl .Values.env.KAFKA_ZOOKEEPER_CONNECT . }}; do echo $(date) [CHECK-SERVICES] Waiting for zookeeper at {{ tpl .Values.env.KAFKA_ZOOKEEPER_CONNECT . }}; sleep 2; done']
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.env }}
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key | upper | replace "." "_" }}
+              value: {{ tpl $value $ | quote }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: {{ .Values.service.name }}
+              containerPort: {{ .Values.service.port }}
+              protocol: {{ .Values.service.protocol }}
+            - name: jmx
+              containerPort: 9010
+              protocol: TCP 
+#          livenessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+#          readinessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: "jmx-prometheus-exporter"
+          securityContext:
+            {{- toYaml .Values.jmxExporter.securityContext | nindent 12 }}
+          image: "{{ .Values.jmxExporter.image.repository }}:{{ .Values.jmxExporter.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.jmxExporter.image.pullPolicy }}
+          {{- if .Values.env }}
+          env:
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key | upper | replace "." "_" }}
+              value: {{ tpl $value $ | quote }}
+            {{- end }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /opt/jmx_exporter/config.yml
+            subPath: config.yaml
+            name: kafka-jmxexporter
+          ports:
+            - name: {{ .Values.jmxExporter.service.name }}
+              containerPort: {{ .Values.jmxExporter.service.port }}
+              protocol: {{ .Values.jmxExporter.service.protocol }}
+#          livenessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+#          readinessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: kafka-jmxexporter
+        configMap:
+          name: {{ include "acc-kafka.fullname" . }}-jmx-config
+
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,5 @@
+apiVersion: v2
+description: A common Library chart that provides standardized Named Templates
+name: acc-common
+type: library
+version: 0.1.0

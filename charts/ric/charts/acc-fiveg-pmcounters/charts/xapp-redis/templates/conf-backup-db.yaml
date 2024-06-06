@@ -1,0 +1,90 @@
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "redis.fullname" . }}-backup
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+data:
+  backup-db.sh: |-
+    #!/bin/sh
+    #
+    ## redis backup script
+    ## usage
+    ## redis-backup.sh port backup.dir
+    
+    port={{ .Values.service.port }}
+    backup_dir=${2:-"/data/backup"}
+    
+    cli="/usr/local/bin/redis-cli -p $port"
+    rdb="/data/dump.rdb"
+    aof="/data/appendonly.aof"
+    
+    rdb_found=1
+    aof_found=1
+
+    test -f $rdb || {
+      echo "No RDB Found" ; rdb_found=0 #exit 1
+    }
+    
+    test -f $aof || {
+      echo "No AOF Found" ; aof_found=0 #exit 1
+    }
+    
+    if [ $rdb_found -eq 0 ]; then                                                                                                                                                                       
+      if [ $aof_found -eq 0 ]; then                                                                                                                                                                     
+        echo "No DBs found!"; exit 1                                                                                                                                                                    
+      fi                                                                                                                                                                                                
+    fi
+
+    test -d $backup_dir || {
+      echo "Create backup directory $backup_dir" && mkdir -p $backup_dir
+    }
+    
+    # perform a bgsave before copy
+    echo bgsave | $cli
+    echo "Waiting for 20 seconds..."
+    sleep 20
+    try=5
+    while [ $try -gt 0 ] ; do
+      ## redis-cli output dos format line feed '\r\n', remove '\r'
+      bg=$(echo 'info Persistence' | $cli | awk -F: '/rdb_bgsave_in_progress/{sub(/\r/, "", $0); print $2}')
+      ok=$(echo 'info Persistence' | $cli | awk -F: '/rdb_last_bgsave_status/{sub(/\r/, "", $0); print $2}')
+      if [[ "$bg" = "0" ]] && [[ "$ok" = "ok" ]] ; then
+        dst_rdb="$backup_dir/dump.$(date +%Y%m%d%H%M%S).rdb"
+        dst_aof="$backup_dir/appendonly.$(date +%Y%m%d%H%M%S).aof"
+        cp $rdb $dst_rdb
+        #cp $aof $dst_aof
+        if [ $? = 0 ] ; then
+          echo "Redis rdb $rdb copied to $dst_rdb."
+    
+          # delete rdb created {{ .Values.backup.deleteAfterDay }} days ago
+          cd $backup_dir
+          find . \( -name "dump*" \) -mtime +{{ .Values.backup.deleteAfterDay }} -exec rm -f {} \;
+          #exit 0
+          if [ $aof_found -eq 0 ]; then
+            exit 0
+          fi
+          cp $aof $dst_aof
+          if [ $? = 0 ] ; then
+            echo "Redis aof $aof copied to $dst_aof."
+    
+            # delete aof created {{ .Values.backup.deleteAfterDay }} days ago
+            cd $backup_dir
+            find . \( -name "appendonly*" \) -mtime +{{ .Values.backup.deleteAfterDay }} -exec rm -f {} \;
+            exit 0
+    
+          else
+            echo "Failed to copy $aof to $dst_aof!"
+          fi
+        else
+          echo "Failed to copy $rdb to $dst!"
+        fi
+      fi
+      try=$((try - 1))
+      echo "Redis maybe busy, waiting and retry in 5s..."
+      sleep 5
+    done
+
+
+{{- end }}

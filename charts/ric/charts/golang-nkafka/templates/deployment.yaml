@@ -1,0 +1,128 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "golang-nkafka.fullname" . }}
+  labels:
+    {{- include "golang-nkafka.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "golang-nkafka.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "golang-nkafka.labels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "golang-nkafka.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        {{ if .Values.initConfig.natsCheckEnabled }}
+        - name: {{ .Chart.Name }}-check-nats
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'until nc -z -v -w1 {{ tpl .Values.natsUrl . }}; do echo $(date) [CHECK-SERVICES] Waiting for NATS at {{ tpl .Values.natsUrl . }}; sleep 2; done']
+        {{ end }}
+        {{ if .Values.initConfig.kafkaCheckEnabled }}
+        - name: {{ .Chart.Name }}-check-kafka
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'echo "KAFKA_URL=\"{{ tpl .Values.kafkaUrl . }}\"" > kafka_url.py && python3 kafka-test.py {{ tpl .Values.initConfig.kafkaTopicsCheck . }}']
+        {{ end }}
+        - name: {{ .Chart.Name }}-create-config
+          {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+          image: "{{ .Values.image.repository }}-license:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{ else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{ end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: {{ include "golang-nkafka.fullname" . }}-config-volume
+              mountPath: /config
+            {{ if .Values.config.natsKafkaTopics.override }}
+            - name: {{ include "golang-nkafka.fullname" . }}-kafkatopics
+              mountPath: /KafkaTopics.toml
+              subPath: "KafkaTopics.toml"
+            {{ end }}
+          command: ["/usr/bin/python3"]
+          args:
+            - /home/conf/generate_nats_to_kafka_connections.py
+            - /home/conf/KafkaTopics.toml
+            - /home/conf/Topics.toml
+            - {{ tpl .Values.kafkaUrl . }}
+            - /config/Connections.conf
+          {{ if eq (tpl .Values.mode .) "5g" }}
+            - --asterisk_prefix
+          {{ end }}         
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+          image: "{{ .Values.image.repository }}-license:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{ else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{ end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: {{ include "golang-nkafka.fullname" . }}-config
+              mountPath: /nkafka.conf
+              subPath: "nkafka.conf"
+            - name: {{ include "golang-nkafka.fullname" . }}-config-volume
+              mountPath: /config
+            {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+            - mountPath: "/etc/license/license.crt"
+              subPath: "license.crt"
+              name: accelleran-license
+              readOnly: true
+            {{ end }}
+          command: ["/home/nats-kafka"]
+          env:
+            - name: "NATS_KAFKA_BRIDGE_CONFIG"
+              value: "/nkafka.conf"
+          {{ if .Values.overrideArgs }}
+          args:
+            {{  range .Values.overrideArgs }}
+            - {{ tpl . $ }}
+            {{ end }}
+          {{ end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: {{ include "golang-nkafka.fullname" . }}-config-volume
+          emptyDir: {}
+        - name: {{ include "golang-nkafka.fullname" . }}-config
+          configMap:
+            name: {{ include "golang-nkafka.fullname" . }}-config
+        {{ if .Values.config.natsKafkaTopics.override }}
+        - name: {{ include "golang-nkafka.fullname" . }}-kafkatopics
+          configMap:
+            name: {{ include "golang-nkafka.fullname" . }}-kafkatopics
+        {{ end }}
+        {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+        - name: accelleran-license
+          secret:
+            secretName: {{ tpl .Values.accelleranLicense.licenseSecretName . }}
+        {{ end }}

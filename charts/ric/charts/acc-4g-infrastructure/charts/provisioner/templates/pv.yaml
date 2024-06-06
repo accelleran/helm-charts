@@ -1,0 +1,19 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: {{ include "provisioner.fullname" . }}
+  labels:
+    {{- include "provisioner.labels" . | nindent 4 }}
+    type: local
+spec:
+  storageClassName: {{ .Values.persistence.storageClassName }}
+  capacity:
+    storage: {{ .Values.persistence.size | quote }}
+  accessModes:
+    {{- range .Values.persistence.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  hostPath:
+     #path: "{{ .Values.persistence.hostPath }}/{{ include "provisioner.fullname" . }}"
+     path: "{{ .Values.persistence.hostPath }}/provisioner"
+     type: DirectoryOrCreate

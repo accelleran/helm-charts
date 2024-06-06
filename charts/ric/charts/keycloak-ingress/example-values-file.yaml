@@ -1,0 +1,9 @@
+ingress:
+  namespace: "default"
+
+  ingress-nginx:
+    controller:
+      service:
+        type: "NodePort"
+        nodePorts:
+          http: 80

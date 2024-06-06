@@ -1,0 +1,10 @@
+If you have chosen a name for the package other than "acc-sys", please delete the current helm package and reinstall it with the name "acc-sys". 
+This is important for Grafana to correctly find Prometheus as a datasource.
+
+Get the Grafana URL to visit by running these commands in the same shell:
+{{ if contains "NodePort" .Values.grafana.service.type -}}
+     export NODE_PORT=$(kubectl get --namespace {{ template "grafana.namespace" . }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ .Release.Name }}-grafana)
+     export NODE_IP=$(kubectl get nodes --namespace {{ template "grafana.namespace" . }} -o jsonpath="{.items[0].status.addresses[0].address}")
+     echo http://$NODE_IP:$NODE_PORT
+{{- end }}
+

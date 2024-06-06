@@ -1,0 +1,80 @@
+{{- if .Values.jobs.netconfConfig.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "oran-clustercontrol.fullname" . }}-config-netconf
+  labels:
+    {{- include "oran-clustercontrol.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade,post-rollback
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      {{ if .Values.config.https }}
+      serviceAccountName: {{ include "oran-clustercontrol.serviceAccountName" . }}
+      {{ end }}
+      restartPolicy: Never
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+          {{ end }}
+          {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+          {{ end }}
+      {{- end }}
+      containers:
+      - name: netconf-config
+        image: {{ .Values.jobs.netconfConfig.image }}
+        volumeMounts:
+          - name: {{ include "oran-clustercontrol.fullname" . }}-check-netconf
+            mountPath: /rpcs/check-netconf.py
+            subPath: "check-netconf.py"
+          - name: {{ include "oran-clustercontrol.fullname" . }}-4g-netconf-config
+            mountPath: /rpcs/4grc-netconf-config.py
+            subPath: "4grc-netconf-config.py"
+          - name: {{ include "oran-clustercontrol.fullname" . }}-4g-netconf-delete-config
+            mountPath: /rpcs/4grc-netconf-delete-config.py
+            subPath: "4grc-netconf-delete-config.py"
+        command:
+          - sh
+          - "-c"
+          - |
+            /bin/bash <<'EOF'
+
+            #!/bin/bash
+
+            # upgrade pip
+            # python3 -m pip install -U pip
+
+            # Install netconf python lib
+            # pip3 install netconf-client==1.7.1
+
+            # make sure that netconf is running
+            python3 /rpcs/check-netconf.py
+
+            {{ if .Values.jobs.netconfConfig.deleteExistingConfig }}
+            # If the delete config job is enabled, run the following script
+            python3 /rpcs/4grc-netconf-delete-config.py
+            {{ end }}
+
+            # Run 4grc-netconf-config.py script
+            python3 /rpcs/4grc-netconf-config.py
+
+            exit 0
+
+            EOF
+      volumes:
+        - name: {{ include "oran-clustercontrol.fullname" . }}-check-netconf
+          configMap:
+            name: {{ include "oran-clustercontrol.fullname" . }}-check-netconf
+
+        - name: {{ include "oran-clustercontrol.fullname" . }}-4g-netconf-config
+          configMap:
+            name: {{ include "oran-clustercontrol.fullname" . }}-4g-netconf-config
+
+        - name: {{ include "oran-clustercontrol.fullname" . }}-4g-netconf-delete-config
+          configMap:
+            name: {{ include "oran-clustercontrol.fullname" . }}-4g-netconf-delete-config
+{{- end }} 

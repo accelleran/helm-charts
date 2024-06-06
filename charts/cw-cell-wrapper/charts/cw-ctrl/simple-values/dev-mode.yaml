@@ -1,0 +1,15 @@
+initConfig:
+  redisCheckEnabled: false
+  natsCheckEnabled: true
+
+nats:
+  url: "10.55.1.2"
+  port: "31100"
+
+redisConfig:
+  hostname: "10.55.1.2"
+  port: "32200"
+
+developerMode:
+  enabled: true
+  hostPath: ""

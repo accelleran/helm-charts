@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "golang-nkafka.fullname" . }}-config
+data:
+  nkafka.conf: |-
+    # The interval to wait to reconnect
+    reconnectinterval: 5000,
+
+    # The global connection timeout
+    connecttimeout: 5000,
+
+    # Logging options
+    logging: {
+      time: true,
+      debug: trace,
+      trace: trace,
+      colors: true,
+      pid: false,
+    }
+
+    monitoring: {
+      httpport: 9222,
+
+    #  Uncomment this block to enable TLS for the monitoring port.
+    #  httpsport: 9222,
+    #  tls: {
+    #      cert: /a/server-cert.pem,
+    #      key: /a/server-key.pem,
+    #  }
+    }
+
+    # Setup the global connection parameters to NATS
+    nats: {
+      Servers: ["{{ tpl .Values.natsUrl . }}"],
+      ConnectTimeout: {{ .Values.config.natsConnectionParameters.connectTimeout }},
+      MaxReconnects: {{ .Values.config.natsConnectionParameters.maxReconnects }},
+      ReconnectWait: {{ .Values.config.natsConnectionParameters.reconnectWait }},
+    }
+
+    # Depite the nats-kafka-bridge documentation indicating otherwise,
+    # these paths are relative to the working directory when the application is started
+    include conf/Protobuf.conf
+
+    include ../config/Connections.conf

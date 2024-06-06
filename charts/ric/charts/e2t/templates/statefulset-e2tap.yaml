@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "e2t.fullname" . }}-e2tap
+  labels:
+    {{- include "e2t.e2ap.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "e2t.fullname" . }}-service
+  replicas: {{ tpl .Values.e2tap.numOfE2Nodes . }}
+  selector:
+    matchLabels:
+      {{- include "e2t.e2ap.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.e2tap.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "e2t.e2ap.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.e2tap.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "e2t.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.e2tap.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.e2tap.securityContext | nindent 12 }}
+          image: "{{ .Values.e2tap.image.repository }}:{{ tpl .Values.e2tap.image.tag . | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.e2tap.image.pullPolicy }}
+          command:
+            - sh
+            - "-c"
+            - |
+              /bin/sh <<'EOF'
+              echo e2-ap-${HOSTNAME##*-}
+              __APPID=e2-ap-${HOSTNAME##*-} {{ .Values.e2tap.cmd }} {{- if .Values.e2tap.args }}{{ range .Values.e2tap.args }} {{ .name }} {{ .value }}{{ end }}{{- end }}
+              EOF
+          env:
+            - name: NATS_SERVICE_URL
+              value: nats://{{ tpl .Values.natsHostname . }}:{{ tpl .Values.natsPort . }}
+            - name: BOOTSTRAP_FILENAME
+              value: {{ .Values.e2tap.bootstrapFile }}
+            - name: JAEGER_AGENT_HOST
+              value: {{ tpl .Values.jaegerAgentHost . }}
+            - name: __APPNAME
+              value: e2Ap
+            {{- if .Values.e2tap.extraEnvs }}
+            {{ toYaml .Values.e2tap.extraEnvs | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: {{ include "e2t.fullname" . }}-bootstrap
+              mountPath: {{ .Values.e2tap.bootstrapFile }}
+              subPath: "bootstrap.txt"
+          resources:
+            {{- toYaml .Values.e2tap.resources | nindent 12 }}
+          lifecycle:
+            preStop:
+              exec:
+                command: [ '/bin/sh', '-c', 'pkill -15 -e {{ .Values.e2tap.cmd | trimPrefix "./" | trimSuffix ".exe" | trunc 15  }}' ]
+      {{- if or (.Values.e2tap.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.e2tap.nodeSelector }}
+          {{- toYaml .Values.e2tap.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+      {{- with .Values.e2tap.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.e2tap.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "e2t.fullname" . }}-bootstrap
+          configMap:
+            name: {{ include "e2t.fullname" . }}-bootstrap

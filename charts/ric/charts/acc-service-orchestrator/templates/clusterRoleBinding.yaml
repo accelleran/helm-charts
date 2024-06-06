@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "acc-service-orchestrator.fullname" . }} 
+  namespace: {{ .Release.Namespace }}
+subjects:  
+- kind: ServiceAccount
+  name: {{ include "acc-service-orchestrator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:  
+  kind: ClusterRole
+  name: {{ include "acc-service-orchestrator.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cell-config
+data:
+  cellconfig.yaml: |-
+    {{- $redisHostname := tpl .Values.provisioner.redis.hostname . -}}
+    {{- $redisPort := tpl .Values.provisioner.redis.port . -}}
+    {{- $lokiHostname := tpl .Values.provisioner.loki.hostname . -}}
+    {{- $lokiPort := tpl .Values.provisioner.loki.port . -}}
+    {{ range $cellSerial, $cellName := .Values.provisioner.cells }}
+    {{ $cellSerial }}:
+      redis:
+        hostname: {{ $redisHostname }}
+        port: {{ $redisPort }}
+      instance:
+        filter: {{ $cellName}}
+      loki:
+        hostname: {{ $lokiHostname }}
+        port: {{ $lokiPort }}
+    {{ end }}

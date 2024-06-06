@@ -1,0 +1,22 @@
+apiVersion: v2
+appVersion: CW2.3.2
+dependencies:
+- name: acc-common
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.1.0
+- condition: cw-ctrl.enabled
+  name: cw-ctrl
+  repository: file://charts/cw-ctrl
+  version: 2.3.2
+- condition: cw-inst.enabled
+  name: cw-inst
+  repository: file://charts/cw-inst
+  version: 2.3.2
+- condition: netconf.enabled
+  name: netconf
+  repository: https://accelleran.github.io/5g-helm-charts/
+  version: 2.4.0
+description: Accelleran Cell Wrapper Components
+name: cell-wrapper
+type: application
+version: 2.3.2

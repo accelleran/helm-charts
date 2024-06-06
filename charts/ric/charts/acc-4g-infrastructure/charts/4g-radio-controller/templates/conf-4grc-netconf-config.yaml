@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "oran-clustercontrol.fullname" . }}-4g-netconf-config
+  labels:
+    {{- include "oran-clustercontrol.labels" . | nindent 4 }}
+data:
+  4grc-netconf-config.py: |
+    from netconf_client.connect import connect_ssh
+    from netconf_client.ncclient import Manager
+    import time
+
+    HOST = "{{ .Values.jobs.netconfConfig.netconfHost }}"
+    PORT = 830
+
+    session = connect_ssh(host=HOST, port=PORT, username="helm", password="helm")
+    mgr = Manager(session, timeout=120)
+    rc_config = """<config xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+                  <enb-internal xmlns="http://accelleran.com/ns/yang/accelleran-enb-internal" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="create">
+                      <feature-flags xc:operation="create">
+                          <handout-enabled>true</handout-enabled>
+                        <handin-enabled>true</handin-enabled>
+                        <son-enabled>false</son-enabled>
+                        <cbrs-enabled>false</cbrs-enabled>
+                        <snmp-enabled>false</snmp-enabled>
+                        <imsi-sniffing-enabled>false</imsi-sniffing-enabled>
+                        <mme-slicing-enabled>false</mme-slicing-enabled>
+                        <ran-slicing-enabled>false</ran-slicing-enabled>
+                        <reestablish-enabled>false</reestablish-enabled>
+                        <erab-add-enabled>true</erab-add-enabled>
+                        <erab-remove-enabled>removeERAB</erab-remove-enabled>
+                        <channel-dimensioning-enabled>false</channel-dimensioning-enabled>
+                        <mocn-enabled>false</mocn-enabled>
+                        <remote-management-type>netconf</remote-management-type>
+                    </feature-flags>
+
+                      <socket-interface>eth0</socket-interface>
+
+                      <common xc:operation="create">
+                          <logging xc:operation="create"><id>frm-common</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-datastore</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-fsm</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-list</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-memory</id><severity>error</severity></logging>
+                        <logging xc:operation="create"><id>frm-message</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-posix</id><severity>info</severity></logging>
+                        <logging xc:operation="create"><id>frm-queue</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-schedule</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-socket</id><severity>info</severity></logging>
+                        <logging xc:operation="create"><id>frm-sysutil</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-timer</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-io</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-http</id><severity>info</severity></logging>
+                        <logging xc:operation="create"><id>frm-string</id><severity>error</severity></logging>
+                        <logging xc:operation="create"><id>frm-pubsub</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>frm-snmp</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-tasks</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-health-monitor</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-system-monitor</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>frm-watchdog</id><severity>warning</severity></logging>
+                        
+                        <logging xc:operation="create"><id>appl-pm-counters</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>appl-led-ctrlr</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>appl-gps-ctrlr</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>appl-environment</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>appl-eeprom</id><severity>info</severity></logging>
+                        <logging xc:operation="create"><id>appl-sas</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>appl-sas-codec</id><severity>warning</severity></logging>
+                        <logging xc:operation="create"><id>appl-pran</id><severity>error</severity></logging>
+                        <logging xc:operation="create"><id>appl-snmp</id><severity>info</severity></logging>
+                        <logging xc:operation="create"><id>appl-remmgmt</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>appl-platform</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>appl-rc4g</id><severity>info</severity></logging>
+                        <logging xc:operation="create"><id>appl-netconf</id><severity>info</severity></logging>
+                        <logging xc:operation="create"><id>appl-data-distribution</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>appl-erm</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>appl-uec</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>frm-relational-db</id><severity>notice</severity></logging>
+                        <logging xc:operation="create"><id>appl-l3-stats</id><severity>notice</severity></logging>
+                      </common>
+
+                      <ric-controller-config xc:operation="create">
+                          <automatic-handover>true</automatic-handover>
+                          <publish-measurement-data>true</publish-measurement-data>
+                          <publish-ue-data>true</publish-ue-data>
+                          <measurement-type>periodic</measurement-type>
+                        <orchestrator-url>{{ if .Values.config.https }}https://{{ else }}http://{{ end }}{{ tpl .Values.config.orchestratorUrl . }}:{{ if .Values.config.https }}6443{{ else }}8080{{ end }}</orchestrator-url>
+                      </ric-controller-config>
+
+                  </enb-internal>
+                </config>
+
+                """
+    try:
+      print(mgr.edit_config(config=rc_config,target='running', default_operation=None))
+      print("Successfully set the 4G Radio Controller Configuration!")
+    except Exception as e:
+      print(e)

@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 0.2.0
+description: The configurator of Accelleran dRAX
+name: configurator
+type: application
+version: 0.3.0

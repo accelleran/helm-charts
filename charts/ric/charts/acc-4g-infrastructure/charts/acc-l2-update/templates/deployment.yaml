@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "acc-l2-update.fullname" . }}
+  labels:
+    {{- include "acc-l2-update.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "acc-l2-update.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "acc-l2-update.labels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "acc-l2-update.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+          image: "{{ .Values.image.repository }}-license:{{ tpl .Values.version . }}"
+          {{ else }}
+          image: "{{ .Values.image.repository }}:{{ tpl .Values.version . }}"
+          {{ end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+          volumeMounts:
+            - mountPath: "/etc/license/license.crt"
+              subPath: "license.crt"
+              name: accelleran-license
+              readOnly: true
+          {{ end }}
+          ports:
+            - name: {{ .Values.service.name }}
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+              #livenessProbe:
+              #httpGet:
+              #path: /
+              #port: http
+              #readinessProbe:
+              #httpGet:
+              #path: /
+              #port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+        {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+      volumes:
+        - name: accelleran-license
+          secret:
+            secretName: {{ tpl .Values.accelleranLicense.licenseSecretName . }}
+        {{ end }}

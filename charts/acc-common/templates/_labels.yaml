@@ -1,0 +1,51 @@
+{{/* vim: set filetype=mustache syntax=helm: */}}
+
+{{/*
+Common labels used for selection
+
+Should be included separately to the common labels!
+*/}}
+{{- define "acc-common.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "acc-common.name" . }}
+app.kubernetes.io/instance: {{ include "acc-common.instance" . }}
+{{- end -}}
+
+{{/*
+Common labels
+*/}}
+{{- define "acc-common.labels" -}}
+helm.sh/chart: {{ include "acc-common.chart" . }}
+{{ include "acc-common.selectorLabels" . }}
+app.kubernetes.io/version: {{ include "acc-common.version" . | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if include "acc-common.topChart.name" . }}
+app.kubernetes.io/part-of: {{ include "acc-common.topChart.name" . }}
+{{- end }}
+drax/helm-version: {{ include "acc-common.helmVersion" . | quote}}
+{{- if include "acc-common.topChart.helmVersion" . }}
+drax/top-helm-version: {{ include "acc-common.topChart.helmVersion" . | quote}}
+{{- end }}
+{{- if include "acc-common.drax.role" . }}
+drax/role: {{ include "acc-common.drax.role" . }}
+{{- end }}
+{{- if include "acc-common.drax.technology" . }}
+drax/technology: {{ include "acc-common.drax.technology" . }}
+{{- end }}
+{{- if include "acc-common.drax.instanceId" . }}
+drax/instanceId: {{ include "acc-common.drax.instanceId" . | quote }}
+{{- end }}
+
+drax/name: 5g # Deprecated
+drax/component-name: {{ .Chart.Name }} # Deprecated - use app.kubernetes.io/name instead
+drax/component-version: {{ .Chart.Version | quote }} # Deprecated - use drax/helm-version instead
+{{- end -}}
+
+{{/*
+Labels specific for 5G components
+*/}}
+{{- define "acc-common.labels.5g" -}}
+{{ include "acc-common.labels" . }}
+drax/5g-version: {{ include "acc-common.version" . | quote }} # Deprecated - use app.kubernetes.io/version instead
+drax/technology: 5g
+drax/role: 5g
+{{- end -}}

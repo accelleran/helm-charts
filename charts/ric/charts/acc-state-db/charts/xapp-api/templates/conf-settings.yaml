@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: {{ include "xapp-api.fullname" . }}-settings
+ labels:
+   {{- include "xapp-api.labels" . | nindent 4 }}
+data:
+  settings.py: |
+    REDIS_URL = "{{ tpl .Values.redis.url . }}"
+    REDIS_PORT = 6379

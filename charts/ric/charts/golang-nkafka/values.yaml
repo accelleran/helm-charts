@@ -1,0 +1,108 @@
+# Default values for golang-nkafka-5g.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+# For mounting the accelleran license
+accelleranLicense:
+  enabled: "true"
+  licenseSecretName: "accelleran-license"
+
+replicaCount: 1
+
+mode: "5g"
+
+image:
+  repository: accelleran/golang-nkafka-5g
+  pullPolicy: IfNotPresent
+  tag: "1.3.0_R4.1.0-rc6_jupiler_CW2.2.0-rc.1"
+
+initImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+initConfig:
+  natsCheckEnabled: true
+  kafkaCheckEnabled: true
+  kafkaTopicsCheck: "accelleran.drax.5g.ric.raw.messages,accelleran.drax.5g.ric.raw.pm_counters,accelleran.drax.5g.ric.raw.ue_measurements,accelleran.drax.5g.ric.raw.cu_state,accelleran.drax.5g.ric.raw.ran_control_response"
+
+imagePullSecrets:
+  - name: accelleran-secret
+nameOverride: ""
+fullnameOverride: ""
+
+# If you want to run the NKafka tool with custom argument, you can override them here. Note all the args need to be strings!
+overrideArgs: []
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  runAsUser: 0
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+draxNodeSelectorEnabled: "false"
+
+draxNodeSelector:
+  draxName: "main"
+
+tolerations: []
+
+affinity: {}
+
+natsUrl: "ric-nats-5g.{{ .Release.Namespace }}:4222"
+kafkaUrl: "ric-acc-kafka.{{ .Release.Namespace }}:9092"
+
+config:
+  natsConnectionParameters:
+    connectTimeout: 5000
+    maxReconnects: 120
+    reconnectWait: 5000
+
+  natsKafkaTopics:
+    override: false
+    # defaultKafkaTopic: "accelleran.drax.5g.ric.raw.messages"
+    # translations:
+    #   - natsSubject: "5G_CUUP_BEACON_INFO"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.cu_state"
+    #   - natsSubject: "5G_CUUP_BEACON_INFO_UPDATED"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.cu_state"
+    #   - natsSubject: "5G_AMF_BEACON_INFO"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.cu_state"
+    #   - natsSubject: "5G_DU_BEACON_INFO"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.cu_state"
+    #   - natsSubject: "5G_MEAS_INFO.ENB=*.DU=*.CELL=*.UE=*"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.ue_measurements"
+    #   - natsSubject: "PM-REPORT-COUNTERS"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.pm_counters"
+    #   - natsSubject: "5G_COUNTERS_INFO"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.pm_counters"
+    #   - natsSubject: "CUCP_COUNTERS_INFO"
+    #     kafkaTopic: "accelleran.drax.5g.ric.raw.pm_counters"

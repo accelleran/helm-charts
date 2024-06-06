@@ -1,0 +1,63 @@
+{{- $values := (index $.Values "instance-scaler") -}}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cell-wrapper.instance-scaler.fullname" $ }}
+  labels:
+    {{- include "cell-wrapper.instance-scaler.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "acc-common.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with $values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "cell-wrapper.instance-scaler.labels" . | nindent 8 }}
+    spec:
+      {{- with $values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ ($values.serviceAccount).enabled | default (include "cell-wrapper.instance-scaler.fullname" .) | quote }}
+      securityContext:
+        {{- toYaml $values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: instance-scaler
+          securityContext:
+            {{- toYaml $values.securityContext | nindent 12 }}
+          image: "{{ $values.image.repository }}:{{ tpl $values.image.tag . | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ $values.image.pullPolicy }}
+          volumeMounts:
+            - name: {{ include "cell-wrapper.instance-scaler.fullname" $ }}
+              mountPath: /config.yaml
+              subPath: config.yaml
+              readOnly: true
+          resources:
+            {{- toYaml $values.resources | nindent 12 }}
+      {{- if or ($values.nodeSelector) (eq (tpl $values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if $values.nodeSelector }}
+          {{- toYaml $values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl $values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml $values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+      {{- with $values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "cell-wrapper.instance-scaler.fullname" $ }}
+          configMap:
+            name: {{ include "cell-wrapper.instance-scaler.fullname" $ }}

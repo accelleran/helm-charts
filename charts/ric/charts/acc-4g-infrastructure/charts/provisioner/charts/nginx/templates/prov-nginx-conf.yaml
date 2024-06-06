@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prov-nginx-conf
+  labels:
+    {{- include "nginx.labels" . | nindent 4 }}
+data:
+  provision.conf: |
+    server {
+            listen {{ .Values.service.port}} ssl;
+            ssl_session_cache  builtin:1000  shared:SSL:10m;
+            ssl_protocols  TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+            ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
+            ssl_prefer_server_ciphers on;
+            server_name localhost;
+            ssl_certificate /etc/nginx/certs/server.crt;
+            ssl_certificate_key /etc/nginx/certs/server.key;
+            ssl_client_certificate /etc/nginx/client-certs/client.crt;
+            ssl_verify_client optional;
+            proxy_set_header SSL_CLIENT_CERT $ssl_client_cert;
+            access_log /var/log/nginx/provision;
+            error_log /var/log/error.log info;
+  
+            location /get/ {
+                    proxy_set_header        Host $host;
+                    proxy_set_header        X-Real-IP $remote_addr;
+                    proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header        X-Forwarded-Proto $scheme;
+  
+                    proxy_pass          http://{{ tpl .Values.provisionerUrl . }}:{{ .Values.provisionerPort }};
+                    proxy_read_timeout  90;
+                    proxy_redirect http://{{ tpl .Values.provisionerUrl . }}:{{ .Values.provisionerPort }} http://{{ tpl .Values.provisionerUrl . }};
+            }
+  
+            location ~ ^/(delete|set|push)/ {
+                    if ($ssl_client_verify != SUCCESS) {
+                            return 403;
+                    }
+                    proxy_set_header        Host $host;
+                    proxy_set_header        X-Real-IP $remote_addr;
+                    proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header        X-Forwarded-Proto $scheme;
+  
+                    proxy_pass          http://{{ tpl .Values.provisionerUrl . }}:{{ .Values.provisionerPort }};
+                    proxy_read_timeout  90;
+                    proxy_redirect http://{{ tpl .Values.provisionerUrl . }}:{{ .Values.provisionerPort }} http://{{ tpl .Values.provisionerUrl . }};
+            }
+  
+    }

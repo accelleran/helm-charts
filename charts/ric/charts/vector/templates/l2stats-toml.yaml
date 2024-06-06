@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: l2stats-toml
+data:
+  l2stats.toml: |-
+    [sources.inL2stats]
+      bootstrap_servers = "{{ tpl .Values.config.kafka.hostname . }}:{{ .Values.config.kafka.port}}"
+      group_id = "VECTOR_4G_L2stats"
+      topics = ["{{ tpl .Values.config.kafka.topic . }}"]
+      type = "kafka"
+
+    [transforms.parseL2StatsMessages]
+      type = "json_parser"
+      inputs = ["inL2stats"]
+      drop_field = false 
+      drop_invalid = true
+      field = "message" 
+    
+    [transforms.filterL2statsMessages]
+      # General
+      type = "filter"
+      inputs = ["parseL2StatsMessages"]
+      # Condition
+      condition."EnbStatsL2StatsValues.exists" = true
+    
+    [transforms.parseL2statsReport]
+      inputs = ["filterL2statsMessages"]
+      type   = "json_parser"
+      field  = "EnbStatsL2StatsValues"
+      drop_field = false 
+      drop_invalid = true
+    
+    [transforms.luaL2stats]
+      # General
+      type = "lua" # required
+      inputs = ["parseL2statsReport"] # required
+      version = "2" # required
+    
+    # Hooks
+      hooks.process = """
+      function (event, emit)
+        m = {}
+        m.log = {
+              timestamp = "",
+              cellId = "",
+              ueId = "",
+              DownlinkBler = "",
+              DschThroughput = "",
+              TimingAdvance = "",
+              UlSinr = "",
+              UplinkBler = "",
+              UschThroughput = "",
+            }
+        temp = m
+        temp.log.timestamp = event.log.timestamp
+        temp.log.ueId = event.log.ueRicId
+        temp.log.cellId = event.log.CELL
+        temp.log.DownlinkBler = event.log.EnbStatsL2StatsValues.Report.DownlinkBler
+        temp.log.DschThroughput = event.log.EnbStatsL2StatsValues.Report.DschThroughput
+        temp.log.TimingAdvance = event.log.EnbStatsL2StatsValues.Report.TimingAdvance
+        temp.log.UlSinr = event.log.EnbStatsL2StatsValues.Report.UlSinr
+        temp.log.UplinkBler = event.log.EnbStatsL2StatsValues.Report.UplinkBler
+        temp.log.UschThroughput = event.log.EnbStatsL2StatsValues.Report.UschThroughput
+        emit(temp)
+      end
+      """
+
+    [sinks.outL2statsReport]
+      # General
+      bucket = "vector-bucket"
+      database = "{{ .Values.config.influx.database }}"
+      endpoint = "http://{{ tpl .Values.config.influx.hostname . }}:{{ .Values.config.influx.port}}/"
+      inputs = ["luaL2stats"]
+      namespace = "{{ .Values.config.influx.namespace }}"
+      type = "{{ .Values.config.influx.type }}"
+      username = "{{ .Values.config.influx.username }}"
+      password = "{{ .Values.config.influx.password }}"
+      tags = ["cellId", "ueId"] 
+

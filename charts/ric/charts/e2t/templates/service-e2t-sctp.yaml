@@ -1,0 +1,25 @@
+{{- if .Values.e2tsctp.sctpService.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "e2t.fullname" . }}
+  labels:
+    {{- include "e2t.sctp.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.e2tsctp.sctpService.type }}
+  {{- if .Values.e2tsctp.sctpService.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ tpl .Values.e2tsctp.sctpService.externalTrafficPolicy . }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.e2tsctp.sctpService.port}}
+      protocol: {{ .Values.e2tsctp.sctpService.protocol }}
+      name: {{ tpl .Values.e2tsctp.sctpService.name . }}
+      {{- if contains "NodePort" .Values.e2tsctp.sctpService.type }}
+      nodePort: {{ .Values.e2tsctp.sctpService.nodePort }}
+      {{- end }}
+  {{- if .Values.e2tsctp.sctpService.loadBalancerIP }}
+  loadBalancerIP: {{ tpl .Values.e2tsctp.sctpService.loadBalancerIP . }}
+  {{- end }}
+  selector:
+    {{- include "e2t.sctp.selectorLabels" . | nindent 4 }}
+{{- end -}}

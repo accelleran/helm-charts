@@ -1,0 +1,42 @@
+global:
+  config:
+    enabled: true
+    # Documentation: https://accelleran.atlassian.net/wiki/spaces/GS/pages/2298183683/Configuration
+    dus:
+      - name: "du-1"
+        install: |-
+          <type>effnet</type>
+
+          <ssh-connection-details xc:operation="replace">
+            <host>127.0.0.1</host>
+            <username>root</username>
+          </ssh-connection-details>
+
+          <l1 xc:operation="replace">
+            <phluido-l1-config xc:operation="replace">
+              <license-key>XXXX-YYYY-ZZZZ-WWWW</license-key>
+              <bbu-addr>10.10.0.1</bbu-addr>
+            </phluido-l1-config>
+          </l1>
+        rus:
+        - name: "ru-1"
+          install: |-
+            <type>benetel650</type>
+
+            <ssh-connection-details xc:operation="replace">
+              <host>127.0.0.1</host>
+              <username>root</username>
+            </ssh-connection-details>
+            
+            <supported-frequency-band xc:operation="replace">77</supported-frequency-band>
+            <antenna-gain>0</antenna-gain>
+            <maximum-power-capability>37</maximum-power-capability>
+            <minimum-power-capability>10</minimum-power-capability>
+
+            <serial-number>unknown</serial-number>
+            <location xc:operation="replace">
+              <longitude>51213881</longitude>
+              <latitude>4422566</latitude>
+              <altitude>0</altitude>
+              <altitude-ref>msl-geoid</altitude-ref>
+            </location>

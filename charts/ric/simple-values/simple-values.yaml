@@ -1,0 +1,52 @@
+global:
+  kubeIp: "172.31.36.102"
+  enable4G: true
+  enable5G: true
+
+# ONLY IF ACCESS FROM PUBLIC IP IS NEEDED!
+#dash-front-back-end:
+#  config:
+#    grafanaURL: ""
+#    nodeApiURL: ""
+#    apiUrl: ""
+
+acc-5g-infrastructure:
+  metallb:
+    configInline:
+      address-pools:
+        - name: default
+          protocol: layer2
+          addresses:
+            - 10.55.1.20-10.55.1.60
+  jaeger:
+    enabled: false
+
+acc-4g-infrastructure:
+  provisioner-dhcp:
+    enabled: true
+    configuration:
+      interface: eno1
+  provisioner:
+    enabled: true
+  configurator:
+    enabled: true
+    provisioner:
+      enabled: true
+      cells:
+        exampleSerial1: exampleName100
+        exampleSerial2: exampleName200
+  4g-radio-controller:
+    jobs:
+      netconfConfig:
+        enabled: true
+        deleteExistingConfig: false
+
+e2t:
+  enabled: false
+  e2tsctp:
+    enabled: true
+  e2tap:
+    enabled: true
+    numOfE2Nodes: "5"
+  e2smkpm:
+    enabled: true

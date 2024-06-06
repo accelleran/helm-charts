@@ -1,0 +1,39 @@
+{{- $values := index $.Values "cw-inst" -}}
+{{- if ($values.autoscaling).enabled -}}
+
+{{- $instanceId := tpl ($values.bootstrapId) $ -}}
+{{- $natsHost := tpl ($values.nats.url) $ -}}
+{{- $natsPort := tpl ($values.nats.port) $ -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cell-wrapper.instance-scaler.fullname" $ }}
+  labels:
+    {{- include "cell-wrapper.instance-scaler.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    subscribers:
+    - kind: "nats"
+      topic: "{{ $instanceId }}.INSTANCE-SCALER"
+      host: "{{ $natsHost }}"
+      port: {{ $natsPort }}
+
+    instances:
+    - id: "{{ $instanceId }}/cw-inst"
+      kind: "deployment"
+      namespace: "{{ $.Release.Namespace }}"
+      name: "{{ include "cell-wrapper.cw-inst.fullname" . }}"
+      {{- if ne $values.autoscaling.factorReplicas nil }}
+      factor: {{ $values.autoscaling.factorReplicas }}
+      {{- end }}
+      {{- if ne $values.autoscaling.spareReplicas nil }}
+      spare: {{ $values.autoscaling.spareReplicas }}
+      {{- end }}
+      {{- if ne $values.autoscaling.minReplicas nil }}
+      min: {{ $values.autoscaling.minReplicas }}
+      {{- end }}
+      {{- if ne $values.autoscaling.maxReplicas nil }}
+      max: {{ $values.autoscaling.maxReplicas }}
+      {{- end }}
+{{- end -}}

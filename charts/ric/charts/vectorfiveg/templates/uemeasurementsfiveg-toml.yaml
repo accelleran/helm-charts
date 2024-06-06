@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uemeasurementsfiveg-toml
+data:
+  uemeasurementsfiveg.toml: |-
+    [sources.inUeMeas]
+      bootstrap_servers = "{{ tpl .Values.config.kafka.hostname . }}:{{ .Values.config.kafka.port}}"
+      group_id = "VECTOR_5G_UE_MEAS"
+      topics = ["{{ tpl .Values.config.kafka.topic . }}"]
+      type = "kafka"
+
+      [transforms.parseJsonUeMeas]
+      type = "json_parser"
+      inputs = ["inUeMeas"]
+      drop_field = false # optional, default
+      drop_invalid = true
+      field = "message" # optional, default
+    
+    [transforms.filterUeMeas]
+      # General
+      type = "filter"
+      inputs = ["parseJsonUeMeas"]
+      # Condition
+      condition."RrcMeasurementReportResultInfo.exists" = true
+    
+    [transforms.parseUeMeas]
+      inputs = ["filterUeMeas"]
+      type   = "json_parser"
+      field  = "RrcMeasurementReportResultInfo"
+      drop_field = false # optional, default
+      drop_invalid = true
+    
+    [transforms.lua]
+      # General
+      type = "lua" # required
+      inputs = ["parseUeMeas"] # required
+      version = "2" # required
+    
+    # Hooks
+      hooks.process = """
+      function (event, emit)
+        m = {}
+        m.log = {
+          timestamp = os.date("!*t"),
+          nrCellId = "",
+          ueId = "",
+          measurement = {}
+        }
+        if event.log.RrcMeasurementReportResultInfo.CellInfo ~= nil then
+          for f, v in pairs(event.log.RrcMeasurementReportResultInfo.CellInfo) do
+            temp = m
+            temp.log.ueId = event.log.RrcMeasurementReportResultInfo.GnbCuCpUeId
+            temp.log.nrCellId = v.NeighbourCellInfo.NrCgi.NrCellId
+            temp.log.measurement.ssbRsrp = v.NeighbourCellInfo.SsbRsrpResult
+            temp.log.measurement.ssbRsrq = v.NeighbourCellInfo.SsbRsrqResult
+            temp.log.measurement.ssbSinr = v.NeighbourCellInfo.SsbSinrResult
+            emit(temp)
+          end
+        end
+        temp = m
+        nrCellId = event.log.ServingCellInfo.NrCgi.NrCellId
+        temp.log.ueId = event.log.RrcMeasurementReportResultInfo.GnbCuCpUeId
+        temp.log.nrCellId = nrCellId
+        temp.log.measurement.ssbRsrp = event.log.ServingCellInfo.SsbRsrpResult
+        temp.log.measurement.ssbRsrq = event.log.ServingCellInfo.SsbRsrqResult
+        temp.log.measurement.ssbSinr = event.log.ServingCellInfo.SsbSinrResult
+        emit(temp)
+    
+      end
+    
+      """
+
+
+    [sinks.outUeMeas]
+      # General
+      bucket = "vector-bucket"
+      tags = ["nrCellId", "ueId"]
+      database = "{{ .Values.config.influx.database }}"
+      endpoint =  "http://{{ tpl .Values.config.influx.hostname . }}:{{ .Values.config.influx.port}}/"
+      inputs = ["lua"]
+      namespace = "{{ .Values.config.influx.namespace }}"
+      type = "{{ .Values.config.influx.type }}"
+      username = "{{ .Values.config.influx.username }}"
+      password = "{{ .Values.config.influx.password }}"
+
+
+

@@ -1,0 +1,83 @@
+{{- if .Values.config.cleanup }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cleanup-l3
+  labels:
+    {{- include "oran-clustercontrol.labels" . | nindent 4 }}
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      {{ if .Values.config.https }}
+      serviceAccountName: {{ include "oran-clustercontrol.serviceAccountName" . }}
+      {{ end }}
+      restartPolicy: Never
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+          {{ end }}
+          {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+          {{ end }}
+      {{- end }}
+      containers:
+      - name: pre-delete-job
+        image: {{ .Values.jobs.preDelete.image }}
+        command:
+          - sh
+          - "-c"
+          - |
+            /bin/bash <<'EOF'
+
+            #!/bin/bash
+
+            {{ if .Values.config.https }}
+            http="https"
+            port="6443"
+            caLoc="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+            tokenLoc="/var/run/secrets/kubernetes.io/serviceaccount/token"
+            {{ else }}
+            http="http"
+            port="8080"
+            {{ end }}
+
+            namespace="{{ tpl .Values.config.l3Namespace . }}"
+            orcUrl="{{ tpl .Values.config.orchestratorUrl . }}"
+
+            echo "#################################################################Testing preStop script#######################################################3"
+
+            #Delete pods:
+            printf "\nDeleting l3 pods...\n"
+            #printf "\ncurl -XDELETE $http://$orcUrl:$port/api/v1/namespaces/$namespace/pods?labelSelector=app=l3-pod\n"
+            curl -XDELETE $http://$orcUrl:$port/api/v1/namespaces/$namespace/pods?labelSelector=app=l3-pod {{ if .Values.config.https }}--cacert $caLoc -H "Authorization: Bearer $(cat $tokenLoc)"{{ end }}
+
+            #Delete configMaps:
+            printf "\nDeleting l3 configmaps...\n"
+            #printf "\ncurl -XDELETE $http://$orcUrl:$port/api/v1/namespaces/$namespace/configmaps?labelSelector=app=l3-pod\n"
+            curl -XDELETE $http://$orcUrl:$port/api/v1/namespaces/$namespace/configmaps?labelSelector=app=l3-pod {{ if .Values.config.https }}--cacert $caLoc -H "Authorization: Bearer $(cat $tokenLoc)"{{ end }}
+
+            #Delete services:
+            printf "\nGettings a list of l3 services...\n"
+            #printf "\ncurl -XGET $http://$orcUrl:$port/api/v1/namespaces/$namespace/services?labelSelector=app=l3-pod\n"
+            content=$(curl -XGET $http://$orcUrl:$port/api/v1/namespaces/$namespace/services?labelSelector=app=l3-pod{{ if .Values.config.https }} --cacert $caLoc -H "Authorization: Bearer $(cat $tokenLoc)"{{ end }})
+
+            list_of_services=( $(jq '.items[].metadata.name' <<<"$content") )
+
+            printf "\nDeleting l3 services...\n"
+            for i in "${list_of_services[@]}"
+            do
+              #printf "\ncurl -XDELETE $http://$orcUrl:$port/api/v1/namespaces/$namespace/services/${i:1:-1}\n"
+              curl -XDELETE $http://$orcUrl:$port/api/v1/namespaces/$namespace/services/${i:1:-1} {{ if .Values.config.https }}--cacert $caLoc -H "Authorization: Bearer $(cat $tokenLoc)"{{ end }}
+            done
+
+            EOF
+
+         
+{{- end }} 

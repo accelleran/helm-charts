@@ -1,0 +1,120 @@
+# Default values for acc-kafka.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: accelleran/acc-kafka
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "2.7.0"
+
+initImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.4.1"
+
+imagePullSecrets:
+  - name: accelleran-secret
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+env:
+  KAFKA_ADVERTISED_PORT: "31090"
+  KAFKA_ADVERTISED_HOST_NAME: "10.8.0.1"
+  KAFKA_ZOOKEEPER_CONNECT: "{{ .Release.Name }}-zookeeper.{{ .Release.Namespace }}:2181"
+  KAFKA_BROKER_ID: "0"
+  KAFKA_CREATE_TOPICS: "accelleran.drax.4g.ric.raw.network_state:1:1,accelleran.drax.4g.ric.raw.service_discovery:1:1,accelleran.drax.4g.ric.raw.ue_measurements:1:1,accelleran.drax.5g.ric.raw.cu_state:1:1,accelleran.drax.5g.ric.raw.ue_measurements:1:1,accelleran.drax.5g.ric.raw.pm_counters:1:1,accelleran.drax.5g.ric.raw.messages:1:1"
+  KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+  JMX_PORT: "9010"
+
+
+jmxExporter:
+  securityContext: {}
+  image:
+    repository: sscaling/jmx-prometheus-exporter
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "0.12.0"
+  service:
+    name: "jmxexporter"
+    port: 5556
+    protocol: "TCP"
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  enabled: true
+  type: NodePort
+  port: 9092
+  name: kafka
+  protocol: TCP
+  nodePort: 31090
+#  loadBalancerIP:
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths: []
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+draxNodeSelectorEnabled: "false"
+
+draxNodeSelector:
+  draxName: "main"
+
+tolerations: []
+
+affinity: {}
+
+zookeeper:
+  enabled: true

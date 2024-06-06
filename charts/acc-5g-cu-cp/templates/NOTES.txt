@@ -1,0 +1,29 @@
+#############################################################################
+
+Accelleran CU-CP {{ .Chart.Version }} using {{ .Values.global.tag }}
+
+Deployed Accelleran CU-CP component [{{- include "acc-common.drax.instanceId.withLengthCheck" . }}] with the following details:
+
+Tag: {{ tpl .Values.global.tag . }}
+
+Instance ID: {{- include "acc-common.drax.instanceId.withFormatCheck" . }}
+
+Supported number of components:
+AMFs: {{ .Values.global.numOfAmfs }}
+CU-UPs: {{ .Values.global.numOfCuUps }}
+DUs: {{ .Values.global.numOfDus }}
+CELLs: {{ .Values.global.numOfCells }}
+UEs: {{ .Values.global.numOfUes }}
+
+Redis Configuration: {{ tpl .Values.global.redisHostname . }}:{{ tpl .Values.global.redisPort . }}
+
+Nats Configuration: {{ tpl .Values.global.natsUrl . }}:{{ tpl .Values.global.natsPort . }}
+
+Discover the IPs given to the services using the following command and its EXTERNAL-IP column:
+kubectl get service
+
+{{ if eq (tpl .Values.global.draxNodeSelectorEnabled .) "true" }}
+The CU-CP component is installed on the Kubernetes node with the following dRAX Node Selector Name: {{ tpl .Values.global.draxName . }}
+{{ end }}
+
+#############################################################################
