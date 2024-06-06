@@ -1,0 +1,159 @@
+# Default values for kafka-minion.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: quay.io/google-cloud-tools/kafka-minion
+  tag: v1.0.2
+  pullPolicy: IfNotPresent
+
+initImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.6.0"
+
+initConfig:
+  kafkaUrl: "ric-acc-kafka:9092"
+  kafkaTopicsCheck: "accelleran.drax.4g.ric.raw.messages,accelleran.drax.4g.ric.raw.service_discovery,accelleran.drax.4g.ric.raw.ue_measurements,accelleran.drax.5g.ric.raw.cu_state,accelleran.drax.5g.ric.raw.ue_measurements,accelleran.drax.5g.ric.raw.pm_counters,accelleran.drax.5g.ric.raw.messages"
+  securityContext:
+    runAsUser: 0
+
+nameOverride: ""
+fullnameOverride: ""
+componentOverride: "kafkaMonitoring"
+componentPartOfOverride: "kafkaMonitoring"
+
+service:
+  type: ClusterIP
+  port: 8080
+  labels: {}
+  annotations: {}
+
+ingress:
+  enabled: false
+  labels: {}
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  paths: []
+  hosts:
+    - chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+podSecurityContext:
+  runAsUser: 99
+  fsGroup: 99
+
+containerSecurityContext: {}
+
+telemetry:
+  host: 0.0.0.0
+  port: 8080
+
+logLevel: info
+
+readinessProbe:
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 60 # 60 * 10s equals 10min
+  periodSeconds: 10
+
+livenessProbe:
+  initialDelaySeconds: 0
+  timeoutSeconds: 5
+  failureThreshold: 3
+  periodSeconds: 10
+
+exporter:
+  ignoreSystemTopics: true
+  metricsPrefix: kafka_minion
+
+kafka:
+  brokers: ric-acc-kafka:9092
+  consumerOffsetsTopic: __consumer_offsets
+  sasl:
+    enabled: false
+    useHandshake: true
+    mechanism: ""
+    credentials: {}
+      # You can either create the secret yourself or let the helm chart create one for you.
+      # If you create the secret yourself, specify the secret name under existingSecret.
+      # Make sure they key names of your secret comply with those used in this chart
+      #
+      # existingSecret: secretname
+      # username: admin
+      # password: securePass123
+  tls:
+    enabled: false
+    insecureSkipTlsVerify: true
+    certificates: {}
+      # You can either create the secret yourself or let the helm chart create one for you.
+      # If you create the secret yourself, specify the secret name under existingSecret.
+      # Make sure they key names of your secret comply with those used in this chart
+      #
+      # existingSecret: secretname
+      # ca: |-
+      #   -----BEGIN CERTIFICATE-----
+      #   ...
+      #   -----END CERTIFICATE-----
+      # cert:
+      # key:
+      # passphrase:
+
+# Create ServiceMonitor custom resource required for Prometheus Operator to scrape the service
+serviceMonitor:
+  create: false
+  interval: 10s
+  scrapeTimeout: 10s
+  # By default, Prometheus Operator uses its own Release label as the selector for ServiceMonitors.
+  # Update this to match the release name of your Prometheus Operator installation if
+  # you aren't using custom match labels on your Prometheus definition.
+  releaseLabel: prometheus-operator
+  # Additional labels to add to the ServiceMonitor in case Prometheus Operator is configured with
+  # different matchLabels configuration, to make sure it matches this ServiceMonitor.
+  # If this is defined, the release label of the service monitor will match kube-eagle's one
+  # additionalLabels:
+
+# Do not create a service account by default
+# Name allows using a service account not handled by the chart
+serviceAccount:
+  create: false
+  imagePullSecrets: []
+  name: default
+
+# Creates a PodSecurityPolicy and the role/rolebinding
+# allowing the serviceaccount to use it
+podSecurityPolicy:
+  enabled: false
+
+podsLabels: {}
+podsAnnotations: {}
+deploymentLabels: {}
+
+draxNodeSelectorEnabled: "false"
+
+draxNodeSelector:
+  draxName: "main"

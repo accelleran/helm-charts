@@ -1,0 +1,15 @@
+apiVersion: v2
+appVersion: 0.12.4
+dependencies:
+- condition: xapp-redis.enabled
+  name: xapp-redis
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.2.0
+- condition: xapp-api.enabled
+  name: xapp-api
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.6.0
+description: A Helm chart for Kubernetes
+name: acc-state-db
+type: application
+version: 0.14.5

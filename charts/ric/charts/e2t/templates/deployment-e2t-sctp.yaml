@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "e2t.fullname" . }}-sctp
+  labels:
+    {{- include "e2t.sctp.labels"  . | nindent 4 }}
+spec:
+  replicas: {{ .Values.e2tsctp.replicaCount }}
+  selector:
+    matchLabels:
+       {{- include "e2t.sctp.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.e2tsctp.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "e2t.sctp.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.e2tsctp.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "e2t.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.e2tsctp.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.e2tsctp.securityContext | nindent 12 }}
+          image: "{{ .Values.e2tsctp.image.repository }}:{{ tpl .Values.e2tsctp.image.tag . | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.e2tsctp.image.pullPolicy }}
+          command:
+            - sh
+            - "-c"
+            - |
+              /bin/sh <<'EOF'
+              {{ .Values.e2tsctp.cmd }} {{- if .Values.e2tsctp.args }}{{ range .Values.e2tsctp.args }} {{ .name }} {{ .value }}{{ end }}{{- end }}
+              EOF
+          env: 
+            - name: NATS_SERVICE_URL
+              value: nats://{{ tpl .Values.natsHostname . }}:{{ tpl .Values.natsPort . }}
+            - name: BOOTSTRAP_FILENAME
+              value: {{ .Values.e2tsctp.bootstrapFile }}
+            - name: JAEGER_AGENT_HOST
+              value: {{ tpl .Values.jaegerAgentHost . }}
+            - name: __APPNAME
+              value: sctpE2ap
+            {{- if .Values.e2tsctp.extraEnvs }}
+            {{ toYaml .Values.e2tsctp.extraEnvs | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: {{ tpl .Values.e2tsctp.sctpService.name . }}
+              containerPort: {{ .Values.e2tsctp.sctpService.port}}
+              protocol: {{ .Values.e2tsctp.sctpService.protocol }}
+          volumeMounts:
+            - name: {{ include "e2t.fullname" . }}-bootstrap
+              mountPath: {{ .Values.e2tsctp.bootstrapFile }}
+              subPath: "bootstrap.txt"
+          resources:
+            {{- toYaml .Values.e2tsctp.resources | nindent 12 }}
+          lifecycle:
+            preStop:
+              exec:
+                command: [ '/bin/sh', '-c', 'pkill -15 -e {{ .Values.e2tsctp.cmd | trimPrefix "./" | trimSuffix ".exe" | trunc 15  }}' ]
+      {{- if or (.Values.e2tsctp.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.e2tsctp.nodeSelector }}
+          {{- toYaml .Values.e2tsctp.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+      {{- with .Values.e2tsctp.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.e2tsctp.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "e2t.fullname" . }}-bootstrap
+          configMap:
+            name: {{ include "e2t.fullname" . }}-bootstrap

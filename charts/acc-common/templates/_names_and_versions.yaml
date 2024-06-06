@@ -1,0 +1,105 @@
+{{/* vim: set filetype=mustache syntax=helm: */}}
+
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "acc-common.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Unique name for this instance of the chart
+*/}}
+{{- define "acc-common.instance" -}}
+{{- .Release.Name -}}
+{{- end -}}
+
+{{/*
+Version of application to be deployed
+*/}}
+{{- define "acc-common.version" -}}
+{{- tpl $.Values.image.tag $ | default $.Chart.AppVersion -}}
+{{- end -}}
+
+{{/*
+Version of the Helm chart
+*/}}
+{{- define "acc-common.helmVersion" -}}
+{{- .Chart.Version -}}
+{{- end -}}
+
+{{/*
+The name of a higher level application this one is part of. This is only relevant to subcharts, and should be the name of the top level chart.
+*/}}
+{{- define "acc-common.topChart.name" -}}
+{{- if ((.Values.global).topChart).name -}}
+{{- .Values.global.topChart.name -}}
+{{- end -}}
+{{- end -}} 
+
+{{/*
+The version of the umbrella chart this is part of. This is only relevant to subcharts, and should be the version of the top level chart.
+*/}}
+{{- define "acc-common.topChart.helmVersion" -}}
+{{- if ((.Values.global).topChart).helmVersion -}}
+{{- .Values.global.topChart.helmVersion -}}
+{{- end -}} 
+{{- end -}} 
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+
+We consciously differ here from the standard Helm helper template.
+
+The standard template usually uses the release name as the full name, if it contains the chart name.
+We have chosen not to do that as it has caused issues for us in the past, when subchart names are contained
+within the release name.
+
+If the standard behaviour is really desired, an additional template is provided as acc-common.fullname.dedup
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "acc-common.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "acc-common.fullname.dedup" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create chart name and version as used by the chart label.
+*/}}
+{{- define "acc-common.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
+Create the name of the service account to use
+*/}}
+{{- define "acc-common.serviceAccountName" -}}
+{{- if .Values.serviceAccount.create -}}
+    {{ default (include "acc-common.fullname" .) .Values.serviceAccount.name }}
+{{- else -}}
+    {{ default "default" .Values.serviceAccount.name }}
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vector.fullname" . }}
+  labels:
+    {{- include "vector.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "vector.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "vector.labels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "vector.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: {{ .Chart.Name }}-check-kafka
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'echo "KAFKA_URL=\"{{ tpl .Values.initConfig.kafkaUrl . }}\"" > kafka_url.py && python3 kafka-test.py {{ tpl .Values.initConfig.kafkaTopicsCheck . }}']
+        - name: check-influxdb
+          image: gcr.io/kubernetes-e2e-test-images/dnsutils:1.3
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'until nc -z -v -w1 {{ tpl .Values.initConfig.influxdbService . }}; do echo $(date) [CHECK-SERVICES] Waiting for InfluxDB at {{ tpl .Values.initConfig.influxdbService . }}; sleep 2; done']
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ tpl .Values.version . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["vector","-c","l2stats.toml","-c","cqi.toml","-c","uemeasurements.toml"]
+          volumeMounts:
+            - name: cqi-toml
+              mountPath: /influx/cqi.toml
+              subPath: cqi.toml
+            - name: l2stats-toml
+              mountPath: /influx/l2stats.toml
+              subPath: l2stats.toml
+            - name: uemeasurements-toml
+              mountPath: /influx/uemeasurements.toml
+              subPath: uemeasurements.toml
+          {{ if .Values.service.enabled }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          {{ end }}
+              #livenessProbe:
+              # httpGet:
+              #path: /
+              #port: http
+              #readinessProbe:
+              #httpGet:
+              #path: /
+              #port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: cqi-toml
+          configMap:
+            name: cqi-toml
+        - name: l2stats-toml
+          configMap:
+            name: l2stats-toml
+        - name: uemeasurements-toml
+          configMap:
+            name: uemeasurements-toml

@@ -1,0 +1,51 @@
+{{/* vim: set filetype=mustache syntax=helm: */}}
+
+{{/*
+The Radio Access Technology provided by this component
+*/}}
+{{- define "acc-common.drax.technology" -}}
+{{- if (.Values.drax).technology -}}
+{{- tpl .Values.drax.technology . -}}
+{{- end -}} 
+{{- end -}} 
+
+{{/*
+The Role this component serves in the overall application
+*/}}
+{{- define "acc-common.drax.role" -}}
+{{- if (.Values.drax).role -}}
+{{- tpl .Values.drax.role . -}}
+{{- end -}} 
+{{- end -}} 
+
+{{/*
+Instance ID
+*/}}
+{{- define "acc-common.drax.instanceId" -}}
+{{- $instanceId := (.Values.drax).instanceId | default .Values.bootstrapId | default .Values.global.instanceId -}}
+{{- tpl $instanceId . -}}
+{{- end -}}
+
+{{/*
+Instance ID, first checking that the format is valid
+*/}}
+{{- define "acc-common.drax.instanceId.withFormatCheck" -}}
+{{- $instanceId := include "acc-common.drax.instanceId" . }}
+{{- if mustRegexMatch "^[a-z]([a-z0-9-]*[a-z0-9])?$" $instanceId }}
+{{- required "A valid netconf service entry required!" $instanceId | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- required "The Instance ID you have chosen is invalid! The Instance ID must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for validation is '^[a-z]([a-z0-9-]*[a-z0-9])?$'). The Instance ID also cannot be longer than 16 alphanumeric characters!" nil }}
+{{- end }}
+{{- end }}
+
+{{/*
+Instance ID, first checking that the length is valid
+*/}}
+{{- define "acc-common.drax.instanceId.withLengthCheck" -}}
+{{- $instanceId := include "acc-common.drax.instanceId" . }}
+{{- if mustRegexMatch "^[a-z0-9-]{1,16}$" $instanceId }}
+{{- required "Length of Instance ID is OK!" $instanceId | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- required "The Instance ID you have chosen is invalid! The Instance ID cannot be longer than 16 alphanumeric characters!" nil }}
+{{- end }}
+{{- end }}

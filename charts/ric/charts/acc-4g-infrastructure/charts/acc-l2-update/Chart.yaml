@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: master-candidate_3af3df12
+description: A server containing the Layer 2 update file
+name: acc-l2-update
+type: application
+version: 3.1.0

@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nginx.fullname" . }}
+  labels:
+    {{- include "nginx.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "nginx.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "nginx.labels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "nginx.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ tpl .Values.version . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+            - name: prov-nginx-conf
+              mountPath: /etc/nginx/conf.d/
+              subPath: ""
+#            - mountPath: /etc/nginx/certs/
+#              name: provisioner-conf
+#              subPath: nginx-s-certs/
+#            - mountPath: /etc/nginx/client-certs/
+#              name: provisioner-conf
+#              subPath: nginx-c-certs/
+            - name: prov-server-key
+              mountPath: /etc/nginx/certs/server.key
+              subPath: "server.key"
+            - name: prov-server-crt
+              mountPath: /etc/nginx/certs/server.crt
+              subPath: "server.crt"
+            - name: prov-client-crt
+              mountPath: /etc/nginx/client-certs/client.crt
+              subPath: "client.crt"
+          ports:
+            - name: {{ .Values.service.name }}
+              containerPort: {{ .Values.service.port }}
+              protocol: {{ .Values.service.protocol }}
+          #livenessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: {{ .Values.service.port }}
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: {{ .Values.service.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: provisioner-conf
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "nginx.fullname" . }}{{- end }}
+          {{- end }}
+        - name: prov-nginx-conf
+          configMap: 
+            name: prov-nginx-conf
+        - name: prov-server-key
+          configMap:
+            name: {{ .Values.config.serverKeyName }}
+        - name: prov-server-crt
+          configMap:
+            name: {{ .Values.config.serverCrtName }}
+        - name: prov-client-crt
+          configMap:
+            name: {{ .Values.config.clientCrtName }}

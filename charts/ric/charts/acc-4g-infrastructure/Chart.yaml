@@ -1,0 +1,39 @@
+apiVersion: v2
+appVersion: 5.1.0
+dependencies:
+- condition: nats.enabled
+  name: nats
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.8.4
+- condition: redis.enabled
+  name: redis
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.7.0
+- condition: provisioner-dhcp.enabled
+  name: provisioner-dhcp
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.2.0
+- condition: provisioner.enabled
+  name: provisioner
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.11.2
+- condition: ntp-server.enabled
+  name: ntp-server
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.2.0
+- condition: configurator.enabled
+  name: configurator
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.3.0
+- condition: 4g-radio-controller.enabled
+  name: 4g-radio-controller
+  repository: https://accelleran.github.io/helm-charts/
+  version: 3.1.0
+- condition: acc-l2-update.enabled
+  name: acc-l2-update
+  repository: https://accelleran.github.io/helm-charts/
+  version: 3.1.0
+description: Accelleran dRAX 4G Infrastructure
+name: acc-4g-infrastructure
+type: application
+version: 5.1.0

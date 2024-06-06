@@ -1,0 +1,27 @@
+dependencies:
+- name: nats
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.1.1
+- name: redis
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.5.1
+- name: provisioner-dhcp
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.1.4
+- name: provisioner
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.8.1
+- name: ntp-server
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.1.1
+- name: configurator
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.2.1
+- name: 4g-radio-controller
+  repository: https://accelleran.github.io/helm-charts/
+  version: 1.0.1
+- name: acc-l2-update
+  repository: https://accelleran.github.io/helm-charts/
+  version: 1.0.1
+digest: sha256:bbd861fea15eb442f43c4497ce286a3ea578a42c1c49ba869c7c841c4cf92d15
+generated: "2020-09-07T14:44:19.765835637Z"

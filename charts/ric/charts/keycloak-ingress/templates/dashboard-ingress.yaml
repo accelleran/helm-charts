@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: {{ printf "http://%s-oauth2-proxy.%s.svc.cluster.local/oauth2/auth" (.Release.Name) (.Values.namespace) | quote }}
+    nginx.ingress.kubernetes.io/auth-signin: "http://$http_host/oauth2/start?rd=$escaped_request_uri"
+
+  name: dashboard-ingress
+  labels:
+    {{- include "keycloak-ingress.labels" . | nindent 4 }}
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ric-dash-front-back-end
+                port:
+                  number: 5000

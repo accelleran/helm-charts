@@ -1,0 +1,48 @@
+affinity: {}
+containerSecurityContext: {}
+image:
+  pullPolicy: IfNotPresent
+  repository: accelleran/acc-kube-eagle
+  tag: 1.1.4-acc
+imagePullSecrets:
+  - name: accelleran-secret
+ingress:
+  annotations: {}
+  enabled: false
+  hosts:
+  - chart-example.local
+  path: /
+  tls: []
+livenessProbe:
+  timeoutSeconds: 5
+logLevel: info
+metricsNamespace: eagle
+nodeSelector: {}
+draxNodeSelectorEnabled: "false"
+draxNodeSelector:
+  draxName: "main"
+podAnnotations: {}
+podSecurityContext:
+  fsGroup: 99
+  runAsUser: 99
+priorityClassName: ""
+rbac:
+  create: true
+readinessProbe:
+  timeoutSeconds: 5
+replicaCount: 1
+resources: {}
+service:
+  port: 8080
+  type: ClusterIP
+serviceAccountName: sa-kube-eagle
+serviceMonitor:
+  additionalLabels: null
+  create: false
+  interval: 10s
+  releaseLabel: prometheus-operator
+  scrapeTimeout: 10s
+telemetry:
+  host: 0.0.0.0
+  port: 8080
+tolerations: []

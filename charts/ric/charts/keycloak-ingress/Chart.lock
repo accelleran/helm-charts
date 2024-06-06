@@ -1,0 +1,12 @@
+dependencies:
+- name: keycloak
+  repository: https://codecentric.github.io/helm-charts
+  version: 16.0.4
+- name: oauth2-proxy
+  repository: https://oauth2-proxy.github.io/manifests/
+  version: 5.0.6
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.0.16
+digest: sha256:b32be45dec8b8ab4da5bb3105816500ce1519406a999e0eb9332849e5d13e754
+generated: "2022-04-20T18:05:11.538975723+02:00"

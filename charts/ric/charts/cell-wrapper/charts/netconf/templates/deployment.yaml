@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "acc-common.fullname" . }}
+  labels:
+    {{- include "acc-common.labels.5g" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "acc-common.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "acc-common.labels.5g" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "acc-common.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: {{ .Chart.Name }}-check-redis
+          image: "{{ .Values.initImage.repository }}:{{ tpl .Values.initImage.tag . }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              until [ "$(redis-cli -h {{ tpl .Values.redisConfig.hostname . }} -p {{ tpl .Values.redisConfig.port . }} ping)" == "PONG" ]; do sleep 1; done;
+              echo "$(date) Redis ready"
+        - name: {{ .Chart.Name }}-check-nats
+          image: "{{ .Values.initImage.repository }}:{{ .Values.initImage.tag }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          command: ['sh', '-c', 'until nc -z -v -w1 {{ tpl .Values.nats.url . }}:{{ tpl .Values.nats.port . }}; do sleep 1; done; echo "$(date) NATS ready"']
+        - name: {{ .Chart.Name }}-get-configs
+          image: "{{ .Values.initImage.repository }}:{{ tpl .Values.initImage.tag . }}"
+          imagePullPolicy: {{ .Values.initImage.pullPolicy }}
+          volumeMounts:
+            - name: init-volume
+              mountPath: /init-configs/
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              {{- if .Values.initGetConfig }}
+              {{- range .Values.initGetConfig }}
+              value=$(kubectl get {{ .resourceType }} {{ tpl .resourceName $ }} -n {{ tpl .resourceNamespace $ }} -o json | jq "{{ .field }}")
+              echo "{{ .envName }}=$value" >> /init-configs/env.env
+              {{- end }}
+              {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ tpl .Values.image.tag . | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              {{- if .Values.initGetConfig }}
+              export $(xargs < /init-configs/env.env)
+              {{- if .Values.testing }}
+              echo {{ .Values.testing.value }} > /init-configs/test.txt
+              {{- end }}
+              {{- end }}
+              {{ .Values.cmd }} {{- if .Values.args }}{{ range .Values.args }} {{ .name }} {{ tpl .value $ }}{{ end }}{{- end }}
+          env: 
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: BOOTSTRAP_INSTANCE_ID 
+              value: {{ tpl .Values.bootstrapId . }}
+            - name: BOOTSTRAP_FILENAME
+              value: {{ .Values.bootstrapFile }}
+            - name: NATS_SERVICE_URL
+              value: "nats://{{ tpl .Values.nats.url . }}:{{ tpl .Values.nats.port . }}"
+            - name: NETCONF_LISTEN_PORT
+              value: "{{ .Values.netconfService.port }}"
+            {{- if .Values.extraEnvs }}
+            {{ toYaml .Values.extraEnvs | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: {{ .Values.netconfService.name }}
+              containerPort: {{ .Values.netconfService.port }}
+              protocol: {{ .Values.netconfService.protocol }}
+#          livenessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+#          readinessProbe:
+#            httpGet:
+#              path: /
+#              port: http
+          volumeMounts:
+            - name: {{ include "acc-common.fullname" . }}-bootstrap
+              mountPath: {{ .Values.bootstrapFile }}
+              subPath: "bootstrap.txt"
+            - name: init-volume
+              mountPath: /init-configs/
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: init-volume
+          emptyDir: {}
+        - name: {{ include "acc-common.fullname" . }}-bootstrap
+          configMap:
+            name: {{ include "acc-common.fullname" . }}-bootstrap
+            defaultMode: 0777
+        - name: {{ include "acc-common.fullname" . }}-rpcs
+          configMap:
+            name: {{ include "acc-common.fullname" . }}-rpcs
+            defaultMode: 0777

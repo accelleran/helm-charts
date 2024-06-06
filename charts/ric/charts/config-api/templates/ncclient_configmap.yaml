@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "config-api.fullname" . }}-config
+  labels:
+    {{- include "config-api.labels" . | nindent 4 }}
+data:
+  config_api.env: |
+    DEFAULT_SERVICE_NAMESPACE_5G = "{{ tpl .Values.config.default_service_namespace_5g . }}"
+    DEFAULT_ORAN_NAMESPACE_4G = "{{ tpl .Values.config.default_oran_namespace_4g . }}"
+    SERVICE_MONITOR_HOST = "{{ tpl .Values.config.service_monitor_host . }}"
+    SERVICE_MONITOR_PORT = "{{ tpl .Values.config.service_monitor_port . }}"
+

@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: CW2.3.2
+description: Accelleran Cell Wrapper Instance
+name: cw-inst
+type: application
+version: 2.3.2

@@ -1,0 +1,15 @@
+apiVersion: v2
+dependencies:
+- name: keycloak
+  repository: https://codecentric.github.io/helm-charts
+  version: 16.0.4
+- name: oauth2-proxy
+  repository: https://oauth2-proxy.github.io/manifests/
+  version: 5.0.6
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.0.16
+description: A Helm chart for Kubernetes
+name: keycloak-ingress
+type: application
+version: 0.1.0

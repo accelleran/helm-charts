@@ -1,0 +1,184 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "oran-clustercontrol.fullname" . }}
+  labels:
+    {{- include "oran-clustercontrol.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "oran-clustercontrol.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "oran-clustercontrol.labels" . | nindent 8 }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      {{- if .Values.config.https }}
+      serviceAccountName: {{ include "oran-clustercontrol.serviceAccountName" . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{ if or (.Values.jobs.checkRedis.enabled) }}
+      initContainers:
+        {{ if .Values.jobs.checkRedis.enabled }}
+        - name: {{ .Chart.Name }}-check-redis
+          image: "{{ .Values.jobs.checkRedis.repository }}:{{ .Values.jobs.checkRedis.tag }}"
+          imagePullPolicy: {{ .Values.jobs.checkRedis.pullPolicy }}
+          command: ['sh', '-c', 'until [ "$(redis-cli -h {{ tpl .Values.config.redis.hostname . }} -p {{ .Values.config.redis.port }} ping)" == "PONG" ]; do echo $(date) [CHECK-SERVICES] Waiting for dRAX-4G REDIS; sleep 2; done; echo Redis online']
+        {{ end }}
+      {{ end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+          image: "{{ .Values.image.repository }}-license:{{ tpl .Values.version . }}"
+          {{ else }}
+          image: "{{ .Values.image.repository }}:{{ tpl .Values.version . }}"
+          {{ end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: SERVED_NAMESPACE
+              value: "{{ tpl .Values.config.l3Namespace . }}"
+#          command: ["sudo"]
+#          args: ["/data/oran/ocstart"]
+          ports:
+            - name: {{ .Values.service.name }}
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          volumeMounts:
+            {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+            - mountPath: "/etc/license/license.crt"
+              subPath: "license.crt"
+              name: accelleran-license
+              readOnly: true
+            {{ end }}
+#            - name: acc-oran
+#              mountPath: /data
+            - name: bootstrap-config
+              mountPath: /data/oc.bootstrap
+              subPath: "oc.bootstrap"
+            - name: conf-l3-create
+              mountPath: /data/l3-create.yaml
+              subPath: "l3-create.yaml"
+            - name: conf-zlog
+              mountPath: /data/zlog.conf
+              subPath: "zlog.conf" 
+            - name: conf-l3-create-url
+              mountPath: /data/l3-create_url
+              subPath: "l3-create_url"
+            - name: conf-l3-del-all-url
+              mountPath: /data/l3-delete-all_url
+              subPath: "l3-delete-all_url"
+            - name: conf-l3-del-url
+              mountPath: /data/l3-delete_url
+              subPath: "l3-delete_url"
+            - name: conf-l3-ns-create-url
+              mountPath: /data/l3-namespace-create_url
+              subPath: "l3-namespace-create_url"
+            - name: conf-l3-ns-create
+              mountPath: /data/l3-namespace-create.yaml
+              subPath: "l3-namespace-create.yaml"
+            - name: conf-l3-ns-del-url
+              mountPath: /data/l3-namespace-delete_url
+              subPath: "l3-namespace-delete_url"
+            - name: conf-l3-service-create-url
+              mountPath: /data/l3-service-create_url
+              subPath: "l3-service-create_url"
+            - name: conf-l3-service-create
+              mountPath: /data/l3-service-create.yaml
+              subPath: "l3-service-create.yaml"
+            - name: conf-l3-service-create-int-url
+              mountPath: /data/l3-service-create-internal_url
+              subPath: "l3-service-create-internal_url"
+            - name: conf-l3-service-create-int
+              mountPath: /data/l3-service-create-internal.yaml
+              subPath: "l3-service-create-internal.yaml"
+            - name: conf-l3-service-del-url
+              mountPath: /data/l3-service-delete_url
+              subPath: "l3-service-delete_url"
+          #livenessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: {{ .Values.service.port }}
+          #readinessProbe:
+          #  httpGet:
+          #    path: /
+          #    port: {{ .Values.service.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if or (.Values.nodeSelector) (eq (tpl .Values.draxNodeSelectorEnabled .) "true") }}
+      nodeSelector:
+        {{ if .Values.nodeSelector }}
+          {{- toYaml .Values.nodeSelector | nindent 8 }}
+        {{ end }}
+        {{ if eq (tpl .Values.draxNodeSelectorEnabled .) "true" }}
+          {{- tpl (toYaml .Values.draxNodeSelector) $ | nindent 8 }}
+        {{ end }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        {{ if eq (tpl .Values.accelleranLicense.enabled .) "true" }}
+        - name: accelleran-license
+          secret:
+            secretName: {{ tpl .Values.accelleranLicense.licenseSecretName . }}
+        {{ end }}
+#        - name: acc-oran
+#          {{- if .Values.persistence.enabled }}
+#          persistentVolumeClaim:
+#            claimName: {{ if .Values.persistence.existingClaim }}{{ .Values.persistence.existingClaim }}{{- else }}{{ include "oran-clustercontrol.fullname" . }}{{- end }}
+#          {{- end }}
+        - name: bootstrap-config
+          configMap:
+            name: bootstrap-config
+        - name: conf-l3-create
+          configMap:
+            name: conf-l3-create
+        - name: conf-zlog
+          configMap:
+            name: conf-zlog
+        - name: conf-l3-create-url
+          configMap:
+            name: conf-l3-create-url
+        - name: conf-l3-del-all-url
+          configMap:
+            name: conf-l3-del-all-url
+        - name: conf-l3-del-url
+          configMap:
+            name: conf-l3-del-url
+        - name: conf-l3-ns-create-url
+          configMap:
+            name: conf-l3-ns-create-url
+        - name: conf-l3-ns-create
+          configMap:
+            name: conf-l3-ns-create
+        - name: conf-l3-ns-del-url
+          configMap:
+            name: conf-l3-ns-del-url
+        - name: conf-l3-service-create-url
+          configMap:
+            name: conf-l3-service-create-url
+        - name: conf-l3-service-create
+          configMap:
+            name: conf-l3-service-create
+        - name: conf-l3-service-create-int-url
+          configMap:
+            name: conf-l3-service-create-int-url
+        - name: conf-l3-service-create-int
+          configMap:
+            name: conf-l3-service-create-int
+        - name: conf-l3-service-del-url
+          configMap:
+            name: conf-l3-service-del-url

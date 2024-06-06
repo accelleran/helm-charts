@@ -1,0 +1,271 @@
+global:
+  # Kubernetes advertise IP
+  #   Description:  Supply the Kubernetes Advertise address of your Kubernetes cluster.
+  #                 This is used by some services that are exposed via a nodePort.
+  #
+  #   Value type:   string
+  #
+  kubeIp: "10.20.20.20"
+
+  # dRAX Specific Node Selector
+  #   Description: This is a special nodeSelector field implemented for the
+  #                Accelleran dRAX Helm charts. You need to first label your
+  #                node in Kubernetes with a label "draxName" and give it a
+  #                <value>. For example for node <node_name>, you can use the
+  #                following command to label it:
+  #                kubectl label node <node_name> draxName=<value>.
+  #                You can then enabled this feature by setting
+  #                "draxNodeSelectorEnabled" to "true" (as a string with quotes!).
+  #                The in "draxName" set the value of the label you chose for
+  #                the node. This will in effect install all the dRAX Applications
+  #                on that node, without the need to edit all individual helm
+  #                charts. In case you want to add other nodeSelector options,
+  #                you have to add them to the helm chart specific values files.
+  #
+  #   Value type: string
+  #
+  draxNodeSelectorEnabled: "false"
+  draxName: "main"
+
+  # Accelleran License
+  #   Description:  In order to use the Accelleran products, you need to have a license from Accelleran.
+  #                 Please contact Accelleran to get the license.
+  #                 The license file should be saved as a Kubernetes secret. The name of the secret should be
+  #                 supplied here under the "licenseSecretName" field.
+  #                 To create the secret you can use the following command:
+  #                 kubectl create secret generic accelleran-license --from-file=license.crt
+  #
+  # Value type:     enabled: string
+  #                 licenseSecretName: string
+  #
+  accelleranLicense:
+    enabled: "true"
+    licenseSecretName: "accelleran-license"
+
+nats:
+  # To enable/disable the installation of NATS
+  enabled: true
+
+  commonLabels:
+    drax/technology: 4g
+
+  service:
+    serviceName: "nats-service"
+    type: NodePort
+    client:
+      nodePort: 31000
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+redis:
+  # To enable or disable the installation of redis
+  enabled: true
+
+  customLabels:
+    drax/technology: 4g
+
+  # The External IP of where NATS is installed
+  natsIp: "{{ .Values.global.kubeIp }}"
+
+  # The port NATS is using, check in the above settings of NATS
+  natsPort: 31000
+
+  # Backup the redis db when the pod is terminated
+  backup:
+    # Enabled or disable this feature
+    enabled: true
+
+    # Choose after how many days should the backed up DBs be deleted
+    deleteAfterDay: 7
+
+  service:
+    nodePort: 32000
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+provisioner-dhcp:
+  # To enable/disable the installation of the dRAX Provisioner DHCP
+  enabled: true
+
+  # The configuration file for the dRAX Provisioner DHCP
+  # interface: The interface used by the Kubernetes cluster
+  # provisionerIp: The IP of the Kubernetes cluster
+  # provisionerPort: The port of the Provisioner, see the provisioner setting in this file to check which port is used
+  # staticRoute: If you install provisioner-dhcp and the cells are on a seperate network than the privisioner, set this to true
+  # staticRouteNetwork: Set the network where the provisioner is, example 10.20.20.0/24
+  # staticRouteGateway: Set the gateway to be used by the cells to reach the provisioner 10.22.10.52
+  configuration:
+    interface: eno1
+    provisionerIp: "{{ .Values.global.kubeIp }}"
+    provisionerPort: 31610
+    # If you enable staticRoute, then provide the network and gateway values
+    staticRoute: false
+    staticRouteNetwork: 10.20.20.0/24
+    staticRouteGateway: 10.22.10.52
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+provisioner:
+  # To enable/disable the installation of the dRAX Provisioner DHCP
+  enabled: true
+
+  accelleranLicense:
+    enabled: "{{ .Values.global.accelleranLicense.enabled }}"
+    licenseSecretName: "{{ .Values.global.accelleranLicense.licenseSecretName }}"
+
+  strategyType: Recreate
+
+  # The service port used by the privisioner
+  service:
+    port: 16002
+
+  # Log level of the provisioner
+  logLevel: "debug"
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+  # The nginx configuration
+  nginx:
+    # Names of the pre-made configMaps for the keys and crts
+    config:
+      serverKeyName: prov-server-key
+      serverCrtName: prov-server-crt
+      clientKeyName: prov-client-key
+      clientCrtName: prov-client-crt
+      caCrtName: prov-ca-crt
+
+    # Exposed external port of the provisioner
+    service:
+      port: 16010
+      nodePort: 31610
+
+    # AUTOGENERATED DONT EDIT
+    provisionerUrl: "{{ .Release.Name }}-provisioner.{{ .Release.Namespace }}"
+
+    #The Port should be the same as the one in provisioner.service.port, deafult is 16002
+    provisionerPort: 16002
+
+    draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+    draxNodeSelector:
+      draxName: "{{ .Values.global.draxName }}"
+
+ntp-server:
+  # To enable/disable the installation of the dRAX NTP Server for cells
+  enabled: true
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+configurator:
+  # To enabled or disable the installation of the dRAX Configurator
+  enabled: true
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+  provisioner:
+    # Enable if the provisioner is installed as well
+    enabled: true
+
+    draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+    draxNodeSelector:
+      draxName: "{{ .Values.global.draxName }}"
+
+    # Pre-provision the cells, create a list of serial: name as shown below
+    cells:
+      exampleSerial1: exampleName100
+      exampleSerial2: exampleName200
+
+    # Loki hostname and port
+    loki:
+      hostname: "{{ .Values.global.kubeIp }}"
+      port: "30302"
+
+    # Redis hostname and port
+    redis:
+      hostname: "{{ .Values.global.kubeIp }}"
+      port: "32000"
+
+    # Names of the pre-made configMaps for the keys and crts
+    serverKeyName: prov-server-key
+    serverCrtName: prov-server-crt
+    clientKeyName: prov-client-key
+    clientCrtName: prov-client-crt
+    caCrtName: prov-ca-crt
+
+    # provisioner external (nodePort) ip and port
+    provisionerApi: "{{ .Values.global.kubeIp }}"
+    provisionerPort: 31610
+
+4g-radio-controller:
+  # Enable or disable the component
+  enabled: true
+
+  accelleranLicense:
+    enabled: "{{ .Values.global.accelleranLicense.enabled }}"
+    licenseSecretName: "{{ .Values.global.accelleranLicense.licenseSecretName }}"
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+  image:
+    pullPolicy: IfNotPresent
+
+  # Pre- and Post- start jobs that can be enabled or disabled
+  jobs:
+    # Set enabled to true if you wish the 4G Radio Controller to be automatically configured on deployment.
+    # If set to false, you have to configure it from the dRAx Dashbaord or using a NetConf RPC after the dRAX is deployed
+    netconfConfig:
+      enabled: true
+      # If the 4G Radio Controller is already configured in REDIS from a previous installation, you can delete that configuration if you want using the following job
+      deleteExistingConfig: false
+    # Make sure dRAX-4G Redis is up and running before starting.
+    checkRedis:
+      enabled: true
+
+  config:
+    # If you are using the secure HTTPS protocol for the Kubernetes API, enable this option
+    https: true
+
+    # The orchestratorUrl is used for contacting the Kubernetes API, hence this should be the Kubernetes Advertise IP
+    orchestratorUrl: "{{ .Values.global.kubeIp }}"
+
+    # Choose the namespace where the Layer3 pods will be installed. By default its in teh same namespace as dRAX
+    l3Namespace: "{{ .Release.Namespace }}"
+
+    # Choose the Docker image pull policy for the Layer 3
+    l3PullPolicy: "IfNotPresent"
+
+    # Enable if you want the Layer3 pods to be deleted once dRAX is deleted
+    cleanup: true
+
+    # Redis settings, can be reached through Kubernetes Advertise address, or can set this manually if the node IP where Redis is installed is known. This can be in situations where we want the Layer3 to communicate to Redis on the same node for latency purposes
+    redis:
+      hostname: "{{ .Values.global.kubeIp }}"
+      port: 32000
+
+acc-l2-update:
+  # Enable the server that serves the Layer2 update files
+  enabled: true
+
+  accelleranLicense:
+    enabled: "{{ .Values.global.accelleranLicense.enabled }}"
+    licenseSecretName: "{{ .Values.global.accelleranLicense.licenseSecretName }}"
+
+  draxNodeSelectorEnabled: "{{ .Values.global.draxNodeSelectorEnabled }}"
+  draxNodeSelector:
+    draxName: "{{ .Values.global.draxName }}"
+
+  image:
+    pullPolicy: IfNotPresent

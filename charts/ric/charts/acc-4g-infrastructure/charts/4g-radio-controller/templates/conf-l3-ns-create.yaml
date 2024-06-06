@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: conf-l3-ns-create
+ labels:
+   {{- include "oran-clustercontrol.labels" . | nindent 4 }}
+data:
+  l3-namespace-create.yaml: |
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: <!namespace!>

@@ -1,0 +1,262 @@
+# Bootstrap Instance ID
+#   Description:  The Bootstrap Instance ID. Is used by the logical group:
+#                 SCTP and all APs associated to that SCTP module.
+#
+#   Example:
+# bootstrapId: "e2-t"
+#
+bootstrapId: "e2-t"
+
+# NATS URL and PORT
+#   Description: Used to configure the application to talk
+#                to NATS
+#   Value type: string
+#
+natsHostname: "10.55.1.2"
+natsPort: "31100"
+
+
+# Redis settings
+#   Description: Certain application need to be able to reach
+#                Redis. Here we configure the Redis hostname
+#                and port.
+#   Value type: string
+#   Example:
+#
+redisConfig:
+  hostname: "10.55.1.2"
+  port: "32200"
+
+
+# dRAX Specific Node Selector
+#   Description: This is a special nodeSelector field implemented for the
+#                Accelleran 5G Helm charts. You need to first label your
+#                node in Kubernetes with a label "draxName" and give it a
+#                <value>. For example for node <node_name>, you can use the
+#                following command to label it:
+#                kubectl label node <node_name> draxName=<value>.
+#                You can then enabled this feature by setting
+#                "draxNodeSelectorEnabled" to "true" (as a string with quotes!).
+#                The in "draxName" set the value of the label you chose for
+#                the node. This will in effect install all the 5G Application
+#                on that node, without the need to edit all individual helm
+#                charts. In case you want to add other nodeSelector options,
+#                you have to add them to the helm chart specific values files.
+#   Value type: string
+#   Example:
+#
+draxNodeSelectorEnabled: "false"
+draxNodeSelector:
+  draxName: ""
+
+# Jaeger settings
+#   Description:  Sets the DNS hostname where the Jaeger agent is located
+#   Value type:   string
+#   Example: jaegerAgentHost: "ric-jaeger-agent"
+jaegerAgentHost: "ric-jaeger-agent"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+nameOverride: ""
+fullnameOverride: ""
+
+e2tsctp:
+
+  replicaCount: 1
+
+  image:
+    repository: accelleran/e2sctpappl
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  # Application Settings
+  cmd: "./sctpE2apAppl.exe"
+
+  args: []
+  #  - name: "--own"
+  #    value: 127.0.0.1
+  #  - name: "--ng"
+  #    value: 127.0.0.5
+  
+  bootstrapFile: /home/accelleran/5G/bootstrap.txt
+
+  extraEnvs: []
+  #  - name: __APPNAME
+  #    value: sctpE2ap
+  #  - name: ex1
+  #    value: ex1
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: 
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    runAsUser: 0
+    privileged: true
+
+  sctpService:
+    enabled: true
+    name: "e2-sctp"
+    type:  NodePort
+    protocol: SCTP
+    port: 38482
+    nodePort: 31900
+    loadBalancerIP: ""
+    externalTrafficPolicy: ""
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+e2tap:
+
+  numOfE2Nodes: "5"
+
+  image:
+    repository: accelleran/e2apintfappl
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  # Application Settings
+  cmd: "./e2ApAppl.exe"
+
+  args: []
+  #  - name: "--own"
+  #    value: 127.0.0.1
+  #  - name: "--ng"
+  #    value: 127.0.0.5
+
+  bootstrapFile: /home/accelleran/5G/bootstrap.txt
+
+  extraEnvs: []
+  #  - name: __APPNAME
+  #    value: e2Ap
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: 
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    runAsUser: 0
+    privileged: true
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+e2smkpm:
+
+  replicaCount: 1
+
+  image:
+    repository: accelleran/e2smkpmappl
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  # Application Settings
+  cmd: "./e2SmKpmAppl.exe"
+
+  args: []
+  #  - name: "--own"
+  #    value: 127.0.0.1
+  #  - name: "--ng"
+  #    value: 127.0.0.5
+
+  bootstrapFile: /bootstrap.txt
+
+  extraEnvs:
+    - name: __APPNAME
+      value: e2SmKpm
+  #  - name: ex1
+  #    value: ex1
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: 
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    runAsUser: 0
+    privileged: true
+
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}

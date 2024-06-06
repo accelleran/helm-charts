@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 0.7.0
+description: The Accelleran provisioner for bootstrap files
+name: provisioner
+type: application
+version: 0.11.2

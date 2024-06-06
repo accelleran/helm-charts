@@ -1,0 +1,16 @@
+{{- range $vendor, $v := .Values.baseConfig.vendors }}
+{{- if gt (len $v) 0 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "acc-common.fullname" $ }}-{{ $vendor }}
+  labels:
+    {{- include "acc-common.labels.5g" $ | nindent 4 }}
+data:
+{{- range $v }}
+  {{ .file }}: |-
+    {{- .data | nindent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}

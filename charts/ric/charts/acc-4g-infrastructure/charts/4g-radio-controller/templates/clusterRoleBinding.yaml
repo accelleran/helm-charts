@@ -1,0 +1,15 @@
+{{- if .Values.config.https }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: orancontroller-clusterrolebinding
+  namespace: {{ tpl .Values.config.l3Namespace . }}
+subjects:  
+- kind: ServiceAccount
+  name: orancontroller
+  namespace: {{ .Release.Namespace }}
+roleRef:  
+  kind: ClusterRole
+  name: orancontroller-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

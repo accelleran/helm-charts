@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uethroughputfiveg-toml
+data:
+  uethroughputfiveg.toml: |-
+    [sources.inUeThroughput]
+      bootstrap_servers = "{{ tpl .Values.config.kafka.hostname . }}:{{ .Values.config.kafka.port}}"
+      group_id = "VECTOR_5G_UE_THROUGHPUT"
+      topics = ["{{ tpl .Values.config.kafka.pmCounterTopic . }}"]
+      type = "kafka"
+    
+    [transforms.parseJsonUeThroughput]
+      type = "json_parser"
+      inputs = ["inUeThroughput"]
+      drop_field = false # optional, default
+      drop_invalid = true
+      field = "message" # optional, default
+  
+    [transforms.filterUeThroughput]
+      # General
+      type = "filter"
+      inputs = ["parseJsonUeThroughput"]
+      condition."PmReportingCuupCounterData.exists" = true
+
+    [transforms.parseUeThroughput]
+      inputs = ["filterUeThroughput"]
+      type   = "json_parser"
+      field  = "PmReportingCuupCounterData"
+      drop_field = false # optional, default
+      drop_invalid = true
+
+    [transforms.filterNatsTopic]
+      type = "filter"                                                                                                    
+      inputs = ["parseUeThroughput"]                                                                                       
+      condition."topic.contains" = ".CUUP_COUNTERS_INFO"
+
+    [transforms.luaParseThr]
+      type = "lua" # required
+      inputs = ["filterNatsTopic"] # required
+      version = "2" # required
+
+      # Hooks
+      hooks.process = """
+      function (event, emit)
+        m = {}
+        m.log = {
+              timestamp = os.date("!*t"),
+              ueId = "",
+              measurement = {}
+             }
+        if event.log.PmReportingCuupCounterData.CounterList ~= nil then      
+            if event.log.PmReportingCuupCounterData.CounterList.items ~= nil then
+              for k, v in pairs(event.log.PmReportingCuupCounterData.CounterList.items) do
+                temp = m
+                temp.log.ueId = event.log.PmReportingCuupCounterData.CounterList.items[k].InstanceId
+                temp.log.cuupId = event.log.topic:match("[^.]*")
+                if v.CounterId == "DL_GTP_THP" then
+                  temp.log.measurement.dlGtpThroughput = 0.0
+                  temp.log.measurement.dlGtpThroughput = event.log.PmReportingCuupCounterData.CounterList.items[k].ValueList.items["0"]._val / event.log.PmReportingCuupCounterData.CounterList.items[k].ValueList.items["0"]._key
+                  emit(temp)
+                end
+                if v.CounterId == "UL_GTP_THP" then
+                  temp.log.measurement.ulGtpThroughput = 0.0
+                  temp.log.measurement.ulGtpThroughput = event.log.PmReportingCuupCounterData.CounterList.items[k].ValueList.items["0"]._val / event.log.PmReportingCuupCounterData.CounterList.items[k].ValueList.items["0"]._key
+                  emit(temp)
+                end
+              end
+            end
+        end
+      end
+      """
+
+    [sinks.outUeThroughput]
+      # General
+      bucket = "vector-bucket"
+      tags = ["cuupId", "ueId"]
+      database = "{{ .Values.config.influx.database }}"
+      endpoint =  "http://{{ tpl .Values.config.influx.hostname . }}:{{ .Values.config.influx.port}}/"
+      inputs = ["luaParseThr"]
+      namespace = "{{ .Values.config.influx.namespace }}"
+      type = "{{ .Values.config.influx.type }}"
+      username = "{{ .Values.config.influx.username }}"
+      password = "{{ .Values.config.influx.password }}"
+
+

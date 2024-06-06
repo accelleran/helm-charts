@@ -1,0 +1,40 @@
+global:
+  # NATS URL and PORT
+  #   Description: Used to configure the application to talk
+  #                to NATS
+  #   Value type: string
+  #
+  natsUrl: ""
+  natsPort: "31100"
+
+  # Redis settings
+  #   Description: Certain application need to be able to reach
+  #                Redis. Here we configure the Redis hostname
+  #                and port.
+  #   Value type: string
+  #   Example:
+  #
+  redisHostname: ""
+  redisPort: "32220"
+
+redis:
+  # Backup the redis db when the pod is terminated
+  backup:
+    # Enabled or disable this feature
+    enabled: true
+    # Choose after how many days should the backed up DBs be deleted
+    deleteAfterDay: 7
+
+  # Enabled or disable different jobs
+  jobs:
+    # If the data in Redis should be deleted on Redis startup, enable this job
+    deleteExistingData: false
+
+nats:
+  # Enable or disable deploying a separate NATS just for the Cell Wrapper
+  enabled: false
+
+#netconf:
+#  netconfService:
+#    # The Node port on which NetConf will be exposed on the host machine
+#    nodePort: 31832

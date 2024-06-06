@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+ name: conf-l3-service-create
+ labels:
+   {{- include "oran-clustercontrol.labels" . | nindent 4 }}
+data:
+  l3-service-create.yaml: |
+    apiVersion: v1
+    kind: Service
+    metadata: 
+      name: netconf-<!lowInstanceId!>
+      labels:
+        app: l3-pod
+        drax/role: drax-core
+        drax/name: Layer3
+        drax/component-name: l3
+        drax/component-version: {{ tpl .Values.config.l3Version . }}
+    spec:
+      ports:
+        - name: netconf-port
+          port: 830
+          protocol: TCP
+      selector:
+        ncss: l3-<!lowInstanceId!>
+      type: NodePort
