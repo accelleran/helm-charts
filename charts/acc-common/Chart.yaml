@@ -1,5 +1,7 @@
 apiVersion: v2
-description: A common library chart that provides standardized named templates
+# The acc-common chart is deprecated in favor of common.
+deprecated: true
+description: DEPRECATED A common library chart that provides standardized named templates
 name: acc-common
 type: library
-version: 0.1.0
+version: 0.1.1
