@@ -25,7 +25,9 @@ dependencies:
   name: nats
   repository: https://accelleran.github.io/helm-charts/
   version: 0.8.4
-description: A Helm chart for Kubernetes
+# The cw-cell-wrapper chart is deprecated in favor of cell-wrapper.
+deprecated: true
+description: DEPRECATED A Helm chart for Kubernetes
 name: cw-cell-wrapper
 type: application
-version: 1.1.0
+version: 1.1.1
