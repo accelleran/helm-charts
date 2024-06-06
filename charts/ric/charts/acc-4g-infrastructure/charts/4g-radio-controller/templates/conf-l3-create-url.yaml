@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
- name: conf-l3-create-url
- labels:
-   {{- include "oran-clustercontrol.labels" . | nindent 4 }}
-data:
-  l3-create_url: |
-    <!orchestratorUrl!>/api/v1/namespaces/<!lowNamespace!>/<!kubernetesPath!>s

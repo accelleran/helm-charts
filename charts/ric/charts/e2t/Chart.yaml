@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: e2-5.0.3
-description: The E2 Termination
-name: e2t
-type: application
-version: 1.0.0

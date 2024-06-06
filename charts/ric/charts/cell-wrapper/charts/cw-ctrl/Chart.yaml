@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: CW2.3.2
-description: Accelleran Cell Wrapper Controller
-name: cw-ctrl
-type: application
-version: 2.3.2

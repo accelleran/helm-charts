@@ -1,5 +1,0 @@
-apiVersion: v1
-appVersion: 3.4.16
-description: Accelleran's System Overview Dashboard
-name: acc-sys-dashboard
-version: 3.4.16

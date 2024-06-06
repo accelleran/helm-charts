@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: master-af29a94210fa
-description: A Helm chart for Kubernetes
-name: rr-ctrl
-type: application
-version: 1.1.1

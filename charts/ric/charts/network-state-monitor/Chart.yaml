@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: 1.0.9
-description: A Helm chart for Accelleran's Network State Monitor RIC component
-name: network-state-monitor
-type: application
-version: 0.1.0

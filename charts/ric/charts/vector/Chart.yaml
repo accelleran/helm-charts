@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: 0.2.0
-description: A Helm chart for Kubernetes
-name: vector
-type: application
-version: 0.7.0

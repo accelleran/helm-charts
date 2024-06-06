@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: 2.2.4
-description: The dRAX Service Orchestrator
-name: acc-service-orchestrator
-type: application
-version: 2.5.0
