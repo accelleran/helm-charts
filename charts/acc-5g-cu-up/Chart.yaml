@@ -28,7 +28,9 @@ dependencies:
   name: controller-up
   repository: https://accelleran.github.io/5g-helm-charts/
   version: 0.2.1
-description: Accelleran 5G CU UP Components
+# The acc-5g-cu-up chart is deprecated in favor of cu-up.
+deprecated: true
+description: DEPRECATED Accelleran 5G CU UP Components
 name: acc-5g-cu-up
 type: application
-version: 6.0.0
+version: 6.0.1

@@ -1,5 +1,11 @@
 #############################################################################
 
+DEPRECATED
+
+Please switch to the cu-up helm chart.
+
+#############################################################################
+
 Accelleran CU-UP {{ .Chart.Version }} using {{ .Values.global.tag }}
 
 Deployed Accelleran CU-UP component [{{- include "acc-common.drax.instanceId.withLengthCheck" . }}] with the following details:
