@@ -1,6 +1,6 @@
 {
   "charts/common": "0.3.0",
-  "charts/cell-wrapper": "3.1.0",
+  "charts/cell-wrapper": "4.0.0",
   "charts/cell-wrapper-config": "0.3.0",
   "charts/cu-cp": "8.0.0",
   "charts/cu-up": "8.0.0",
