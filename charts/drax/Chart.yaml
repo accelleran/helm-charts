@@ -88,7 +88,7 @@ dependencies:
   # infrastructure
   - name: kafka
     condition: kafka.enabled
-    version: 29.2.4
+    version: 29.2.2
     repository: https://charts.bitnami.com/bitnami/
   - name: nats
     condition: nats.enabled
@@ -96,5 +96,5 @@ dependencies:
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 19.5.2
+    version: 19.5.0
     repository: https://charts.bitnami.com/bitnami/
