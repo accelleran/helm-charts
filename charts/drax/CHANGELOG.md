@@ -1,5 +1,79 @@
 # Changelog
 
+## [8.0.0](https://github.com/accelleran/helm-charts/compare/drax-7.1.0...drax-8.0.0) (2024-06-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update drax to common chart 0.3.0
+* **deps:** update helm release cell-wrapper to v4
+* disable nats and redis by default ([#278](https://github.com/accelleran/helm-charts/issues/278))
+* rework loki dashboard to single log panel ([#276](https://github.com/accelleran/helm-charts/issues/276))
+* use different topics for DU metrics ([#271](https://github.com/accelleran/helm-charts/issues/271))
+* **deps:** update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173))
+* **deps:** update helm release kafka to v29 ([#254](https://github.com/accelleran/helm-charts/issues/254))
+
+### Features
+
+* Add du metrics dashboard ([#197](https://github.com/accelleran/helm-charts/issues/197)) ([72ebd74](https://github.com/accelleran/helm-charts/commit/72ebd742518bc6a7da8ad2ec963eda8818e1c5f2))
+* Add metrics to 5g DU metrics dashboard ([#219](https://github.com/accelleran/helm-charts/issues/219)) ([bb77bfc](https://github.com/accelleran/helm-charts/commit/bb77bfcda2376967b6e8e535046273df978c3243))
+* Allow external logs in loki ([#214](https://github.com/accelleran/helm-charts/issues/214)) ([95c40a3](https://github.com/accelleran/helm-charts/commit/95c40a3c36dc27160123cfa8f85e0c211ed300bc))
+* Enable kafka publishing for du-metrics-server ([#231](https://github.com/accelleran/helm-charts/issues/231)) ([9ab1ccf](https://github.com/accelleran/helm-charts/commit/9ab1ccfeaff0903d701d4ed8754f410e8982f701))
+* Expose all CU beacons and UeInfo messages ([#267](https://github.com/accelleran/helm-charts/issues/267)) ([ea39aa9](https://github.com/accelleran/helm-charts/commit/ea39aa98b4c93196ced60a95b06b6627bfcbe219))
+* Increase max entries limit per query to 10000 in loki ([#273](https://github.com/accelleran/helm-charts/issues/273)) ([33c95a8](https://github.com/accelleran/helm-charts/commit/33c95a89c87f4dbb9019a0768556cb2b0ec7e5e2))
+* Rework loki dashboard to single log panel ([#276](https://github.com/accelleran/helm-charts/issues/276)) ([169fd30](https://github.com/accelleran/helm-charts/commit/169fd30ccb86c75d924783cfa21559960bc112d4))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/config-api docker tag to v1.3.0 ([2e2ec63](https://github.com/accelleran/helm-charts/commit/2e2ec6357831e0d5499930559cc8eb4acec157c5))
+* **deps:** Update accelleran/config-api docker tag to v1.3.1 ([b367efa](https://github.com/accelleran/helm-charts/commit/b367efa88105b8a9f7e1a1a8421c9f0b40f88d76))
+* **deps:** Update accelleran/dash-front-back-end docker tag to v5.2.0 ([357e044](https://github.com/accelleran/helm-charts/commit/357e044167682ec94978d9b550cd5f1fdbaa5a47))
+* **deps:** Update accelleran/dash-front-back-end docker tag to v5.2.1 ([be3a250](https://github.com/accelleran/helm-charts/commit/be3a2509d4ca9d99ac056404c977ce09d4890ca6))
+* **deps:** Update accelleran/dash-front-back-end docker tag to v5.2.2 ([5bc25b2](https://github.com/accelleran/helm-charts/commit/5bc25b271ee336595938ad877ca5371ff216fca9))
+* **deps:** Update accelleran/dash-front-back-end docker tag to v5.3.0 ([9ba6232](https://github.com/accelleran/helm-charts/commit/9ba62327f852e32e811d278cec3e4b829d348625))
+* **deps:** Update accelleran/network-state-monitor docker tag to v1.2.0 ([fe16a82](https://github.com/accelleran/helm-charts/commit/fe16a8219be8e5221d2ccf5248b59758dea1e7a5))
+* **deps:** Update drax to common chart 0.3.0 ([43cb011](https://github.com/accelleran/helm-charts/commit/43cb011ae62ef0849dda405989af61b8c93531b5))
+* **deps:** Update e2 to 5.2.15 ([#241](https://github.com/accelleran/helm-charts/issues/241)) ([8640aaf](https://github.com/accelleran/helm-charts/commit/8640aafdd7d6b1ea0072f1dacc5d4f55851583d1))
+* **deps:** Update helm release cell-wrapper to v4 ([43cb011](https://github.com/accelleran/helm-charts/commit/43cb011ae62ef0849dda405989af61b8c93531b5))
+* **deps:** Update helm release common to v0.2.3 ([2720172](https://github.com/accelleran/helm-charts/commit/2720172fa39bfc8c82ee656029c09200f21647aa))
+* **deps:** Update helm release du-metrics-server to v0.1.1 ([8f46e06](https://github.com/accelleran/helm-charts/commit/8f46e064b5b01743e63a6167908e9faca583dff4))
+* **deps:** Update helm release du-metrics-server to v0.1.2 ([40b11b9](https://github.com/accelleran/helm-charts/commit/40b11b9b26d5851367ec507986c03949997e79f4))
+* **deps:** Update helm release du-metrics-server to v0.2.0 ([e4b73e2](https://github.com/accelleran/helm-charts/commit/e4b73e21aa5620e15eacf6d09081f827d845dc97))
+* **deps:** Update helm release du-metrics-server to v0.2.1 ([8e88672](https://github.com/accelleran/helm-charts/commit/8e88672ef604cdc9564df782dada12f52c12e3ca))
+* **deps:** Update helm release grafana to v7.3.10 ([d510c7e](https://github.com/accelleran/helm-charts/commit/d510c7e55a5a629ac5e8ff934f0073fff849980c))
+* **deps:** Update helm release grafana to v7.3.11 ([c826db1](https://github.com/accelleran/helm-charts/commit/c826db1917330f3a4562cb6206363cd4da33ecb9))
+* **deps:** Update helm release grafana to v7.3.12 ([75e8d67](https://github.com/accelleran/helm-charts/commit/75e8d67dec896e2c25c83771d088d4a49b014057))
+* **deps:** Update helm release grafana to v7.3.8 ([34a39ca](https://github.com/accelleran/helm-charts/commit/34a39ca54d44d97a34a73d61bcf7367cc09c3ff1))
+* **deps:** Update helm release grafana to v7.3.9 ([7dc3495](https://github.com/accelleran/helm-charts/commit/7dc349511637e62bf061b051e18a612ff50154c6))
+* **deps:** Update helm release grafana to v8 ([#269](https://github.com/accelleran/helm-charts/issues/269)) ([ec40f3b](https://github.com/accelleran/helm-charts/commit/ec40f3bcd098ce6db236cceab362d24e86369ec4))
+* **deps:** Update helm release kafka to v29 ([#254](https://github.com/accelleran/helm-charts/issues/254)) ([9c30985](https://github.com/accelleran/helm-charts/commit/9c3098558c1e55ef58eb8d5074feedb275f27c94))
+* **deps:** Update helm release kafka to v29.2.2 ([7d2f2ba](https://github.com/accelleran/helm-charts/commit/7d2f2bad6e3594788691839ac6fb122c69bf466d))
+* **deps:** Update helm release kafka to v29.2.3 ([898455e](https://github.com/accelleran/helm-charts/commit/898455edd850d9b46836bc71f9ebf58fb2879999))
+* **deps:** Update helm release kafka to v29.2.4 ([f216ac3](https://github.com/accelleran/helm-charts/commit/f216ac3365814ec9bd83f2186ca2321474ed763b))
+* **deps:** Update helm release kminion to v0.12.8 ([acb92a3](https://github.com/accelleran/helm-charts/commit/acb92a3baebbd0202eac79d1174c0fdd4caa09d7))
+* **deps:** Update helm release kminion to v0.13.0 ([caf3b27](https://github.com/accelleran/helm-charts/commit/caf3b27c83a2db963fb73a19b2483a081a02ea05))
+* **deps:** Update helm release loki-stack to v2.10.2 ([#263](https://github.com/accelleran/helm-charts/issues/263)) ([296f2b1](https://github.com/accelleran/helm-charts/commit/296f2b11369f01cdcc029b35a5159357cdf2cfd2))
+* **deps:** Update helm release nats to v1.1.11 ([ca65524](https://github.com/accelleran/helm-charts/commit/ca6552466091a7b8bc997f3added20ab02dea9ea))
+* **deps:** Update helm release nats to v1.1.12 ([da5f102](https://github.com/accelleran/helm-charts/commit/da5f1027547c83f5c68f56ce524218db3f2b35c0))
+* **deps:** Update helm release prometheus to v25.18.0 ([7bf4254](https://github.com/accelleran/helm-charts/commit/7bf42542f249c1fbb0c3b65262064797ad64b3bd))
+* **deps:** Update helm release prometheus to v25.19.0 ([9036981](https://github.com/accelleran/helm-charts/commit/90369812e7d2f9466393c78646e1c27fdaa6bc26))
+* **deps:** Update helm release prometheus to v25.19.1 ([c1a7a58](https://github.com/accelleran/helm-charts/commit/c1a7a58b5a431a508be64594dd67e6308ff5e57b))
+* **deps:** Update helm release prometheus to v25.20.0 ([9375ef1](https://github.com/accelleran/helm-charts/commit/9375ef17f1ef07029abd4c9adbde397d51ab8142))
+* **deps:** Update helm release prometheus to v25.20.1 ([#205](https://github.com/accelleran/helm-charts/issues/205)) ([55f0d4a](https://github.com/accelleran/helm-charts/commit/55f0d4a51eba56aca3885bfebf7d8f0ad4f53046))
+* **deps:** Update helm release prometheus to v25.21.0 ([0911fad](https://github.com/accelleran/helm-charts/commit/0911fad7b8efe6d755dbff0842fdaa1d3555fdd0))
+* **deps:** Update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173)) ([979ae1e](https://github.com/accelleran/helm-charts/commit/979ae1e51d665263c457c7a9ecc30e64ac001843))
+* **deps:** Update helm release redis to v19.5.2 ([f649761](https://github.com/accelleran/helm-charts/commit/f6497616674d6f113d3bab8c7d10bf19e47db602))
+* **deps:** Update helm release vector to v0.32.0 ([b0319ee](https://github.com/accelleran/helm-charts/commit/b0319ee112d3392ae9c15bf5cc6de4611df5487d))
+* **deps:** Update helm release vector to v0.32.1 ([c31e6be](https://github.com/accelleran/helm-charts/commit/c31e6be43d0831bf14c4f2d7d5c772a5006d0439))
+* **deps:** Update helm release vector to v0.33.0 ([b0b1094](https://github.com/accelleran/helm-charts/commit/b0b10940b8cd50294ff2372bbac2804bd38f9e72))
+* **deps:** Update helm release xapp-hello-world to v3 ([#288](https://github.com/accelleran/helm-charts/issues/288)) ([796cabc](https://github.com/accelleran/helm-charts/commit/796cabc20927129e9a965b36a4c4a5094ec18870))
+* Disable nats and redis by default ([#278](https://github.com/accelleran/helm-charts/issues/278)) ([c472498](https://github.com/accelleran/helm-charts/commit/c472498b31777491f8e697d2902a732f8551601a))
+* Fix Chart.lock files of drax subcharts ([#298](https://github.com/accelleran/helm-charts/issues/298)) ([0c01a37](https://github.com/accelleran/helm-charts/commit/0c01a37db0b14feccdcef77e0cb370c4962ce12f))
+* Fix ue label transformations in DU metrics dashboard ([#260](https://github.com/accelleran/helm-charts/issues/260)) ([2654fda](https://github.com/accelleran/helm-charts/commit/2654fda5e4ce1da15c82ffe2f3727f88d4027986))
+* Increase kafka resource preset ([#275](https://github.com/accelleran/helm-charts/issues/275)) ([f30c33f](https://github.com/accelleran/helm-charts/commit/f30c33fd0c75600c314ba272dfe26b018d51684e))
+* Use different topics for DU metrics ([#271](https://github.com/accelleran/helm-charts/issues/271)) ([039d109](https://github.com/accelleran/helm-charts/commit/039d109c0a002bf8d71021d5ad6f5adfca8e5f5d))
+
 ## [7.1.0](https://github.com/accelleran/helm-charts/compare/drax-7.0.1...drax-7.1.0) (2024-03-22)
 
 
