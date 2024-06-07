@@ -2,10 +2,10 @@ apiVersion: v2
 name: network-state-monitor
 description: The Accelleran dRAX Network State Monitor
 type: application
-version: 0.1.1
+version: 0.2.0
 # renovate: image=accelleran/network-state-monitor
 appVersion: 1.2.0
 dependencies:
   - name: common
-    version: 0.2.3
+    version: 0.3.0
     repository: https://accelleran.github.io/helm-charts/

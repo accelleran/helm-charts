@@ -51,11 +51,10 @@ replicaCount: 1
 nameOverride: ""
 fullnameOverride: ""
 
-initImage:
-  kafka:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
+kafkaInitImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.8.0"
 
 image:
   repository: accelleran/dash-front-back-end

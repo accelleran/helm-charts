@@ -37,11 +37,10 @@ imagePullSecrets:
 accelleranLicense:
   enabled: false
 
-initImage:
-  kafka:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
+kafkaInitImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.8.0"
 
 podSecurityContext:
   {}

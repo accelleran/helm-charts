@@ -26,6 +26,7 @@ replicaCount: 1
 image:
   repository: accelleran/service-orchestrator
   pullPolicy: IfNotPresent
+  tag: ""
 
 imagePullSecrets:
   - name: accelleran-secret
