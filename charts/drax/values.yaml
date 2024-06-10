@@ -334,16 +334,20 @@ nats:
 
   service:
     enabled: true
-    type: NodePort
     name: ""
 
     ports:
       nats:
         enabled: true
-        targetPort: 4222
-        nodePort: 31100
       monitor:
         enabled: true
+    merge:
+      spec:
+        type: NodePort
+        ports:
+          - name: nats
+            port: 4222
+            nodePort: 31100
 
   extraResources:
     - apiVersion: v1
