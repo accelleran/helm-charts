@@ -55,8 +55,8 @@ xappEndpoints:
   NATS_URL_5G: "nats://{{ .Values.global.kubeIp }}:31100"
 
 ### Define the xapp_config.json
-xappConfig:
-  LOG_LEVEL: 20
+xappConfig: {}
+#  LOG_LEVEL: 20
 # example_slider: 50
 # someUrl: "nats://{{ .Values.global.kubeIp }}:31000"
 # boolean: false
