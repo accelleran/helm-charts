@@ -51,14 +51,14 @@ xappEndpoints:
   REDIS_URL: "redis://{{ .Release.Name }}-xapp-redis.{{ .Release.Namespace }}:6379"
   KAFKA_URL: "kafka://{{ .Values.global.kubeIp }}:31090"
   API_URL: "http://{{ .Values.global.kubeIp }}:31315"
-  NATS_URL: "nats://{{ .Values.global.kubeIp }}:31000"
+  NATS_URL: "nats://{{ .Values.global.kubeIp }}:31100"
   NATS_URL_5G: "nats://{{ .Values.global.kubeIp }}:31100"
 
 ### Define the xapp_config.json
 xappConfig: {}
 #  LOG_LEVEL: 20
 # example_slider: 50
-# someUrl: "nats://{{ .Values.global.kubeIp }}:31000"
+# someUrl: "nats://{{ .Values.global.kubeIp }}:31100"
 # boolean: false
 
 serviceAccount:
