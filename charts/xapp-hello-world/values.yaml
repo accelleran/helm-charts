@@ -49,10 +49,10 @@ xappFrameworkConfig:
 ### Define the xapp_endpoints.json
 xappEndpoints:
   REDIS_URL: "redis://{{ .Release.Name }}-xapp-redis.{{ .Release.Namespace }}:6379"
-  KAFKA_URL: "kafka://{{ .Values.global.kubeIp }}:31090"
-  API_URL: "http://{{ .Values.global.kubeIp }}:31315"
-  NATS_URL: "nats://{{ .Values.global.kubeIp }}:31000"
-  NATS_URL_5G: "nats://{{ .Values.global.kubeIp }}:31100"
+  KAFKA_URL: "kafka://drax-kafka:9095"
+  API_URL: "http://drax-dashboard:5000"
+  NATS_URL: "nats://drax-nats-headless:4222"
+  NATS_URL_5G: "nats://drax-nats-headless:4222"
 
 ### Define the xapp_config.json
 xappConfig: {}
