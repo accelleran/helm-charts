@@ -341,6 +341,13 @@ nats:
         enabled: true
       monitor:
         enabled: true
+    merge:
+      spec:
+        type: NodePort
+        ports:
+          - name: nats
+            port: 4222
+            nodePort: 31100
 
   extraResources:
     - apiVersion: v1
@@ -662,7 +669,7 @@ loki-stack:
     nodeSelector: {}
     service:
       type: NodePort
-      nodePort: 31000
+      nodePort: 31005
       port: 3100
       targetPort: http-metrics
     config:
@@ -695,9 +702,9 @@ influxdb:
     size: 2Gi
 
   service:
-    type: ClusterIP
+    type: NodePort
     nodePorts:
-      http: ""
+      http: "30303"
 
   setDefaultUser:
     enabled: true
