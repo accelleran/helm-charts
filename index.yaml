@@ -13323,6 +13323,42 @@ entries:
       urls:
         - https://github.com/accelleran/helm-charts/releases/download/cw-cell-wrapper-0.1.0-rc.3/cw-cell-wrapper-0.1.0-rc.3.tgz
       version: 0.1.0-rc.3
+    - apiVersion: v2
+      appVersion: CW1.1.0
+      created: "2024-06-10T08:45:08.8015075+02:00"
+      dependencies:
+        - condition: netconf.enabled
+          name: netconf
+          repository: https://accelleran.github.io/5g-helm-charts/
+          version: 2.3.1-rc.5
+        - condition: redis.enabled
+          name: redis
+          repository: https://accelleran.github.io/helm-charts/
+          version: 0.8.0
+        - condition: cw-phy-cell.enabled
+          name: cw-phy-cell
+          repository: https://accelleran.github.io/helm-charts/
+          version: 1.1.0-rc3
+        - condition: cw-auto-repairer.enabled
+          name: cw-auto-repairer
+          repository: https://accelleran.github.io/helm-charts/
+          version: 1.0.0
+        - condition: cw-ctrl.enabled
+          name: cw-ctrl
+          repository: https://accelleran.github.io/helm-charts/
+          version: 1.0.0
+        - condition: nats.enabled
+          name: nats
+          repository: https://accelleran.github.io/helm-charts/
+          version: 0.8.4
+      deprecated: true
+      description: DEPRECATED A Helm chart for Kubernetes
+      digest: 09e18d296f4aee7cb80c741801d113f85ac37bdcaec07ec4b10a30b3e0783150
+      name: cw-cell-wrapper
+      type: application
+      urls:
+        - https://github.com/accelleran/helm-charts/releases/download/cw-cell-wrapper-1.1.1/cw-cell-wrapper-1.1.1.tgz
+      version: 1.1.1
   drax:
     - apiVersion: v2
       created: "2024-06-07T11:43:49.819962484Z"
