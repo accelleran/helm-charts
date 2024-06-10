@@ -7020,6 +7020,16 @@ entries:
       urls:
         - https://github.com/accelleran/helm-charts/releases/download/acc-common-0.1.0/acc-common-0.1.0.tgz
       version: 0.1.0
+    - apiVersion: v2
+      created: "2024-06-10T08:45:08.796722308+02:00"
+      deprecated: true
+      description: DEPRECATED A common library chart that provides standardized named templates
+      digest: 05b981b2fa309c4a38ce08c2fb1053ca11b2bd7118344ca6406cc899f7e5fb0f
+      name: acc-common
+      type: library
+      urls:
+        - https://github.com/accelleran/helm-charts/releases/download/acc-common-0.1.1/acc-common-0.1.1.tgz
+      version: 0.1.1
   cell-wrapper:
     - apiVersion: v2
       appVersion: 4.0.0
