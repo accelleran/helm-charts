@@ -514,7 +514,20 @@ grafana:
           isDefault: false
           name: Loki
           type: loki
-          url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100
+          url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3101
+          basicAuth: true
+          basicAuthUser: logs
+          secureJsonData:
+            basicAuthPassword: accelleran
+        - access: proxy
+          isDefault: false
+          name: Loki-notifications
+          type: loki
+          url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3101
+          basicAuth: true
+          basicAuthUser: notifications
+          secureJsonData:
+            basicAuthPassword: accelleran
         - access: proxy
           isDefault: false
           name: InfluxDB-4G
@@ -653,10 +666,16 @@ loki-stack:
   promtail:
     config:
       clients:
-        - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100/loki/api/v1/push
+        - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3101/loki/api/v1/push
+          tenant_id: logs
+          basic_auth:
+            username: logs
+            password: accelleran
     nodeSelector: {}
   loki:
     enabled: true
+    persistence:
+      enabled: true
     podLabels:
       drax/role: ric
       drax/component-name: loki
@@ -670,14 +689,54 @@ loki-stack:
       port: 3100
       targetPort: http-metrics
     config:
+      auth_enabled: true
       table_manager:
-        # Retention polocy for logs in Loki
+        # Retention policy for logs in Loki
         retention_deletes_enabled: true
         # Must be a multiple of 168h
         retention_period: 672h
       limits_config:
+        max_query_lookback: 672h # Avoid querying of data beyond the retention period
+        retention_period: 672h # Applied globally for all tenants unless overridden
         max_entries_limit_per_query: 10000
-
+        per_tenant_override_config: /home/loki/tenant_override_config.yaml
+    extraContainers:
+      - name: reverse-proxy
+        image: k8spin/loki-multi-tenant-proxy:v1.0.0
+        args:
+          - "run"
+          - "--port=3101"
+          - "--loki-server=http://ric-loki:3100"
+          - "--auth-config=/etc/reverse-proxy-conf/authn.yaml"
+        ports:
+          - name: http
+            containerPort: 3101
+            protocol: TCP
+        resources:
+          limits:
+            cpu: 250m
+            memory: 200Mi
+          requests:
+            cpu: 50m
+            memory: 40Mi
+        volumeMounts:
+          - name: reverse-proxy-auth-config
+            mountPath: /etc/reverse-proxy-conf
+    extraVolumeMounts:
+      - name: loki-tenant-override-config
+        mountPath: /home/loki
+    extraVolumes:
+      - name: loki-tenant-override-config
+        configMap:
+          name: loki-tenant-override-config
+      - name: reverse-proxy-auth-config
+        secret:
+          secretName: reverse-proxy-auth-config
+    extraPorts:
+      - port: 3101
+        protocol: TCP
+        name: http
+        targetPort: http
 
 influxdb:
   # Enable/disable installation of InfluxDB
@@ -962,3 +1021,66 @@ kminion:
 
   tests:
     enabled: false
+
+
+promtail-kafka-to-loki:
+  daemonset:
+    # -- Deploys Promtail as a DaemonSet
+    enabled: false
+  deployment:
+    # -- Deploys Promtail as a Deployment
+    enabled: true
+  configmap:
+    # -- If enabled, promtail config will be created as a ConfigMap instead of a secret
+    enabled: true
+  config:
+    # -- Enable Promtail config from Helm chart
+    enabled: true
+    clients:
+      - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3101/loki/api/v1/push
+        tenant_id: notifications
+        basic_auth:
+          username: notifications
+          password: accelleran
+    snippets:
+      scrapeConfigs: |
+        - job_name: kafka-to-loki
+          kafka:
+            brokers:
+              - {{ .Release.Name }}-kafka.{{ .Release.Namespace }}:9092
+            topics:
+              - "accelleran.drax.5g.ric.o1.ves"
+            use_incoming_timestamp: true
+            labels:
+              job: kafka-to-loki
+              app: {{ .Release.Name }}-promtail-kafka-to-loki
+          pipeline_stages:
+            - json:
+                expressions:
+                  domain: event.commonEventHeader.domain
+                  eventId: event.commonEventHeader.eventId
+                  eventName: event.commonEventHeader.eventName
+                  lastEpochMicrosec: event.commonEventHeader.lastEpochMicrosec
+                  priority: event.commonEventHeader.priority
+                  reportingEntityName: event.commonEventHeader.reportingEntityName
+                  sequence: event.commonEventHeader.sequence
+                  sourceName: event.commonEventHeader.sourceName
+                  startEpochMicrosec: event.commonEventHeader.startEpochMicrosec
+                  stndDefinedNamespace: event.commonEventHeader.stndDefinedNamespace
+                  version: event.commonEventHeader.version
+                  timeZoneOffset: event.commonEventHeader.timeZoneOffset
+                  vesEventListenerVersion: event.commonEventHeader.vesEventListenerVersion
+            - labels:
+                domain:
+                eventId:
+                eventName:
+                lastEpochMicrosec:
+                priority:
+                reportingEntityName:
+                sequence:
+                sourceName:
+                startEpochMicrosec:
+                stndDefinedNamespace:
+                version:
+                timeZoneOffset:
+                vesEventListenerVersion:

@@ -56,6 +56,11 @@ dependencies:
     condition: global.enable5G
     version: 2.0.1
     repository: file://charts/golang-nkafka
+  - name: promtail
+    condition: loki-stack.enabled
+    alias: promtail-kafka-to-loki
+    version: 6.16.0
+    repository: https://grafana.github.io/helm-charts
 
   # external
 
