@@ -965,3 +965,99 @@ kminion:
 
   tests:
     enabled: false
+
+
+promtail-kafka-to-loki:
+  initContainer:
+    - name: wait-for-loki
+      image: busybox:1.33
+      command:
+        - sh
+        - -c
+        - |
+          until nc -zv ric-loki 3100; do
+            echo waiting for ric-loki;
+            sleep 5;
+          done
+          echo "$(date) ric-loki is ready"
+      securityContext:
+        privileged: true
+  daemonset:
+    # -- Deploys Promtail as a DaemonSet
+    enabled: false
+  deployment:
+    # -- Deploys Promtail as a Deployment
+    enabled: true
+  configmap:
+    # -- If enabled, promtail config will be created as a ConfigMap instead of a secret
+    enabled: true
+  config:
+    # -- Enable Promtail config from Helm chart
+    enabled: true
+    clients:
+      - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100/loki/api/v1/push
+        tenant_id: 1
+        basic_auth:
+          username: root
+          password: root
+    snippets:
+      scrapeConfigs: |
+        - job_name: kafka-to-loki
+          kafka:
+            brokers:
+              - {{ .Release.Name }}-kafka.{{ .Release.Namespace }}:9092
+            topics:
+              - "accelleran.drax.5g.ric.o1.ves"
+            group_id: "promtail-consumer-group"
+            use_incoming_timestamp: true
+            # assign_partitions:
+            #   - 0
+            labels:
+              job: kafka-to-loki
+              app: {{ .Release.Name }}-promtail-kafka-to-loki
+          pipeline_stages:
+            - json:
+                expressions:
+                  domain: event.commonEventHeader.domain
+                  eventName: event.commonEventHeader.eventName
+                  eventId: event.commonEventHeader.eventId
+                  sequence: event.commonEventHeader.sequence
+                  priority: event.commonEventHeader.priority
+                  reportingEntityId: event.commonEventHeader.reportingEntityId
+                  reportingEntityName: event.commonEventHeader.reportingEntityName
+                  sourceId: event.commonEventHeader.sourceId
+                  sourceName: event.commonEventHeader.sourceName
+                  nfVendorName: event.commonEventHeader.nfVendorName
+                  nfNamingCode: event.commonEventHeader.nfNamingCode
+                  nfcNamingCode: event.commonEventHeader.nfcNamingCode
+                  startEpochMicrosec: event.commonEventHeader.startEpochMicrosec
+                  lastEpochMicrosec: event.commonEventHeader.lastEpochMicrosec
+                  timeZoneOffset: event.commonEventHeader.timeZoneOffset
+                  faultFieldsVersion: event.faultFields.faultFieldsVersion
+                  alarmCondition: event.faultFields.alarmCondition
+                  eventSourceType: event.faultFields.eventSourceType
+                  specificProblem: event.faultFields.specificProblem
+                  eventSeverity: event.faultFields.eventSeverity
+                  vfStatus: event.faultFields.vfStatus
+            - labels:
+                domain:
+                eventName:
+                eventId:
+                sequence:
+                priority:
+                reportingEntityId:
+                reportingEntityName:
+                sourceId:
+                sourceName:
+                nfVendorName:
+                nfNamingCode:
+                nfcNamingCode:
+                startEpochMicrosec:
+                lastEpochMicrosec:
+                timeZoneOffset:
+                faultFieldsVersion:
+                alarmCondition:
+                eventSourceType:
+                specificProblem:
+                eventSeverity:
+                vfStatus:
