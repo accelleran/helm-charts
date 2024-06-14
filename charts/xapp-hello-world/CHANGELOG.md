@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.1](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-3.0.0...xapp-hello-world-3.0.1) (2024-06-14)
+
+
+### Bug Fixes
+
+* Change default endpoint for NATS_URL ([#305](https://github.com/accelleran/helm-charts/issues/305)) ([28810ae](https://github.com/accelleran/helm-charts/commit/28810ae47f74a5be015235678901dba8df06fb13))
+* Fix null config warning ([#302](https://github.com/accelleran/helm-charts/issues/302)) ([2f5e0b7](https://github.com/accelleran/helm-charts/commit/2f5e0b7fa91cf595b7d4b239b548ed5c21fb9fcb))
+
 ## [3.0.0](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-2.1.2...xapp-hello-world-3.0.0) (2024-06-05)
 
 
