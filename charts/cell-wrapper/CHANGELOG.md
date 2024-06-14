@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.0.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-4.0.0...cell-wrapper-4.0.1) (2024-06-14)
+
+
+### Bug Fixes
+
+* Add component label to netconf service ([#319](https://github.com/accelleran/helm-charts/issues/319)) ([3b47247](https://github.com/accelleran/helm-charts/commit/3b472473a80611dd1c62fd9af39f1f68858ad688))
+* **deps:** Update helm release common to v0.3.1 ([f0121bd](https://github.com/accelleran/helm-charts/commit/f0121bd9089ea7a3c6b527438ebad672806d861d))
+* **deps:** Update helm release redis to v19.5.3 ([babb22e](https://github.com/accelleran/helm-charts/commit/babb22e555da1e7bc93141bc65c135c21be8a17e))
+
 ## [4.0.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-3.1.0...cell-wrapper-4.0.0) (2024-06-07)
 
 
