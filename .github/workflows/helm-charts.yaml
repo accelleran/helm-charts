@@ -14,7 +14,7 @@ jobs:
     name: Variables
     # This is a work-around to be able to properly use variables.
     # This job should be made a dependency in order to be able to use its outputs.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       is_main_branch: ${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
       is_release_branch: ${{ github.ref_type == 'branch' && startsWith(github.ref_name, 'releases/') }}
@@ -52,7 +52,7 @@ jobs:
     name: Lint Charts
     needs:
       - vars
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -118,7 +118,7 @@ jobs:
     name: Test Charts
     needs:
       - vars
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
@@ -261,7 +261,7 @@ jobs:
       - vars
       - lint-charts
       - test-charts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
