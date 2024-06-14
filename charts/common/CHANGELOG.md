@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/accelleran/helm-charts/compare/common-0.3.0...common-0.3.1) (2024-06-14)
+
+
+### Features
+
+* Add component label ([#318](https://github.com/accelleran/helm-charts/issues/318)) ([d300d88](https://github.com/accelleran/helm-charts/commit/d300d883b0fa36f6e960f348b8360a2179b2f265))
+
 ## [0.3.0](https://github.com/accelleran/helm-charts/compare/common-0.2.3...common-0.3.0) (2024-06-03)
 
 
