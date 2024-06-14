@@ -31,7 +31,7 @@ dependencies:
   version: 2.0.0
 - name: golang-nkafka
   repository: file://charts/golang-nkafka
-  version: 2.0.0
+  version: 2.0.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 8.0.2
@@ -59,5 +59,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 19.5.3
-digest: sha256:165bff9b4249e23d18038a28cdedaea6d18cae95a50cbed4b88f4208e1b908ca
-generated: "2024-06-14T11:38:07.294180274Z"
+digest: sha256:ce3da2732b6f046a2aa737fa6bb3b762a419b1f8490a3fa79c826de726b1bd63
+generated: "2024-06-14T16:26:26.115099235+02:00"
