@@ -65,6 +65,14 @@ resulting in a failure when no (de)serializations took place.
 {{- end -}}
 
 
+{{- define "accelleran.common.component" -}}
+{{- $ := get . "top" | required "The top context needs to be provided to common part of" -}}
+{{- $values := get . "values" | default $.Values -}}
+
+{{- $values.component | default "" -}}
+{{- end -}}
+
+
 {{- define "accelleran.common.partOf" -}}
 {{- $ := get . "top" | required "The top context needs to be provided to common part of" -}}
 
