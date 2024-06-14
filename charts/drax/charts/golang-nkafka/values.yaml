@@ -59,7 +59,7 @@ kafkaInitImage:
 image:
   repository: accelleran/golang-nkafka-5g
   pullPolicy: IfNotPresent
-  tag: "1.3.5_R4.3.8_leffe_CW3.0.1"
+  tag: "1.3.7_cu-5.0.7-maredsous_cw-4.0.0"
 
 imagePullSecrets:
   - name: accelleran-secret
@@ -71,7 +71,8 @@ accelleranLicense:
 command:
   - "/home/nats-kafka"
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
 securityContext:
@@ -82,7 +83,8 @@ securityContext:
   # runAsNonRoot: true
   runAsUser: 0
 
-resources: {}
+resources:
+  {}
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
