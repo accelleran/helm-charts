@@ -176,7 +176,9 @@ jobs:
 
           subnets=$(docker network inspect -f '{{range .IPAM.Config}}{{printf "%s\n" .Subnet}}{{end}}' kind)
           printf "subnets:\n%s\n" "${subnets}"
-          subnet=$(echo "$subnets" | head -n 1)
+          ipv4_subnets=$(echo "$subnets" | grep -E '(([0-9]{1,3})\.){3}([0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])')
+          printf "ipv4_subnets:\n%s\n" "${ipv4_subnets}"
+          subnet=$(echo "$ipv4_subnets" | head -n 1)
           printf "subnet: '%s'\n" "${subnet}"
 
           net_ip=$(echo "$subnet" | cut -d/ -f1)
