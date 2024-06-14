@@ -22,6 +22,9 @@ app.kubernetes.io/instance: {{ include "accelleran.common.instance" . }}
 {{- else -}}
 helm.sh/chart: {{ include "accelleran.common.chart" . }}
 {{ include "accelleran.common.selectorLabels" . }}
+{{- with (include "accelleran.common.component" .) }}
+app.kubernetes.io/component: {{ . | quote }}
+{{- end }}
 app.kubernetes.io/version: {{ include "accelleran.common.appVersion" . | quote }}
 {{- with (include "accelleran.common.partOf" .) }}
 app.kubernetes.io/part-of: {{ . | quote }}
