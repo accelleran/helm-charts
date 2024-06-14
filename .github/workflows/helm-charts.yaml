@@ -174,9 +174,17 @@ jobs:
             --selector=app=metallb \
             --timeout=90s
 
-          subnet=$(docker network inspect -f '{{range .IPAM.Config}}{{printf "%s\n" .Subnet}}{{end}}' kind | head -n 1)
+          subnets=$(docker network inspect -f '{{range .IPAM.Config}}{{printf "%s\n" .Subnet}}{{end}}' kind)
+          printf "subnets:\n%s\n" "${subnets}"
+          ipv4_subnets=$(echo "$subnets" | grep -E '(([0-9]{1,3})\.){3}([0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])')
+          printf "ipv4_subnets:\n%s\n" "${ipv4_subnets}"
+          subnet=$(echo "$ipv4_subnets" | head -n 1)
+          printf "subnet: '%s'\n" "${subnet}"
+
           net_ip=$(echo "$subnet" | cut -d/ -f1)
+          printf "net_ip: '%s'\n" "${net_ip}"
           cidr=$(echo "$subnet" | cut -d/ -f2)
+          printf "cidr: '%s'\n" "${cidr}"
           if [ $cidr -gt 24 ]; then
             echo "CIDR of $subnet needs to be 24 or smaller" 1>&2
             exit 1
@@ -184,6 +192,7 @@ jobs:
 
           net_ip_prefix=$(echo $net_ip | cut -d. -f 1-3)
           ip_range=$net_ip_prefix.200-$net_ip_prefix.250
+          printf "ip_range: '%s'\n" "${ip_range}"
 
           cat <<EOF | kubectl apply -f -
           apiVersion: metallb.io/v1beta1
