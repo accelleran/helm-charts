@@ -108,6 +108,8 @@ netconf:
   nameOverride: "netconf"
   fullnameOverride: ""
 
+  component: "netconf"
+
   containerName: "netconf"
 
   image:
