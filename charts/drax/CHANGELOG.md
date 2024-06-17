@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.1.1](https://github.com/accelleran/helm-charts/compare/drax-7.1.0...drax-7.1.1) (2024-06-17)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release cell-wrapper to v3.1.1 ([e8e32af](https://github.com/accelleran/helm-charts/commit/e8e32af4b35a46e2b067cbe6e23d81e1fca49c0c))
+
 ## [7.1.0](https://github.com/accelleran/helm-charts/compare/drax-7.0.1...drax-7.1.0) (2024-03-22)
 
 
