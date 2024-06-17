@@ -2,7 +2,7 @@
   "charts/common": "0.2.0",
   "charts/cell-wrapper": "3.1.0",
   "charts/cell-wrapper-config": "0.2.3",
-  "charts/cu-cp": "6.0.0",
+  "charts/cu-cp": "7.0.0",
   "charts/cu-up": "6.0.0",
   "charts/drax": "6.5.3"
 }
