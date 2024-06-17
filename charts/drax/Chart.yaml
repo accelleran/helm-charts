@@ -32,7 +32,7 @@ dependencies:
     repository: file://charts/config-api
   - name: cell-wrapper
     condition: cell-wrapper.enabled
-    version: 3.1.0
+    version: 3.1.1
     repository: https://accelleran.github.io/helm-charts/
 
   # ric
