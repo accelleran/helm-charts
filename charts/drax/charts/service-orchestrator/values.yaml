@@ -15,7 +15,7 @@ config:
   prefix5g: "acc-5g"
   cucpRepoName: "acc-5g-cu-cp"
   cuupRepoName: "acc-5g-cu-up"
-  cuRepoUrl: "https://accelleran.github.io/helm-charts-ng/"
+  cuRepoUrl: "https://accelleran.github.io/helm-charts/"
 
 nameOverride: ""
 fullnameOverride: ""

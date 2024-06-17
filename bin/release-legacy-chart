@@ -60,7 +60,7 @@ function create_release() {
         fatal "${tag} is not present in the provided legacy index file"
     fi
 
-    yq -i ".urls[0] = \"https://github.com/accelleran/helm-charts-ng/releases/download/${tag}/${file_name}\"" "/tmp/github/${tag}/index.yaml"
+    yq -i ".urls[0] = \"https://github.com/accelleran/helm-charts/releases/download/${tag}/${file_name}\"" "/tmp/github/${tag}/index.yaml"
     yq -i ".entries.${chart} += [load(\"/tmp/github/${tag}/index.yaml\")]" "${GIT_ROOT}/index.yaml"
 
     echo "Index file updated"
@@ -73,7 +73,7 @@ function create_release() {
             --header 'authorization: Bearer ${GITHUB_TOKEN}' \
             --header 'content-type: application/json' \
             --data '{\"tag_name\": \"${tag}\", \"name\": \"${tag}\", \"body\": \"Legacy chart release\"}' \
-            https://api.github.com/repos/accelleran/helm-charts-ng/releases"
+            https://api.github.com/repos/accelleran/helm-charts/releases"
         http_code=$(eval "${command}")
         if [ "${http_code}" != "201" ]; then
             fatal "Release ${tag} failed with code '${http_code}'"

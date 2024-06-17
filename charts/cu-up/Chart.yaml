@@ -8,7 +8,7 @@ appVersion: "R4.3.8_leffe"
 dependencies:
   - name: common
     version: 0.2.0
-    repository: https://accelleran.github.io/helm-charts-ng/
+    repository: https://accelleran.github.io/helm-charts/
   - name: nats
     condition: nats.enabled
     version: 1.1.9
