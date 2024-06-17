@@ -1,5 +1,28 @@
 # Changelog
 
+## [5.0.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-4.0.2...cell-wrapper-5.0.0) (2024-06-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update cw to 4.0.0 ([#244](https://github.com/accelleran/helm-charts/issues/244))
+* disable nats and redis by default ([#279](https://github.com/accelleran/helm-charts/issues/279))
+* **deps:** update cell-wrapper to common chart 0.3.0 ([#247](https://github.com/accelleran/helm-charts/issues/247))
+* **deps:** update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173))
+
+### Bug Fixes
+
+* Add component label to netconf service ([#319](https://github.com/accelleran/helm-charts/issues/319)) ([3b47247](https://github.com/accelleran/helm-charts/commit/3b472473a80611dd1c62fd9af39f1f68858ad688))
+* **deps:** Update accelleran/cw-netconf docker tag to v4.0.1 ([31c5100](https://github.com/accelleran/helm-charts/commit/31c5100fd35091dd6878ebf582a35c89bbd2067b))
+* **deps:** Update cell-wrapper to common chart 0.3.0 ([#247](https://github.com/accelleran/helm-charts/issues/247)) ([005c7cc](https://github.com/accelleran/helm-charts/commit/005c7cc36875e089deb30aa87d67cbe2e890b5f0))
+* **deps:** Update cw to 4.0.0 ([#244](https://github.com/accelleran/helm-charts/issues/244)) ([dd79122](https://github.com/accelleran/helm-charts/commit/dd7912204444efa625629744326dd0b568456396))
+* **deps:** Update helm release common to v0.3.1 ([f0121bd](https://github.com/accelleran/helm-charts/commit/f0121bd9089ea7a3c6b527438ebad672806d861d))
+* **deps:** Update helm release nats to v1.1.12 ([da5f102](https://github.com/accelleran/helm-charts/commit/da5f1027547c83f5c68f56ce524218db3f2b35c0))
+* **deps:** Update helm release redis to v19 ([#173](https://github.com/accelleran/helm-charts/issues/173)) ([979ae1e](https://github.com/accelleran/helm-charts/commit/979ae1e51d665263c457c7a9ecc30e64ac001843))
+* **deps:** Update helm release redis to v19.5.2 ([f649761](https://github.com/accelleran/helm-charts/commit/f6497616674d6f113d3bab8c7d10bf19e47db602))
+* **deps:** Update helm release redis to v19.5.3 ([babb22e](https://github.com/accelleran/helm-charts/commit/babb22e555da1e7bc93141bc65c135c21be8a17e))
+* Disable nats and redis by default ([#279](https://github.com/accelleran/helm-charts/issues/279)) ([dd5587d](https://github.com/accelleran/helm-charts/commit/dd5587dcc7c3a92be86afe931908952b2392c09b))
+
 ## [4.0.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-4.0.1...cell-wrapper-4.0.2) (2024-06-17)
 
 
