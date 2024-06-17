@@ -2,7 +2,7 @@ apiVersion: v2
 name: cu-cp
 description: Accelleran 5G CU-CP Components
 type: application
-version: 7.0.0-rc.1
+version: 7.0.0
 # renovate: image=accelleran/cucp-netconf
 appVersion: "R4.3.8_leffe"
 dependencies:
