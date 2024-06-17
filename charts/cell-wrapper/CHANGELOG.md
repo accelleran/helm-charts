@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-3.1.0...cell-wrapper-3.1.1) (2024-06-17)
+
+
+### Bug Fixes
+
+* **deps:** Bump app version to 3.1.1 ([0b10048](https://github.com/accelleran/helm-charts/commit/0b1004853a8318d75f97bdc86647bda1e70ce579))
+
 ## [3.1.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-3.0.3...cell-wrapper-3.1.0) (2024-02-26)
 
 
