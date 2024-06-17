@@ -7033,6 +7033,28 @@ entries:
     version: 0.1.0
   cell-wrapper:
   - apiVersion: v2
+    appVersion: 4.0.1
+    created: "2024-06-17T09:07:30.271729488Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.1
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      version: 1.1.12
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami/
+      version: 19.5.3
+    description: Accelleran's cell-wrapper helm chart
+    digest: 67111b5ea4b4f0dc023d3165cdc226fed252e7f0fbce8d3ad81d4e597f67faa5
+    name: cell-wrapper
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cell-wrapper-4.0.2/cell-wrapper-4.0.2.tgz
+    version: 4.0.2
+  - apiVersion: v2
     appVersion: 4.0.0
     created: "2024-06-14T15:45:42.714654106Z"
     dependencies:
@@ -10274,6 +10296,28 @@ entries:
     - https://github.com/accelleran/helm-charts/releases/download/cu-cp-7.0.0-rc.0/cu-cp-7.0.0-rc.0.tgz
     version: 7.0.0-rc.0
   cu-up:
+  - apiVersion: v2
+    appVersion: 5.0.7
+    created: "2024-06-17T09:07:30.442550897Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.1
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      version: 1.1.12
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami/
+      version: 19.5.3
+    description: Accelleran 5G CU-UP Components
+    digest: d56a8b0e75515c1bb86c1330071731e1afb19fe0a5546d9d5d829bb0dc22dd94
+    name: cu-up
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cu-up-8.0.2/cu-up-8.0.2.tgz
+    version: 8.0.2
   - apiVersion: v2
     appVersion: 5.0.7
     created: "2024-06-10T08:42:51.671372803Z"
@@ -32738,4 +32782,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-06-17T07:33:31.935310139Z"
+generated: "2024-06-17T09:07:30.648482352Z"
