@@ -82,7 +82,7 @@ dependencies:
     repository: https://helm.vector.dev
   - name: kminion
     condition: kminion.enabled
-    version: 0.13.0
+    version: 0.14.0
     repository: https://charts.redpanda.com
 
   # infrastructure
