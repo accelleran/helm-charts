@@ -34,7 +34,7 @@ dependencies:
   version: 2.0.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.2.0
+  version: 8.2.1
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
   version: 25.22.0
@@ -59,5 +59,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 19.6.0
-digest: sha256:6d0966f0c90e2a5b721fe09b5c295dc5c274b0b923350b0f6f099a08a35b9c5a
-generated: "2024-06-27T22:46:39.207041358Z"
+digest: sha256:790ba2c61bb9473d328156d9a91b3edccd9afff7bf3a61bd789ac9ed394b1070
+generated: "2024-07-01T09:56:53.661768593Z"
