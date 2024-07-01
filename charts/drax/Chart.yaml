@@ -88,7 +88,7 @@ dependencies:
   # infrastructure
   - name: kafka
     condition: kafka.enabled
-    version: 29.3.4
+    version: 29.3.5
     repository: https://charts.bitnami.com/bitnami/
   - name: nats
     condition: nats.enabled
