@@ -4,7 +4,7 @@
   "charts/cell-wrapper-config": "0.3.0",
   "charts/cu-cp": "8.0.2",
   "charts/cu-up": "8.0.2",
-  "charts/drax": "8.0.1",
+  "charts/drax": "8.0.2",
   "charts/du-metrics-server": "0.2.1",
   "charts/xapp-hello-world": "3.0.1"
 }
