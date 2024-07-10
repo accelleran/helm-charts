@@ -10,6 +10,13 @@ top:
   {{ $ | toYaml | nindent 2 }}
 
 name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
+{{- $config := .Values.config }}
+{{- $instance := include "accelleran.common.instance" (dict "top" .) }}
+
+{{- if and (hasKey $config "serviceMonitorUrl") (eq ($config.serviceMonitorUrl | default "") "") }}
+  {{- $config = merge $config (dict "serviceMonitorUrl" (printf "http://%s-service-monitor:80" $instance)) }}
+{{- end }}
+
 
 data:
   config.json: |-

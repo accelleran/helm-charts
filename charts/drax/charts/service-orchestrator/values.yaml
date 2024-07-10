@@ -1,19 +1,21 @@
 global: {}
 
 kubeIp: "10.55.1.2"
-default5gVersion: "6"
+default5gVersion: "8"
 # renovate: repository=https://accelleran.github.io/helm-charts chart=xapp-hello-world
 defaultDevEnvVersion: "3"
 
 config:
   namespaces:
-    - ""  # This field is unused
+    - "default"
   uploadFolder: "uploads"
+  serviceMonitorUrl: ""
   uploadFolderSubDirectories:
     - "cu-cp"
     - "cu-up"
     - "xapp"
-  prefix5g: "acc-5g"
+  prefix5g: "acc"
+  prefix5gOld: "acc-5g"
   cucpRepoName: "acc-5g-cu-cp"
   cuupRepoName: "acc-5g-cu-up"
   cuRepoUrl: "https://accelleran.github.io/helm-charts/"
