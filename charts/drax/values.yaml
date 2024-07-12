@@ -696,8 +696,10 @@ loki-stack:
         # Must be a multiple of 168h
         retention_period: 672h
       limits_config:
-        max_query_lookback: 672h # Avoid querying of data beyond the retention period
-        retention_period: 672h # Applied globally for all tenants unless overridden
+        # Avoid querying of data beyond the retention period
+        max_query_lookback: 672h
+        # Applied globally for all tenants unless overridden
+        retention_period: 672h
         max_entries_limit_per_query: 10000
         per_tenant_override_config: /home/loki/tenant_override_config.yaml
     extraContainers:
