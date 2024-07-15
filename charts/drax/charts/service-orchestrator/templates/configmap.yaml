@@ -6,10 +6,6 @@
 {{- define "accelleran.service-orchestrator.configMap.args" -}}
 {{- $ := . -}}
 
-top:
-  {{ $ | toYaml | nindent 2 }}
-
-name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
 {{- $config := .Values.config }}
 {{- $instance := include "accelleran.common.instance" (dict "top" .) }}
 
@@ -17,6 +13,10 @@ name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
   {{- $config = merge $config (dict "serviceMonitorUrl" (printf "http://%s-service-monitor:80" $instance)) }}
 {{- end }}
 
+top:
+  {{ $ | toYaml | nindent 2 }}
+
+name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
 
 data:
   config.json: |-
