@@ -13,7 +13,7 @@ name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
 {{- $config := .Values.config }}
 {{- $instance := include "accelleran.common.instance" (dict "top" .) }}
 
-{{- if and (hasKey $config "serviceMonitorUrl") (eq ($config.serviceMonitorUrl | default "") "") }}
+{{- if empty $config.serviceMonitorUrl }}
   {{- $config = merge $config (dict "serviceMonitorUrl" (printf "http://%s-service-monitor:80" $instance)) }}
 {{- end }}
 
