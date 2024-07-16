@@ -28,7 +28,7 @@ jobs:
       lib_chart_names: ${{ steps.list-charts.outputs.lib_chart_names }}
       chart_names_to_ignore_for_test: ${{ steps.list-charts.outputs.chart_names_to_ignore_for_test }}
       # renovate: github_repository=metallb/metallb versioning=semver
-      metallb_version: v0.14.6
+      metallb_version: v0.14.7
       # renovate: github_repository=halkeye/helm-repo-html versioning=semver
       helm_repo_html_version: v0.2.1
     timeout-minutes: 1
