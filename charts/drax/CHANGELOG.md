@@ -1,5 +1,16 @@
 # Changelog
 
+## [8.0.3](https://github.com/accelleran/helm-charts/compare/drax-8.0.2...drax-8.0.3) (2024-07-18)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/dash-front-back-end docker tag to v5.4.1 ([e59b6be](https://github.com/accelleran/helm-charts/commit/e59b6be6ee960136328d2c1554ec4c2541b0d4a0))
+* **deps:** Update helm release grafana to v8.3.5 ([fc7b5dd](https://github.com/accelleran/helm-charts/commit/fc7b5dd1d6a4c55e035b4c598ea38da6c97da0ce))
+* **deps:** Update helm release kafka to v29.3.9 ([700c268](https://github.com/accelleran/helm-charts/commit/700c26854077020665579ff40082c68601df5529))
+* **deps:** Update helm release prometheus to v25.24.1 ([92df78b](https://github.com/accelleran/helm-charts/commit/92df78b5f7eb02992e346e91c05485a67d090a52))
+* **deps:** Update helm release redis to v19.6.2 ([af43807](https://github.com/accelleran/helm-charts/commit/af438077cb1a12297103ab3f96eba9dd868558e7))
+
 ## [8.0.2](https://github.com/accelleran/helm-charts/compare/drax-8.0.1...drax-8.0.2) (2024-07-16)
 
 
