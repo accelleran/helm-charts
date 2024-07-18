@@ -77,9 +77,6 @@ dashboard:
       http:
         port: 5000
         nodePort: 31315
-      websocket:
-        port: 5001
-        nodePort: 31316
 
 
 network-state-monitor:

@@ -102,8 +102,3 @@ service:
       targetPort: 5000
       nodePort: 31315
       protocol: TCP
-    websocket:
-      port: 5001
-      targetPort: 5001
-      nodePort: 31316
-      protocol: TCP
