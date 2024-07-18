@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/accelleran/helm-charts/compare/common-0.3.1...common-0.3.2) (2024-07-18)
+
+
+### Features
+
+* Add ingress templates ([#372](https://github.com/accelleran/helm-charts/issues/372)) ([bfde558](https://github.com/accelleran/helm-charts/commit/bfde5584c16286d06ed552abbe8c444bda451ace))
+
 ## [0.3.1](https://github.com/accelleran/helm-charts/compare/common-0.3.0...common-0.3.1) (2024-06-14)
 
 
