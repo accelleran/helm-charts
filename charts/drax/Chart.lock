@@ -1,7 +1,7 @@
 dependencies:
 - name: common
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.3.1
+  version: 0.3.2
 - name: dashboard
   repository: file://charts/dashboard
   version: 6.0.0
@@ -59,5 +59,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 19.6.2
-digest: sha256:6effc143a6dfd998256a86194a15c7d2bdb26a53eda358d016a0519583c558a3
-generated: "2024-07-18T08:47:40.66028537Z"
+digest: sha256:a739abc5faa0c1577331a8487ae3005b81c39fc2dd7e1e97ce794bce88762099
+generated: "2024-07-18T11:48:23.963067361Z"
