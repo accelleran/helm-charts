@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/accelleran/helm-charts/compare/common-0.3.2...common-0.3.3) (2024-07-22)
+
+
+### Bug Fixes
+
+* Add option to not set ingress tls secret name or hosts ([#416](https://github.com/accelleran/helm-charts/issues/416)) ([ef7b18e](https://github.com/accelleran/helm-charts/commit/ef7b18e0704f4fab9a3619b1481e729bacc62c97))
+
 ## [0.3.2](https://github.com/accelleran/helm-charts/compare/common-0.3.1...common-0.3.2) (2024-07-18)
 
 
