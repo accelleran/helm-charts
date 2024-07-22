@@ -19,11 +19,16 @@ spec:
   {{- if ($values.ingress).tls }}
   tls:
     {{- range ($values.ingress).tls }}
-    - hosts:
-        {{- range .hosts }}
+    - 
+      {{- with .hosts }}
+      hosts:
+        {{- range . }}
         - {{ . | quote }}
         {{- end }}
-      secretName: {{ .secretName }}
+      {{- end }}
+      {{- with .secretName }}
+      secretName: {{ . | quote }}
+      {{- end }}
     {{- end }}
   {{- end }}
   rules:
