@@ -1,0 +1,4 @@
+{{- include
+      "accelleran.common.ingress"
+      (dict "top" $)
+-}}
