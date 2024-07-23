@@ -25,7 +25,7 @@ jobs:
       charts_to_test: ${{ steps.list-charts.outputs.charts_to_test }}
       charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
       # renovate: github_repository=metallb/metallb versioning=semver
-      metallb_version: v0.14.7
+      metallb_version: v0.14.8
       # renovate: github_repository=halkeye/helm-repo-html versioning=semver
       helm_repo_html_version: v0.2.1
     timeout-minutes: 1
