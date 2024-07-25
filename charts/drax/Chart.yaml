@@ -84,6 +84,11 @@ dependencies:
     condition: kminion.enabled
     version: 0.14.0
     repository: https://charts.redpanda.com
+  - name: influxdb2
+    condition: influxdb2.enabled
+    version: 2.1.2
+    repository: https://helm.influxdata.com/
+
 
   # infrastructure
   - name: kafka
