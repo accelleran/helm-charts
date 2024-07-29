@@ -1,0 +1,31 @@
+{{- include
+      "accelleran.common.deployment"
+      (fromYaml (include "accelleran.telemetry-collector.deployment.args" $))
+-}}
+
+{{- define "accelleran.telemetry-collector.deployment.args" -}}
+{{- $ := . -}}
+{{- $fullname := include "accelleran.common.fullname" (dict "top" $) | trunc 40 -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+
+volumes:
+- name: {{ $fullname }}-config
+  configMap:
+    name: {{ $fullname }}-config
+
+
+volumeMounts:
+- name: {{ $fullname }}-config
+  mountPath: /app/config.yaml
+  subPath: "config.yaml"
+
+env:
+  - name: INTERNAL_INFLUXDB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: "{{ tpl $.Values.influxdbAuthSecret $ }}"
+        key: admin-token
+
+{{- end -}}

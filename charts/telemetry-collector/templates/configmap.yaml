@@ -1,0 +1,26 @@
+{{- include "accelleran.common.configMap" (fromYaml (include "accelleran.telemetry-collector.configMap.args" .)) -}}
+
+{{- define "accelleran.telemetry-collector.configMap.args" -}}
+{{- $ := . -}}
+
+top:
+  {{ tpl ($ | toYaml) $ | nindent 2 }}
+
+name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
+
+data:
+  config.yaml: |-
+    {{- if and $.Values.config.internal.influxDB (tpl $.Values.config.internal.influxDB.url $) -}}
+      {{- fail "The influxdb URL needs to be provided (config.internal.influxDB.url)" -}}
+    {{- end -}}
+    {{- range $index, $pipeline := $.Values.config.pipelines -}}
+      {{- if and $pipeline.publishers $pipeline.publishers.kafkaPublisher (not $pipeline.publishers.kafkaPublisher.topic) -}}
+        {{ fail (printf "When specifying a kafka publisher also a kafka topic needs to be provided (config.pipelines[%d].publishers.kafkaPublisher.topic" $index) }}
+      {{- end -}}
+      {{- if and $pipeline.publishers $pipeline.publishers.influxPublisher (not $pipeline.publishers.influxPublisher.buckets) -}}
+        {{ fail (printf "When specifying an influx publisher also buckets need to be provided (config.pipelines[%d].publishers.influxPublisher.buckets" $index) }}
+      {{- end -}}
+    {{- end -}}
+    {{ tpl ($.Values.config | toYaml) $ | nindent 4 }}
+        
+{{- end -}}
