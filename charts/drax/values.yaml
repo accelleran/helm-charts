@@ -704,6 +704,14 @@ grafana:
       secretKeyRef:
         name: "{{ $.Release.Name }}-du-influxdb-auth"
         key: admin-token
+    LOKI_LOGS_BASIC_AUTH_PASSWORD:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-loki-gateway-auth"
+        key: grafana-logs
+    LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-loki-gateway-auth"
+        key: grafana-notifications
 
     INFLUXDB2_ADMIN_TOKEN:
       secretKeyRef:
@@ -723,9 +731,23 @@ grafana:
             timeInterval: 2s
         - access: proxy
           isDefault: false
-          name: Loki
+          name: Loki-Logs
           type: loki
-          url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100
+          url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80
+          uid: P8E80F9AEF21F6940
+          basicAuth: true
+          basicAuthUser: grafana-logs
+          secureJsonData:
+            basicAuthPassword: ${LOKI_LOGS_BASIC_AUTH_PASSWORD}
+        - access: proxy
+          isDefault: false
+          name: Loki-Notifications
+          type: loki
+          url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80
+          basicAuth: true
+          basicAuthUser: grafana-notifications
+          secureJsonData:
+            basicAuthPassword: ${LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD}
         - access: proxy
           isDefault: false
           name: InfluxDB-4G
@@ -871,35 +893,247 @@ grafana:
     nats-dashboard: "{{ .Release.Name }}-grafana-nats-dashboard"
 
 
-loki-stack:
+loki:
   enabled: true
-  promtail:
-    config:
-      clients:
-        - url: http://{{ .Release.Name }}-loki.{{ .Release.Namespace }}:3100/loki/api/v1/push
-    nodeSelector: {}
+
   loki:
-    enabled: true
-    podLabels:
-      drax/role: ric
-      drax/component-name: loki
-    serviceLabels:
-      drax/role: ric
-      drax/component-name: loki
-    nodeSelector: {}
-    service:
-      type: NodePort
-      nodePort: 31005
-      port: 3100
-      targetPort: http-metrics
-    config:
+    overrideConfiguration:
       table_manager:
-        # Retention polocy for logs in Loki
         retention_deletes_enabled: true
-        # Must be a multiple of 168h
-        retention_period: 672h
+        retention_period: 672h  # 28d
       limits_config:
+        max_query_lookback: 672h  # 28 days
+        retention_period: 672h  # 28d
         max_entries_limit_per_query: 10000
+      compactor:
+        retention_enabled: true
+      runtime_config:
+        file: "/runtime-config/tenants.yaml"
+
+  compactor:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  indexGateway:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  distributor:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  ingester:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  querier:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  queryFrontend:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  queryScheduler:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  ruler:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  tableManager:
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  gateway:
+    enabled: false
+
+  promtail:
+    enabled: false
+
+
+loki-gateway:
+  enabled: true
+
+  auth:
+    enabled: true
+    preventSecretUninstall: true
+    users:
+      - username: "promtail-logs"
+        password: ""
+        organization: "logs"
+      - username: "grafana-logs"
+        password: ""
+        organization: "logs"
+      - username: "promtail-notifications"
+        password: ""
+        organization: "notifications"
+      - username: "grafana-notifications"
+        password: ""
+        organization: "notifications"
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+
+promtail-logs:
+  enabled: true
+
+  nameOverride: "promtail-logs"
+
+  config:
+    enabled: true
+    clients:
+      - url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80/loki/api/v1/push
+        tenant_id: logs
+        basic_auth:
+          username: promtail-logs
+          password_file: /etc/promtail/secrets/password
+
+  extraVolumeMounts:
+    - name: loki-gateway-password
+      mountPath: /etc/promtail/secrets
+
+  extraVolumes:
+    - name: loki-gateway-password
+      secret:
+        secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+        items:
+          - key: promtail-logs
+            path: password
+
+
+promtail-notifications:
+  enabled: true
+
+  nameOverride: "promtail-notifications"
+
+  daemonset:
+    enabled: false
+  deployment:
+    enabled: true
+
+  config:
+    enabled: true
+    clients:
+      - url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80/loki/api/v1/push
+        tenant_id: notifications
+        basic_auth:
+          username: promtail-notifications
+          password_file: /etc/promtail/secrets/password
+    snippets:
+      scrapeConfigs: |
+        - job_name: kafka-notifications
+          kafka:
+            brokers:
+              - {{ .Release.Name }}-kafka.{{ .Release.Namespace }}:9092
+            topics:
+              - "accelleran.drax.5g.ric.o1.ves"
+            use_incoming_timestamp: true
+            labels:
+              job: kafka-notifications
+              app: {{ .Release.Name }}-promtail-notifications
+          pipeline_stages:
+            - json:
+                expressions:
+                  domain: event.commonEventHeader.domain
+                  eventId: event.commonEventHeader.eventId
+                  eventName: event.commonEventHeader.eventName
+                  lastEpochMicrosec: event.commonEventHeader.lastEpochMicrosec
+                  priority: event.commonEventHeader.priority
+                  reportingEntityName: event.commonEventHeader.reportingEntityName
+                  sequence: event.commonEventHeader.sequence
+                  sourceName: event.commonEventHeader.sourceName
+                  startEpochMicrosec: event.commonEventHeader.startEpochMicrosec
+                  stndDefinedNamespace: event.commonEventHeader.stndDefinedNamespace
+                  version: event.commonEventHeader.version
+                  timeZoneOffset: event.commonEventHeader.timeZoneOffset
+                  vesEventListenerVersion: event.commonEventHeader.vesEventListenerVersion
+            - labels:
+                domain:
+                eventId:
+                eventName:
+                lastEpochMicrosec:
+                priority:
+                reportingEntityName:
+                sequence:
+                sourceName:
+                startEpochMicrosec:
+                stndDefinedNamespace:
+                version:
+                timeZoneOffset:
+                vesEventListenerVersion:
+ 
+  extraVolumeMounts:
+    - name: loki-gateway-password
+      mountPath: /etc/promtail/secrets
+
+  extraVolumes:
+    - name: loki-gateway-password
+      secret:
+        secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+        items:
+          - key: promtail-notifications
+            path: password
 
 
 influxdb:
