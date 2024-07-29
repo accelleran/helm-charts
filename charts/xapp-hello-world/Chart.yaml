@@ -4,7 +4,7 @@ description: A Helm chart for Accelleran dRAX xApp
 type: application
 version: 3.0.2
 # renovate: image=accelleran/xapp-framework-package
-appVersion: 3.0.1
+appVersion: 3.0.2
 dependencies:
   - name: xapp-redis
     condition: xapp-redis.enabled
