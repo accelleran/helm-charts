@@ -32931,6 +32931,21 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/ric-1.0.0/ric-1.0.0.tgz
     version: 1.0.0
+  telemetry-collector:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2024-07-29T17:40:33.21178344Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.1
+    description: A Helm chart for the Telemetry Collector
+    digest: 873396dcd824f60aed04aef72c4455b0a686038303a4da62e13ae75f7cd49780
+    name: telemetry-collector
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/telemetry-collector-1.0.0/telemetry-collector-1.0.0.tgz
+    version: 1.0.0
   xapp-hello-world:
   - apiVersion: v2
     appVersion: 3.0.1
@@ -33109,4 +33124,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-07-22T17:45:50.957570372Z"
+generated: "2024-07-29T17:40:33.335514087Z"
