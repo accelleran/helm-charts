@@ -76,20 +76,30 @@ dependencies:
   - name: grafana-loki
     alias: loki
     condition: loki.enabled
+    tags:
+      - logs
+      - notifications
     version: 4.6.7
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-gateway
     condition: loki-gateway.enabled
+    tags:
+      - logs
+      - notifications
     version: 0.1.0
     repository: https://accelleran.github.io/helm-charts/
   - name: promtail
     alias: promtail-logs
     condition: promtail-logs.enabled
+    tags:
+      - logs
     version: 6.17.0
     repository: https://accelleran.github.io/helm-charts/
   - name: promtail
     alias: promtail-notifications
     condition: promtail-notifications.enabled
+    tags:
+      - notifications
     version: 6.17.0
     repository: https://accelleran.github.io/helm-charts/
   - name: influxdb
