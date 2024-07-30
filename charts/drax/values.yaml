@@ -595,6 +595,11 @@ grafana:
         name: "{{ $.Release.Name }}-du-influxdb-auth"
         key: admin-token
 
+    INFLUXDB2_ADMIN_TOKEN:
+      secretKeyRef:
+        name: "drax-influxdb2-auth"
+        key: admin-token
+
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -640,6 +645,18 @@ grafana:
           uid: JOSE3g9KVz
           secureJsonData:
             token: ${DU_INFLUXDB_ADMIN_TOKEN}
+          jsonData:
+            version: Flux
+            organization: accelleran
+            defaultBucket: default
+            tlsSkipVerify: true
+        - name: InfluxDB2
+          type: influxdb
+          access: proxy
+          url: "http://{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
+          uid: ddswjfzs92bk0b
+          secureJsonData:
+            token: ${INFLUXDB2_ADMIN_TOKEN}
           jsonData:
             version: Flux
             organization: accelleran
@@ -818,6 +835,46 @@ influxdb:
       init_5g.iql: |+
         CREATE DATABASE "db_5G" WITH DURATION 5d REPLICATION 1 NAME "rp_5d_5G"
 
+
+influxdb2:
+  enabled: true
+
+  podLabels:
+    drax/role: ric
+    drax/component-name: influxdb2
+
+  adminUser:
+    organization: "accelleran"
+    bucket: "default"
+    retention_policy: "0s"
+    user: "admin"
+    password: ""
+    token: ""
+    existingSecret: drax-influxdb2-auth
+
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 2Gi
+
+  service:
+    type: ClusterIP
+    nodePorts:
+      http: ""
+
+  initScripts:
+    enabled: true
+    scripts:
+      init.sh: |+
+        #!/bin/bash
+        influx bucket create -n rrc_measurements -o accelleran -r 1w
+        influx bucket create -n rrc_connection_metrics -o accelleran -r 1w
+        influx bucket create -n handover_and_mobility_metrics -o accelleran -r 1w
+        influx bucket create -n pdu_session_management_metrics -o accelleran -r 1w
+        influx bucket create -n radio_resource_utilization_metrics -o accelleran -r 1w
+        influx bucket create -n throughput_metrics -o accelleran -r 1w
+        influx bucket create -n du_ue_measurements -o accelleran -r 1w
+        influx bucket create -n du_rlc_measurements -o accelleran -r 1w
 
 vector:
   nameOverride: ""
