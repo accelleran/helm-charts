@@ -37,6 +37,11 @@ dependencies:
     condition: du-metrics-server.enabled
     version: 0.2.1
     repository: https://accelleran.github.io/helm-charts/
+  - name: telemetry-collector
+    alias: telemetry-collector
+    condition: telemetry-collector.enabled
+    version: 1.0.1
+    repository: https://accelleran.github.io/helm-charts/
 
   # ric
   - name: e2-t
@@ -88,7 +93,6 @@ dependencies:
     condition: influxdb2.enabled
     version: 2.1.2
     repository: https://helm.influxdata.com/
-
 
   # infrastructure
   - name: kafka
