@@ -10,7 +10,7 @@ name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
 
 data:
   config.yaml: |-
-    {{- if and $.Values.config.internal.influxDB (tpl $.Values.config.internal.influxDB.url $) -}}
+    {{- if not (and $.Values.config.internal.influxDB (tpl $.Values.config.internal.influxDB.url $)) -}}
       {{- fail "The influxdb URL needs to be provided (config.internal.influxDB.url)" -}}
     {{- end -}}
     {{- range $index, $pipeline := $.Values.config.pipelines -}}
