@@ -1,0 +1,61 @@
+{{- if $.Values.notify.enabled -}}
+{{-
+  include
+    "accelleran.common.job"
+    (include "accelleran.drax.notify.job.args" . | fromYaml)
+-}}
+{{- end -}}
+
+
+{{- define "accelleran.drax.notify.job.args" -}}
+{{- $ := . -}}
+{{- $values := $.Values.notify -}}
+
+{{- $bootstrapConfigMapName := include "accelleran.common.bootstrap.configMapName" (dict "top" $ "values" $values) -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ (merge
+      (deepCopy $values)
+      (include "accelleran.drax.notify.job.args.command" $ | fromYaml)
+    ) | toYaml | nindent 2 }}
+
+name: {{ include "accelleran.common.fullname" (dict "top" $  "values" $values) }}-notify
+
+initContainers:
+- {{ fromYaml (include "accelleran.common.init.kafka" (dict "top" $ "values" $values)) | toYaml | nindent 2 }}
+
+env:
+  - name: KAFKA_HOSTNAME
+    valueFrom:
+      configMapKeyRef:
+        name: {{ $bootstrapConfigMapName | quote }}
+        key: KAFKA_HOSTNAME
+  - name: KAFKA_PORT
+    valueFrom:
+      configMapKeyRef:
+        name: {{ $bootstrapConfigMapName | quote }}
+        key: KAFKA_PORT
+
+volumeMounts:
+  - name: notify
+    mountPath: /notify.py
+    subPath: notify.py
+    readOnly: true
+
+volumes:
+  - name: notify
+    configMap:
+      name: {{ include "accelleran.common.fullname" (dict "top" $  "values" $values) }}-notify
+{{- end -}} 
+
+
+{{- define "accelleran.drax.notify.job.args.command" -}}
+command:
+  - "/bin/sh"
+  - "-c"
+  - |
+    python3 -m pip install confluent-kafka
+    python3 /notify.py
+{{- end -}}
