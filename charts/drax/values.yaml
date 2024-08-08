@@ -1126,7 +1126,33 @@ promtail-notifications:
                 version:
                 timeZoneOffset:
                 vesEventListenerVersion:
- 
+
+  initContainer:
+    - name: check-kafka
+      # renovate:
+      image: accelleran/acc-generic-img:0.8.0
+      imagePullPolicy: IfNotPresent
+      command:
+      - /bin/sh
+      - -c
+      - |
+        until kcat -b "${KAFKA_HOSTNAME}:${KAFKA_PORT}" -t kafka-cluster-init -C -o -1 -e
+        do
+          sleep 1
+        done
+        echo "$(date) Kafka ready"
+      env:
+      - name: KAFKA_HOSTNAME
+        valueFrom:
+          configMapKeyRef:
+            key: KAFKA_HOSTNAME
+            name: "{{ $.Release.Name }}-bootstrap"
+      - name: KAFKA_PORT
+        valueFrom:
+          configMapKeyRef:
+            key: KAFKA_PORT
+            name: "{{ $.Release.Name }}-bootstrap"
+
   extraVolumeMounts:
     - name: loki-gateway-password
       mountPath: /etc/promtail/secrets
