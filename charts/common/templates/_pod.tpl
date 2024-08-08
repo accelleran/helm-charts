@@ -1,3 +1,13 @@
+{{- define "accelleran.common.pod" -}}
+apiVersion: v1
+kind: Pod
+{{ toYaml (merge
+    (fromYaml (include "accelleran.common.metadata" .))
+    (fromYaml (include "accelleran.common.pod.tpl" .))
+) }}
+{{- end -}}
+
+
 {{- define "accelleran.common.pod.tpl" -}}
 {{- $ := get . "top" | required "The top context needs to be provided to common pod tpl" -}}
 {{- $values := get . "values" | default $.Values -}}
