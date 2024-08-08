@@ -30,6 +30,14 @@
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
     },
     {
+      "datasourceTemplate": "docker",
+      "fileMatch": ["(^|/)values\\.y[a]?ml$"],
+      "matchStrings": [
+        "#\\s?renovate:( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s+image:\\s?\"?(?<depName>[^:]*?):(?<currentValue>[\\w+\\.\\-]*)\"?"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
+    },
+    {
       "datasourceTemplate": "helm",
       "fileMatch": ["(^|/)values\\.y[a]?ml$"],
       "matchStrings": [
