@@ -254,6 +254,51 @@ e2-t-sm-rc:
 
   affinity: {}
 
+e2-t-sm-ccc:
+  enabled: true
+
+  nameOverride: "e2-t-sm-ccc"
+  fullnameOverride: ""
+
+  containerName: "e2-t-sm-ccc"
+
+  replicaCount: 1
+
+  image:
+    repository: accelleran/e2smcccappl
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  accelleranLicense:
+    enabled: false
+
+  podSecurityContext: {}
+    # fsGroup: 2000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 0
+    # privileged: true
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
 
 nats:
   enabled: false
