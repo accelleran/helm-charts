@@ -1,0 +1,39 @@
+{{-
+  include
+    "accelleran.common.deployment"
+    (fromYaml (include "accelleran.loki-gateway.deployment.args" $))
+-}}
+
+
+{{- define "accelleran.loki-gateway.deployment.args" -}}
+{{- $ := . -}}
+
+top: {{ $ | toYaml | nindent 2 }}
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+    subPath: tmp-dir
+  - name: config
+    mountPath: /etc/nginx/nginx.conf
+    subPath: nginx.conf
+{{- if ($.Values.auth).enabled }}
+  - name: auth
+    mountPath: /etc/nginx/secrets
+{{- end }}
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: config
+    configMap:
+      name: "{{ include "accelleran.common.fullname" (dict "top" $) }}-config"
+{{- if ($.Values.auth).enabled }}
+  - name: auth
+    secret:
+      secretName: "{{ include "accelleran.common.fullname" (dict "top" $) }}-auth"
+      items:
+        - key: htpasswd
+          path: .htpasswd
+{{- end }}
+{{- end -}}

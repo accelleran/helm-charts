@@ -1,0 +1,20 @@
+{{
+  include
+    "accelleran.common.configMap"
+    (fromYaml (include "accelleran.drax.lokiTenants.configMap.args" .))
+}}
+
+
+{{- define "accelleran.drax.lokiTenants.configMap.args" -}}
+top:
+  {{ $ | toYaml | nindent 2 }}
+name: "{{ $.Release.Name }}-drax-loki-tenants"
+
+data:
+  tenants.yaml: |
+    overrides:
+      "notifications":
+        retention_period: 24h
+      "logs":
+        retention_period: 672h  # 28d
+{{- end -}}

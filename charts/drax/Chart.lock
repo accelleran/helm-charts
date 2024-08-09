@@ -35,15 +35,24 @@ dependencies:
 - name: golang-nkafka
   repository: file://charts/golang-nkafka
   version: 2.0.1
+- name: loki-gateway
+  repository: file://charts/loki-gateway
+  version: 0.1.0
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 8.4.3
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
   version: 25.25.0
-- name: loki-stack
+- name: grafana-loki
+  repository: https://charts.bitnami.com/bitnami/
+  version: 4.6.7
+- name: promtail
   repository: https://grafana.github.io/helm-charts
-  version: 2.10.2
+  version: 6.16.4
+- name: promtail
+  repository: https://grafana.github.io/helm-charts
+  version: 6.16.4
 - name: influxdb
   repository: https://helm.influxdata.com/
   version: 4.12.5
@@ -65,5 +74,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.0.0
-digest: sha256:66c86fd172541107e89887be4d2879d8f1eecb3be5d56119724252eeff88af31
-generated: "2024-08-09T14:23:01.510144598Z"
+digest: sha256:e14357cdeff397f84f36581df88550edeeeffca91ce6c80efbdad98c5a4796d1
+generated: "2024-08-09T16:44:26.097623848+02:00"
