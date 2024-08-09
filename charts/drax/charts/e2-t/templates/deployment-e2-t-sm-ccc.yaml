@@ -1,0 +1,33 @@
+{{- include
+      "accelleran.common.deployment"
+      (fromYaml (include "accelleran.e2-t.sm-ccc.deployment.args" $))
+-}}
+
+{{- define "accelleran.e2-t.sm-ccc.deployment.args" -}}
+{{- $ := . -}}
+{{- $values := index $.Values "e2-t-sm-ccc" -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ $values | toYaml | nindent 2 }}
+
+initContainers:
+- {{ fromYaml (include "accelleran.common.init.redis" (fromYaml (include "accelleran.e2-t.init.args" .))) | toYaml | nindent 2 }}
+- {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.e2-t.init.args" .))) | toYaml | nindent 2 }}
+
+env:
+  - name: __APPNAME
+    value: e2TSmCcc
+  - name: __APPID
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+{{- with (include "accelleran.common.bootstrap.instanceId" (dict "top" $)) }}
+  - name: INSTANCE_FILTER
+    value: {{ . | quote }}
+{{- end }}
+envFrom:
+  - configMapRef:
+      name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
+{{- end -}}
