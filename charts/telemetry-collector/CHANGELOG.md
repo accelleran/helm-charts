@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.0.1...telemetry-collector-1.0.2) (2024-08-09)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.4 ([dd6b1c2](https://github.com/accelleran/helm-charts/commit/dd6b1c2a09a57bd5cc5a322416b2427a6332532b))
+
 ## [1.0.1](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.0.0...telemetry-collector-1.0.1) (2024-07-31)
 
 
