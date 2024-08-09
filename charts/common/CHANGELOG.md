@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.4](https://github.com/accelleran/helm-charts/compare/common-0.3.3...common-0.3.4) (2024-08-09)
+
+
+### Features
+
+* Add pod disruption budget template ([#457](https://github.com/accelleran/helm-charts/issues/457)) ([86fbf9f](https://github.com/accelleran/helm-charts/commit/86fbf9fb0b8c7777a033df626478dc83e03369b0))
+* Add pod template ([#453](https://github.com/accelleran/helm-charts/issues/453)) ([4fffb98](https://github.com/accelleran/helm-charts/commit/4fffb98cd9bdca611409f222f1633b06ec737c1a))
+
 ## [0.3.3](https://github.com/accelleran/helm-charts/compare/common-0.3.2...common-0.3.3) (2024-07-22)
 
 
