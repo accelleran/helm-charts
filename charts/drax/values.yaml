@@ -246,6 +246,116 @@ du-metrics-server:
       targetPort: 8086
 
 
+telemetry-collector:
+  enabled: true
+  service:
+    enabled: true
+    name: ""
+    type: ClusterIP
+    ports:
+      udp:
+        port: 55555
+        targetPort: 55555
+        protocol: UDP
+
+  influxdbAuthSecret: "drax-influxdb2-auth"
+
+  config:
+    internal:
+      kafka:
+        url: "{{ $.Release.Name }}-kafka.{{ $.Release.Namespace }}:9092"
+      influxDB:
+        url: "{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
+        org: "accelleran"
+    pipelines:
+      - name: "cu_measurements"
+        component: "cu"
+        vendor: "accelleran"
+        enabled: "true"
+        consumers:
+          natsConsumer:
+            url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
+          subjects: "*.5G_MEAS_INFO.*.*.*.*"
+        publishers:
+          kafkaPublisher:
+            topic: "accelleran.drax.5g.ric.o1.ves"
+        influxPublisher:
+          defaultBucket: "meas5g"
+          buckets:
+            RrcMeasurementReport: "rrc_measurements"
+      - name: "pm_counters"
+        component: "cu"
+        vendor: "accelleran"
+        enabled: "true"
+        consumers:
+          natsConsumer:
+            url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
+            subjects: "*.CUCP_COUNTERS_INFO,*.CUUP_COUNTERS_INFO"
+        publishers:
+          kafkaPublisher:
+            topic: "accelleran.drax.5g.ric.o1.ves"
+          influxPublisher:
+            defaultBucket: "counters5g"
+            buckets:
+              RRCConnEstabAtt: "rrc_connection_metrics"
+              RRCConnEstabSucc: "rrc_connection_metrics"
+              MMHoExeIntraReq: "handover_and_mobility_metrics"
+              MMHoExeIntraSucc: "handover_and_mobility_metrics"
+              RRCConnMean: "rrc_connection_metrics"
+              RRCConnMax: "rrc_connection_metrics"
+              SMPDUSessionSetupReq: "pdu_session_management_metrics"
+              SMPDUSessionSetupReqSnssai: "pdu_session_management_metrics"
+              SMPDUSessionSetupFail: "pdu_session_management_metrics"
+              L1MSSRSRP: "rrc_measurements"
+              MMHoPrepInterReq: "handover_and_mobility_metrics"
+              MMHoPrepInterSucc: "handover_and_mobility_metrics"
+              MMHoPrepInterFail: "handover_and_mobility_metrics"
+              MMHoResAlloInterReq: "handover_and_mobility_metrics"
+              MMHoResAlloInterSucc: "handover_and_mobility_metrics"
+              MMHoResAlloInterFail: "handover_and_mobility_metrics"
+              MMHoExeInterReq: "handover_and_mobility_metrics"
+              AccDRBEstabAtt5QiSnssai: "radio_resource_utilization_metrics"
+              DRBEstabSuccSnssai: "radio_resource_utilization_metrics"
+              DRBEstabSucc5Qi: "radio_resource_utilization_metrics"
+              DRBRelActNbr5QiSnssai: "radio_resource_utilization_metrics"
+              DRBRelActNbrSnssai: "radio_resource_utilization_metrics"
+              DRBRelActNbr5Qi: "radio_resource_utilization_metrics"
+              MMHoExeInterReqTimeMean: "handover_and_mobility_metrics"
+              MMHoExeInterReqTimeMax: "handover_and_mobility_metrics"
+              AccGTPThpDl: "throughput_metrics"
+              AccGTPThpDlQfiSnssaiPlmn: "throughput_metrics"
+              AccGTPThpUl: "throughput_metrics"
+              AccGTPThpUlQfiSnssaiPlmn: "throughput_metrics"
+              AccDRBPdcpSduDelayDlQfiSnssaiPlmn: "radio_resource_utilization_metrics"
+              AccDRBF1UPacketLossRateUlQoS: "radio_resource_utilization_metrics"
+              AccDRBF1UPacketLossRateUlQfiSnssaiPlmn: "radio_resource_utilization_metrics"
+              AccDRBF1UPacketLossRateUlSnssai: "radio_resource_utilization_metrics"
+              AccDRBPdcpPacketDropRateDlQoS: "radio_resource_utilization_metrics"
+              AccDRBPdcpPacketDropRateDlSnssai: "radio_resource_utilization_metrics"
+              AccDRBPdcpPacketDropRateDlQfiSnssaiPlmn: "radio_resource_utilization_metrics"
+              DRBPdcpSduDelayDlQoS: "radio_resource_utilization_metrics"
+              DRBPdcpSduDelayDlSnssai: "radio_resource_utilization_metrics"
+              DRBPdcpSduDelayDlDistQos: "radio_resource_utilization_metrics"
+              DRBPdcpSduDelayDlDist: "radio_resource_utilization_metrics"
+              DRBPdcpSduDelayDlDistSnssai: "radio_resource_utilization_metrics"
+              AccDRBPdcpSduDelayDlDistQfiSnssaiPlmn: "radio_resource_utilization_metrics"
+      - name: "acc_du"
+        component: "du"
+        vendor: "accelleran"
+        enabled: "true"
+        consumers:
+          udpConsumer:
+            port: "55555"
+        publishers:
+          kafkaPublisher:
+            topic: "accelleran.drax.5g.ric.o1.ves"
+          influxPublisher:
+            defaultBucket: "acc_du"
+            buckets:
+              DUUEMeasurements: "du_ue_measurements"
+              DURLCMeasurements: "du_rlc_measurements"
+
+
 e2-t:
   enabled: true
 
@@ -1115,112 +1225,3 @@ kminion:
 
   tests:
     enabled: false
-
-telemetry-collector:
-  enabled: true
-  service:
-    enabled: true
-    name: ""
-    type: ClusterIP
-    ports:
-      udp:
-        port: 55555
-        targetPort: 55555
-        protocol: UDP
-
-  influxdbAuthSecret: "drax-influxdb2-auth"
-
-  config:
-    internal:
-      kafka:
-        url: "{{ $.Release.Name }}-kafka.{{ $.Release.Namespace }}:9092"
-      influxDB:
-        url: "{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
-        org: "accelleran"
-    pipelines:
-      - name: "cu_measurements"
-        component: "cu"
-        vendor: "accelleran"
-        enabled: "true"
-        consumers:
-          natsConsumer:
-            url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
-          subjects: "*.5G_MEAS_INFO.*.*.*.*"
-        publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
-        influxPublisher:
-          defaultBucket: "meas5g"
-          buckets:
-            RrcMeasurementReport: "rrc_measurements"
-      - name: "pm_counters"
-        component: "cu"
-        vendor: "accelleran"
-        enabled: "true"
-        consumers:
-          natsConsumer:
-            url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
-            subjects: "*.CUCP_COUNTERS_INFO,*.CUUP_COUNTERS_INFO"
-        publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
-          influxPublisher:
-            defaultBucket: "counters5g"
-            buckets:
-              RRCConnEstabAtt: "rrc_connection_metrics"
-              RRCConnEstabSucc: "rrc_connection_metrics"
-              MMHoExeIntraReq: "handover_and_mobility_metrics"
-              MMHoExeIntraSucc: "handover_and_mobility_metrics"
-              RRCConnMean: "rrc_connection_metrics"
-              RRCConnMax: "rrc_connection_metrics"
-              SMPDUSessionSetupReq: "pdu_session_management_metrics"
-              SMPDUSessionSetupReqSnssai: "pdu_session_management_metrics"
-              SMPDUSessionSetupFail: "pdu_session_management_metrics"
-              L1MSSRSRP: "rrc_measurements"
-              MMHoPrepInterReq: "handover_and_mobility_metrics"
-              MMHoPrepInterSucc: "handover_and_mobility_metrics"
-              MMHoPrepInterFail: "handover_and_mobility_metrics"
-              MMHoResAlloInterReq: "handover_and_mobility_metrics"
-              MMHoResAlloInterSucc: "handover_and_mobility_metrics"
-              MMHoResAlloInterFail: "handover_and_mobility_metrics"
-              MMHoExeInterReq: "handover_and_mobility_metrics"
-              AccDRBEstabAtt5QiSnssai: "radio_resource_utilization_metrics"
-              DRBEstabSuccSnssai: "radio_resource_utilization_metrics"
-              DRBEstabSucc5Qi: "radio_resource_utilization_metrics"
-              DRBRelActNbr5QiSnssai: "radio_resource_utilization_metrics"
-              DRBRelActNbrSnssai: "radio_resource_utilization_metrics"
-              DRBRelActNbr5Qi: "radio_resource_utilization_metrics"
-              MMHoExeInterReqTimeMean: "handover_and_mobility_metrics"
-              MMHoExeInterReqTimeMax: "handover_and_mobility_metrics"
-              AccGTPThpDl: "throughput_metrics"
-              AccGTPThpDlQfiSnssaiPlmn: "throughput_metrics"
-              AccGTPThpUl: "throughput_metrics"
-              AccGTPThpUlQfiSnssaiPlmn: "throughput_metrics"
-              AccDRBPdcpSduDelayDlQfiSnssaiPlmn: "radio_resource_utilization_metrics"
-              AccDRBF1UPacketLossRateUlQoS: "radio_resource_utilization_metrics"
-              AccDRBF1UPacketLossRateUlQfiSnssaiPlmn: "radio_resource_utilization_metrics"
-              AccDRBF1UPacketLossRateUlSnssai: "radio_resource_utilization_metrics"
-              AccDRBPdcpPacketDropRateDlQoS: "radio_resource_utilization_metrics"
-              AccDRBPdcpPacketDropRateDlSnssai: "radio_resource_utilization_metrics"
-              AccDRBPdcpPacketDropRateDlQfiSnssaiPlmn: "radio_resource_utilization_metrics"
-              DRBPdcpSduDelayDlQoS: "radio_resource_utilization_metrics"
-              DRBPdcpSduDelayDlSnssai: "radio_resource_utilization_metrics"
-              DRBPdcpSduDelayDlDistQos: "radio_resource_utilization_metrics"
-              DRBPdcpSduDelayDlDist: "radio_resource_utilization_metrics"
-              DRBPdcpSduDelayDlDistSnssai: "radio_resource_utilization_metrics"
-              AccDRBPdcpSduDelayDlDistQfiSnssaiPlmn: "radio_resource_utilization_metrics"
-      - name: "acc_du"
-        component: "du"
-        vendor: "accelleran"
-        enabled: "true"
-        consumers:
-          udpConsumer:
-            port: "55555"
-        publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
-          influxPublisher:
-            defaultBucket: "acc_du"
-            buckets:
-              DUUEMeasurements: "du_ue_measurements"
-              DURLCMeasurements: "du_rlc_measurements"
