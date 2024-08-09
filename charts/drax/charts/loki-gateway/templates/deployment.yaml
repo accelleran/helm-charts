@@ -1,108 +1,39 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ include "loki-gateway.fullname" . }}
-  labels: {{- include "loki-gateway.labels" . | nindent 4 }}
-spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels: {{- include "loki-gateway.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      {{- with .Values.podAnnotations }}
-      annotations: {{- toYaml . | nindent 8 }}
-      {{- end }}
-      labels:
-        {{- include "loki-gateway.labels" . | nindent 8 }}
-        {{- with .Values.podLabels }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-    spec:
-      {{- with .Values.image.pullSecrets }}
-      imagePullSecrets: {{- toYaml . | nindent 8 }}
-      {{- end }}
-      securityContext: {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      containers:
-        - name: {{ .Chart.Name }}
-          securityContext: {{- toYaml .Values.containerSecurityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.extraEnvVars }}
-          env: {{- tpl . $ | nindent 12 }}
-          {{- end }}
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          {{- if .Values.startupProbe.enabled }}
-          startupProbe:
-            tcpSocket:
-              port: http
-            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
-            successThreshold: {{ .Values.startupProbe.successThreshold }}
-          {{- end }}
-          {{- if .Values.livenessProbe.enabled }}
-          livenessProbe:
-            tcpSocket:
-              port: http
-            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
-            successThreshold: {{ .Values.startupProbe.successThreshold }}
-          {{- end }}
-          {{- if .Values.startupProbe.enabled }}
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
-            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
-            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
-            successThreshold: {{ .Values.startupProbe.successThreshold }}
-          {{- end }}
-          resources: {{- toYaml .Values.resources | nindent 12 }}
-          volumeMounts:
-            - name: tmp
-              mountPath: /tmp
-              subPath: tmp-dir
-            - name: config
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
-            {{- if (.Values.auth).enabled }}
-            - name: auth
-              mountPath: /etc/nginx/secrets
-            {{- end }}
-            {{- with .Values.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-      volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: config
-          configMap:
-            name: "{{ include "loki-gateway.fullname" . }}-config"
-      {{- if (.Values.auth).enabled }}
-        - name: auth
-          secret:
-            secretName: "{{ include "loki-gateway.fullname" . }}-auth"
-            items:
-              - key: htpasswd
-                path: .htpasswd
-      {{- end }}
-      {{- with .Values.extraVolumes }}
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector: {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity: {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations: {{- toYaml . | nindent 8 }}
-      {{- end }}
+{{-
+  include
+    "accelleran.common.deployment"
+    (fromYaml (include "accelleran.loki-gateway.deployment.args" $))
+-}}
+
+
+{{- define "accelleran.loki-gateway.deployment.args" -}}
+{{- $ := . -}}
+
+top: {{ $ | toYaml | nindent 2 }}
+
+volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+    subPath: tmp-dir
+  - name: config
+    mountPath: /etc/nginx/nginx.conf
+    subPath: nginx.conf
+{{- if ($.Values.auth).enabled }}
+  - name: auth
+    mountPath: /etc/nginx/secrets
+{{- end }}
+
+volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: config
+    configMap:
+      name: "{{ include "accelleran.common.fullname" (dict "top" $) }}-config"
+{{- if ($.Values.auth).enabled }}
+  - name: auth
+    secret:
+      secretName: "{{ include "accelleran.common.fullname" (dict "top" $) }}-auth"
+      items:
+        - key: htpasswd
+          path: .htpasswd
+{{- end }}
+{{- end -}}
