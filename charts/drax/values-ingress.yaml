@@ -1,0 +1,207 @@
+dashboard:
+ ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+network-state-monitor:
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+service-monitor:
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+service-orchestrator:
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+config-api:
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+pm-counters:
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+loki-gateway:
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+prometheus:
+  server:
+    prefixURL: ""
+    baseURL: ""
+
+    ingress:
+      enabled: false
+      # ingressClassName: nginx
+      annotations: {}
+      extraLabels: {}
+      # servicePort: 8081
+      hosts: []
+      #   - prometheus.domain.com
+      #   - domain.com/prometheus
+      path: /
+      pathType: Prefix
+      extraPaths: []
+      # - path: /*
+      #   backend:
+      #     serviceName: ssl-redirect
+      #     servicePort: use-annotation
+      tls: []
+      #   - secretName: prometheus-server-tls
+      #     hosts:
+      #       - prometheus.domain.com
+
+influxdb:
+  ingress:
+    enabled: false
+    tls: false
+    secretName: ""
+    hostname: ""
+    className: ""
+    annotations: {}
+    path: /
+
+influxdb2:
+  ingress:
+    enabled: false
+    # className: nginx
+    tls: false
+    # secretName: my-tls-cert
+    hostname: influxdb.foobar.com
+    annotations: {}
+    path: /
+
+vector:
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts: []
+    #  - host: chart-example.local
+    #    paths:
+    #      - path: /
+    #        pathType: ImplementationSpecific
+    #        # Specify the port name or number on the Service
+    #        # Using name requires Kubernetes >=1.19
+    #        port:
+    #          name: ""
+    #          number: ""
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+kminion:
+  ingress:
+    enabled: false
+    ingressClassName: ""
+    annotations: {}
+    labels: {}
+    path: /
+    pathType: Prefix
+    hosts:
+      - chart-example.local
+    extraPaths: []
+    # - path: /*
+    #   pathType: Prefix
+    #   backend:
+    #     service:
+    #       name: ssl-redirect
+    #       port:
+    #         name: use-annotation
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local

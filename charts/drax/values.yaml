@@ -533,6 +533,30 @@ prometheus:
       type: NodePort
       nodePort: 30304
 
+    prefixURL: ""
+    baseURL: ""
+
+    ingress:
+      enabled: false
+      # ingressClassName: nginx
+      annotations: {}
+      extraLabels: {}
+      # servicePort: 8081
+      hosts: []
+      #   - prometheus.domain.com
+      #   - domain.com/prometheus
+      path: /
+      pathType: Prefix
+      extraPaths: []
+      # - path: /*
+      #   backend:
+      #     serviceName: ssl-redirect
+      #     servicePort: use-annotation
+      tls: []
+      #   - secretName: prometheus-server-tls
+      #     hosts:
+      #       - prometheus.domain.com
+
   # adds additional scrape configs to prometheus.yml
   # must be a string so you have to add a | after extraScrapeConfigs:
   extraScrapeConfigs: |
@@ -816,6 +840,15 @@ influxdb:
     nodePorts:
       http: "30303"
 
+  ingress:
+    enabled: false
+    tls: false
+    secretName: ""
+    hostname: ""
+    className: ""
+    annotations: {}
+    path: /
+
   setDefaultUser:
     enabled: true
     user:
@@ -861,6 +894,15 @@ influxdb2:
     type: ClusterIP
     nodePorts:
       http: ""
+
+  ingress:
+    enabled: false
+    # className: nginx
+    tls: false
+    # secretName: my-tls-cert
+    hostname: influxdb.foobar.com
+    annotations: {}
+    path: /
 
   initScripts:
     enabled: true
@@ -1074,6 +1116,25 @@ vector:
   serviceHeadless:
     enabled: false
 
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts: []
+    #  - host: chart-example.local
+    #    paths:
+    #      - path: /
+    #        pathType: ImplementationSpecific
+    #        # Specify the port name or number on the Service
+    #        # Using name requires Kubernetes >=1.19
+    #        port:
+    #          name: ""
+    #          number: ""
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
 
 kminion:
   enabled: true
@@ -1112,6 +1173,28 @@ kminion:
 
       logger:
         level: info
+
+  ingress:
+    enabled: false
+    ingressClassName: ""
+    annotations: {}
+    labels: {}
+    path: /
+    pathType: Prefix
+    hosts:
+      - chart-example.local
+    extraPaths: []
+    # - path: /*
+    #   pathType: Prefix
+    #   backend:
+    #     service:
+    #       name: ssl-redirect
+    #       port:
+    #         name: use-annotation
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
 
   tests:
     enabled: false
