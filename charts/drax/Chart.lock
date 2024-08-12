@@ -47,15 +47,15 @@ dependencies:
 - name: influxdb
   repository: https://helm.influxdata.com/
   version: 4.12.5
+- name: influxdb2
+  repository: https://helm.influxdata.com/
+  version: 2.1.2
 - name: vector
   repository: https://helm.vector.dev
   version: 0.35.0
 - name: kminion
   repository: https://charts.redpanda.com
   version: 0.14.0
-- name: influxdb2
-  repository: https://helm.influxdata.com/
-  version: 2.1.2
 - name: kafka
   repository: https://charts.bitnami.com/bitnami/
   version: 30.0.3
@@ -65,5 +65,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.0.1
-digest: sha256:c3de0e1650dc9d8c67de5c94a5baefd11ee9cd05f9c927bdaeb830e5ca25ed33
-generated: "2024-08-12T00:54:03.301141453Z"
+digest: sha256:791bbd80a4e87152e820808e5c19568af9e55fc3757a756b62ab9433792c3afa
+generated: "2024-08-12T11:46:18.564507125+02:00"
