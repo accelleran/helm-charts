@@ -16,13 +16,13 @@ bootstrap:
 image:
   repository: accelleran/xapp-anr
   pullPolicy: IfNotPresent
-  tag: "0.1.0"
+  tag: ""
 
 imagePullSecrets:
   - name: accelleran-secret
 
 accelleranLicense:
-  enabled: false
+  enabled: true
   secretName: "accelleran-license"
 
 podSecurityContext: {}
@@ -63,6 +63,3 @@ service:
       targetPort: 8080
       nodePort: null
       protocol: TCP
-
-rbac:
-  enabled: false

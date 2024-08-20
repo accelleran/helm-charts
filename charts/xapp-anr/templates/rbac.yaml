@@ -1,9 +1,0 @@
-{{ include
-      "accelleran.common.serviceAccount"
-      (dict "top" $)
-}}
----
-{{ include
-      "accelleran.common.clusterRbac"
-      (dict "top" $)
-}}

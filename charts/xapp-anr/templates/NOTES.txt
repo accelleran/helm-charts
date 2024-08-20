@@ -1,8 +1,8 @@
 ################################################################################
 
-Accelleran ANR Xapp {{ $.Chart.Version }}
+Accelleran ANR xApp {{ $.Chart.Version }}
 
-Deployed ANR XApp [{{ $.Release.Name }}]
+Deployed ANR xApp [{{ $.Release.Name }}]
 with the following details:
 
   Tag: {{ include "accelleran.common.appVersion" (dict "top" $) }}
