@@ -1,18 +1,21 @@
 global: {}
 
 kubeIp: "10.55.1.2"
-default5gVersion: "6"
-defaultDevEnvVersion: "2"
+default5gVersion: "8"
+# renovate: repository=https://accelleran.github.io/helm-charts chart=xapp-hello-world
+defaultDevEnvVersion: "3"
 
 config:
   namespaces:
-    - ""  # This field is unused
+    - "default"
   uploadFolder: "uploads"
+  serviceMonitorUrl: ""
   uploadFolderSubDirectories:
     - "cu-cp"
     - "cu-up"
     - "xapp"
-  prefix5g: "acc-5g"
+  prefix5g: "acc"
+  prefix5gOld: "acc-5g"
   cucpRepoName: "acc-5g-cu-cp"
   cuupRepoName: "acc-5g-cu-up"
   cuRepoUrl: "https://accelleran.github.io/helm-charts/"
@@ -25,6 +28,7 @@ replicaCount: 1
 image:
   repository: accelleran/service-orchestrator
   pullPolicy: IfNotPresent
+  tag: ""
 
 imagePullSecrets:
   - name: accelleran-secret
@@ -70,6 +74,22 @@ service:
       targetPort: 8080
       nodePort: null
       protocol: TCP
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    -
+      # host: example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+          port: http
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
 
 serviceAccount:
   # Specifies whether a service account should be created

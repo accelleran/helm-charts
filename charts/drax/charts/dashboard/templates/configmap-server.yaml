@@ -11,38 +11,46 @@ top:
 
 name: {{ include "accelleran.common.fullname" (dict "top" $) }}-server
 
+{{- $config := .Values.config }}
+
+# Define required variables
+{{- $requiredVariables := list
+  "nodeApiURL"
+  "nodeApiPort"
+  "kafkaURL"
+  "kafkaPort"
+  "networkStateMonitorHost"
+  "networkStateMonitorPort"
+  "svcMonitorHost"
+  "svcMonitorPort"
+  "svcOrchestratorHost"
+  "svcOrchestratorPort"
+  "configApiHost"
+  "configApiPort"
+  "pcixAppPodName"
+  "pcixAppPort"
+  "ksqldbPodName"
+  "ksqldbPort"
+  "LteRadioControllerLabel"
+}}
+
+
+{{- range $index, $key := $requiredVariables }}
+  {{- if not (index $config $key) }}
+    {{- fail (printf "Dashboard requires config.%s to be defined in values.yaml" $key) }}
+  {{- end }}
+{{- end }}
+
+
+{{- $serviceName := include "accelleran.common.service.name" (dict "top" $) }}
+# Update the serviceName in config with templated value only if it is empty ""
+{{- merge $config (dict "serviceName" $serviceName) }}
+
+
 data:
   config.json: |
     {
-      "production": {
-        "config_id": "{{ .Values.config.config_id }}",
-        "defaultServiceName": "{{ include "accelleran.common.service.name" (dict "top" $) }}",
-        "defaultServiceNamespace": "{{ tpl .Release.Namespace . }}",
-        "defaultOranNamespace": "{{ tpl .Values.config.defaultOranNamespace . }}",
-        "node_port": {{ .Values.service.ports.http.port }},
-        "grafanaURL": "{{ tpl .Values.config.grafanaURL . }}",
-        "grafanaPort": "{{ .Values.config.grafanaPort }}",
-        "nodeApiURL": "{{ tpl .Values.config.nodeApiURL . }}",
-        "nodeApiPort": "{{ .Values.service.ports.http.nodePort }}",
-        "kafkaURL": "{{ tpl .Values.config.kafkaUrl . }}",
-        "kafkaPort": "{{ tpl .Values.config.kafkaPort . }}",
-        "svcOrchestratorHost": "{{ tpl .Values.config.svcOrchestratorHost . }}",
-        "svcOrchestratorPort": "{{ tpl .Values.config.svcOrchestratorPort . }}",
-        "networkStateMonitorHost": "{{ tpl .Values.config.networkStateMonitorHost . }}",
-        "networkStateMonitorPort": "{{ tpl .Values.config.networkStateMonitorPort . }}",
-        "configApiHost": "{{ tpl .Values.config.configApiHost . }}",
-        "configApiPort": "{{ tpl .Values.config.configApiPort . }}",
-        "svcMonitorHost": "{{ tpl .Values.config.svcMonitorHost . }}",
-        "svcMonitorPort": "{{ tpl .Values.config.svcMonitorPort . }}",
-        "pcixAppPodName": "{{ tpl .Values.config.pcixAppPodName . }}",
-        "pcixAppPort": "{{ tpl .Values.config.pcixAppPort . }}",
-        "ksqldbPodName": "{{ tpl .Values.config.ksqldbPodName . }}",
-        "ksqldbPort": "{{ tpl .Values.config.ksqldbPort . }}",
-        "LteRadioControllerLabel": "{{ tpl .Values.config.LteRadioControllerLabel . }}",
-        "topologyExpired": {{ .Values.config.topologyExpired }},
-        "enable5G": {{ .Values.global.enable5G }},
-        "enable4G": {{ .Values.global.enable4G }},
-        "kafkaTopics": {{ .Values.config.kafkaTopics | toJson }}
-      }
+      "production": {{ tpl ($config | toPrettyJson) $ | indent 6 | trim }}
     }
-{{- end -}}
+
+{{- end }}

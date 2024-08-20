@@ -1,0 +1,6 @@
+dependencies:
+- name: xapp-redis
+  repository: file://charts/xapp-redis
+  version: 0.3.0
+digest: sha256:9f37dddb65759ca2b2de1516529aea827b298ff526500eae3e2d5508d00972c6
+generated: "2024-05-28T16:24:27.964403647+02:00"

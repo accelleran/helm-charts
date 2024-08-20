@@ -2,9 +2,10 @@ apiVersion: v2
 name: pm-counters
 description: The Accelleran dRAX PM Counters xAPP
 type: application
-version: 1.1.0
+version: 2.0.0
+# renovate: image=accelleran/acc-fiveg-pmcounters
 appVersion: 1.1.0
 dependencies:
   - name: common
-    version: 0.2.2
+    version: 0.3.4
     repository: https://accelleran.github.io/helm-charts/

@@ -62,15 +62,15 @@ cu-cp:
   nameOverride: "cu-cp"
   fullnameOverride: ""
 
-  initImage:
-    redis:
-      repository: accelleran/acc-generic-img
-      tag: "0.8.0"
-      pullPolicy: IfNotPresent
-    nats:
-      repository: accelleran/acc-generic-img
-      tag: "0.8.0"
-      pullPolicy: IfNotPresent
+  redisInitImage:
+    repository: accelleran/acc-generic-img
+    tag: "0.8.0"
+    pullPolicy: IfNotPresent
+
+  natsInitImage:
+    repository: accelleran/acc-generic-img
+    tag: "0.8.0"
+    pullPolicy: IfNotPresent
 
   serviceAccount:
     # Specifies whether a service account should be created
@@ -96,6 +96,8 @@ netconf:
 
   nameOverride: "netconf"
   fullnameOverride: ""
+
+  component: "netconf"
 
   containerName: "netconf"
 
@@ -425,7 +427,7 @@ ds-ctrl:
 
   replicaCount: null
 
-  initImage:
+  envInitImage:
     repository: accelleran/acc-generic-img
     tag: "0.8.0"
     pullPolicy: IfNotPresent
@@ -458,13 +460,13 @@ ds-ctrl:
   affinity: {}
 
 nats:
-  enabled: true
+  enabled: false
 
   natsBox:
     enabled: false
 
 redis:
-  enabled: true
+  enabled: false
 
   architecture: standalone
   auth:

@@ -1,5 +1,58 @@
 # Changelog
 
+## [0.3.4](https://github.com/accelleran/helm-charts/compare/common-0.3.3...common-0.3.4) (2024-08-09)
+
+
+### Features
+
+* Add pod disruption budget template ([#457](https://github.com/accelleran/helm-charts/issues/457)) ([86fbf9f](https://github.com/accelleran/helm-charts/commit/86fbf9fb0b8c7777a033df626478dc83e03369b0))
+* Add pod template ([#453](https://github.com/accelleran/helm-charts/issues/453)) ([4fffb98](https://github.com/accelleran/helm-charts/commit/4fffb98cd9bdca611409f222f1633b06ec737c1a))
+
+## [0.3.3](https://github.com/accelleran/helm-charts/compare/common-0.3.2...common-0.3.3) (2024-07-22)
+
+
+### Bug Fixes
+
+* Add option to not set ingress tls secret name or hosts ([#416](https://github.com/accelleran/helm-charts/issues/416)) ([ef7b18e](https://github.com/accelleran/helm-charts/commit/ef7b18e0704f4fab9a3619b1481e729bacc62c97))
+
+## [0.3.2](https://github.com/accelleran/helm-charts/compare/common-0.3.1...common-0.3.2) (2024-07-18)
+
+
+### Features
+
+* Add ingress templates ([#372](https://github.com/accelleran/helm-charts/issues/372)) ([bfde558](https://github.com/accelleran/helm-charts/commit/bfde5584c16286d06ed552abbe8c444bda451ace))
+
+## [0.3.1](https://github.com/accelleran/helm-charts/compare/common-0.3.0...common-0.3.1) (2024-06-14)
+
+
+### Features
+
+* Add component label ([#318](https://github.com/accelleran/helm-charts/issues/318)) ([d300d88](https://github.com/accelleran/helm-charts/commit/d300d883b0fa36f6e960f348b8360a2179b2f265))
+
+## [0.3.0](https://github.com/accelleran/helm-charts/compare/common-0.2.3...common-0.3.0) (2024-06-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* give an error message when a service is disabled without setting an (external) hostname ([#142](https://github.com/accelleran/helm-charts/issues/142))
+* switch to image values that renovate automatically updates ([#246](https://github.com/accelleran/helm-charts/issues/246))
+
+### Features
+
+* Give an error message when a service is disabled without setting an (external) hostname ([#142](https://github.com/accelleran/helm-charts/issues/142)) ([e297459](https://github.com/accelleran/helm-charts/commit/e297459fc9b51007616fd3ce5b862d594c5aa05a))
+
+
+### Bug Fixes
+
+* Switch to image values that renovate automatically updates ([#246](https://github.com/accelleran/helm-charts/issues/246)) ([e45b60a](https://github.com/accelleran/helm-charts/commit/e45b60af421cb985d8f3d25a9f190f00fcddee5d))
+
+## [0.2.3](https://github.com/accelleran/helm-charts/compare/common-0.2.2...common-0.2.3) (2024-05-22)
+
+
+### Bug Fixes
+
+* Fix extraEnvs ([#221](https://github.com/accelleran/helm-charts/issues/221)) ([908b5fa](https://github.com/accelleran/helm-charts/commit/908b5fadc2b829f696ae9ca77cbed46aca3897cf))
+
 ## [0.2.2](https://github.com/accelleran/helm-charts/compare/common-0.2.1...common-0.2.2) (2024-03-06)
 
 

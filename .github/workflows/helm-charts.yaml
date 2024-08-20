@@ -14,53 +14,60 @@ jobs:
     name: Variables
     # This is a work-around to be able to properly use variables.
     # This job should be made a dependency in order to be able to use its outputs.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       is_main_branch: ${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
       is_release_branch: ${{ github.ref_type == 'branch' && startsWith(github.ref_name, 'releases/') }}
       is_pull_request: ${{ github.event_name == 'pull_request' }}
       target_branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref_name }}
-      charts: ${{ steps.list-charts.outputs.charts }}
+      lib_charts: ${{ steps.list-charts.outputs.lib_charts }}
       charts_to_lint: ${{ steps.list-charts.outputs.charts_to_lint }}
       charts_to_test: ${{ steps.list-charts.outputs.charts_to_test }}
-      app_charts: ${{ steps.list-charts.outputs.app_charts }}
-      lib_charts: ${{ steps.list-charts.outputs.lib_charts }}
-      lib_chart_names: ${{ steps.list-charts.outputs.lib_chart_names }}
-      chart_names_to_ignore_for_test: ${{ steps.list-charts.outputs.chart_names_to_ignore_for_test }}
+      charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
       # renovate: github_repository=metallb/metallb versioning=semver
-      metallb_version: v0.14.3
+      metallb_version: v0.14.8
+      # renovate: github_repository=halkeye/helm-repo-html versioning=semver
+      helm_repo_html_version: v0.2.1
     timeout-minutes: 1
     steps:
       - name: Expose variables
         run: echo "Exposing variables for proper usage"
 
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
+
+      - name: Set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          check-latest: true
+
+      - name: Set up chart-testing
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: helm/chart-testing-action@v2.6.1
 
       - name: List charts
         id: list-charts
         run: |
-          echo "charts=$(./bin/list-charts -p)" >> $GITHUB_OUTPUT
-          echo "charts_to_lint=$(./bin/list-charts -p)" >> $GITHUB_OUTPUT
-          echo "charts_to_test=$(./bin/list-charts -t -p)" >> $GITHUB_OUTPUT
-          echo "app_charts=$(./bin/list-charts -a -p)" >> $GITHUB_OUTPUT
-          echo "lib_charts=$(./bin/list-charts -l -p)" >> $GITHUB_OUTPUT
-          echo "lib_chart_names=$(./bin/list-charts -l -n)" >> $GITHUB_OUTPUT
-          echo "chart_names_to_ignore_for_test=$(./bin/list-charts -i -n)" >> $GITHUB_OUTPUT
+          echo "lib_charts=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --list --delimiter=, --path lib)" | tee -a $GITHUB_OUTPUT
+          echo "charts_to_lint=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --list --delimiter=, --path lint)" | tee -a $GITHUB_OUTPUT
+          echo "charts_to_test=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --list --delimiter=, --path test)" | tee -a $GITHUB_OUTPUT
+          echo "charts_to_test_matrix=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --matrix test)" | tee -a $GITHUB_OUTPUT
 
   lint-charts:
     name: Lint Charts
     needs:
       - vars
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    if: ${{ needs.vars.outputs.charts_to_lint != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-        with:
-          fetch-depth: ${{ needs.vars.outputs.is_pull_request == 'true' && '0' || '1' }}
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4.1.0
+        uses: azure/setup-helm@v4.2.0
 
       - name: Set up python
         uses: actions/setup-python@v5
@@ -74,22 +81,7 @@ jobs:
       - name: Add helm repositories
         run: ./bin/add-repos
 
-      - name: List changed
-        id: list-changed
-        run: |
-          changed_charts="${{ needs.vars.outputs.charts_to_lint }}"
-          if [ "${{ needs.vars.outputs.is_pull_request }}" == "true" ]; then
-            changed_charts="$(ct list-changed --config etc/ct.yaml --target-branch ${{ needs.vars.outputs.target_branch }})"
-          fi
-
-          if [[ -n "${changed_charts}" ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Prepare library charts
-        if: ${{ steps.list-changed.outputs.changed == 'true' }}
         run: |
           lib_charts="${{ needs.vars.outputs.lib_charts }}"
           for lc in ${lib_charts//,/ } ; do
@@ -99,32 +91,27 @@ jobs:
           done
 
       - name: Lint charts
-        if: ${{ steps.list-changed.outputs.changed == 'true' }}
         run: >-
           ct
           lint
           --config etc/ct.yaml
-          ${{
-            needs.vars.outputs.is_pull_request == 'true' && (
-              format('--target-branch "{0}"', needs.vars.outputs.target_branch)
-            ) || (
-              format('--charts "{0}"', needs.vars.outputs.charts_to_lint)
-            )
-          }}
+          --charts ${{ needs.vars.outputs.charts_to_lint }}
 
   test-charts:
     name: Test Charts
     needs:
       - vars
-    runs-on: ubuntu-latest
+    if: ${{ needs.vars.outputs.charts_to_test != '' }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.vars.outputs.charts_to_test_matrix) }}
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-        with:
-          fetch-depth: ${{ needs.vars.outputs.is_pull_request == 'true' && '0' || '1' }}
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
       - name: Set up Helm
-        uses: azure/setup-helm@v4.1.0
+        uses: azure/setup-helm@v4.2.0
 
       - name: Set up python
         uses: actions/setup-python@v5
@@ -138,32 +125,10 @@ jobs:
       - name: Add helm repositories
         run: ./bin/add-repos
 
-      - name: List changed
-        id: list-changed
-        run: |
-          changed_charts="${{ needs.vars.outputs.charts_to_test }}"
-          if [ "${{ needs.vars.outputs.is_pull_request }}" == "true" ]; then
-            changed_charts="$( \
-              ct list-changed \
-                --config etc/ct.yaml \
-                --target-branch ${{ needs.vars.outputs.target_branch }} \
-                ${{ (needs.vars.outputs.lib_chart_names && format('--excluded-charts "{0}"', needs.vars.outputs.lib_chart_names)) }} \
-                ${{ (needs.vars.outputs.chart_names_to_ignore_for_test && format('--excluded-charts "{0}"', needs.vars.outputs.chart_names_to_ignore_for_test)) }} \
-            )"
-          fi
-
-          if [[ -n "${changed_charts}" ]]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Create kind cluster
-        if: ${{ steps.list-changed.outputs.changed == 'true' }}
-        uses: helm/kind-action@v1.9.0
+        uses: helm/kind-action@v1.10.0
 
       - name: Install metallb for loadbalancer services
-        if: ${{ steps.list-changed.outputs.changed == 'true' }}
         run: |
           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/${{ needs.vars.outputs.metallb_version }}/config/manifests/metallb-native.yaml
 
@@ -172,9 +137,17 @@ jobs:
             --selector=app=metallb \
             --timeout=90s
 
-          subnet=$(docker network inspect -f '{{range .IPAM.Config}}{{printf "%s\n" .Subnet}}{{end}}' kind | head -n 1)
+          subnets=$(docker network inspect -f '{{range .IPAM.Config}}{{printf "%s\n" .Subnet}}{{end}}' kind)
+          printf "subnets:\n%s\n" "${subnets}"
+          ipv4_subnets=$(echo "$subnets" | grep -E '(([0-9]{1,3})\.){3}([0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])')
+          printf "ipv4_subnets:\n%s\n" "${ipv4_subnets}"
+          subnet=$(echo "$ipv4_subnets" | head -n 1)
+          printf "subnet: '%s'\n" "${subnet}"
+
           net_ip=$(echo "$subnet" | cut -d/ -f1)
+          printf "net_ip: '%s'\n" "${net_ip}"
           cidr=$(echo "$subnet" | cut -d/ -f2)
+          printf "cidr: '%s'\n" "${cidr}"
           if [ $cidr -gt 24 ]; then
             echo "CIDR of $subnet needs to be 24 or smaller" 1>&2
             exit 1
@@ -182,6 +155,7 @@ jobs:
 
           net_ip_prefix=$(echo $net_ip | cut -d. -f 1-3)
           ip_range=$net_ip_prefix.200-$net_ip_prefix.250
+          printf "ip_range: '%s'\n" "${ip_range}"
 
           cat <<EOF | kubectl apply -f -
           apiVersion: metallb.io/v1beta1
@@ -201,7 +175,6 @@ jobs:
           EOF
 
       - name: Create accelleran pull secret
-        if: ${{ steps.list-changed.outputs.changed == 'true' }}
         run: >-
           kubectl create secret docker-registry
           --namespace default
@@ -210,7 +183,6 @@ jobs:
           --docker-password=${{ secrets.DOCKER_ACCESS_TOKEN }}
 
       - name: Create accelleran license
-        if: ${{ steps.list-changed.outputs.changed == 'true' }}
         run: |-
           cat <<EOF > license.crt
           ${{ secrets.ACCELLERAN_LICENSE }}
@@ -222,23 +194,12 @@ jobs:
           --from-file=license.crt
 
       - name: Test charts
-        if: ${{ steps.list-changed.outputs.changed == 'true' }}
         run: >-
           ct
           install
           --namespace default
           --config etc/ct.yaml
-          ${{
-            needs.vars.outputs.is_pull_request == 'true' && (
-              format('--target-branch "{0}" --excluded-charts "{1}" --excluded-charts "{2}"',
-                needs.vars.outputs.target_branch,
-                needs.vars.outputs.lib_chart_names,
-                needs.vars.outputs.chart_names_to_ignore_for_test
-              )
-            ) || (
-              format('--charts "{0}"', needs.vars.outputs.charts_to_test)
-            )
-          }}
+          --charts ${{ matrix.chart_path }}
           --helm-extra-set-args "--set=kafka.provisioning.useHelmHooks=false"
 
   release-charts:
@@ -248,12 +209,12 @@ jobs:
       - vars
       - lint-charts
       - test-charts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
 
@@ -261,7 +222,11 @@ jobs:
         uses: git-actions/set-user@v1
 
       - name: Install Helm
-        uses: azure/setup-helm@v4.1.0
+        uses: azure/setup-helm@v4.2.0
+        
+      - name: Install helm repo html plugin
+        if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
+        run: helm plugin install https://github.com/halkeye/helm-repo-html --version ${{ needs.vars.outputs.helm_repo_html_version }}
 
       - name: Add helm repositories
         run: ./bin/add-repos
@@ -272,6 +237,19 @@ jobs:
           config: etc/cr.yaml
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      
+      - name: Generate repo html index
+        if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
+        run: |-
+          git checkout gh-pages
+          git pull # pull index.yaml commit from chart releaser
+          helm repo-html
+          if ! git diff --exit-code index.html > /dev/null 2>&1 ; then
+            git add index.html
+            git commit -s -m "Update index.html"
+            git push
+          fi
+          git checkout -
 
   release-please:
     name: Release

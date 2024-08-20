@@ -156,6 +156,10 @@ while getopts ":hf:d:i:ru" opt; do
 done
 shift $((OPTIND -1))
 
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+    fatal "Make sure to set the GITHUB_TOKEN!"
+fi
+
 if [[ ! "$(yq --version)" =~ .*mikefarah/yq.* ]]; then
     fatal "Make sure to install mikefarah/yq"
 fi

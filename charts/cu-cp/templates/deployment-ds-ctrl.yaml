@@ -69,11 +69,17 @@ containers:
 {{- define "accelleran.cu-cp.ds-ctrl.init.container.args" -}}
 {{- $ := . -}}
 {{- $values := index $.Values "ds-ctrl" -}}
+{{- $image := $values.envInitImage | required "The env init image needs to be provided to cu-cp ds-ctrl args" -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
 values:
-  {{ $values | toYaml | nindent 2 }}
+  {{
+    (mergeOverwrite
+      (deepCopy $values)
+      (dict "image" $image)
+    ) | toYaml | nindent 2
+  }}
 
 name: {{ printf "%s-app-ids" $values.containerName | quote }}
 command:

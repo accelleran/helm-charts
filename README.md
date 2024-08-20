@@ -2,6 +2,24 @@
 
 This repository contains accelleran's helm charts.
 
+## Releases
+
+Depending on the type of release (an official release or release candidate), a different approach should be taken.
+
+Every time a commit is pushed to a release branch (including `main`) helm's chart releaser will try to create a release of all charts.
+It will block this if the specified version in the `Chart.yaml` file already matches with an existing release.
+This allows to add multiple features to a single release and prevents from overwriting an existing one.
+
+The above mechanism can then be used to create non-official releases by just manually bumping the version.
+Note that this should only be done for release candidates, alpha, beta or dev releases!
+If official releases were to be created this way, release please and the changelog would get out of sync.
+
+With official releases everything is automated with release please.
+Release please will create a PR which bumps the version and adds a changelog.
+After someone of the drax team approved this PR it can be merged.
+Helm's chart releaser will then run and it will use the changelog in the github release.
+Note that, before a PR can be merged, some merge conflicts might need to be resolved if a release candidate was created.
+
 ## Chart dependencies
 
 For helm chart dependencies the required repository needs to be added.

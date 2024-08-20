@@ -4,8 +4,7 @@
   "dependencyDashboardApproval": false,
   "dependencyDashboardAutoclose": false,
   "reviewers": [
-    "ben-foxmoore",
-    "Wielewout"
+    "team:dRAX"
   ],
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
@@ -29,6 +28,13 @@
         "#\\s?renovate: image=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s?appVersion:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
+    },
+    {
+      "datasourceTemplate": "helm",
+      "fileMatch": ["(^|/)values\\.y[a]?ml$"],
+      "matchStrings": [
+        "#\\s?renovate: repository=(?<registryUrl>.*?) chart=(?<depName>.*?)\\s?[\\w\\-]*[vV]ersion:\\s?\"?(?<currentValue>[\\w\\.\\-]*)\"?"
+      ]
     },
     {
       "datasourceTemplate": "github-releases",

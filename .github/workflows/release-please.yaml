@@ -2,6 +2,7 @@ name: Release Please
 
 on:
   workflow_call:
+  workflow_dispatch:
 
 jobs:
 
@@ -10,10 +11,11 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Release please
-        uses: google-github-actions/release-please-action@v4
+        if: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'releases/') }}
+        uses: googleapis/release-please-action@v4
         with:
           target-branch: ${{ github.ref_name }}
           config-file: "etc/release-please-config.json"

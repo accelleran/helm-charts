@@ -74,7 +74,7 @@ volumeMounts:
 {{- $ := first . -}}
 {{- $values := index $.Values "ups" -}}
 
-{{- $image := ($values.initImage).loadBalancerIP -}}
+{{- $image := $values.loadBalancerIPInitImage -}}
 
 {{- $ordinal := index . 1 -}}
 

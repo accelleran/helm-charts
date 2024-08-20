@@ -41,6 +41,18 @@
     "charts/xapp-anr": {
       "component": "xapp-anr",
       "package-name": "xapp-anr"
+    },
+    "charts/du-metrics-server": {
+      "component": "du-metrics-server",
+      "package-name": "du-metrics-server"
+    },
+    "charts/xapp-hello-world": {
+      "component": "xapp-hello-world",
+      "package-name": "xapp-hello-world"
+    },
+    "charts/telemetry-collector": {
+      "component": "telemetry-collector",
+      "package-name": "telemetry-collector"
     }
   }
 }

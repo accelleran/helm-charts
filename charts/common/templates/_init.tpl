@@ -56,7 +56,7 @@ Init container check waiting until redis is available
 {{- $values := get . "values" | default $.Values -}}
 
 {{- $bootstrapConfigMapName :=  get . "bootstrapConfigMapName" | default (include "accelleran.common.bootstrap.configMapName" .) -}}
-{{- $image := ($values.initImage).redis | required "The redis init image needs to be provided to common init redis args" -}}
+{{- $image := $values.redisInitImage | required "The redis init image needs to be provided to common init redis args" -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
@@ -108,7 +108,7 @@ Init container check waiting until NATS is available
 {{- $values := get . "values" | default $.Values -}}
 
 {{- $bootstrapConfigMapName := get . "bootstrapConfigMapName" | default (include "accelleran.common.bootstrap.configMapName" .)  -}}
-{{- $image := ($values.initImage).nats | required "The nats init image needs to be provided to common init nats args" -}}
+{{- $image := $values.natsInitImage | required "The nats init image needs to be provided to common init nats args" -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
@@ -161,7 +161,7 @@ Init container check waiting until kafka is available
 {{- $values := get . "values" | default $.Values -}}
 
 {{- $bootstrapConfigMapName := get . "bootstrapConfigMapName" | default (include "accelleran.common.bootstrap.configMapName" .)  -}}
-{{- $image := ($values.initImage).kafka | required "The kafka init image needs to be provided to common init kafka args" -}}
+{{- $image := $values.kafkaInitImage | required "The kafka init image needs to be provided to common init kafka args" -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}

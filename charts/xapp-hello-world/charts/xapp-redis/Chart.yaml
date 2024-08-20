@@ -1,0 +1,7 @@
+apiVersion: v2
+name: xapp-redis
+description: Accelleran xApp Redis
+type: application
+version: 0.3.0
+# renovate: image=redis
+appVersion: 7.4.0-alpine3.20

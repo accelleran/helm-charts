@@ -1,10 +1,10 @@
 #!/bin/bash
 
-helm repo add accelleran https://accelleran.github.io/helm-charts/
-helm repo add nats https://nats-io.github.io/k8s/helm/charts/
-helm repo add bitnami https://charts.bitnami.com/bitnami/
+helm repo add accelleran https://accelleran.github.io/helm-charts
+helm repo add nats https://nats-io.github.io/k8s/helm/charts
+helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo add influxdata https://helm.influxdata.com/
+helm repo add influxdata https://helm.influxdata.com
 helm repo add vector https://helm.vector.dev
 helm repo add redpanda https://charts.redpanda.com

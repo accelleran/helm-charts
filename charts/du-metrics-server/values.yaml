@@ -1,0 +1,107 @@
+bootstrap:
+  create: true
+  name: ""
+  kafka:
+    enabled: true
+    hostname: ""
+    port: 0
+
+du-metrics-server:
+  config:
+    testbed: default
+    kafkaPublishingEnabled: false
+    topics:
+      default: accelleran.drax.5g.du_metrics
+      # ue_kpis: accelleran.drax.5g.du_metrics.ue_mac
+      # rlc_tx_kpis: accelleran.drax.5g.du_metrics.ue_rlc_tx
+      # rlc_rx_kpis: accelleran.drax.5g.du_metrics.ue_rlc_rx
+
+  replicaCount: 1
+
+  influxdbInitImage:
+    repository: accelleran/acc-generic-img
+    pullPolicy: IfNotPresent
+    tag: "0.8.0"
+
+  image:
+    repository: accelleran/du-metrics-server
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  accelleranLicense:
+    enabled: false
+
+  extraEnvs: []
+
+  extraLabels: {}
+  annotations: {}
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+
+  securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  service:
+    enabled: true
+    name: ""
+    type: NodePort
+    ports:
+      metric:
+        port: 55555
+        targetPort: 55555
+        nodePort: 31555
+        protocol: UDP
+
+
+influxdb:
+  enabled: true
+
+  adminUser:
+    organization: "accelleran"
+    bucket: "default"
+    retention_policy: "0s"
+    user: "admin"
+    password: ""
+    token: ""
+    # existingSecret: influxdb-auth
+
+  persistence:
+    enabled: true
+    accessMode: ReadWriteOnce
+    size: 2Gi
+    mountPath: /var/lib/influxdb2
+    subPath: ""
+
+  service:
+    annotations: {}
+    labels: {}
+    type: ClusterIP
+    portName: http
+    port: 80
+    targetPort: 8086

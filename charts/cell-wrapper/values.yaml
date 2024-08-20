@@ -50,15 +50,15 @@ cw-ctrl:
 
   containerName: "cw-ctrl"
 
-  initImage:
-    redis:
-      repository: accelleran/acc-generic-img
-      pullPolicy: IfNotPresent
-      tag: "0.8.0"
-    nats:
-      repository: accelleran/acc-generic-img
-      pullPolicy: IfNotPresent
-      tag: "0.8.0"
+  redisInitImage:
+    repository: accelleran/acc-generic-img
+    pullPolicy: IfNotPresent
+    tag: "0.8.0"
+
+  natsInitImage:
+    repository: accelleran/acc-generic-img
+    pullPolicy: IfNotPresent
+    tag: "0.8.0"
 
   image:
     repository: accelleran/cw-ctrl
@@ -197,7 +197,7 @@ instance-scaler:
   image:
     repository: accelleran/instance-scaler
     pullPolicy: IfNotPresent
-    tag: "v0.1.2"
+    tag: "v0.1.3"
 
   accelleranLicense:
     enabled: false
@@ -239,6 +239,8 @@ netconf:
   nameOverride: "netconf"
   fullnameOverride: ""
 
+  component: "netconf"
+
   containerName: "netconf"
 
   image:
@@ -275,13 +277,13 @@ netconf:
         nodePort: null
 
 nats:
-  enabled: true
+  enabled: false
 
   natsBox:
     enabled: false
 
 redis:
-  enabled: true
+  enabled: false
 
   architecture: standalone
   auth:

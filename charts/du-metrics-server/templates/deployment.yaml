@@ -1,0 +1,79 @@
+{{- include
+      "accelleran.common.deployment"
+      (fromYaml (include "accelleran.du-metrics-server.deployment.args" $))
+-}}
+
+{{- define "accelleran.du-metrics-server.deployment.args" -}}
+{{- $ := . -}}
+{{- $values := index $.Values "du-metrics-server" -}}
+{{- $fullname := include "accelleran.common.fullname" (dict "top" $ "values" $values) -}}
+{{- $bootstrapConfigMapName := get . "bootstrapConfigMapName" | default (include "accelleran.common.bootstrap.configMapName" (dict "top" $ "values" $values))  -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ (mergeOverwrite (deepCopy $values) (fromYaml (include "accelleran.du-metrics-server.deployment.valueOverrides" .))) | toYaml | nindent 2 }}
+
+initContainers:
+- {{ fromYaml (include "accelleran.du-metrics-server.init.influxdb" (dict "top" $ "values" (index $.Values "du-metrics-server"))) | toYaml | nindent 2 }}
+
+env:
+  - name: PORT
+    value: {{ (($values.service.ports).metric).containerPort | default ((($values.service).ports).metric).targetPort | default ((($values.service).ports).metric).port | quote }}
+  - name: TESTBED
+    value: {{ $values.config.testbed | quote }}
+  - name: URL
+    value: {{ printf "http://%s.%s:%v" (($.Values.influxdb).fullnameOverride | default (printf "%s-%s" $.Release.Name (($.Values.influxdb).nameOverride | default "influxdb"))) $.Release.Namespace (($.Values.influxdb).service).port }}
+  - name: ORG
+    value: {{ (($.Values.influxdb).adminUser).organization }}
+  - name: BUCKET
+    value: {{ (($.Values.influxdb).adminUser).bucket | quote }}
+  - name: TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: {{ (($.Values.influxdb).adminUser).existingSecret | default (printf "%s-auth" (($.Values.influxdb).fullnameOverride | default (printf "%s-%s" $.Release.Name (($.Values.influxdb).nameOverride | default "influxdb")))) }}
+        key: admin-token
+{{- if $values.config.kafkaPublishingEnabled }}
+  - name: KAFKA_HOSTNAME
+    valueFrom:
+      configMapKeyRef:
+        name: {{ $bootstrapConfigMapName | quote }}
+        key: KAFKA_HOSTNAME
+  - name: KAFKA_PORT
+    valueFrom:
+      configMapKeyRef:
+        name: {{ $bootstrapConfigMapName | quote }}
+        key: KAFKA_PORT
+{{- range $key, $topic := $values.config.topics }}
+  - name: {{ upper $key }}_TOPIC
+    value: {{ $topic | quote }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+
+{{- define "accelleran.du-metrics-server.deployment.valueOverrides" -}}
+{{- $ := . -}}
+{{- $values := index $.Values "du-metrics-server" -}}
+
+args:
+  - metrics-server
+  - --port
+  - $(PORT)
+  - --testbed
+  - $(TESTBED)
+  - --bucket
+  - $(BUCKET)
+  - --db-config
+  - url=$(URL)
+  - org=$(ORG)
+  - token=$(TOKEN)
+{{- if $values.config.kafkaPublishingEnabled }}
+  - --kafka-config
+  - bootstrap.servers=$(KAFKA_HOSTNAME):$(KAFKA_PORT)
+  - --topics
+{{- range $key, $_ := $values.config.topics }}
+  - {{ $key }}=$({{ upper $key }}_TOPIC)
+{{- end }}
+{{- end -}}
+{{- end -}}

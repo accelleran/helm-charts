@@ -1,0 +1,18 @@
+{{- if .Values.tcpService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "xapp_core.fullname" . }}-xapp-tcp
+  labels:
+    {{- include "xapp_core.labels" . | nindent 4 }}
+    drax/xapp-component-name: xapp-tcp
+spec:
+  type: NodePort
+  ports:
+    - port: {{ .Values.tcpService.port }}
+      name:  {{ .Values.tcpService.name }}
+      nodePort: {{ .Values.tcpService.nodePort }}
+#     protocol: TCP
+  selector:
+    {{- include "xapp_core.selectorLabels" . | nindent 4 }}
+{{- end }}

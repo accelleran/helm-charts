@@ -73,15 +73,15 @@ cu-up:
   nameOverride: "cu-up"
   fullnameOverride: ""
 
-  initImage:
-    redis:
-      repository: accelleran/acc-generic-img
-      tag: "0.8.0"
-      pullPolicy: IfNotPresent
-    nats:
-      repository: accelleran/acc-generic-img
-      tag: "0.8.0"
-      pullPolicy: IfNotPresent
+  redisInitImage:
+    repository: accelleran/acc-generic-img
+    tag: "0.8.0"
+    pullPolicy: IfNotPresent
+
+  natsInitImage:
+    repository: accelleran/acc-generic-img
+    tag: "0.8.0"
+    pullPolicy: IfNotPresent
 
   serviceAccount:
     # Specifies whether a service account should be created
@@ -107,6 +107,8 @@ netconf:
 
   nameOverride: "netconf"
   fullnameOverride: ""
+
+  component: "netconf"
 
   containerName: "netconf"
 
@@ -200,11 +202,10 @@ ups:
 
   containerName: "ups"
 
-  initImage:
-    loadBalancerIP:
-      repository: accelleran/acc-generic-img
-      tag: "0.8.0"
-      pullPolicy: IfNotPresent
+  loadBalancerIPInitImage:
+    repository: accelleran/acc-generic-img
+    tag: "0.8.0"
+    pullPolicy: IfNotPresent
 
   image:
     repository: accelleran/upsappl
@@ -305,13 +306,13 @@ xdp-ups:
   affinity: {}
 
 nats:
-  enabled: true
+  enabled: false
 
   natsBox:
     enabled: false
 
 redis:
-  enabled: true
+  enabled: false
 
   architecture: standalone
   auth:

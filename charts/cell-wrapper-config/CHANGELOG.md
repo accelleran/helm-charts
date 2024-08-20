@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.3.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.2.5...cell-wrapper-config-0.3.0) (2024-05-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* prevent failures if config is already deleted ([#229](https://github.com/accelleran/helm-charts/issues/229))
+
+### Features
+
+* Prevent failures if config is already deleted ([#229](https://github.com/accelleran/helm-charts/issues/229)) ([59be706](https://github.com/accelleran/helm-charts/commit/59be7068c99d887ad3b9b6a86941cb4d3cd599cf))
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.2.3 ([2720172](https://github.com/accelleran/helm-charts/commit/2720172fa39bfc8c82ee656029c09200f21647aa))
+
+## [0.2.5](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.2.4...cell-wrapper-config-0.2.5) (2024-04-16)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.2.2 ([b228a5f](https://github.com/accelleran/helm-charts/commit/b228a5f3aaee93ad7ea4127362cf815d98bd48c2))
+* Flatten xml ([#193](https://github.com/accelleran/helm-charts/issues/193)) ([637b8a2](https://github.com/accelleran/helm-charts/commit/637b8a28510bd01b88a1fbf0d1bfb4a95fe0c155))
+
 ## [0.2.4](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.2.3...cell-wrapper-config-0.2.4) (2024-02-26)
 
 

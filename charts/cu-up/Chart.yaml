@@ -2,18 +2,18 @@ apiVersion: v2
 name: cu-up
 description: Accelleran 5G CU-UP Components
 type: application
-version: 7.0.0
+version: 8.0.2
 # renovate: image=accelleran/cuup-netconf
-appVersion: "R4.3.12_leffe"
+appVersion: "5.0.7"
 dependencies:
   - name: common
-    version: 0.2.2
+    version: 0.3.4
     repository: https://accelleran.github.io/helm-charts/
   - name: nats
     condition: nats.enabled
-    version: 1.1.9
+    version: 1.2.2
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 18.18.0
+    version: 20.0.2
     repository: https://charts.bitnami.com/bitnami/

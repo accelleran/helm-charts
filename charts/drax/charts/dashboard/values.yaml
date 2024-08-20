@@ -12,47 +12,49 @@ bootstrap:
     port: 0
 
 config:
-  config_id: "production"
-  defaultOranNamespace: "default"
-  grafanaURL: "10.20.20.20"
-  grafanaPort: "30300"
-  nodeApiURL: "10.20.20.20"
-  nodePort: "30315"
-  kafkaUrl: "{{ .Release.Name }}-kafka"
-  kafkaPort: "9092"
-  svcOrchestratorHost: "{{ .Release.Name }}-service-orchestrator"
-  svcOrchestratorPort: "80"
-  networkStateMonitorHost: "{{ .Release.Name }}-network-state-monitor"
-  networkStateMonitorPort: "5000"
-  configApiHost: "{{ .Release.Name }}-config-api"
-  configApiPort: "80"
-  svcMonitorHost: "{{ .Release.Name }}-service-monitor"
-  svcMonitorPort: "80"
-  pcixAppPodName: "accelleran-drax-pci-010-pci-xapp-api"
-  pcixAppPort: "80"
-  ksqldbPodName: "10.20.20.20"
-  ksqldbPort: "30533"
+  # Defined for server config.json
+  defaultServiceNamespace: "{{ $.Release.Namespace }}"
+  defaultOranNamespace: "{{ $.Release.Namespace }}"
+  backendServerPort: 5000
+  nodeApiURL: ""
+  nodeApiPort: "{{ $.Values.service.ports.http.nodePort }}"
+  serviceName: ""
+  servicePort: "{{ $.Values.service.ports.http.port }}"
+  kafkaURL: ""
+  kafkaPort: 9092
+  networkStateMonitorHost: ""
+  networkStateMonitorPort: 5000
+  svcMonitorHost: ""
+  svcMonitorPort: 80
+  svcOrchestratorHost: ""
+  svcOrchestratorPort: 80
+  configApiHost: ""
+  configApiPort: 80
+  pcixAppPodName: ""
+  pcixAppPort: 80
+  ksqldbPodName: ""
+  ksqldbPort: 80
   LteRadioControllerLabel: "4G-Radio-Controller"
-  apiUrl: "10.20.20.20"
-  websocketPort: "31316"
   topologyExpired: 5000
-  draxVersionConfigmap: ""
   kafkaTopics:
     - "accelleran.drax.5g.ric.raw.cu_state"
     - "accelleran.drax.5g.ric.raw.ue_measurements"
     - "accelleran.drax.4g.ric.raw.network_state"
     - "accelleran.drax.all.ric.processed.anr"
+  # Defined for core-ui config.js
+  grafanaPort: 0
+  # Defined for environment variable DRAX_VERSION
+  draxVersionConfigmap: ""
 
 replicaCount: 1
 
 nameOverride: ""
 fullnameOverride: ""
 
-initImage:
-  kafka:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
+kafkaInitImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.8.0"
 
 image:
   repository: accelleran/dash-front-back-end
@@ -100,8 +102,19 @@ service:
       targetPort: 5000
       nodePort: 31315
       protocol: TCP
-    websocket:
-      port: 5001
-      targetPort: 5001
-      nodePort: 31316
-      protocol: TCP
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    -
+      # host: example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+          port: http
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local

@@ -53,7 +53,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "always",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -110,7 +110,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "increase(RRC_CONNECTION_SUCC_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"} [$__rate_interval]) * 100 / increase(RRC_CONNECTION_EST_ATTEMPT_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$__rate_interval])",
+          "editorMode": "code",
+          "expr": "round(increase(RRC_CONNECTION_SUCC_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$MinStep])) * 100 / round(increase(RRC_CONNECTION_EST_ATTEMPT_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$MinStep]))",
           "instant": false,
           "interval": "$MinStep",
           "legendFormat": "{{instanceId}}",
@@ -270,6 +271,7 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
           "links": [],
           "mappings": [],
           "min": 0,
@@ -317,7 +319,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "increase(RRC_CONNECTION_EST_ATTEMPT_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$__rate_interval])",
+          "editorMode": "code",
+          "expr": "round(increase(RRC_CONNECTION_EST_ATTEMPT_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$MinStep]))",
           "instant": false,
           "interval": "$MinStep",
           "legendFormat": "{{instanceId}}",
@@ -1342,7 +1345,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "increase(RRC_CONNECTION_SUCC_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$__rate_interval])",
+          "editorMode": "code",
+          "expr": "round(increase(RRC_CONNECTION_SUCC_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$MinStep]))",
           "instant": false,
           "interval": "$MinStep",
           "legendFormat": "{{instanceId}}",
@@ -2250,7 +2254,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -2323,7 +2327,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -2338,6 +2342,7 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
+          "editorMode": "code",
           "expr": "max_over_time(MAXIMUM_NUMBER_OF_RRC_CONNECTIONS {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$__interval])",
           "hide": false,
           "instant": true,
@@ -2397,7 +2402,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -2470,7 +2475,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -2578,7 +2583,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -2636,7 +2641,7 @@
             "scaleDistribution": {
               "type": "linear"
             },
-            "showPoints": "never",
+            "showPoints": "always",
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -2693,7 +2698,8 @@
             "type": "prometheus",
             "uid": "PBFA97CFB590B2093"
           },
-          "expr": "increase(SUCC_INTRA_GNB_HANDOVER_EXECUTIONS_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"} [$__rate_interval]) * 100 / increase(REQ_INTRA_GNB_HANDOVER_EXECUTIONS_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$__rate_interval])",
+          "editorMode": "code",
+          "expr": "round(increase(SUCC_INTRA_GNB_HANDOVER_EXECUTIONS_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"} [$MinStep])) * 100 / round(increase(REQ_INTRA_GNB_HANDOVER_EXECUTIONS_total {instanceId=~\"$InstanceID\",instanceType=~\"$instanceType\"}[$MinStep]))",
           "instant": false,
           "interval": "$MinStep",
           "legendFormat": "{{instanceId}}",
@@ -2751,7 +2757,7 @@
         "orientation": "horizontal",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "last"
           ],
           "fields": "",
           "values": false
@@ -2814,7 +2820,7 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 38,
+  "schemaVersion": 39,
   "tags": [],
   "templating": {
     "list": [
@@ -2873,8 +2879,8 @@
       {
         "current": {
           "selected": false,
-          "text": "30m",
-          "value": "30m"
+          "text": "1m",
+          "value": "1m"
         },
         "hide": 0,
         "includeAll": false,
@@ -2882,7 +2888,7 @@
         "name": "MinStep",
         "options": [
           {
-            "selected": false,
+            "selected": true,
             "text": "1m",
             "value": "1m"
           },
@@ -2897,7 +2903,7 @@
             "value": "10m"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "30m",
             "value": "30m"
           },
@@ -2911,71 +2917,11 @@
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"
-      },
-      {
-        "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
-        },
-        "definition": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sst)",
-        "hide": 0,
-        "includeAll": true,
-        "multi": true,
-        "name": "sliceType",
-        "options": [],
-        "query": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sst)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
-        },
-        "definition": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sd)",
-        "hide": 0,
-        "includeAll": true,
-        "multi": true,
-        "name": "sliceDifferentiator",
-        "options": [],
-        "query": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sd)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
       }
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {

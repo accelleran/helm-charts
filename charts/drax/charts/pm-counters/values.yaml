@@ -27,11 +27,10 @@ fullnameOverride: ""
 
 replicaCount: 1
 
-initImage:
-  kafka:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
+kafkaInitImage:
+  repository: accelleran/acc-generic-img
+  pullPolicy: IfNotPresent
+  tag: "0.8.0"
 
 image:
   repository: accelleran/acc-fiveg-pmcounters
@@ -79,3 +78,19 @@ service:
       port: 8000
       protocol: TCP
       nodePort: null  # 30515
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    -
+      # host: example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+          port: http
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
