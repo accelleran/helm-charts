@@ -199,7 +199,7 @@ netconf:
   initEditConfig:
     config:
       - |-
-        <cw-install xmlns="http://accelleran.com/ns/yang/accelleran-cw-install" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace">
+        <cw-install xmlns="http://accelleran.com/ns/yang/accelleran-cw-install" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
         <du xc:operation="replace">
         <name>{{ $du.name }}</name>
@@ -222,7 +222,7 @@ netconf:
         {{- end }}
         </cw-install>
       - |-
-        <cw-internal xmlns="http://accelleran.com/ns/yang/accelleran-cw-internal" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace">
+        <cw-internal xmlns="http://accelleran.com/ns/yang/accelleran-cw-internal" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
         <du xc:operation="replace">
         <name>{{ $du.name }}</name>
@@ -244,7 +244,7 @@ netconf:
         {{- end }}
         </cw-internal>
       - |-
-        <cw-ran xmlns="http://accelleran.com/ns/yang/accelleran-cw-ran" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace">
+        <cw-ran xmlns="http://accelleran.com/ns/yang/accelleran-cw-ran" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
         <du xc:operation="replace">
         <name>{{ $du.name }}</name>
@@ -258,7 +258,7 @@ netconf:
         {{- end }}
         </cw-ran>
       - |-
-        <configuration xmlns="http://accelleran.com/ns/yang/accelleran-cw-config" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace">
+        <configuration xmlns="http://accelleran.com/ns/yang/accelleran-cw-config" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
           {{- with .Values.global.config.global.configuration }}
           {{ . }}
           {{- end }}
@@ -270,7 +270,7 @@ netconf:
         {{- if .Values.global.config.global.install }}
         <cw-install xmlns="http://accelleran.com/ns/yang/accelleran-cw-install" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="remove"/>
         {{ else }}
-        <cw-install xmlns="http://accelleran.com/ns/yang/accelleran-cw-install" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace">
+        <cw-install xmlns="http://accelleran.com/ns/yang/accelleran-cw-install" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
         {{- if $du.install }}
         <du xc:operation="remove">
@@ -291,7 +291,7 @@ netconf:
         {{- if .Values.global.config.global.internal }}
         <cw-internal xmlns="http://accelleran.com/ns/yang/accelleran-cw-internal" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="remove"/>
         {{ else }}
-        <cw-internal xmlns="http://accelleran.com/ns/yang/accelleran-cw-internal" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace">
+        <cw-internal xmlns="http://accelleran.com/ns/yang/accelleran-cw-internal" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
         {{- if $du.internal }}
         <du xc:operation="remove">
@@ -312,7 +312,7 @@ netconf:
         {{- if .Values.global.config.global.ran }}
         <cw-ran xmlns="http://accelleran.com/ns/yang/accelleran-cw-ran" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="remove"/>
         {{ else }}
-        <cw-ran xmlns="http://accelleran.com/ns/yang/accelleran-cw-ran" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace">
+        <cw-ran xmlns="http://accelleran.com/ns/yang/accelleran-cw-ran" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
         {{- if $du.ran }}
         <du xc:operation="remove">
@@ -326,7 +326,7 @@ netconf:
         {{- if .Values.global.config.global.configuration }}
         <configuration xmlns="http://accelleran.com/ns/yang/accelleran-cw-config" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="remove"/>
         {{ else }}
-        <configuration xmlns="http://accelleran.com/ns/yang/accelleran-cw-config" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0" xc:operation="replace"/>
+        <configuration xmlns="http://accelleran.com/ns/yang/accelleran-cw-config" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0"/>
         {{- end }}
 
   service:
