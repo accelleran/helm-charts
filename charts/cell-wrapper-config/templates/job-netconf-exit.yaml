@@ -83,11 +83,11 @@ args:
   - "$(username)"
   - "--pass"
   - "$(password)"
-  {{- range $index, $configRpc := $values.exitEditConfig.config }}
+  {{- range $index, $configRpc := reverse $values.exitEditConfig.config }}
   {{- $configRpc = tpl $configRpc $ -}}
   {{- if $configRpc }}
   - "--edit"
-  - "/rpcs/exit-edit-config-{{- $index -}}.xml"
+  - "/rpcs/exit-edit-config-{{- sub (sub (len $values.exitEditConfig.config) $index) 1 -}}.xml"
   {{- end }}
   {{- end }}
 {{- end -}}
