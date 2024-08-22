@@ -1,0 +1,6 @@
+dependencies:
+- name: common
+  repository: https://accelleran.github.io/helm-charts/
+  version: 0.3.4
+digest: sha256:ebc680e6cb8f29696caa2bdf87dc2d94985fa03930376e924619e0a5ccbd9b5a
+generated: "2024-08-20T12:01:45.127532+01:00"

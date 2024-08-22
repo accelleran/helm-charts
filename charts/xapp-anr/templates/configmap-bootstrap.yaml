@@ -1,0 +1,4 @@
+{{- include
+      "accelleran.common.bootstrap.configMap"
+      (dict "top" $)
+-}}

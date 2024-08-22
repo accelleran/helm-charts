@@ -1,0 +1,11 @@
+apiVersion: v2
+name: xapp-anr
+description: A Helm chart for Accelleran ANR xApp
+type: application
+version: 1.0.0
+# renovate: image=accelleran/xapp-anr
+appVersion: "1.0.0"
+dependencies:
+  - name: common
+    version: 0.3.4
+    repository: https://accelleran.github.io/helm-charts/

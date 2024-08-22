@@ -1,0 +1,19 @@
+{{- include
+      "accelleran.common.deployment"
+      (fromYaml (include "accelleran.xapp-anr.deployment.args" $))
+-}}
+
+{{- define "accelleran.xapp-anr.deployment.args" -}}
+{{- $ := . -}}
+{{- $fullname := include "accelleran.common.fullname" (dict "top" $) -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+
+env:
+  - name: REST_SERVER_PORT
+    value: "{{ tpl $.Values.config.restServerPort $ }}"
+envFrom:
+  - configMapRef:
+      name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
+{{- end -}}

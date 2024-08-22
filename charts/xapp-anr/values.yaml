@@ -1,0 +1,65 @@
+global: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+bootstrap:
+  create: true
+  name: ""
+  kafka:
+    enabled: true
+    hostname: ""
+    port: 0
+
+image:
+  repository: accelleran/xapp-anr
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets:
+  - name: accelleran-secret
+
+accelleranLicense:
+  enabled: true
+  secretName: "accelleran-license"
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  # readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10000
+
+resources: {}
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+config:
+  restServerPort: "8080"
+
+service:
+  enabled: true
+  name: ""
+  type: ClusterIP
+  ports:
+    http:
+      port: 80
+      targetPort: 8080
+      nodePort: null
+      protocol: TCP
