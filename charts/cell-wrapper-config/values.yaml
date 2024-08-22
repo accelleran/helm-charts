@@ -340,3 +340,5 @@ jobs: []
   #   schedule: "<cron_schedule>"
   #   rpc: |-
   #     <!-- full edit-config rpc -->
+
+extraResources: []

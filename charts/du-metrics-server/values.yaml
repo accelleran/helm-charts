@@ -105,3 +105,5 @@ influxdb:
     portName: http
     port: 80
     targetPort: 8086
+
+extraResources: []
