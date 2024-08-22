@@ -8203,6 +8203,16 @@ entries:
     version: 0.1.0
   common:
   - apiVersion: v2
+    created: "2024-08-22T11:23:42.805275098Z"
+    description: A common library chart that provides accelleran standardized named
+      templates
+    digest: 1126aab5c856300cdc211befef1d46300f6fad26cb51ea36befe25a891b8c9be
+    name: common
+    type: library
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/common-0.3.5/common-0.3.5.tgz
+    version: 0.3.5
+  - apiVersion: v2
     created: "2024-08-09T09:42:25.277119577Z"
     description: A common library chart that provides accelleran standardized named
       templates
@@ -33163,4 +33173,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-08-09T09:42:25.701750932Z"
+generated: "2024-08-22T11:23:43.714316576Z"
