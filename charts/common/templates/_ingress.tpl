@@ -72,6 +72,6 @@ spec:
 {{- $values := get . "values" | default $.Values -}}
 
 {{- with (get $values.ingress "annotations") -}}
-{{- . | toYaml -}}
+{{- tpl (toYaml .) $ -}}
 {{- end -}}
 {{- end -}}
