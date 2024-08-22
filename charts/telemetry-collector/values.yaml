@@ -151,3 +151,5 @@ config:
           buckets:
             DUUEMeasurements: "du_ue_measurements"
             DURLCMeasurements: "du_rlc_measurements"
+
+extraResources: []

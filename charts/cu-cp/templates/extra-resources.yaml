@@ -1,0 +1,2 @@
+{{- include "accelleran.common.extraResources" (dict "top" $) -}}
+

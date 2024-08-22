@@ -1225,3 +1225,5 @@ kminion:
 
   tests:
     enabled: false
+
+extraResources: []
