@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.5](https://github.com/accelleran/helm-charts/compare/common-0.3.4...common-0.3.5) (2024-08-22)
+
+
+### Features
+
+* Add extraResources tpl ([#473](https://github.com/accelleran/helm-charts/issues/473)) ([bda16ce](https://github.com/accelleran/helm-charts/commit/bda16ced019635c08dc3c4472dd830e7111b6ce2))
+
 ## [0.3.4](https://github.com/accelleran/helm-charts/compare/common-0.3.3...common-0.3.4) (2024-08-09)
 
 
