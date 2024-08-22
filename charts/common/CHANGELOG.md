@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/accelleran/helm-charts/compare/common-0.3.5...common-0.3.6) (2024-08-22)
+
+
+### Features
+
+* Allow to inject templates in annotations ([#479](https://github.com/accelleran/helm-charts/issues/479)) ([70b66d4](https://github.com/accelleran/helm-charts/commit/70b66d40279f6a46d57636d9769c150d0f96a962))
+
 ## [0.3.5](https://github.com/accelleran/helm-charts/compare/common-0.3.4...common-0.3.5) (2024-08-22)
 
 
