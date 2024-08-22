@@ -8,7 +8,7 @@
 {{- $annotations | toYaml }}
 {{- else -}}
 {{- with $values.annotations -}}
-{{ toYaml . }}
+{{ tpl (toYaml .) $ }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
