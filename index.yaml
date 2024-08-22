@@ -32980,6 +32980,21 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/telemetry-collector-1.0.0/telemetry-collector-1.0.0.tgz
     version: 1.0.0
+  xapp-anr:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2024-08-22T13:12:20.103986633Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.4
+    description: A Helm chart for Accelleran ANR xApp
+    digest: 8dbc9c577440a068b0f4986fef38fc7c1786cb94cca03828ceb3f4a50c6a2ca2
+    name: xapp-anr
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/xapp-anr-1.0.0/xapp-anr-1.0.0.tgz
+    version: 1.0.0
   xapp-hello-world:
   - apiVersion: v2
     appVersion: 3.0.2
@@ -33173,4 +33188,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-08-22T11:23:43.714316576Z"
+generated: "2024-08-22T13:12:20.105313001Z"
