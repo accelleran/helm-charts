@@ -8,5 +8,5 @@
     "charts/du-metrics-server": "0.2.1",
     "charts/xapp-hello-world": "3.0.3",
     "charts/telemetry-collector": "1.0.1",
-    "charts/xapp-anr": "0.1.0"
+    "charts/xapp-anr": "0.1.1"
 }
