@@ -1,0 +1,134 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: nginx
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  pullPolicy: IfNotPresent
+
+accelleranLicense:
+  enabled: false
+
+imagePullSecrets: []
+
+extraEnvs: []
+
+annotations: {}
+
+replicaCount: 1
+
+resolver: ""
+dnsService: "kube-dns"
+dnsNamespace: "kube-system"
+clusterDomain: cluster.local
+
+auth:
+  enabled: false
+  preventSecretUninstall: true
+  users: []
+    # - username: "user"
+    #   password: "pass"
+    #   organization: "org"
+
+startupProbe: {}
+  # tcpSocket:
+  #   port: http
+  # initialDelaySeconds: 10
+  # periodSeconds: 10
+  # timeoutSeconds: 1
+  # failureThreshold: 15
+  # successThreshold: 1
+
+livenessProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+    ephemeral-storage: 50Mi
+  limits:
+    cpu: 150m
+    memory: 192Mi
+    ephemeral-storage: 2Gi
+
+podSecurityContext:
+  fsGroupChangePolicy: Always
+  sysctls: []
+  supplementalGroups: []
+  fsGroup: 1001
+
+securityContext:
+  seLinuxOptions: {}
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+
+podLabels: {}
+podAnnotations: {}
+
+affinity: {}
+tolerations: []
+nodeSelector: {}
+
+extraVolumes: []
+extraVolumeMounts: []
+
+pdb:
+  create: true
+  minAvailable: 0
+  maxUnavailable: 0
+
+service:
+  enabled: true
+  name: ""
+  annotations: {}
+  type: ClusterIP
+  ports:
+    http:
+      port: 80
+      targetPort: 8080
+      nodePort: 0
+      protocol: TCP
+  loadBalancerIP: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    -
+      # host: example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+          port: http
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
