@@ -390,36 +390,6 @@ pm-counters:
     #      - chart-example.local
 
 
-notify:
-  enabled: false
-
-  bootstrap:
-    name: "{{ $.Release.Name }}-bootstrap"
-
-  nameOverride: ""
-  fullnameOverride: ""
-
-  containerName: notify
-
-  kafkaInitImage:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
-
-  image:
-    repository: python
-    pullPolicy: IfNotPresent
-    tag: "3.12.5-slim"
-
-  imagePullSecrets:
-    - name: accelleran-secret
-
-  accelleranLicense:
-    enabled: false
-
-  podSecurityContext: {}
-  securityContext: {}
-
 golang-nkafka-5g:
   mode: "5g"
 
