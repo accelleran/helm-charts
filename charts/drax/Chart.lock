@@ -43,7 +43,7 @@ dependencies:
   version: 25.27.0
 - name: grafana-loki
   repository: https://charts.bitnami.com/bitnami/
-  version: 4.6.7
+  version: 4.6.13
 - name: loki-gateway
   repository: https://accelleran.github.io/helm-charts/
   version: 0.1.0
@@ -74,5 +74,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.0.3
-digest: sha256:806250ef178b7e3c2aca96eb9272a2da20a84c14ef981cb925e72869edefb948
-generated: "2024-08-29T12:31:54.975535411+02:00"
+digest: sha256:cfeeb84f01a005282befe04747ef39918ebc16cd974dc12eb5df9b83c60a392c
+generated: "2024-08-29T13:33:15.795654828Z"
