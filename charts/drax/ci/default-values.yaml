@@ -1,0 +1,63 @@
+kafka:
+  controller:
+    resourcesPreset: "none"
+  broker:
+    resourcesPreset: "none"
+  externalAccess:
+    autoDiscovery:
+      resourcesPreset: "none"
+  volumePermissions:
+    resourcesPreset: "none"
+  metrics:
+    jmx:
+      resourcesPreset: "none"
+  provisioning:
+    resourcesPreset: "none"
+
+loki:
+  compactor:
+    resourcesPreset: "none"
+  gateway:
+    resourcesPreset: "none"
+  indexGateway:
+    resourcesPreset: "none"
+  distributor:
+    resourcesPreset: "none"
+  ingester:
+    resourcesPreset: "none"
+  querier:
+    resourcesPreset: "none"
+  queryFrontend:
+    resourcesPreset: "none"
+  queryScheduler:
+    resourcesPreset: "none"
+  ruler:
+    resourcesPreset: "none"
+  tableManager:
+    resourcesPreset: "none"
+  promtail:
+    resourcesPreset: "none"
+  volumePermissions:
+    resourcesPreset: "none"
+  memcachedchunks:
+    resourcesPreset: "none"
+  memcachedfrontend:
+    resourcesPreset: "none"
+  memcachedindexqueries:
+    resourcesPreset: "none"
+  memcachedindexwrites:
+    resourcesPreset: "none"
+
+redis:
+  master:
+    resourcesPreset: "none"
+  replica:
+    resourcesPreset: "none"
+  sentinel:
+    resourcesPreset: "none"
+  metrics:
+    resourcesPreset: "none"
+  volumePermissions:
+    resourcesPreset: "none"
+  sysctl:
+    resourcesPreset: "none"
