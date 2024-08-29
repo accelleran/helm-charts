@@ -31041,6 +31041,21 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/du-metrics-server-0.1.0/du-metrics-server-0.1.0.tgz
     version: 0.1.0
+  loki-gateway:
+  - apiVersion: v2
+    appVersion: 1.27.1
+    created: "2024-08-29T10:00:15.754940645Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.6
+    description: Loki gateway
+    digest: 0b583f9ac6b7a4a50428eee93e1ea35a3539ee7f6585eb6e2057445f46529df2
+    name: loki-gateway
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/loki-gateway-0.1.0/loki-gateway-0.1.0.tgz
+    version: 0.1.0
   nmock:
   - apiVersion: v2
     appVersion: 0.5.1
@@ -33248,4 +33263,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-08-28T11:25:22.797127432Z"
+generated: "2024-08-29T10:00:15.885041859Z"
