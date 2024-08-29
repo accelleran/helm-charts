@@ -409,7 +409,7 @@ notify:
   image:
     repository: python
     pullPolicy: IfNotPresent
-    tag: "3.12.5"
+    tag: "3.12.5-slim"
 
   imagePullSecrets:
     - name: accelleran-secret
