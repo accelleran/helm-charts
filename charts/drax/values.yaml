@@ -391,7 +391,7 @@ pm-counters:
 
 
 notify:
-  enabled: true
+  enabled: false
 
   bootstrap:
     name: "{{ $.Release.Name }}-bootstrap"
@@ -507,6 +507,9 @@ kafka:
     numPartitions: 1
     topics:
       - name: kafka-cluster-init
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.ric.o1.ves
         partitions: 1
         replicationFactor: 1
 
