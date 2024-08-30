@@ -93,14 +93,14 @@ dependencies:
     condition: promtail-logs.enabled
     tags:
       - logs
-    version: 6.17.0
+    version: 6.17.1
     repository: https://accelleran.github.io/helm-charts/
   - name: promtail
     alias: promtail-notifications
     condition: promtail-notifications.enabled
     tags:
       - notifications
-    version: 6.17.0
+    version: 6.17.1
     repository: https://accelleran.github.io/helm-charts/
   - name: influxdb
     condition: influxdb.enabled
