@@ -85,7 +85,7 @@ dashboard:
   extraEnvs:
   - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_USERNAME"
     value: "dashboard-notifications"
-  
+
   service:
     type: NodePort
     ports:
