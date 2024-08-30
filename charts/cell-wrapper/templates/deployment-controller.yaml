@@ -25,7 +25,6 @@ initContainers:
 containers:
 - {{ fromYaml (include "accelleran.cell-wrapper.controller.container" $) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.cell-wrapper.instance-scaler.container" $) | toYaml | nindent 2 }}
-- {{ fromYaml (include "accelleran.cell-wrapper.netconf.container" $) | toYaml | nindent 2 }}
 {{- end -}}
 
 
@@ -94,34 +93,4 @@ volumeMounts:
     mountPath: /config.yaml
     subPath: config.yaml
     readOnly: true
-{{- end -}}
-
-
-{{- define "accelleran.cell-wrapper.netconf.container" -}}
-{{- include
-      "accelleran.common.container"
-      (fromYaml (include "accelleran.cell-wrapper.netconf.container.args" .))
--}}
-{{- end -}}
-
-
-{{- define "accelleran.cell-wrapper.netconf.container.args" -}}
-{{- $ := . -}}
-{{- $values := $.Values.netconf -}}
-
-top:
-  {{ $ | toYaml | nindent 2 }}
-values:
-  {{ $values | toYaml | nindent 2 }}
-
-env:
-  - name: __APPNAME
-    value: cellWrapperNetconf
-{{- with (include "accelleran.common.bootstrap.instanceId" (dict "top" $)) }}
-  - name: INSTANCE_FILTER
-    value: {{ . | quote }}
-{{- end }}
-envFrom:
-  - configMapRef:
-      name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
 {{- end -}}
