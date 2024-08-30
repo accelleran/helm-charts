@@ -189,7 +189,7 @@ cw-inst:
 instance-scaler:
   enabled: true
 
-  nameOverride: "instance-scaler"
+  nameOverride: "cw-instance-scaler"
   fullnameOverride: ""
 
   containerName: "instance-scaler"
@@ -236,7 +236,7 @@ instance-scaler:
 netconf:
   enabled: true
 
-  nameOverride: "netconf"
+  nameOverride: "cw-netconf"
   fullnameOverride: ""
 
   component: "netconf"
