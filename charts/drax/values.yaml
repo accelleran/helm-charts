@@ -60,6 +60,11 @@ dashboard:
     create: false
     name: "{{ $.Release.Name }}-bootstrap"
 
+  secretRefs:
+  - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD"
+    secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+    secretKey: "dashboard-notifications"
+
   config:
     # Defined for server config.json
     kafkaURL: "{{ $.Release.Name }}-kafka"
@@ -68,12 +73,18 @@ dashboard:
     svcOrchestratorHost: "{{ $.Release.Name }}-service-orchestrator"
     configApiHost: "{{ $.Release.Name }}-config-api"
     pcixAppPodName: "accelleran-drax-pci-010-pci-xapp-api"
+    lokiHost: "{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}"
+    lokiPort: "80"
     ksqldbPodName: "{{ $.Values.global.kubeIp }}"
     nodeApiURL: "{{ $.Values.global.kubeIp }}"
     # Defined for core-ui config.js
     grafanaPort: "30300"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
+
+  extraEnvs:
+  - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_USERNAME"
+    value: "dashboard-notifications"
 
   service:
     type: NodePort
@@ -1022,6 +1033,9 @@ loki-gateway:
         password: ""
         organization: "notifications"
       - username: "grafana-notifications"
+        password: ""
+        organization: "notifications"
+      - username: "dashboard-notifications"
         password: ""
         organization: "notifications"
 
