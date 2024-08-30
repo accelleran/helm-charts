@@ -13,13 +13,23 @@ top:
 initContainers:
 - {{ fromYaml (include "accelleran.common.init.kafka" (dict "top" $)) | toYaml | nindent 2 }}
 
-{{- with tpl $.Values.config.draxVersionConfigmap $ }}
+{{- if or (tpl $.Values.config.draxVersionConfigmap $) .Values.secretRefs }}
 env:
+  {{- with tpl $.Values.config.draxVersionConfigmap $ }}
   - name: DRAX_VERSION
     valueFrom:
       configMapKeyRef:
         name: {{ . }}
         key: draxVersion
+  {{- end }}
+
+  {{- range .Values.secretRefs }}
+  - name: {{ .name }}
+    valueFrom:
+      secretKeyRef:
+        name: {{ tpl .secretName $ }}
+        key: {{ .secretKey }}
+  {{- end }}
 {{- end }}
 
 volumes:

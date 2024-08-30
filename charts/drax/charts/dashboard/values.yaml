@@ -28,6 +28,8 @@ config:
   svcMonitorPort: 80
   svcOrchestratorHost: ""
   svcOrchestratorPort: 80
+  lokiHost: ""
+  lokiPort: ""
   configApiHost: ""
   configApiPort: 80
   pcixAppPodName: ""
