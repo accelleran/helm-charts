@@ -122,3 +122,5 @@ ingress:
   #      - chart-example.local
 
 extraResources: []
+
+extraEnvs: []

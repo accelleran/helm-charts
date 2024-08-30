@@ -82,6 +82,10 @@ dashboard:
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
 
+  extraEnvs:
+  - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_USERNAME"
+    value: "dashboard-notifications"
+  
   service:
     type: NodePort
     ports:
