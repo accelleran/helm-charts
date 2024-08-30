@@ -25,11 +25,6 @@ bootstrap:
   #
   instanceId: "cw"
 
-  redis:
-    enabled: true
-    hostname: ""
-    port: 0
-
   nats:
     enabled: true
     hostname: ""
@@ -49,11 +44,6 @@ cw-ctrl:
   fullnameOverride: ""
 
   containerName: "cw-ctrl"
-
-  redisInitImage:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.8.0"
 
   natsInitImage:
     repository: accelleran/acc-generic-img
@@ -293,13 +283,6 @@ nats:
   enabled: false
 
   natsBox:
-    enabled: false
-
-redis:
-  enabled: false
-
-  architecture: standalone
-  auth:
     enabled: false
 
 extraResources: []

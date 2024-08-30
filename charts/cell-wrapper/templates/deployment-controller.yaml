@@ -19,7 +19,6 @@ volumes:
       name: {{ include "accelleran.common.fullname" (dict "top" $  "values" (index $.Values "instance-scaler")) }}
 
 initContainers:
-- {{ fromYaml (include "accelleran.common.init.redis" (fromYaml (include "accelleran.cell-wrapper.controller.init.args" .))) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cell-wrapper.controller.init.args" .))) | toYaml | nindent 2 }}
 
 containers:
