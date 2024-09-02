@@ -129,6 +129,11 @@ cw-inst:
 
   replicaCount: 0  # instance scaler controls replicas by default
 
+  natsInitImage:
+    repository: accelleran/acc-generic-img
+    pullPolicy: IfNotPresent
+    tag: "0.8.0"
+
   image:
     repository: "accelleran/cw-inst"
     pullPolicy: IfNotPresent
