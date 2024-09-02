@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.7](https://github.com/accelleran/helm-charts/compare/common-0.3.6...common-0.3.7) (2024-09-02)
+
+
+### Features
+
+* Add statefulset template ([#502](https://github.com/accelleran/helm-charts/issues/502)) ([98b70c3](https://github.com/accelleran/helm-charts/commit/98b70c36cbf4ffa2ed1b82f544d32187772f7590))
+
 ## [0.3.6](https://github.com/accelleran/helm-charts/compare/common-0.3.5...common-0.3.6) (2024-08-22)
 
 
