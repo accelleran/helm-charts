@@ -13,6 +13,9 @@ top:
 values:
   {{ $values | toYaml | nindent 2 }}
 
+initContainers:
+- {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cell-wrapper.instance.init.args" .))) | toYaml | nindent 2 }}
+
 volumes:
   - name: {{ $fullname }}-ssh-key
     secret:
@@ -59,4 +62,17 @@ env:
 envFrom:
   - configMapRef:
       name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
+{{- end -}}
+
+
+{{- define "accelleran.cell-wrapper.instance.init.args" -}}
+{{- $ := . -}}
+{{- $values := (index $.Values "cw-inst") -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ $values | toYaml | nindent 2 }}
+
+bootstrapConfigMapName: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
 {{- end -}}
