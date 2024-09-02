@@ -15,15 +15,18 @@ spec:
   selector:
     {{- include "accelleran.common.selectorLabels" . | nindent 4 }}
   type: {{ $type }}
-  {{- with $values.service.externalTrafficPolicy }}
-  externalTrafficPolicy: {{ . }}
+  {{- with $values.service.clusterIP }}
+  clusterIP: {{ . }}
   {{- end }}
-  {{- include "accelleran.common.service.ports" . | nindent 2 }}
   {{- if eq $type "LoadBalancer" -}}
   {{- with $values.service.loadBalancerIP }}
   loadBalancerIP: {{ . }}
   {{- end }}
-  {{- end -}}
+  {{- end }}
+  {{- with $values.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- include "accelleran.common.service.ports" . | nindent 2 }}
 {{- end -}}
 
 {{- end -}}
