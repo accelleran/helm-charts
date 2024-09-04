@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.4.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.3.0...cell-wrapper-config-0.4.0) (2024-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* use default merge operation on root nodes
+* **deps:** update cell-wrapper-config to common chart 0.3.0 ([#248](https://github.com/accelleran/helm-charts/issues/248))
+
+### Features
+
+* Add extra resource ([#474](https://github.com/accelleran/helm-charts/issues/474)) ([2e33fec](https://github.com/accelleran/helm-charts/commit/2e33fec716543063d6771c1b2809031bacc73c2c))
+
+
+### Bug Fixes
+
+* **deps:** Update cell-wrapper-config to common chart 0.3.0 ([#248](https://github.com/accelleran/helm-charts/issues/248)) ([ae69c07](https://github.com/accelleran/helm-charts/commit/ae69c078baf1e1129c2d95a53515f909896bb75f))
+* **deps:** Update helm release common to v0.3.1 ([f0121bd](https://github.com/accelleran/helm-charts/commit/f0121bd9089ea7a3c6b527438ebad672806d861d))
+* **deps:** Update helm release common to v0.3.2 ([b861ce2](https://github.com/accelleran/helm-charts/commit/b861ce2b3c0369453e335281856ff08840e6aaa3))
+* **deps:** Update helm release common to v0.3.3 ([bf10815](https://github.com/accelleran/helm-charts/commit/bf108152bd37539db6b2d353b4060e3f42a63e2e))
+* **deps:** Update helm release common to v0.3.4 ([dd6b1c2](https://github.com/accelleran/helm-charts/commit/dd6b1c2a09a57bd5cc5a322416b2427a6332532b))
+* **deps:** Update helm release common to v0.3.5 ([4cc4d8f](https://github.com/accelleran/helm-charts/commit/4cc4d8f1f503620132fede33bbd897df0d270ecb))
+* **deps:** Update helm release common to v0.3.6 ([e225cc9](https://github.com/accelleran/helm-charts/commit/e225cc9428bb76a3cb6e54844f1d4058930b7902))
+* **deps:** Update helm release common to v0.3.7 ([#506](https://github.com/accelleran/helm-charts/issues/506)) ([7ab297a](https://github.com/accelleran/helm-charts/commit/7ab297aeebd645f5c00399a04d4e1b159f24859e))
+* Reverse edit-config rpcs on exit ([571724b](https://github.com/accelleran/helm-charts/commit/571724bb63334c2e5f03dc0b338a3d4062e2c39d))
+* Use default merge operation on root nodes ([5740739](https://github.com/accelleran/helm-charts/commit/5740739509834706f328f59a36dd9579ec1e4725))
+
 ## [0.3.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.2.5...cell-wrapper-config-0.3.0) (2024-05-22)
 
 
