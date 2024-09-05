@@ -8109,6 +8109,20 @@ entries:
   cell-wrapper-config:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2024-09-05T07:32:51.889004202Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.7
+    description: Accelleran's cell-wrapper config helm chart
+    digest: 5d6b75e894bd57632dee4e0fe0fd02cd435c81204dfaeaabe2f08bc3b7a29bbe
+    name: cell-wrapper-config
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cell-wrapper-config-0.4.0/cell-wrapper-config-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2024-05-22T14:39:27.797035857Z"
     dependencies:
     - name: common
@@ -33312,4 +33326,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-09-02T15:04:32.063368055Z"
+generated: "2024-09-05T07:32:52.293197632Z"
