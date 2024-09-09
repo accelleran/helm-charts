@@ -1147,7 +1147,7 @@ promtail-notifications:
   initContainer:
     - name: check-kafka
       # renovate:
-      image: accelleran/acc-generic-img:0.8.0
+      image: accelleran/acc-generic-img:0.8.1
       imagePullPolicy: IfNotPresent
       command:
       - /bin/sh

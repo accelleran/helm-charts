@@ -48,7 +48,7 @@ cw-ctrl:
   natsInitImage:
     repository: accelleran/acc-generic-img
     pullPolicy: IfNotPresent
-    tag: "0.8.0"
+    tag: "0.8.1"
 
   image:
     repository: accelleran/cw-ctrl
@@ -132,7 +132,7 @@ cw-inst:
   natsInitImage:
     repository: accelleran/acc-generic-img
     pullPolicy: IfNotPresent
-    tag: "0.8.0"
+    tag: "0.8.1"
 
   image:
     repository: "accelleran/cw-inst"
@@ -241,7 +241,7 @@ netconf:
   natsInitImage:
     repository: accelleran/acc-generic-img
     pullPolicy: IfNotPresent
-    tag: "0.8.0"
+    tag: "0.8.1"
 
   image:
     repository: accelleran/cw-netconf
