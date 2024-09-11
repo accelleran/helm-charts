@@ -2,7 +2,7 @@
 {{- $ := get . "top" | required "The top context needs to be provided to common service" -}}
 {{- $values := get . "values" | default $.Values -}}
 
-{{- if $values.service.enabled -}}
+{{- if ($values.service).enabled -}}
 
 {{- $name := include "accelleran.common.service.name" . -}}
 {{- $annotations := include "accelleran.common.service.annotations" . | fromYaml -}}
