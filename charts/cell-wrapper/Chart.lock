@@ -1,9 +1,9 @@
 dependencies:
 - name: common
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.3.7
+  version: 0.3.8
 - name: nats
   repository: https://nats-io.github.io/k8s/helm/charts/
   version: 1.2.4
-digest: sha256:872aac098ef4c4bf62956a909a270cb8f3d6a819c147d92d1b3f62515bb8c41e
-generated: "2024-09-02T16:18:06.83842893+02:00"
+digest: sha256:5c2ec755afb59303d4d3899dcd3afbaa9e286311a2c98345baedc083b206a0a9
+generated: "2024-09-11T09:00:46.808721179Z"
