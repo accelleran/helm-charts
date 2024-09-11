@@ -14,7 +14,6 @@ values:
   {{ $values | toYaml | nindent 2 }}
 
 initContainers:
-- {{ fromYaml (include "accelleran.common.init.redis" (fromYaml (include "accelleran.cu-up.init.args" .))) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-up.init.args" .))) | toYaml | nindent 2 }}
 
 containers:
