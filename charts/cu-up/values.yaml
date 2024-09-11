@@ -112,6 +112,11 @@ netconf:
 
   containerName: "netconf"
 
+  natsInitImage:
+    repository: accelleran/acc-generic-img
+    pullPolicy: IfNotPresent
+    tag: "0.8.1"
+
   image:
     repository: accelleran/cuup-netconf
     tag: ""
@@ -122,9 +127,17 @@ netconf:
       command:
         - "test"
         - "-f"
-        - "ready"
+        - "/tmp/netopeer2-server.pid"
     initialDelaySeconds: 15
     periodSeconds: 30
+
+  persistence:
+    - name: sysrepo
+      mountPath: "/workdir/sysrepo"
+      storageClassName: ""
+      accessModes:
+        - "ReadWriteOnce"
+      size: "128Mi"
 
   service:
     enabled: true
