@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/accelleran/helm-charts/compare/common-0.3.7...common-0.3.8) (2024-09-11)
+
+
+### Bug Fixes
+
+* Fix missing service block resulting in panic ([#527](https://github.com/accelleran/helm-charts/issues/527)) ([0fae62a](https://github.com/accelleran/helm-charts/commit/0fae62a0987bf1f14505ac0c18323c2d5c36091d))
+
 ## [0.3.7](https://github.com/accelleran/helm-charts/compare/common-0.3.6...common-0.3.7) (2024-09-02)
 
 
