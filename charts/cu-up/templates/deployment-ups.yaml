@@ -30,7 +30,6 @@ volumes:
   emptyDir: {}
 
 initContainers:
-- {{ fromYaml (include "accelleran.common.init.redis" (fromYaml (include "accelleran.cu-up.init.args" $))) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-up.init.args" $))) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.cu-up.ups.init.gtp-u-lb-ip" (list $ $ordinal)) | toYaml | nindent 2 }}
 

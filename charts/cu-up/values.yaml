@@ -52,11 +52,6 @@ bootstrap:
   #
   instanceId: "cuup-1"
 
-  redis:
-    enabled: true
-    hostname: ""
-    port: 0
-
   nats:
     enabled: true
     hostname: ""
@@ -72,11 +67,6 @@ cu-up:
 
   nameOverride: "cu-up"
   fullnameOverride: ""
-
-  redisInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.8.1"
-    pullPolicy: IfNotPresent
 
   natsInitImage:
     repository: accelleran/acc-generic-img
@@ -322,13 +312,6 @@ nats:
   enabled: false
 
   natsBox:
-    enabled: false
-
-redis:
-  enabled: false
-
-  architecture: standalone
-  auth:
     enabled: false
 
 extraResources: []
