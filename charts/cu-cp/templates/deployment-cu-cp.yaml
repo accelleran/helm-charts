@@ -19,7 +19,6 @@ initContainers:
 
 containers:
 - {{ fromYaml (include "accelleran.cu-cp.gnb-ctrl.container" $) | toYaml | nindent 2 }}
-- {{ fromYaml (include "accelleran.cu-cp.netconf.container" $) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.cu-cp.amf-ctrl.container" $) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.cu-cp.cu-up-ctrl.container" $) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.cu-cp.du-ctrl.container" $) | toYaml | nindent 2 }}
