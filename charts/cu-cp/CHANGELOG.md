@@ -1,5 +1,58 @@
 # Changelog
 
+## [9.0.0](https://github.com/accelleran/helm-charts/compare/cu-cp-8.0.2...cu-cp-9.0.0) (2024-09-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove redis
+* remove redis
+* add statefulset for netconf server
+
+### Features
+
+* Add extra resource ([#474](https://github.com/accelleran/helm-charts/issues/474)) ([2e33fec](https://github.com/accelleran/helm-charts/commit/2e33fec716543063d6771c1b2809031bacc73c2c))
+
+
+### Bug Fixes
+
+* Add statefulset for netconf server ([513c62b](https://github.com/accelleran/helm-charts/commit/513c62bc84ae2d5f18cdea88e386c7c2aa6af5ec))
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.8.1 ([0bcaef5](https://github.com/accelleran/helm-charts/commit/0bcaef5ff34ca091ea69f9990487809777db15ee))
+* **deps:** Update accelleran/cucp-netconf docker tag to v6 ([8fce6e8](https://github.com/accelleran/helm-charts/commit/8fce6e8057d72d8464d985b4feb70891ab8f76ca))
+* **deps:** Update helm release common to v0.3.2 ([b861ce2](https://github.com/accelleran/helm-charts/commit/b861ce2b3c0369453e335281856ff08840e6aaa3))
+* **deps:** Update helm release common to v0.3.3 ([bf10815](https://github.com/accelleran/helm-charts/commit/bf108152bd37539db6b2d353b4060e3f42a63e2e))
+* **deps:** Update helm release common to v0.3.4 ([dd6b1c2](https://github.com/accelleran/helm-charts/commit/dd6b1c2a09a57bd5cc5a322416b2427a6332532b))
+* **deps:** Update helm release common to v0.3.5 ([4cc4d8f](https://github.com/accelleran/helm-charts/commit/4cc4d8f1f503620132fede33bbd897df0d270ecb))
+* **deps:** Update helm release common to v0.3.6 ([e225cc9](https://github.com/accelleran/helm-charts/commit/e225cc9428bb76a3cb6e54844f1d4058930b7902))
+* **deps:** Update helm release common to v0.3.7 ([#506](https://github.com/accelleran/helm-charts/issues/506)) ([7ab297a](https://github.com/accelleran/helm-charts/commit/7ab297aeebd645f5c00399a04d4e1b159f24859e))
+* **deps:** Update helm release common to v0.3.8 ([f7ca8ad](https://github.com/accelleran/helm-charts/commit/f7ca8ad8fd5dd79768da4d8b74aac0cd8eaac590))
+* **deps:** Update helm release nats to v1.2.0 ([1375b4c](https://github.com/accelleran/helm-charts/commit/1375b4c234a2b744a8c72c1e0bc09a0ba59dbf76))
+* **deps:** Update helm release nats to v1.2.1 ([6f4c730](https://github.com/accelleran/helm-charts/commit/6f4c73062a4d6f48911256675e78d06061de1485))
+* **deps:** Update helm release nats to v1.2.2 ([281b093](https://github.com/accelleran/helm-charts/commit/281b093e985b367980730e3b10a335f39f02106b))
+* **deps:** Update helm release nats to v1.2.3 ([d70f3d5](https://github.com/accelleran/helm-charts/commit/d70f3d5175a1b3387c51b18299b77f2b6c683ff7))
+* **deps:** Update helm release nats to v1.2.4 ([da73bda](https://github.com/accelleran/helm-charts/commit/da73bda2aaf60db9918e43fb862909dcd6b36f14))
+* **deps:** Update helm release redis to v19.5.4 ([2aa529a](https://github.com/accelleran/helm-charts/commit/2aa529a6746a448f0413f18718fdb94ee5d39ae1))
+* **deps:** Update helm release redis to v19.5.5 ([6fe6a40](https://github.com/accelleran/helm-charts/commit/6fe6a40d9d2dcd1423a6270babc37e07cbe795fb))
+* **deps:** Update helm release redis to v19.6.0 ([3ce4dcd](https://github.com/accelleran/helm-charts/commit/3ce4dcd37b0e7c470d8926abdf010d4a815b85a1))
+* **deps:** Update helm release redis to v19.6.1 ([18805cb](https://github.com/accelleran/helm-charts/commit/18805cb413107f939ea9c9ee6fcb4f694d23e0b3))
+* **deps:** Update helm release redis to v19.6.2 ([af43807](https://github.com/accelleran/helm-charts/commit/af438077cb1a12297103ab3f96eba9dd868558e7))
+* **deps:** Update helm release redis to v19.6.3 ([ef02d83](https://github.com/accelleran/helm-charts/commit/ef02d831d6acf2cfa7a8414b7d12be8ca5a39394))
+* **deps:** Update helm release redis to v19.6.4 ([1c82558](https://github.com/accelleran/helm-charts/commit/1c825589abcafe3bdf8062bd82c4b229c8dfc0d0))
+* **deps:** Update helm release redis to v20 ([#462](https://github.com/accelleran/helm-charts/issues/462)) ([eec9505](https://github.com/accelleran/helm-charts/commit/eec9505e219f556e02742150dc0a53727dca533e))
+* **deps:** Update helm release redis to v20.0.1 ([45e247a](https://github.com/accelleran/helm-charts/commit/45e247adb645a3f7ab83dbd00c727f2628622adf))
+* **deps:** Update helm release redis to v20.0.2 ([8ffc93e](https://github.com/accelleran/helm-charts/commit/8ffc93e9468a23c7d7b1429511b770f841548ea1))
+* **deps:** Update helm release redis to v20.0.3 ([#471](https://github.com/accelleran/helm-charts/issues/471)) ([de81d67](https://github.com/accelleran/helm-charts/commit/de81d6772037be057ca81c87a5df62d0dd45fb26))
+* **deps:** Update helm release redis to v20.0.4 ([3ab30bb](https://github.com/accelleran/helm-charts/commit/3ab30bb96f577c54a97d1951a35033c0278261de))
+* **deps:** Update helm release redis to v20.0.5 ([5fe2e15](https://github.com/accelleran/helm-charts/commit/5fe2e15121eafd539ad041f9a345173b7e9bc43c))
+* **deps:** Update helm release redis to v20.1.0 ([3db101b](https://github.com/accelleran/helm-charts/commit/3db101be6f0e92d35a932ca44f7c8a189b5b27cb))
+* **deps:** Update helm release redis to v20.1.1 ([9835b6f](https://github.com/accelleran/helm-charts/commit/9835b6f5b2192ed61805a236fac99f37c74a7a3b))
+* Remove redis ([39e4c65](https://github.com/accelleran/helm-charts/commit/39e4c65a653d3b33638010e6601407444bfb70a6))
+
+
+### Reverts
+
+* Remove redis ([adc71d6](https://github.com/accelleran/helm-charts/commit/adc71d6b992935cb83847021e2c379759570675e))
+
 ## [8.0.2](https://github.com/accelleran/helm-charts/compare/cu-cp-8.0.1...cu-cp-8.0.2) (2024-06-17)
 
 
