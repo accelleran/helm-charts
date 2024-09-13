@@ -5,8 +5,7 @@
 
 ### ⚠ BREAKING CHANGES
 
-* remove redis
-* remove redis
+* Update accelleran/cucp-netconf docker tag to v6 ([8fce6e8](https://github.com/accelleran/helm-charts/commit/8fce6e8057d72d8464d985b4feb70891ab8f76ca))
 * add statefulset for netconf server
 
 ### Features
@@ -51,7 +50,7 @@
 
 ### Reverts
 
-* Remove redis ([adc71d6](https://github.com/accelleran/helm-charts/commit/adc71d6b992935cb83847021e2c379759570675e))
+* Add redis back ([adc71d6](https://github.com/accelleran/helm-charts/commit/adc71d6b992935cb83847021e2c379759570675e))
 
 ## [8.0.2](https://github.com/accelleran/helm-charts/compare/cu-cp-8.0.1...cu-cp-8.0.2) (2024-06-17)
 
