@@ -1,5 +1,38 @@
 # Changelog
 
+## [9.0.0](https://github.com/accelleran/helm-charts/compare/cu-up-8.0.2...cu-up-9.0.0) (2024-09-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* Update accelleran/cuup-netconf docker tag to v6 ([754b67e](https://github.com/accelleran/helm-charts/commit/754b67e4debeb7dea79a5e0fc72d7169768cc4cf))
+* add statefulset for netconf server
+* remove redis
+
+### Features
+
+* Add extra resource ([#474](https://github.com/accelleran/helm-charts/issues/474)) ([2e33fec](https://github.com/accelleran/helm-charts/commit/2e33fec716543063d6771c1b2809031bacc73c2c))
+
+
+### Bug Fixes
+
+* Add statefulset for netconf server ([a6264c7](https://github.com/accelleran/helm-charts/commit/a6264c7483c02728217e68b138e06c76344c9f16))
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.8.1 ([0bcaef5](https://github.com/accelleran/helm-charts/commit/0bcaef5ff34ca091ea69f9990487809777db15ee))
+* **deps:** Update accelleran/cuup-netconf docker tag to v6 ([754b67e](https://github.com/accelleran/helm-charts/commit/754b67e4debeb7dea79a5e0fc72d7169768cc4cf))
+* **deps:** Update helm release common to v0.3.2 ([b861ce2](https://github.com/accelleran/helm-charts/commit/b861ce2b3c0369453e335281856ff08840e6aaa3))
+* **deps:** Update helm release common to v0.3.3 ([bf10815](https://github.com/accelleran/helm-charts/commit/bf108152bd37539db6b2d353b4060e3f42a63e2e))
+* **deps:** Update helm release common to v0.3.4 ([dd6b1c2](https://github.com/accelleran/helm-charts/commit/dd6b1c2a09a57bd5cc5a322416b2427a6332532b))
+* **deps:** Update helm release common to v0.3.5 ([4cc4d8f](https://github.com/accelleran/helm-charts/commit/4cc4d8f1f503620132fede33bbd897df0d270ecb))
+* **deps:** Update helm release common to v0.3.6 ([e225cc9](https://github.com/accelleran/helm-charts/commit/e225cc9428bb76a3cb6e54844f1d4058930b7902))
+* **deps:** Update helm release common to v0.3.7 ([#506](https://github.com/accelleran/helm-charts/issues/506)) ([7ab297a](https://github.com/accelleran/helm-charts/commit/7ab297aeebd645f5c00399a04d4e1b159f24859e))
+* **deps:** Update helm release common to v0.3.8 ([f7ca8ad](https://github.com/accelleran/helm-charts/commit/f7ca8ad8fd5dd79768da4d8b74aac0cd8eaac590))
+* **deps:** Update helm release nats to v1.2.0 ([1375b4c](https://github.com/accelleran/helm-charts/commit/1375b4c234a2b744a8c72c1e0bc09a0ba59dbf76))
+* **deps:** Update helm release nats to v1.2.1 ([6f4c730](https://github.com/accelleran/helm-charts/commit/6f4c73062a4d6f48911256675e78d06061de1485))
+* **deps:** Update helm release nats to v1.2.2 ([281b093](https://github.com/accelleran/helm-charts/commit/281b093e985b367980730e3b10a335f39f02106b))
+* **deps:** Update helm release nats to v1.2.3 ([d70f3d5](https://github.com/accelleran/helm-charts/commit/d70f3d5175a1b3387c51b18299b77f2b6c683ff7))
+* **deps:** Update helm release nats to v1.2.4 ([da73bda](https://github.com/accelleran/helm-charts/commit/da73bda2aaf60db9918e43fb862909dcd6b36f14))
+* Remove redis ([84d6120](https://github.com/accelleran/helm-charts/commit/84d61206cd809c5bc5d32fa8c027222c4de0f9d7))
+
 ## [8.0.2](https://github.com/accelleran/helm-charts/compare/cu-up-8.0.1...cu-up-8.0.2) (2024-06-17)
 
 
