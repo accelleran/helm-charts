@@ -42,6 +42,10 @@
       "component": "du-metrics-server",
       "package-name": "du-metrics-server"
     },
+    "charts/loki-gateway": {
+      "component": "loki-gateway",
+      "package-name": "loki-gateway"
+    },
     "charts/promtail": {
       "component": "promtail",
       "package-name": "promtail"
