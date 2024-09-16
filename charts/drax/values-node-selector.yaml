@@ -2,6 +2,11 @@ global:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
 
+du-metrics-server:
+  influxdb:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+
 kafka:
   controller:
     nodeSelector:
