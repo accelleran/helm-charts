@@ -46,7 +46,7 @@ dependencies:
   version: 4.6.16
 - name: loki-gateway
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.1.0
+  version: 0.1.1
 - name: promtail
   repository: https://accelleran.github.io/helm-charts/
   version: 6.17.1
@@ -74,5 +74,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.1.3
-digest: sha256:c860b1badc395ea5abf963924e7f72dff3af3b4d48a93c6fca897dd694325ad5
-generated: "2024-09-16T17:27:54.691136516+02:00"
+digest: sha256:e01780bad590736f90ce502cc8e7ed2db357b8c8b10401f7b036c88351ced0ab
+generated: "2024-09-16T15:55:45.351085353Z"
