@@ -51,10 +51,43 @@ grafana:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
 
-loki-stack:
-  loki:
+loki:
+  compactor:
     nodeSelector:
       drax.accelleran.com/schedule: "true"
+  gateway:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  indexGateway:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  distributor:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  ingester:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  querier:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  queryFrontend:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  queryScheduler:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  ruler:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  tableManager:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+
+promtail-logs: {}
+
+promtail-notifications:
+  nodeSelector:
+    drax.accelleran.com/schedule: "true"
 
 influxdb:
   nodeSelector:
