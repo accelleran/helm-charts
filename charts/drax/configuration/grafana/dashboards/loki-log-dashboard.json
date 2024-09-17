@@ -152,7 +152,7 @@
           },
           "expr": "{node_name=~\"$node\", namespace=~\"$namespace\", pod=~\"$pod\", container=~\"$container\"} |~ `$line_search`",
           "hide": false,
-          "maxLines": 10000,
+          "maxLines": 1000,
           "queryType": "range",
           "refId": "A"
         }
