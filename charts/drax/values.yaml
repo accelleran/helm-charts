@@ -247,6 +247,15 @@ du-metrics-server:
   influxdb:
     nameOverride: "du-influxdb"
 
+    adminUser:
+      organization: "accelleran"
+      bucket: "default"
+      retention_policy: "0s"
+      user: "admin"
+      password: ""
+      token: ""
+      existingSecret: drax-du-influxdb-auth
+
     persistence:
       enabled: true
       accessMode: ReadWriteOnce
@@ -720,12 +729,14 @@ grafana:
   envValueFrom:
     DU_INFLUXDB_ADMIN_TOKEN:
       secretKeyRef:
-        name: "{{ $.Release.Name }}-du-influxdb-auth"
+        name: "drax-du-influxdb-auth"
         key: admin-token
+
     LOKI_LOGS_BASIC_AUTH_PASSWORD:
       secretKeyRef:
         name: "{{ $.Release.Name }}-loki-gateway-auth"
         key: grafana-logs
+
     LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD:
       secretKeyRef:
         name: "{{ $.Release.Name }}-loki-gateway-auth"
