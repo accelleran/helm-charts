@@ -1,0 +1,31 @@
+.login-pf body {
+    background: url("../img/accelleran-drax-bg.jpg") no-repeat center center fixed;
+    background-size: cover;
+    height: 100%;
+}
+
+div.kc-logo-text {
+    background-image: url(../img/accelleran-logo-white.svg);
+    background-repeat: no-repeat;
+    height: 63px;
+    width: 213px;
+    background-size: auto 100%;
+    margin: 0 auto;
+}
+
+div.kc-logo-text span {
+    display: none;
+}
+
+div#kc-header-wrapper {
+    background-image: url(../img/accelleran-logo-white.svg);
+    background-repeat: no-repeat;
+    height: 86px;
+    max-width: 300px;
+    background-size: auto 100%;
+    margin: 48px auto;
+
+    /* make the text invisible */
+    color: transparent;
+    user-select: none;
+}
