@@ -939,6 +939,32 @@ loki:
       runtime_config:
         file: "/runtime-config/tenants.yaml"
 
+      schema_config:
+        configs:
+          - from: "2024-04-01"
+            store: tsdb
+            object_store: s3
+            schema: v13
+            index:
+              prefix: loki_index_
+              period: 24h
+      ingester:
+        chunk_encoding: snappy
+      tracing:
+        enabled: true
+      querier:
+        max_concurrent: 4
+
+      common:
+        storage:
+          s3:
+            endpoint: drax-minio.default.svc:9000
+            bucketnames: chunks
+            access_key_id: loki-logs
+            secret_access_key: supersecret-abc-123
+            s3forcepathstyle: true
+            insecure: true
+
   compactor:
     extraVolumes:
       - name: loki-tenants
@@ -1192,6 +1218,36 @@ promtail-notifications:
         items:
           - key: promtail-notifications
             path: password
+
+
+minio:
+  enabled: true
+  replicas: 1
+  # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
+  # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
+  # Since we only have 1 replica, that means 2 drives must be used.
+  drivesPerNode: 2
+  rootUser: loki-logs
+  rootPassword: supersecret-abc-123
+  buckets:
+    - name: chunks
+      policy: none
+      purge: false
+    - name: ruler
+      policy: none
+      purge: false
+    - name: admin
+      policy: none
+      purge: false
+  persistence:
+    size: 5Gi
+    annotations: {}
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # Allow the address used by Loki to refer to Minio to be overridden
+  address: null
 
 
 influxdb:
