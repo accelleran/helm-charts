@@ -1,0 +1,10 @@
+{{- $values := index $.Values.drax "keycloak-init" -}}
+{{ include
+      "accelleran.common.serviceAccount"
+      (dict "top" $ "values" $values)
+}}
+---
+{{ include
+      "accelleran.common.rbac"
+      (dict "top" $ "values" $values)
+}}
