@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.1...loki-gateway-0.1.2) (2024-09-18)
+
+
+### Bug Fixes
+
+* Use random alpha numeric passwords ([#551](https://github.com/accelleran/helm-charts/issues/551)) ([3f99881](https://github.com/accelleran/helm-charts/commit/3f998811ea513a6f0f098b1dea9f56a9afbcbda5))
+
 ## [0.1.1](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.0...loki-gateway-0.1.1) (2024-09-16)
 
 
