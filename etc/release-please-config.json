@@ -46,10 +46,6 @@
       "component": "loki-gateway",
       "package-name": "loki-gateway"
     },
-    "charts/promtail": {
-      "component": "promtail",
-      "package-name": "promtail"
-    },
     "charts/telemetry-collector": {
       "component": "telemetry-collector",
       "package-name": "telemetry-collector"
