@@ -35,6 +35,15 @@ dependencies:
 - name: golang-nkafka
   repository: file://charts/golang-nkafka
   version: 2.0.1
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.11.2
+- name: oauth2-proxy
+  repository: https://oauth2-proxy.github.io/manifests
+  version: 7.7.20
+- name: keycloak
+  repository: https://charts.bitnami.com/bitnami/
+  version: 22.2.5
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 8.5.2
@@ -77,5 +86,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.2.0
-digest: sha256:81ea1c2ab797b765101702bee7b734f4933d7c12a6ae5a379d6d4a58f552c5a9
-generated: "2024-10-09T12:27:50.905008487Z"
+digest: sha256:91a315380393589860f9e5b51a00b5920bb94932350bb75fd0bc4ce23d914d35
+generated: "2024-10-09T15:18:07.788410879+02:00"
