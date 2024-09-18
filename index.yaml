@@ -31154,6 +31154,20 @@ entries:
   loki-gateway:
   - apiVersion: v2
     appVersion: 1.27.1
+    created: "2024-09-18T12:11:23.644844407Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.8
+    description: Loki gateway
+    digest: 506576e8850b777a7b404c42d18c1d3cc9e7424789dba553dcdc5d4cbe113c30
+    name: loki-gateway
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/loki-gateway-0.1.2/loki-gateway-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 1.27.1
     created: "2024-09-16T15:49:06.535616564Z"
     dependencies:
     - name: common
@@ -33408,4 +33422,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-09-16T15:49:06.537006878Z"
+generated: "2024-09-18T12:11:23.646154505Z"
