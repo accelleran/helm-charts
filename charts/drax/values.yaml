@@ -299,7 +299,7 @@ telemetry-collector:
         consumers:
           natsConsumer:
             url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
-          subjects: "*.5G_MEAS_INFO.*.*.*.*"
+            subjects: "*.5G_MEAS_INFO.*.*.*.*"
         publishers:
           kafkaPublisher:
             topic: "accelleran.drax.5g.ric.o1.ves"
