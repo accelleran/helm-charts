@@ -936,6 +936,7 @@ loki:
         max_entries_limit_per_query: 10000
       compactor:
         retention_enabled: true
+        delete_request_store: s3
       runtime_config:
         file: "/runtime-config/tenants.yaml"
 
@@ -966,6 +967,9 @@ loki:
             insecure: true
 
   compactor:
+    replicaCount: 1
+    updateStrategy:
+      type: Recreate
     extraVolumes:
       - name: loki-tenants
         configMap:
