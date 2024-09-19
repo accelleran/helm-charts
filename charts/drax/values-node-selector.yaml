@@ -89,6 +89,13 @@ promtail-notifications:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
 
+minio:
+  nodeSelector:
+    drax.accelleran.com/schedule: "true"
+  postJob:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+
 influxdb:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
