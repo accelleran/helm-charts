@@ -970,6 +970,7 @@ loki:
     replicaCount: 1
     updateStrategy:
       type: Recreate
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -979,6 +980,7 @@ loki:
         mountPath: "/runtime-config"
 
   indexGateway:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -988,6 +990,7 @@ loki:
         mountPath: "/runtime-config"
 
   distributor:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -997,6 +1000,7 @@ loki:
         mountPath: "/runtime-config"
 
   ingester:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1006,6 +1010,7 @@ loki:
         mountPath: "/runtime-config"
 
   querier:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1015,6 +1020,7 @@ loki:
         mountPath: "/runtime-config"
 
   queryFrontend:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1024,6 +1030,7 @@ loki:
         mountPath: "/runtime-config"
 
   queryScheduler:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1033,6 +1040,7 @@ loki:
         mountPath: "/runtime-config"
 
   ruler:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1042,6 +1050,7 @@ loki:
         mountPath: "/runtime-config"
 
   tableManager:
+    resourcesPreset: "none"
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1052,9 +1061,23 @@ loki:
 
   gateway:
     enabled: false
+    resourcesPreset: "none"
 
   promtail:
     enabled: false
+    resourcesPreset: "none"
+
+  volumePermissions:
+    resourcesPreset: "none"
+
+  memcachedchunks:
+    resourcesPreset: "none"
+  memcachedfrontend:
+    resourcesPreset: "none"
+  memcachedindexqueries:
+    resourcesPreset: "none"
+  memcachedindexwrites:
+    resourcesPreset: "none"
 
 
 loki-gateway:
