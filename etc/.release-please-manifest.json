@@ -3,7 +3,7 @@
   "charts/cell-wrapper": "5.0.1",
   "charts/cell-wrapper-config": "0.4.0",
   "charts/cu-cp": "9.0.1",
-  "charts/cu-up": "9.0.0",
+  "charts/cu-up": "9.0.1",
   "charts/drax": "8.0.3",
   "charts/du-metrics-server": "0.2.1",
   "charts/loki-gateway": "0.1.2",
