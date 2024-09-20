@@ -922,111 +922,6 @@ grafana:
     nats-dashboard: "{{ .Release.Name }}-grafana-nats-dashboard"
 
 
-loki:
-  # enabled: true
-
-  loki:
-    overrideConfiguration:
-      table_manager:
-        retention_deletes_enabled: true
-        retention_period: 672h  # 28d
-      limits_config:
-        max_query_lookback: 672h  # 28 days
-        retention_period: 672h  # 28d
-        max_entries_limit_per_query: 10000
-      compactor:
-        retention_enabled: true
-      runtime_config:
-        file: "/runtime-config/tenants.yaml"
-
-  compactor:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  indexGateway:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  distributor:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  ingester:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  querier:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  queryFrontend:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  queryScheduler:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  ruler:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  tableManager:
-    extraVolumes:
-      - name: loki-tenants
-        configMap:
-          name: "{{ $.Release.Name }}-drax-loki-tenants"
-    extraVolumeMounts:
-      - name: loki-tenants
-        mountPath: "/runtime-config"
-
-  gateway:
-    enabled: false
-
-  promtail:
-    enabled: false
-
-
 loki-gateway:
   # enabled: true
 
@@ -1065,6 +960,336 @@ loki-gateway:
     #  - secretName: chart-example-tls
     #    hosts:
     #      - chart-example.local
+
+
+loki:
+  # enabled: true
+
+  loki:
+    overrideConfiguration:
+      table_manager:
+        retention_deletes_enabled: true
+        retention_period: 672h  # 28d
+      limits_config:
+        max_query_lookback: 672h  # 28 days
+        retention_period: 672h  # 28d
+        max_entries_limit_per_query: 10000
+      compactor:
+        retention_enabled: true
+        delete_request_store: s3
+      runtime_config:
+        file: "/runtime-config/tenants.yaml"
+
+      schema_config:
+        configs:
+          - from: "2024-04-01"
+            store: tsdb
+            object_store: s3
+            schema: v13
+            index:
+              prefix: loki_index_
+              period: 24h
+      ingester:
+        chunk_encoding: snappy
+      tracing:
+        enabled: true
+      querier:
+        max_concurrent: 4
+
+      common:
+        storage:
+          s3:
+            endpoint: ${MINIO_ENDPOINT}
+            bucketnames: chunks
+            access_key_id: ${MINIO_ACCESS_KEY_ID}
+            secret_access_key: ${MINIO_SECRET_ACCESS_KEY}
+            s3forcepathstyle: true
+            insecure: true
+
+  compactor:
+    replicaCount: 1
+    updateStrategy:
+      type: Recreate
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  indexGateway:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  distributor:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  ingester:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  querier:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  queryFrontend:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  queryScheduler:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  ruler:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  tableManager:
+    resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
+    extraVolumes:
+      - name: loki-tenants
+        configMap:
+          name: "{{ $.Release.Name }}-drax-loki-tenants"
+    extraVolumeMounts:
+      - name: loki-tenants
+        mountPath: "/runtime-config"
+
+  gateway:
+    enabled: false
+    resourcesPreset: "none"
+
+  promtail:
+    enabled: false
+    resourcesPreset: "none"
+
+  volumePermissions:
+    resourcesPreset: "none"
+
+  memcachedchunks:
+    resourcesPreset: "none"
+  memcachedfrontend:
+    resourcesPreset: "none"
+  memcachedindexqueries:
+    resourcesPreset: "none"
+  memcachedindexwrites:
+    resourcesPreset: "none"
+
+
+minio:
+  # enabled: true
+
+  replicas: 1
+  # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
+  # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
+  # Since we only have 1 replica, that means 2 drives must be used.
+  drivesPerNode: 2
+  rootUser: ""
+  rootPassword: ""
+
+  # Allow the address used by Loki to refer to Minio to be overridden
+  address: null
+
+  buckets:
+    - name: chunks
+      policy: none
+      purge: false
+    - name: ruler
+      policy: none
+      purge: false
+    - name: admin
+      policy: none
+      purge: false
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  persistence:
+    size: 5Gi
+    annotations: {}
+
+minioPostJob:
+  enabled: false
 
 
 promtail-logs:

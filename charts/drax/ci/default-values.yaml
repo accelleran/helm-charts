@@ -61,3 +61,6 @@ redis:
     resourcesPreset: "none"
   sysctl:
     resourcesPreset: "none"
+
+minioPostJob:
+  enabled: true

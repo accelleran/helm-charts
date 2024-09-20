@@ -6,5 +6,5 @@ lint-conf: "etc/lintconf.yaml"
 validate-chart-schema: true
 chart-yaml-schema: "etc/chart_schema.yaml"
 validate-maintainers: false
-helm-extra-args: --timeout 600s --debug
-kubectl-timeout: 600s
+helm-extra-args: --timeout 300s
+kubectl-timeout: 300s
