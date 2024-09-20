@@ -2,7 +2,7 @@ apiVersion: v2
 name: telemetry-collector
 description: A Helm chart for the Telemetry Collector
 type: application
-version: 1.1.0
+version: 1.1.1
 # renovate: image=accelleran/telemetry-collector
 appVersion: "1.1.0"
 dependencies:
