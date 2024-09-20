@@ -999,7 +999,7 @@ loki:
       common:
         storage:
           s3:
-            endpoint: "{{ $.Release.Name }}-minio.default.svc:9000"
+            endpoint: ${MINIO_ENDPOINT}
             bucketnames: chunks
             access_key_id: ${MINIO_ACCESS_KEY_ID}
             secret_access_key: ${MINIO_SECRET_ACCESS_KEY}
@@ -1014,6 +1014,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1037,6 +1039,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1060,6 +1064,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1083,6 +1089,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1106,6 +1114,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1129,6 +1139,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1152,6 +1164,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1175,6 +1189,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1198,6 +1214,8 @@ loki:
     extraArgs:
     - -config.expand-env=true
     extraEnvVars:
+      - name: MINIO_ENDPOINT
+        value: "{{ $.Release.Name }}-minio.default.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
