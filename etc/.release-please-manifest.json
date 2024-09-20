@@ -7,7 +7,7 @@
   "charts/drax": "8.0.3",
   "charts/du-metrics-server": "0.2.1",
   "charts/loki-gateway": "0.1.2",
-  "charts/telemetry-collector": "1.1.0",
+  "charts/telemetry-collector": "1.1.1",
   "charts/xapp-anr": "0.1.1",
   "charts/xapp-hello-world": "3.0.3"
 }
