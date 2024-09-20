@@ -999,7 +999,7 @@ loki:
       common:
         storage:
           s3:
-            endpoint: drax-minio.default.svc:9000
+            endpoint: "{{ $.Release.Name }}-minio.default.svc:9000"
             bucketnames: chunks
             access_key_id: ${MINIO_ACCESS_KEY_ID}
             secret_access_key: ${MINIO_SECRET_ACCESS_KEY}
