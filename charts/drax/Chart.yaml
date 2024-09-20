@@ -72,6 +72,13 @@ dependencies:
     condition: prometheus.enabled
     version: 25.27.0
     repository: https://prometheus-community.github.io/helm-charts
+  - name: loki-gateway
+    condition: loki-gateway.enabled
+    tags:
+      - logs
+      - notifications
+    version: 0.1.2
+    repository: https://accelleran.github.io/helm-charts/
   - name: grafana-loki
     alias: loki
     condition: loki.enabled
@@ -80,13 +87,13 @@ dependencies:
       - notifications
     version: 4.6.16
     repository: https://charts.bitnami.com/bitnami/
-  - name: loki-gateway
-    condition: loki-gateway.enabled
+  - name: minio
+    condition: minio.enabled
     tags:
       - logs
       - notifications
-    version: 0.1.2
-    repository: https://accelleran.github.io/helm-charts/
+    version: 5.2.0
+    repository: https://charts.min.io/
   - name: promtail
     alias: promtail-logs
     condition: promtail-logs.enabled
@@ -101,10 +108,6 @@ dependencies:
       - notifications
     version: 6.16.6
     repository: https://grafana.github.io/helm-charts/
-  - name: minio
-    version: 5.2.0
-    repository: https://charts.min.io/
-    condition: minio.enabled
   - name: influxdb
     condition: influxdb.enabled
     version: 4.12.5

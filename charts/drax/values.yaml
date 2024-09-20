@@ -922,6 +922,46 @@ grafana:
     nats-dashboard: "{{ .Release.Name }}-grafana-nats-dashboard"
 
 
+loki-gateway:
+  # enabled: true
+
+  auth:
+    enabled: true
+    preventSecretUninstall: true
+    users:
+      - username: "promtail-logs"
+        password: ""
+        organization: "logs"
+      - username: "grafana-logs"
+        password: ""
+        organization: "logs"
+      - username: "promtail-notifications"
+        password: ""
+        organization: "notifications"
+      - username: "grafana-notifications"
+        password: ""
+        organization: "notifications"
+      - username: "dashboard-notifications"
+        password: ""
+        organization: "notifications"
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      -
+        # host: example.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - chart-example.local
+
+
 loki:
   # enabled: true
 
@@ -1197,44 +1237,35 @@ loki:
     resourcesPreset: "none"
 
 
-loki-gateway:
+minio:
   # enabled: true
 
-  auth:
-    enabled: true
-    preventSecretUninstall: true
-    users:
-      - username: "promtail-logs"
-        password: ""
-        organization: "logs"
-      - username: "grafana-logs"
-        password: ""
-        organization: "logs"
-      - username: "promtail-notifications"
-        password: ""
-        organization: "notifications"
-      - username: "grafana-notifications"
-        password: ""
-        organization: "notifications"
-      - username: "dashboard-notifications"
-        password: ""
-        organization: "notifications"
-
-  ingress:
-    enabled: false
-    className: ""
+  replicas: 1
+  # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
+  # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
+  # Since we only have 1 replica, that means 2 drives must be used.
+  drivesPerNode: 2
+  rootUser: ""
+  rootPassword: ""
+  buckets:
+    - name: chunks
+      policy: none
+      purge: false
+    - name: ruler
+      policy: none
+      purge: false
+    - name: admin
+      policy: none
+      purge: false
+  persistence:
+    size: 5Gi
     annotations: {}
-    hosts:
-      -
-        # host: example.local
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
-            port: http
-    tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # Allow the address used by Loki to refer to Minio to be overridden
+  address: null
 
 
 promtail-logs:
@@ -1362,36 +1393,6 @@ promtail-notifications:
         items:
           - key: promtail-notifications
             path: password
-
-
-minio:
-  enabled: true
-  replicas: 1
-  # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
-  # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
-  # Since we only have 1 replica, that means 2 drives must be used.
-  drivesPerNode: 2
-  rootUser: ""
-  rootPassword: ""
-  buckets:
-    - name: chunks
-      policy: none
-      purge: false
-    - name: ruler
-      policy: none
-      purge: false
-    - name: admin
-      policy: none
-      purge: false
-  persistence:
-    size: 5Gi
-    annotations: {}
-  resources:
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  # Allow the address used by Loki to refer to Minio to be overridden
-  address: null
 
 
 influxdb:
