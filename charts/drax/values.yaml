@@ -1265,6 +1265,10 @@ minio:
   drivesPerNode: 2
   rootUser: ""
   rootPassword: ""
+
+  # Allow the address used by Loki to refer to Minio to be overridden
+  address: null
+
   buckets:
     - name: chunks
       policy: none
@@ -1275,15 +1279,17 @@ minio:
     - name: admin
       policy: none
       purge: false
-  persistence:
-    size: 5Gi
-    annotations: {}
+
   resources:
     requests:
       cpu: 100m
       memory: 128Mi
-  # Allow the address used by Loki to refer to Minio to be overridden
-  address: null
+  persistence:
+    size: 5Gi
+    annotations: {}
+
+minioPostJob:
+  enabled: false
 
 
 promtail-logs:
