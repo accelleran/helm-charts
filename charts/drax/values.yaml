@@ -961,8 +961,8 @@ loki:
           s3:
             endpoint: drax-minio.default.svc:9000
             bucketnames: chunks
-            access_key_id: loki-logs
-            secret_access_key: supersecret-abc-123
+            access_key_id: ${MINIO_ACCESS_KEY_ID}
+            secret_access_key: ${MINIO_SECRET_ACCESS_KEY}
             s3forcepathstyle: true
             insecure: true
 
@@ -971,6 +971,19 @@ loki:
     updateStrategy:
       type: Recreate
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -981,6 +994,19 @@ loki:
 
   indexGateway:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -991,6 +1017,19 @@ loki:
 
   distributor:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1001,6 +1040,19 @@ loki:
 
   ingester:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1011,6 +1063,19 @@ loki:
 
   querier:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1021,6 +1086,19 @@ loki:
 
   queryFrontend:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1031,6 +1109,19 @@ loki:
 
   queryScheduler:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1041,6 +1132,19 @@ loki:
 
   ruler:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1051,6 +1155,19 @@ loki:
 
   tableManager:
     resourcesPreset: "none"
+    extraArgs:
+    - -config.expand-env=true
+    extraEnvVars:
+      - name: MINIO_ACCESS_KEY_ID
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootUser
+      - name: MINIO_SECRET_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: "{{ $.Release.Name }}-minio"
+            key: rootPassword
     extraVolumes:
       - name: loki-tenants
         configMap:
@@ -1254,8 +1371,8 @@ minio:
   # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
   # Since we only have 1 replica, that means 2 drives must be used.
   drivesPerNode: 2
-  rootUser: loki-logs
-  rootPassword: supersecret-abc-123
+  rootUser: ""
+  rootPassword: ""
   buckets:
     - name: chunks
       policy: none
