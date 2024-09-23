@@ -1,5 +1,12 @@
 # Changelog
 
+## [9.0.2](https://github.com/accelleran/helm-charts/compare/cu-up-9.0.1...cu-up-9.0.2) (2024-09-23)
+
+
+### Bug Fixes
+
+* Fix netconf service labels ([#565](https://github.com/accelleran/helm-charts/issues/565)) ([afce225](https://github.com/accelleran/helm-charts/commit/afce225896eee3b5967e87d5b98099859374cc4d))
+
 ## [9.0.1](https://github.com/accelleran/helm-charts/compare/cu-up-9.0.0...cu-up-9.0.1) (2024-09-20)
 
 
