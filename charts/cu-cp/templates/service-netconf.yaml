@@ -1,8 +1,19 @@
+{{- $values := index $.Values "netconf" -}}
+{{- $mergedValues := mergeOverwrite
+                      (deepCopy $values)
+                      (dict "nameOverride" (index $.Values "cu-cp" "nameOverride"))
+-}}
+
 {{- include
       "accelleran.common.service"
       (dict
         "top" $
-        "values" (index $.Values "netconf")
+        "values" $mergedValues
         "name" (include "accelleran.cu-cp.netconf.service.name" .)
+        "selectorLabels" (merge
+          (include "accelleran.common.selectorLabels" (dict "top" $ "values" $mergedValues) | fromYaml)
+          (dict "app.kubernetes.io/component" $values.component)
+        )
+        "labels" (include "accelleran.common.labels" (dict "top" $ "values" $mergedValues) | fromYaml)
       )
 -}}
