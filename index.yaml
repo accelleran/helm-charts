@@ -8127,6 +8127,20 @@ entries:
   cell-wrapper-config:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2024-09-23T08:49:53.365160577Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.8
+    description: Accelleran's cell-wrapper config helm chart
+    digest: f41cbb0484f10ee50773d86538cea8ab6ca98238f777df4c52b8abeb0dcf8c8b
+    name: cell-wrapper-config
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cell-wrapper-config-0.4.1/cell-wrapper-config-0.4.1.tgz
+    version: 0.4.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2024-09-05T07:32:51.889004202Z"
     dependencies:
     - name: common
@@ -31097,6 +31111,25 @@ entries:
     version: 0.1.0
   du-metrics-server:
   - apiVersion: v2
+    appVersion: 2.0.2
+    created: "2024-09-23T08:49:53.889988692Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.8
+    - alias: influxdb
+      condition: influxdb.enabled
+      name: influxdb2
+      repository: https://helm.influxdata.com/
+      version: 2.1.2
+    description: Accelleran's DU metrics server
+    digest: deca38f1ab348eb5caa2821ad9e7876747872dbade5e133580ba8d6176af6ebe
+    name: du-metrics-server
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/du-metrics-server-0.3.0/du-metrics-server-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
     appVersion: 1.0.4
     created: "2024-06-05T13:22:03.038028925Z"
     dependencies:
@@ -33476,4 +33509,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-09-20T15:33:33.142744044Z"
+generated: "2024-09-23T08:49:53.891790003Z"
