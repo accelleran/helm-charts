@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.2.1...du-metrics-server-0.3.0) (2024-09-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update accelleran/du-metrics-server docker tag to v2
+
+### Features
+
+* Add extra resource ([#474](https://github.com/accelleran/helm-charts/issues/474)) ([2e33fec](https://github.com/accelleran/helm-charts/commit/2e33fec716543063d6771c1b2809031bacc73c2c))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.8.1 ([0bcaef5](https://github.com/accelleran/helm-charts/commit/0bcaef5ff34ca091ea69f9990487809777db15ee))
+* **deps:** Update accelleran/du-metrics-server docker tag to v2 ([e6d3a96](https://github.com/accelleran/helm-charts/commit/e6d3a96fcda8220c1312ad03758b9a8103c638eb))
+* **deps:** Update accelleran/du-metrics-server docker tag to v2.0.1 ([3d49e12](https://github.com/accelleran/helm-charts/commit/3d49e126baf3e5a250e62a6c5675f5c403f74e44))
+* **deps:** Update accelleran/du-metrics-server docker tag to v2.0.2 ([a9c6613](https://github.com/accelleran/helm-charts/commit/a9c66135e1d85140e71d6c1db0fff3cef9334825))
+* **deps:** Update helm release common to v0.3.1 ([f0121bd](https://github.com/accelleran/helm-charts/commit/f0121bd9089ea7a3c6b527438ebad672806d861d))
+* **deps:** Update helm release common to v0.3.2 ([b861ce2](https://github.com/accelleran/helm-charts/commit/b861ce2b3c0369453e335281856ff08840e6aaa3))
+* **deps:** Update helm release common to v0.3.3 ([bf10815](https://github.com/accelleran/helm-charts/commit/bf108152bd37539db6b2d353b4060e3f42a63e2e))
+* **deps:** Update helm release common to v0.3.4 ([dd6b1c2](https://github.com/accelleran/helm-charts/commit/dd6b1c2a09a57bd5cc5a322416b2427a6332532b))
+* **deps:** Update helm release common to v0.3.5 ([4cc4d8f](https://github.com/accelleran/helm-charts/commit/4cc4d8f1f503620132fede33bbd897df0d270ecb))
+* **deps:** Update helm release common to v0.3.6 ([e225cc9](https://github.com/accelleran/helm-charts/commit/e225cc9428bb76a3cb6e54844f1d4058930b7902))
+* **deps:** Update helm release common to v0.3.7 ([#506](https://github.com/accelleran/helm-charts/issues/506)) ([7ab297a](https://github.com/accelleran/helm-charts/commit/7ab297aeebd645f5c00399a04d4e1b159f24859e))
+* **deps:** Update helm release common to v0.3.8 ([f7ca8ad](https://github.com/accelleran/helm-charts/commit/f7ca8ad8fd5dd79768da4d8b74aac0cd8eaac590))
+
 ## [0.2.1](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.2.0...du-metrics-server-0.2.1) (2024-06-05)
 
 
