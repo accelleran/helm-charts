@@ -4,7 +4,7 @@ description: Accelleran's cell-wrapper config helm chart
 type: application
 version: 0.4.1
 # renovate: image=accelleran/ncclient
-appVersion: "0.1.0"
+appVersion: "0.2.0"
 dependencies:
   - name: common
     version: 0.3.8
