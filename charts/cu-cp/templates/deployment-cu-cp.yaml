@@ -13,6 +13,12 @@ top:
 values:
   {{ $values | toYaml | nindent 2 }}
 
+selectorLabels:
+  {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
+  app.kubernetes.io/component: {{ $values.component }}
+labels:
+  {{ include "accelleran.common.labels" (dict "top" $ "values" $values) | nindent 2 }}
+
 initContainers:
 - {{ fromYaml (include "accelleran.common.init.redis" (fromYaml (include "accelleran.cu-cp.init.args" .))) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-cp.init.args" .))) | toYaml | nindent 2 }}

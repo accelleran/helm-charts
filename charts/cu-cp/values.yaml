@@ -62,6 +62,8 @@ cu-cp:
   nameOverride: "cu-cp"
   fullnameOverride: ""
 
+  component: "cu-cp"
+
   redisInitImage:
     repository: accelleran/acc-generic-img
     tag: "0.8.1"

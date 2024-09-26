@@ -1,11 +1,17 @@
+{{- $values := index $.Values "cu-cp" -}}
 {{- include
       "accelleran.common.service"
       (dict
         "top" $
         "values" (mergeOverwrite
-          (deepCopy (index $.Values "cu-cp"))
+          (deepCopy $values)
           (dict "service" (index $.Values "sctp-e1" "service"))
           (dict "service" (dict "name" (include "accelleran.cu-cp.e1.service.name" .)))
         )
+        "selectorLabels" (merge
+          (include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | fromYaml)
+          (dict "app.kubernetes.io/component" $values.component)
+        )
+        "labels" (include "accelleran.common.labels" (dict "top" $ "values" $values) | fromYaml)
       )
 -}}
