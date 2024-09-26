@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.4.1...cell-wrapper-config-0.5.0) (2024-09-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update accelleran/ncclient docker tag to v0.2.0
+
+### Bug Fixes
+
+* **deps:** Update accelleran/ncclient docker tag to v0.2.0 ([dbc04d0](https://github.com/accelleran/helm-charts/commit/dbc04d0b2354412e4cea7e6ce5abec3e47c65d3b))
+
 ## [0.4.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.4.0...cell-wrapper-config-0.4.1) (2024-09-23)
 
 
