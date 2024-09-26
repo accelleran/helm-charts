@@ -59,7 +59,7 @@ kafkaInitImage:
 image:
   repository: accelleran/golang-nkafka-5g
   pullPolicy: IfNotPresent
-  tag: "1.3.7_cu-5.0.7-maredsous_cw-4.0.0"
+  tag: "1.3.8_cu-6.0.3-nostradamus_cw-5.0.1"
 
 imagePullSecrets:
   - name: accelleran-secret
