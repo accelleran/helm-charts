@@ -8460,6 +8460,28 @@ entries:
     version: 0.1.0
   cu-cp:
   - apiVersion: v2
+    appVersion: 6.0.4
+    created: "2024-09-30T07:04:59.254246694Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.8
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      version: 1.2.5
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami/
+      version: 20.1.5
+    description: Accelleran 5G CU-CP Components
+    digest: 3bbe2d918822e5e9c4fa632642cb0675da53afedb8d1e289532ed4308629f8d6
+    name: cu-cp
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cu-cp-9.0.3/cu-cp-9.0.3.tgz
+    version: 9.0.3
+  - apiVersion: v2
     appVersion: 6.0.3
     created: "2024-09-23T10:27:18.1296652Z"
     dependencies:
@@ -33711,4 +33733,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-09-26T11:55:33.851453654Z"
+generated: "2024-09-30T07:04:59.7379625Z"
