@@ -155,7 +155,7 @@ drax:
       #   port: 9092
       #   targetPort: 9092
       #   protocol: TCP
-  
+
   keycloak-init:
     nameOverride: "keycloak-init"
 
@@ -174,7 +174,7 @@ drax:
 
     accelleranLicense:
       enabled: false
-    
+
     useHelmHooks: true
 
     podSecurityContext: {}
@@ -881,7 +881,7 @@ oauth2-proxy:
     type: Recreate
 
   config:
-    existingSecret: "drax-oauth2-proxy" # no tpl
+    existingSecret: "drax-oauth2-proxy"  # no tpl
     clientID: "oauth2-proxy"
     clientSecret: ""
 
