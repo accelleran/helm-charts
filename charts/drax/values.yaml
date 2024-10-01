@@ -895,7 +895,7 @@ oauth2-proxy:
 
       provider = "oidc"
       provider_display_name = "Accelleran dRAX"
-      oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress | required "An IP address for dRAX is required (global.ipAddress)" }}/oidc/realms/drax"
+      oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/oidc/realms/drax"
       redirect_url = "/oauth2/callback"
       email_domains = [ "*" ]
 
