@@ -29,7 +29,7 @@ args:
 
 env:
   - name: DRAX_ENDPOINT
-    value: {{ $.Values.global.domain | default $.Values.global.ipAddress | required "An IP address for dRAX is required (global.ipAddress)" }}
+    value: {{ $.Values.global.domain | default $.Values.global.ipAddress }}
 
   - name: KUBERNETES_NAMESPACE
     value: {{ $.Release.Namespace }}
