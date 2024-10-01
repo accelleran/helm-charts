@@ -884,8 +884,6 @@ oauth2-proxy:
     existingSecret: "drax-oauth2-proxy"  # no tpl
     clientID: "oauth2-proxy"
     clientSecret: ""
-
-    # openssl rand -base64 32 | head -c 32 | base64
     cookieSecret: ""
 
     configFile: |-
