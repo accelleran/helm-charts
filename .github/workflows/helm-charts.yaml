@@ -129,6 +129,7 @@ jobs:
         uses: helm/kind-action@v1.12.0
 
       - name: Install metallb for loadbalancer services
+        id: metallb
         run: |
           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/${{ needs.vars.outputs.metallb_version }}/config/manifests/metallb-native.yaml
 
@@ -156,6 +157,10 @@ jobs:
           net_ip_prefix=$(echo $net_ip | cut -d. -f 1-3)
           ip_range=$net_ip_prefix.200-$net_ip_prefix.250
           printf "ip_range=%s\n" "${ip_range}"
+
+          ip_address=$net_ip_prefix.250
+          printf "ip_address: '%s'\n" "${ip_address}"
+          printf "ip_address='%s'\n" "${ip_address}" >> $GITHUB_OUTPUT
 
           cat <<EOF | kubectl apply -f -
           apiVersion: metallb.io/v1beta1
@@ -213,6 +218,7 @@ jobs:
           --charts ${{ matrix.chart_path }}
           --helm-extra-set-args "
           --set=kafka.provisioning.useHelmHooks=false
+          --set=global.ipAddress=${{ steps.metallb.outputs.ip_address }}
           "
 
   # This is a work-around for a required check with matrix in the branch protection rules
