@@ -7,10 +7,10 @@
 div.kc-logo-text {
     background-image: url(../img/accelleran-logo-white.svg);
     background-repeat: no-repeat;
-    height: 63px;
-    width: 213px;
+    height: 86px;
+    max-width: 300px;
     background-size: auto 100%;
-    margin: 0 auto;
+    margin: 48px auto;
 }
 
 div.kc-logo-text span {
