@@ -10,7 +10,7 @@
 
 {{ if index .Values "dashboard" "enabled" -}}
 ## dRAX Dashboard
-https://{{ $.Values.global.domain | default $.Values.global.ipAddress | required "An IP address for dRAX is required (global.ipAddress)!" }}/
+https://{{ $.Values.global.domain | default $.Values.global.ipAddress | required "An IP address for dRAX is required (global.ipAddress)!" }}
 {{- end }}
 
 
