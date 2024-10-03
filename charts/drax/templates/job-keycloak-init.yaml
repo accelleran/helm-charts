@@ -82,7 +82,7 @@ env:
     value: {{ $valuesOauth2Proxy.config.clientID }}
   - name: OAUTH2_PROXY_COOKIE_SECRET
 {{- $existingSecret := lookup "v1" "Secret" .Release.Namespace $existingSecretName -}}
-{{- with index $existingSecret.data "cookie-secret" }}
+{{- with dig "data" "cookie-secret" nil $existingSecret }}
     value: {{ . | b64dec }}
 {{- else }}
     value: {{ tpl $valuesOauth2Proxy.config.cookieSecret $ | default (randAlphaNum 32 | b64enc) }}
