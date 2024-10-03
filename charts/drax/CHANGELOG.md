@@ -1,5 +1,23 @@
 # Changelog
 
+## [9.0.1](https://github.com/accelleran/helm-charts/compare/drax-9.0.0...drax-9.0.1) (2024-10-03)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/config-api docker tag to v2.0.1 ([#594](https://github.com/accelleran/helm-charts/issues/594)) ([790f05a](https://github.com/accelleran/helm-charts/commit/790f05a701801d48ca133a579a943c44ba7e4a30))
+* **deps:** Update helm release cell-wrapper to v5.0.3 ([550ad2e](https://github.com/accelleran/helm-charts/commit/550ad2e548059fa7c1b00487667382dd81102478))
+* **deps:** Update helm release grafana to v8.5.2 ([cfe861e](https://github.com/accelleran/helm-charts/commit/cfe861e8ec89f49e1ced224412d6e57206eaddb2))
+* **deps:** Update helm release grafana-loki to v4.6.17 ([f2069be](https://github.com/accelleran/helm-charts/commit/f2069be2c44ed0c4acc95610121ff6cb40fab224))
+* **deps:** Update helm release grafana-loki to v4.6.18 ([611bedc](https://github.com/accelleran/helm-charts/commit/611bedc6bfdc1edcc469c9e27d4c8610e308db04))
+* **deps:** Update helm release loki-gateway to v0.1.3 ([8403b67](https://github.com/accelleran/helm-charts/commit/8403b6776ba0a88abbf74e031875a9c25e117856))
+* **deps:** Update helm release nats to v1.2.5 ([6e4c85a](https://github.com/accelleran/helm-charts/commit/6e4c85ad6f6cfbf6047be970f87b4f8ae3d22572))
+* **deps:** Update helm release redis to v20.1.5 ([48887df](https://github.com/accelleran/helm-charts/commit/48887df7d7b34b84ef15ac8ec8d4e833611c52c4))
+* **deps:** Update helm release redis to v20.1.6 ([bd7477f](https://github.com/accelleran/helm-charts/commit/bd7477f746374bbf25c156a01862bd0adf5f250c))
+* **deps:** Update helm release redis to v20.1.7 ([1adabda](https://github.com/accelleran/helm-charts/commit/1adabda2df107dbe5278f368fd824f4247aa4d92))
+* Fix du metrics grafana dasbhoard ([#587](https://github.com/accelleran/helm-charts/issues/587)) ([e812243](https://github.com/accelleran/helm-charts/commit/e812243d649bd7df7824c8f9463e95140fe025a7))
+* Fix support for latest CU and CW versions ([cec7f94](https://github.com/accelleran/helm-charts/commit/cec7f940c4ad337d0425ff49918d74b108b83418))
+
 ## [9.0.0](https://github.com/accelleran/helm-charts/compare/drax-8.0.3...drax-9.0.0) (2024-09-23)
 
 
