@@ -7033,6 +7033,24 @@ entries:
     version: 0.1.0
   cell-wrapper:
   - apiVersion: v2
+    appVersion: 5.0.2
+    created: "2024-10-03T11:09:19.206107551Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.8
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      version: 1.2.5
+    description: Accelleran's cell-wrapper helm chart
+    digest: 945bcda735e7884a61b2abe35afe576b55e8d234ed1e10e39e4249859879e320
+    name: cell-wrapper
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cell-wrapper-5.0.3/cell-wrapper-5.0.3.tgz
+    version: 5.0.3
+  - apiVersion: v2
     appVersion: 5.0.1
     created: "2024-09-23T12:35:59.690870014Z"
     dependencies:
@@ -33765,4 +33783,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-10-03T05:59:20.163583332Z"
+generated: "2024-10-03T11:09:19.436044532Z"
