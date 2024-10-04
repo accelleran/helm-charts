@@ -903,7 +903,7 @@ oauth2-proxy:
       cookie_csrf_per_request = true
       cookie_csrf_expire = "5m"
 
-      skip_provider_button = false
+      skip_provider_button = true
 
   extraObjects:
     - apiVersion: networking.k8s.io/v1
