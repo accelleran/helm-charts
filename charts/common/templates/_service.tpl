@@ -19,7 +19,7 @@ spec:
   clusterIP: {{ . }}
   {{- end }}
   {{- if eq $type "LoadBalancer" -}}
-  {{- with $values.service.loadBalancerIP }}
+  {{- with tpl $values.service.loadBalancerIP $ }}
   loadBalancerIP: {{ . }}
   {{- end }}
   {{- end }}
