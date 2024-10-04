@@ -4,8 +4,8 @@
 
 {{- $containerName := $values.containerName | default (include "accelleran.common.name" .) -}}
 
-{{- $command := $values.command -}}
-{{- $args := $values.args -}}
+{{- $command := get . "command" | default $values.command -}}
+{{- $args := get . "args" | default $values.args -}}
 
 {{- $env := get . "env" | default list -}}
 {{- with $values.extraEnvs -}}
