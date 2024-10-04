@@ -13,7 +13,10 @@ Work-around as .Chart.AppVersion is undefined with (de)serializations (from/toYa
 This can not be used with `default` as then it would be evaluated,
 resulting in a failure when no (de)serializations took place.
 */ -}}
-{{- $version = $.Chart.appVersion -}}
+{{- $chart := $.Chart | toYaml | fromYaml -}}
+{{- with get $chart "appVersion" -}}
+{{- $version = . -}}
+{{- end -}}
 {{- end -}}
 
 {{- $version -}}
