@@ -1,3 +1,7 @@
+{{- if not ($.Values.global.ipAddress) }}
+  {{- fail "An IP address for dRAX is required (global.ipAddress)!" }}
+{{- end }}
+
 {{-
   include
     "accelleran.common.service"
