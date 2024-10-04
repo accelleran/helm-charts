@@ -282,7 +282,7 @@ dashboard:
     className: drax
     annotations:
       nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
-      nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start"
+      nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -903,40 +903,9 @@ oauth2-proxy:
       cookie_csrf_per_request = true
       cookie_csrf_expire = "5m"
 
-      custom_templates_dir = "/templates"
-      skip_provider_button=false
-
-  extraVolumes:
-    - name: templates
-      configMap:
-        name: "{{ $.Release.Name }}-oauth2-proxy-templates"
-  extraVolumeMounts:
-    - name: templates
-      mountPath: "/templates"
+      skip_provider_button = false
 
   extraObjects:
-    - apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: "{{ $.Release.Name }}-oauth2-proxy-templates"
-      data:
-        sign_in.html: |
-          {{"{{"}} define "sign_in.html" {{"}}"}}
-          <!DOCTYPE html>
-          <html lang="en" charset="utf-8">
-            <head>
-              <meta charset="utf-8">
-              <title>Redirecting...</title>
-            </head>
-            <body>
-              <h1>Redirecting...</h1>
-              <script>
-                window.location.replace("{{"{{"}} .ProxyPrefix {{"}}"}}/start?rd=" + encodeURI(window.location));
-              </script>
-            </body>
-          </html>
-          {{"{{"}} end {{"}}"}}
-
     - apiVersion: networking.k8s.io/v1
       kind: Ingress
       metadata:
