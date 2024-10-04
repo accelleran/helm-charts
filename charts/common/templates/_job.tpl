@@ -11,13 +11,16 @@ kind: Job
 {{- define "accelleran.common.job.tpl" -}}
 {{- $ := get . "top" | required "The top context needs to be provided to common job tpl" -}}
 
+{{- $ttlSecondsAfterFinished := get . "ttlSecondsAfterFinished" -}}
 {{- $backoffLimit := get . "backoffLimit" -}}
 
 metadata:
   labels:
     {{- include "accelleran.common.labels" . | nindent 4 }}
 spec:
-  # ttlSecondsAfterFinished: 600 # k8s v1.23
+  {{- with $ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ . }}
+  {{- end }}
   {{- with $backoffLimit }}
   backoffLimit: {{ . }}
   {{- end }}
