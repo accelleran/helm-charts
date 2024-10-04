@@ -160,10 +160,7 @@ def main() -> None:
 
     update_admin(config, admin)
 
-    if config.realm.name not in list_realms(config):
-        create_realm(config)
-    else:
-        update_realm(config)
+    create_or_update_realm(config)
     update_realm_user_profile(config)
     print("realms:", list_realms(config))
 
@@ -173,10 +170,7 @@ def main() -> None:
 
     init_kube_client()
     for client in clients:
-        if client.id not in list_clients(config):
-            create_client(config, client)
-        else:
-            update_client(config, client)
+        create_or_update_client(config, client)
         client.secret = get_client_secret(config, client)
         add_client_secret_to_kubernetes_secret(client)
     print("clients:", list_clients(config))
@@ -236,6 +230,13 @@ def get_admin_id(config: KeycloakConfig, admin: User) -> str:
         )
 
     return users[0]
+
+
+def create_or_update_realm(config: KeycloakConfig) -> None:
+    if config.realm.name not in list_realms(config):
+        create_realm(config)
+    else:
+        update_realm(config)
 
 
 def list_realms(config: KeycloakConfig) -> list[str]:
@@ -347,6 +348,13 @@ def get_user_id(config: KeycloakConfig, user: User) -> str:
         )
 
     return users[0]
+
+
+def create_or_update_client(config: KeycloakConfig, client: Client) -> None:
+    if client.id not in list_clients(config):
+        create_client(config, client)
+    else:
+        update_client(config, client)
 
 
 def list_clients(config: KeycloakConfig) -> list[str]:
