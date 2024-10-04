@@ -419,13 +419,10 @@ def init_kube_client():
 
 
 def add_client_secret_to_kubernetes_secret(client: Client) -> None:
-    print("secrets:", list_secrets(client.kube_secret_name))
     if client.kube_secret_name.name not in list_secrets(client.kube_secret_name):
         create_secret(client.kube_secret_name, client.to_kubernetes_secret_data())
     else:
         update_secret(client.kube_secret_name, client.to_kubernetes_secret_data())
-
-    print("secrets:", list_secrets(client.kube_secret_name))
 
 
 def list_secrets(namespaced_name: NamespacedName) -> list[str]:
