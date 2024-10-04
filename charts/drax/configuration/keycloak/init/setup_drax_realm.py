@@ -167,10 +167,8 @@ def main() -> None:
     update_realm_user_profile(config)
     print("realms:", list_realms(config))
 
-    if user.username not in list_users(config):
-        create_user(config, user)
-    else:
-        update_user(config, user)
+    create_or_update_user(config, admin)
+    create_or_update_user(config, user)
     print("users:", list_users(config))
 
     init_kube_client()
@@ -292,6 +290,13 @@ def loosen_user_profile_requirements(user_profile: dict[str, any]) -> dict[str, 
             attribute.pop("required", None)
 
     return user_profile
+
+
+def create_or_update_user(config: KeycloakConfig, user: User) -> None:
+    if user.username not in list_users(config):
+        create_user(config, user)
+    else:
+        update_user(config, user)
 
 
 def list_users(config: KeycloakConfig) -> list[str]:
