@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.3.0...du-metrics-server-0.4.0) (2024-10-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update accelleran/du-metrics-server docker tag to v3
+
+### Bug Fixes
+
+* **deps:** Update accelleran/du-metrics-server docker tag to v3 ([8756377](https://github.com/accelleran/helm-charts/commit/8756377916d76b5430dfa967f9e017f48cee12bc))
+* **deps:** Update helm release common to v0.3.9 ([#621](https://github.com/accelleran/helm-charts/issues/621)) ([5783bbf](https://github.com/accelleran/helm-charts/commit/5783bbf75b6a5845dfc469d56849e2aae72d1d4c))
+
 ## [0.3.0](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.2.1...du-metrics-server-0.3.0) (2024-09-23)
 
 
