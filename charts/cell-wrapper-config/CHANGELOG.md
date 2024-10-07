@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.5.0...cell-wrapper-config-0.5.1) (2024-10-07)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.9 ([#621](https://github.com/accelleran/helm-charts/issues/621)) ([5783bbf](https://github.com/accelleran/helm-charts/commit/5783bbf75b6a5845dfc469d56849e2aae72d1d4c))
+* Fix mandatory fields failures when leaving config out ([#620](https://github.com/accelleran/helm-charts/issues/620)) ([f30b5ff](https://github.com/accelleran/helm-charts/commit/f30b5ff4a33841bdab0a499db79996cae4026b70))
+
 ## [0.5.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.4.1...cell-wrapper-config-0.5.0) (2024-09-26)
 
 
