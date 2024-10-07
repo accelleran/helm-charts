@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.9](https://github.com/accelleran/helm-charts/compare/common-0.3.8...common-0.3.9) (2024-10-07)
+
+
+### Features
+
+* Add tpl to load balancer service ip ([8130e21](https://github.com/accelleran/helm-charts/commit/8130e21b0b8e66635d8d88c1a69f42e9e0cfc410))
+* Add ttlSecondsAfterFinished to job ([50ee770](https://github.com/accelleran/helm-charts/commit/50ee770e3ba1e5ce478d5fb84a8094ae0f6514fc))
+* Allow to provide binary data to configmap ([535a9aa](https://github.com/accelleran/helm-charts/commit/535a9aafc032bc5e53752f9e26cd90cfaa1fd962))
+* Allow to provide command and args via tpl args ([ae57227](https://github.com/accelleran/helm-charts/commit/ae57227ace6bc70f8fe8068125b6e1d8a906916a))
+
+
+### Bug Fixes
+
+* Fix app version when absent ([d4e64cc](https://github.com/accelleran/helm-charts/commit/d4e64cc9e3feb0db67f91c14af946500d69d8b92))
+
 ## [0.3.8](https://github.com/accelleran/helm-charts/compare/common-0.3.7...common-0.3.8) (2024-09-11)
 
 
