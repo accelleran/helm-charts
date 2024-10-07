@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.0.4](https://github.com/accelleran/helm-charts/compare/cell-wrapper-5.0.3...cell-wrapper-5.0.4) (2024-10-07)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cw-netconf docker tag to v5.0.3 ([efd007c](https://github.com/accelleran/helm-charts/commit/efd007c146f3d8449f34d3b1ebf602199d727c81))
+* **deps:** Update accelleran/cw-netconf docker tag to v5.0.4 ([#626](https://github.com/accelleran/helm-charts/issues/626)) ([598585f](https://github.com/accelleran/helm-charts/commit/598585f6c1f3088f5258f0d16f50619122362ef2))
+* **deps:** Update helm release common to v0.3.9 ([#621](https://github.com/accelleran/helm-charts/issues/621)) ([5783bbf](https://github.com/accelleran/helm-charts/commit/5783bbf75b6a5845dfc469d56849e2aae72d1d4c))
+
 ## [5.0.3](https://github.com/accelleran/helm-charts/compare/cell-wrapper-5.0.2...cell-wrapper-5.0.3) (2024-10-03)
 
 
