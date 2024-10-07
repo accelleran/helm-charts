@@ -944,6 +944,9 @@ loki-gateway:
       - username: "dashboard-notifications"
         password: ""
         organization: "notifications"
+      - username: "external-logs"
+        password: ""
+        organization: "logs"
 
   ingress:
     enabled: false
