@@ -1,7 +1,7 @@
 {
   "charts/common": "0.3.9",
   "charts/cell-wrapper": "5.0.3",
-  "charts/cell-wrapper-config": "0.5.0",
+  "charts/cell-wrapper-config": "0.5.1",
   "charts/cu-cp": "9.0.4",
   "charts/cu-up": "9.0.4",
   "charts/drax": "9.0.1",
