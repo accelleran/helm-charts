@@ -201,20 +201,20 @@ netconf:
       - |-
         <cw-install xmlns="http://accelleran.com/ns/yang/accelleran-cw-install" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
+        {{- with $du.install }}
         <du xc:operation="replace">
         <name>{{ $du.name }}</name>
-        {{- with $du.install }}
         {{ . }}
-        {{- end }}
         </du>
+        {{- end }}
         {{ range $index, $ru := $du.rus }}
+        {{- with $ru.install }}
         <ru xc:operation="replace">
         <name>{{ $ru.name }}</name>
-        {{- with $ru.install }}
         {{ . }}
-        {{- end }}
         <du>{{ $du.name }}</du>
         </ru>
+        {{- end }}
         {{- end }}
         {{- end }}
         {{- with .Values.global.config.global.install }}
@@ -246,12 +246,12 @@ netconf:
       - |-
         <cw-ran xmlns="http://accelleran.com/ns/yang/accelleran-cw-ran" xmlns:xc="urn:ietf:params:xml:ns:netconf:base:1.0">
         {{- range $index, $du := .Values.global.config.dus }}
+        {{- with $du.ran }}
         <du xc:operation="replace">
         <name>{{ $du.name }}</name>
-        {{- with $du.ran }}
-        {{- . }}
-        {{- end }}
+        {{ . }}
         </du>
+        {{- end }}
         {{- end }}
         {{- with .Values.global.config.global.ran }}
         {{ . }}
