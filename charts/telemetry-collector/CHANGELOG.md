@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.2](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.1...telemetry-collector-1.1.2) (2024-10-08)
+
+
+### Bug Fixes
+
+* Change default telemetry collector values ([#636](https://github.com/accelleran/helm-charts/issues/636)) ([eb60ee6](https://github.com/accelleran/helm-charts/commit/eb60ee6143c7380962b1333ec1811a6f945ca852))
+* **deps:** Update accelleran/telemetry-collector docker tag to v1.2.0 ([#634](https://github.com/accelleran/helm-charts/issues/634)) ([f1bc2a3](https://github.com/accelleran/helm-charts/commit/f1bc2a35d076adea58956efe11ce11bef8b7c89c))
+* **deps:** Update helm release common to v0.3.9 ([#621](https://github.com/accelleran/helm-charts/issues/621)) ([5783bbf](https://github.com/accelleran/helm-charts/commit/5783bbf75b6a5845dfc469d56849e2aae72d1d4c))
+
 ## [1.1.1](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.0...telemetry-collector-1.1.1) (2024-09-20)
 
 
