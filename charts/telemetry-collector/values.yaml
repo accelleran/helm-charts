@@ -136,7 +136,7 @@ config:
             DRBPdcpSduDelayDlDist: "radio_resource_utilization_metrics"
             DRBPdcpSduDelayDlDistSnssai: "radio_resource_utilization_metrics"
             AccDRBPdcpSduDelayDlDistQfiSnssaiPlmn: "radio_resource_utilization_metrics"
-    - name: "acc_du"
+    - name: "acc_du_v3"
       component: "du"
       vendor: "accelleran"
       enabled: "true"
