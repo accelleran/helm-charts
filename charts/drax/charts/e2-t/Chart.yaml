@@ -3,7 +3,8 @@ name: e2-t
 description: The E2 Termination
 type: application
 version: 2.0.0
-appVersion: "e2-6.0.0"
+# renovate: image=accelleran/e2smrcappl versioning=semver
+appVersion: "6.0.0"
 dependencies:
   - name: common
     version: 0.3.9
