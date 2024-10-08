@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.4](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-3.0.3...xapp-hello-world-3.0.4) (2024-10-08)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.8.1 ([0bcaef5](https://github.com/accelleran/helm-charts/commit/0bcaef5ff34ca091ea69f9990487809777db15ee))
+* **deps:** Update accelleran/xapp-framework-package docker tag to v3.0.5 ([f61907a](https://github.com/accelleran/helm-charts/commit/f61907a671e97c6e404af40d1ca00328e5d50d6a))
+* **deps:** Update accelleran/xapp-framework-package docker tag to v4 ([#635](https://github.com/accelleran/helm-charts/issues/635)) ([46b8a99](https://github.com/accelleran/helm-charts/commit/46b8a99e1b440b7b7762c9555d75fce933019b34))
+* **deps:** Update redis docker tag to v7.4.1 ([22c48e7](https://github.com/accelleran/helm-charts/commit/22c48e7c478a4d816f9db5e37cfe922a76d6fee0))
+
 ## [3.0.3](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-3.0.2...xapp-hello-world-3.0.3) (2024-07-30)
 
 
