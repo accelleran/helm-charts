@@ -29,6 +29,7 @@
 * **deps:** Update helm release du-metrics-server to v0.4.0 ([6d21eef](https://github.com/accelleran/helm-charts/commit/6d21eef43676ef12e9cd0aebd998d3b55439e3f3))
 * **deps:** Update helm release du-metrics-server to v0.4.1 ([be964b5](https://github.com/accelleran/helm-charts/commit/be964b597558f511f147d53eb35daa450d816e4a))
 * **deps:** Update helm release kafka to v30.1.5 ([b5ad922](https://github.com/accelleran/helm-charts/commit/b5ad9228d904f45da9cb7914a020dd248a89670c))
+* **deps:** Update helm release redis to v20.2.0 ([7d1bf29](https://github.com/accelleran/helm-charts/commit/7d1bf29fe068c221003636bb90cf118d612d0633))
 * **deps:** Update helm release telemetry-collector to v1.1.2 ([#638](https://github.com/accelleran/helm-charts/issues/638)) ([6b75bd7](https://github.com/accelleran/helm-charts/commit/6b75bd750be34b546c1e29b2a16a2b6d4ba7c357))
 * Fix du metrics grafana dashboard ([#637](https://github.com/accelleran/helm-charts/issues/637)) ([2ab9e92](https://github.com/accelleran/helm-charts/commit/2ab9e928e4756b88c45f2eeb765828d8c5b22e98))
 
