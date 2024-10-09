@@ -33855,6 +33855,21 @@ entries:
     version: 0.1.1
   xapp-hello-world:
   - apiVersion: v2
+    appVersion: 3.0.5
+    created: "2024-10-09T09:36:20.89307248Z"
+    dependencies:
+    - condition: xapp-redis.enabled
+      name: xapp-redis
+      repository: file://charts/xapp-redis
+      version: 0.3.0
+    description: A Helm chart for Accelleran dRAX xApp
+    digest: 9ef81bfe484d486c31735d5414c3e01a96399840d19f38fbf9c74b877db8b57f
+    name: xapp-hello-world
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-3.0.5/xapp-hello-world-3.0.5.tgz
+    version: 3.0.5
+  - apiVersion: v2
     appVersion: 4.0.0
     created: "2024-10-08T13:15:19.01677765Z"
     dependencies:
@@ -34061,4 +34076,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-10-08T14:48:36.9197356Z"
+generated: "2024-10-09T09:36:20.894377391Z"
