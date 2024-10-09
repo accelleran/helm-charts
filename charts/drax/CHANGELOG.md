@@ -1,5 +1,37 @@
 # Changelog
 
+## [10.0.0](https://github.com/accelleran/helm-charts/compare/drax-9.0.1...drax-10.0.0) (2024-10-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update helm release xapp-hello-world to v4 ([#644](https://github.com/accelleran/helm-charts/issues/644))
+* bump e2 broker version ([#633](https://github.com/accelleran/helm-charts/issues/633))
+* **deps:** update helm release cell-wrapper to v6 ([#631](https://github.com/accelleran/helm-charts/issues/631))
+* **deps:** update helm release du-metrics-server to v0.4.0
+
+### Features
+
+* Bump e2 broker version ([#633](https://github.com/accelleran/helm-charts/issues/633)) ([46629f4](https://github.com/accelleran/helm-charts/commit/46629f47b64195286f0f6a0d2a5931ffd349bc8f))
+* **deps:** Update helm release xapp-hello-world to v4 ([#644](https://github.com/accelleran/helm-charts/issues/644)) ([49c346d](https://github.com/accelleran/helm-charts/commit/49c346d7bacf1976f032476b5a4f6633d9e3ebaf))
+
+
+### Bug Fixes
+
+* Add an external logs user by default ([#611](https://github.com/accelleran/helm-charts/issues/611)) ([137d7ef](https://github.com/accelleran/helm-charts/commit/137d7efb11d17deaffd6062d34429230a9734419))
+* Bump nkafka to v1.3.9 with cw v5.0.3 ([bcf336d](https://github.com/accelleran/helm-charts/commit/bcf336d044ce03404692690c6abdc4fe04899970))
+* Change default telemetry collector values ([#636](https://github.com/accelleran/helm-charts/issues/636)) ([eb60ee6](https://github.com/accelleran/helm-charts/commit/eb60ee6143c7380962b1333ec1811a6f945ca852))
+* **deps:** Update accelleran/dash-front-back-end docker tag to v6.2.3 ([33ccf78](https://github.com/accelleran/helm-charts/commit/33ccf787e7b6a09fa7e32a0b8c43216bb9f0ce89))
+* **deps:** Update helm release cell-wrapper to v5.0.4 ([#627](https://github.com/accelleran/helm-charts/issues/627)) ([394e3a6](https://github.com/accelleran/helm-charts/commit/394e3a6d39c444d28c4281750e2964e400e278c7))
+* **deps:** Update helm release cell-wrapper to v6 ([#631](https://github.com/accelleran/helm-charts/issues/631)) ([b8d60d0](https://github.com/accelleran/helm-charts/commit/b8d60d022845e345175f0ec00e131564c054c544))
+* **deps:** Update helm release cell-wrapper to v6.0.1 ([612d354](https://github.com/accelleran/helm-charts/commit/612d3549a399889cf6a0240270237cdeb4fcaa57))
+* **deps:** Update helm release common to v0.3.9 ([#621](https://github.com/accelleran/helm-charts/issues/621)) ([5783bbf](https://github.com/accelleran/helm-charts/commit/5783bbf75b6a5845dfc469d56849e2aae72d1d4c))
+* **deps:** Update helm release du-metrics-server to v0.4.0 ([6d21eef](https://github.com/accelleran/helm-charts/commit/6d21eef43676ef12e9cd0aebd998d3b55439e3f3))
+* **deps:** Update helm release du-metrics-server to v0.4.1 ([be964b5](https://github.com/accelleran/helm-charts/commit/be964b597558f511f147d53eb35daa450d816e4a))
+* **deps:** Update helm release kafka to v30.1.5 ([b5ad922](https://github.com/accelleran/helm-charts/commit/b5ad9228d904f45da9cb7914a020dd248a89670c))
+* **deps:** Update helm release telemetry-collector to v1.1.2 ([#638](https://github.com/accelleran/helm-charts/issues/638)) ([6b75bd7](https://github.com/accelleran/helm-charts/commit/6b75bd750be34b546c1e29b2a16a2b6d4ba7c357))
+* Fix du metrics grafana dashboard ([#637](https://github.com/accelleran/helm-charts/issues/637)) ([2ab9e92](https://github.com/accelleran/helm-charts/commit/2ab9e928e4756b88c45f2eeb765828d8c5b22e98))
+
 ## [9.0.1](https://github.com/accelleran/helm-charts/compare/drax-9.0.0...drax-9.0.1) (2024-10-03)
 
 
