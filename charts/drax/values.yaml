@@ -202,7 +202,8 @@ dashboard:
     nodeApiURL: "{{ $.Values.global.domain | default $.Values.global.ipAddress }}"
     nodeApiPort: "80"
     # Defined for core-ui config.js
-    grafanaPort: "30300"
+    grafanaPort: ""
+    grafanaPathPrefix: "/grafana"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
 
@@ -1050,6 +1051,12 @@ grafana:
       org_name: Main Org.
       # Role for unauthenticated users, other valid values are `Editor` and `Admin`
       org_role: Viewer
+    server:
+      protocol: http
+      domain: "0.0.0.0"
+      http_port: 3000
+      root_url: "/grafana/"
+      serve_from_sub_path: true
 
   envValueFrom:
     DU_INFLUXDB_ADMIN_TOKEN:

@@ -13,5 +13,10 @@ name: {{ include "accelleran.common.fullname" (dict "top" $) }}-core-ui
 
 data:
   config.js: |-
-    window.GRAFANA_PORT = "{{ tpl (toString $.Values.config.grafanaPort) $ }}";
+    {{- with $.Values.config.grafanaPort }}
+    window.GRAFANA_PORT = "{{ . }}";
+    {{- end }}
+    {{- with $.Values.config.grafanaPathPrefix }}
+    window.GRAFANA_PATH_PREFIX = "{{ . }}";
+    {{- end }}
 {{- end -}}

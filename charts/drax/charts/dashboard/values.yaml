@@ -45,6 +45,7 @@ config:
     - "accelleran.drax.all.ric.processed.anr"
   # Defined for core-ui config.js
   grafanaPort: 0
+  grafanaPathPrefix: ""
   # Defined for environment variable DRAX_VERSION
   draxVersionConfigmap: ""
 
