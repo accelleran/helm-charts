@@ -248,7 +248,8 @@ dashboard:
     nodeApiURL: "{{ $.Values.global.domain | default $.Values.global.ipAddress }}"
     nodeApiPort: "80"
     # Defined for core-ui config.js
-    grafanaPort: "30300"
+    grafanaPort: ""
+    grafanaPathPrefix: "/grafana"
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
@@ -1136,7 +1137,11 @@ grafana:
       # Role for unauthenticated users, other valid values are `Editor` and `Admin`
       org_role: Viewer
     server:
-      root_url: "http://{{ .Values.global.kubeIp }}:30300/"
+      protocol: http
+      domain: "0.0.0.0"
+      http_port: 3000
+      root_url: "/grafana/"
+      serve_from_sub_path: true
 
   envRenderSecret:
     slack-token:
