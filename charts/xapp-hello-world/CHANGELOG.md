@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-3.0.5...xapp-hello-world-4.0.0) (2024-10-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update accelleran/xapp-framework-package docker tag to v4 ([#641](https://github.com/accelleran/helm-charts/issues/641))
+
+### Features
+
+* **deps:** Update accelleran/xapp-framework-package docker tag to v4 ([#641](https://github.com/accelleran/helm-charts/issues/641)) ([aa8d640](https://github.com/accelleran/helm-charts/commit/aa8d640291ea6fca8500060269d64fd7989589e5))
+
 ## [3.0.5](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-3.0.4...xapp-hello-world-3.0.5) (2024-10-09)
 
 
