@@ -1103,9 +1103,10 @@ grafana:
     targetPort: 3000
     nodePort: 30300
 
-  # Administrator credentials when not using an existing secret (see below)
-  adminUser: accelleran
-  adminPassword: accelleran
+  admin:
+    existingSecret: "{{ $.Release.Name }}-drax-auth"
+    userKey: "superadmin-username"
+    passwordKey: "superadmin-password"
 
   grafana.ini:
     auth.basic:
