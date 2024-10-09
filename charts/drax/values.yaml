@@ -1123,8 +1123,8 @@ grafana:
 
   admin:
     existingSecret: "{{ $.Release.Name }}-drax-auth"
-    userKey: "admin-username"
-    passwordKey: "admin-password"
+    userKey: "superadmin-username"
+    passwordKey: "superadmin-password"
 
   grafana.ini:
     auth.basic:
