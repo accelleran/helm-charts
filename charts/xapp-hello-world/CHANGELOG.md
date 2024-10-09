@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.5](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-3.0.4...xapp-hello-world-3.0.5) (2024-10-09)
+
+
+### Reverts
+
+* **deps:** Downgrade accelleran/xapp-framework-package docker tag to v3 ([#639](https://github.com/accelleran/helm-charts/issues/639)) ([cabc569](https://github.com/accelleran/helm-charts/commit/cabc56948e45eee530c68b17c8736bd34feed121))
+
 ## [3.0.4](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-3.0.3...xapp-hello-world-3.0.4) (2024-10-08)
 
 
