@@ -10,12 +10,12 @@
 
 {{ if index .Values "dashboard" "enabled" -}}
 ## dRAX Dashboard
-{{ .Values.global.kubeIp }}:{{ index .Values "dashboard" "service" "ports" "http" "nodePort" }}
+https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}
 {{- end }}
 
-{{ if index .Values "grafana" "enabled" -}}
-## Grafana
-{{ .Values.global.kubeIp }}:{{ index .Values "grafana" "service" "nodePort" }}
-{{- end }}
+
+## Admin Credentials
+Username: {{ $.Values.drax.auth.adminUser }}
+Password: echo $(kubectl get secret {{ $.Release.Name }}-drax-auth -o jsonpath="{.data.admin-password}" | base64 -d)
 
 ###############################################

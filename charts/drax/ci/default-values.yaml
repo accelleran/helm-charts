@@ -1,3 +1,18 @@
+keycloak:
+  resourcesPreset: "none"
+  postgresql:
+    primary:
+      resourcesPreset: "none"
+    readReplicas:
+      resourcesPreset: "none"
+    backup:
+      cronjob:
+        resourcesPreset: "none"
+    volumePermissions:
+      resourcesPreset: "none"
+    metrics:
+      resourcesPreset: "none"
+
 kafka:
   controller:
     resourcesPreset: "none"
