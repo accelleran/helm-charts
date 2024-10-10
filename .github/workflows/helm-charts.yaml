@@ -159,8 +159,7 @@ jobs:
           printf "ip_range=%s\n" "${ip_range}"
 
           ip_address=$net_ip_prefix.250
-          printf "ip_address: '%s'\n" "${ip_address}"
-          printf "ip_address='%s'\n" "${ip_address}" >> $GITHUB_OUTPUT
+          printf "ip_address=%s\n" "${ip_address}" | tee -a $GITHUB_OUTPUT
 
           cat <<EOF | kubectl apply -f -
           apiVersion: metallb.io/v1beta1
