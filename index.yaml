@@ -34008,6 +34008,20 @@ entries:
     version: 1.0.0
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2024-10-10T08:55:29.416499821Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.9
+    description: A Helm chart for Accelleran ANR xApp
+    digest: ae2bf2e3a66b5731fedf2488f5c816306ed3297efe07ccd84757270ee49b2a11
+    name: xapp-anr
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/xapp-anr-0.1.2/xapp-anr-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2024-08-27T08:42:03.856248965Z"
     dependencies:
     - name: common
@@ -34258,4 +34272,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-10-09T13:04:54.580700849Z"
+generated: "2024-10-10T08:55:29.417860624Z"
