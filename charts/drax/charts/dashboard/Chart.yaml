@@ -4,7 +4,7 @@ description: The Accelleran Dashboard
 type: application
 version: 6.0.0
 # renovate: image=accelleran/dash-front-back-end
-appVersion: 6.2.3
+appVersion: 6.2.4
 dependencies:
   - name: common
     version: 0.3.9
