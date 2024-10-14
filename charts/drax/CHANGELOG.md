@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.1.0](https://github.com/accelleran/helm-charts/compare/drax-10.0.0...drax-10.1.0) (2024-10-14)
+
+
+### Features
+
+* Add e2sm-ccc deployment template ([#659](https://github.com/accelleran/helm-charts/issues/659)) ([e59e088](https://github.com/accelleran/helm-charts/commit/e59e0884f068fe2f6579f24b7978df3d4138991a))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/dash-front-back-end docker tag to v6.2.4 ([24cb573](https://github.com/accelleran/helm-charts/commit/24cb5733057071009101180a7f14cad6afa4e2a9))
+* **deps:** Update helm release cell-wrapper to v6.0.2 ([a052efc](https://github.com/accelleran/helm-charts/commit/a052efcd9ec528a29daded2c314dd2a5dffa5b0a))
+* **deps:** Update helm release grafana to v8.5.3 ([4293f26](https://github.com/accelleran/helm-charts/commit/4293f265073cc3890b527f972cc34cb266a814ec))
+* **deps:** Update helm release minio to v5.3.0 ([1fac58a](https://github.com/accelleran/helm-charts/commit/1fac58a44c24c18e00e9d179b67ef3145fa3e7aa))
+
 ## [10.0.0](https://github.com/accelleran/helm-charts/compare/drax-9.0.1...drax-10.0.0) (2024-10-09)
 
 
