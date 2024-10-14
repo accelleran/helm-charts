@@ -31,7 +31,7 @@ dependencies:
     repository: file://charts/config-api
   - name: cell-wrapper
     condition: cell-wrapper.enabled
-    version: 6.0.1
+    version: 6.0.2
     repository: https://accelleran.github.io/helm-charts/
   - name: du-metrics-server
     condition: du-metrics-server.enabled
