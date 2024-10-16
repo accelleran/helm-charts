@@ -934,7 +934,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum by (topic)(kafka_server_brokertopicmetrics_bytesinpersec_count{topic!=\"__consumer_offsets\"})",
+          "expr": "sum by (topic)(kafka_server_brokertopicmetrics_bytesinpersec_oneminuterate{topic!=\"__consumer_offsets\"})",
           "interval": "1m",
           "legendFormat": "__auto",
           "range": true,
@@ -1034,7 +1034,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum by (topic)(kafka_server_brokertopicmetrics_bytesoutpersec_count{topic!=\"__consumer_offsets\"})",
+          "expr": "sum by (topic)(kafka_server_brokertopicmetrics_bytesoutpersec_oneminuterate{topic!=\"__consumer_offsets\"})",
           "interval": "1m",
           "legendFormat": "__auto",
           "range": true,
