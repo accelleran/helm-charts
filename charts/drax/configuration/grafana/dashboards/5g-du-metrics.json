@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 13,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -56,7 +55,7 @@
         "content": "<div style=\"text-align:center\"><img src=\"https://accelleran.com/wp-content/uploads/2023/07/acceleran-logo-300x89-1.png\" />",
         "mode": "html"
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "11.2.2",
       "transparent": true,
       "type": "text"
     },
@@ -111,7 +110,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": {
@@ -183,7 +182,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": {
@@ -246,7 +245,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": {
@@ -309,7 +308,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": {
@@ -372,7 +371,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.0",
+      "pluginVersion": "11.2.2",
       "targets": [
         {
           "datasource": {
@@ -4833,6 +4832,6 @@
   "timezone": "",
   "title": "DU Metrics",
   "uid": "a8a69f8a-1dd1-4496-8f3f-33de8988a823",
-  "version": 5,
+  "version": 1,
   "weekStart": ""
 }
