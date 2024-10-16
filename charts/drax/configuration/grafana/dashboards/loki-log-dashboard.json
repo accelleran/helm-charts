@@ -20,7 +20,6 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 12019,
   "graphTooltip": 0,
-  "id": 8,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -41,6 +40,7 @@
             "axisLabel": "",
             "axisPlacement": "hidden",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "bars",
             "fillOpacity": 100,
             "gradientMode": "none",
@@ -357,6 +357,6 @@
   "timezone": "",
   "title": "Loki Log Dashboard",
   "uid": "liz0yRCZz",
-  "version": 3,
+  "version": 1,
   "weekStart": ""
 }
