@@ -453,6 +453,15 @@ kafka:
     - name: "KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE"
       value: "true"
 
+  extraConfigYaml:
+    log.retention.ms: 604800000  # 7d
+    log.retention.bytes: 4294967296  # 4GiB
+    log.roll.ms: 86400000  # 24h
+    log.segment.bytes: 268435456  # 0.25GiB
+
+    log.local.retention.ms: 604800000  # 7d
+    log.local.retention.bytes: 4294967296  # 4GiB
+
   listeners:
     client:
       name: CLIENT
@@ -479,14 +488,14 @@ kafka:
     automountServiceAccountToken: true
     nodeSelector: {}
     persistence:
-      size: 1Gi
+      size: 5Gi
     resourcesPreset: medium
 
   broker:
     automountServiceAccountToken: true
     nodeSelector: {}
     persistence:
-      size: 1Gi
+      size: 5Gi
     resourcesPreset: medium
 
   provisioning:
