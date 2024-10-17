@@ -454,8 +454,6 @@ kafka:
       value: "true"
 
   extraConfigYaml:
-    retention.ms: 604800000  # 7d
-    retention.bytes: 4294967296  # 4GiB
     segment.ms: 86400000  # 24h
     segment.bytes: 268435456  # 0.25GiB
 
