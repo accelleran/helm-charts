@@ -85,7 +85,7 @@ dependencies:
     tags:
       - logs
       - notifications
-    version: 4.6.19
+    version: 4.6.20
     repository: https://charts.bitnami.com/bitnami/
   - name: minio
     condition: minio.enabled
