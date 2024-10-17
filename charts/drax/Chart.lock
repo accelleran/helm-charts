@@ -46,7 +46,7 @@ dependencies:
   version: 0.1.3
 - name: grafana-loki
   repository: https://charts.bitnami.com/bitnami/
-  version: 4.6.19
+  version: 4.6.20
 - name: minio
   repository: https://charts.min.io/
   version: 5.3.0
@@ -77,5 +77,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.2.1
-digest: sha256:ba75c881634b50c390e1e12348d251e15dcfc4da5dde83661590ecc4d9091ba1
-generated: "2024-10-17T13:03:57.213426234Z"
+digest: sha256:abfca75d64028ba996b7870906243b1700a5316ab83b0b3e8962edc170d1b700
+generated: "2024-10-17T23:57:33.165153754Z"
