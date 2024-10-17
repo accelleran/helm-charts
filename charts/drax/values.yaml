@@ -1290,8 +1290,7 @@ loki-deleter:
 
     # the names depend on minio.replicas and minio.drivesPerNode
     pvcNames:
-      - "export-0-{{ $.Release.Name }}-minio-0"
-      - "export-1-{{ $.Release.Name }}-minio-0"
+      - "{{ $.Release.Name }}-minio"
 
     localPath: "/opt/local-path-provisioner"
 
@@ -1317,9 +1316,13 @@ minio:
   # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
   # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
   # Since we only have 1 replica, that means 2 drives must be used.
-  drivesPerNode: 2
+  # But for now we want to limit the amount of storage used, so 1 drive.
+  drivesPerNode: 1
   rootUser: ""
   rootPassword: ""
+
+  # With 1 replica and 1 drive we need to run in standalone mode
+  mode: standalone
 
   # Allow the address used by Loki to refer to Minio to be overridden
   address: null
