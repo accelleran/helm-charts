@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.1.1](https://github.com/accelleran/helm-charts/compare/drax-10.1.0...drax-10.1.1) (2024-10-18)
+
+
+### Bug Fixes
+
+* Add retention to kafka to prevent node disk pressure ([#671](https://github.com/accelleran/helm-charts/issues/671)) ([32fed2e](https://github.com/accelleran/helm-charts/commit/32fed2ef11a3c8b1499c2067b79355feae782328))
+* **deps:** Update accelleran/e2smrcappl docker tag to v6.0.1 ([cb07112](https://github.com/accelleran/helm-charts/commit/cb0711214429f9848f69cade5c06b89ff89e82a5))
+* **deps:** Update helm release grafana to v8.5.4 ([2615c26](https://github.com/accelleran/helm-charts/commit/2615c26f358ebb47da86502cd71b27144df4005c))
+* **deps:** Update helm release grafana to v8.5.5 ([cfb69af](https://github.com/accelleran/helm-charts/commit/cfb69afd649576f34727d3ab109f08f6b601aa00))
+* **deps:** Update helm release grafana to v8.5.6 ([9a01c90](https://github.com/accelleran/helm-charts/commit/9a01c90c89541e4c61a5e60e5595d930e308d61d))
+* **deps:** Update helm release grafana-loki to v4.6.19 ([f8896f1](https://github.com/accelleran/helm-charts/commit/f8896f10a7dc4493338ba178c6c29f5aaa4702d2))
+* **deps:** Update helm release grafana-loki to v4.6.20 ([34dd1a2](https://github.com/accelleran/helm-charts/commit/34dd1a27bfcde501c976d880faedbb8801ced3c8))
+* **deps:** Update helm release kafka to v30.1.6 ([47436eb](https://github.com/accelleran/helm-charts/commit/47436eb41aa18e8d290b49ffda3f378539416cb7))
+* **deps:** Update helm release redis to v20.2.1 ([d82a338](https://github.com/accelleran/helm-charts/commit/d82a3387f8b81bfa829263aa998a2df82ec474e9))
+* Fix kafka bytes in and out per topic not displayed as a rate in grafana ([#670](https://github.com/accelleran/helm-charts/issues/670)) ([df1880a](https://github.com/accelleran/helm-charts/commit/df1880a4750ea21f11cd583b0e417f3fbbb1d25a))
+* Update grafana dashboard plugin versions ([#672](https://github.com/accelleran/helm-charts/issues/672)) ([9439e04](https://github.com/accelleran/helm-charts/commit/9439e0445b8b7f627cffad5cb54dd7b1c033b8d3))
+
 ## [10.1.0](https://github.com/accelleran/helm-charts/compare/drax-10.0.0...drax-10.1.0) (2024-10-14)
 
 
