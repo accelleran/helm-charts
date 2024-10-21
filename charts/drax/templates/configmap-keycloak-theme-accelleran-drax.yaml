@@ -1,0 +1,32 @@
+{{- $values := index $.Values.drax -}}
+{{
+  include
+    "accelleran.common.configMap"
+    (fromYaml (include "accelleran.drax.keycloak.theme.configMap.args" .))
+}}
+
+
+{{- define "accelleran.drax.keycloak.theme.configMap.args" -}}
+{{- $textFiles := list
+  "login/theme.properties"
+  "login/resources/css/accelleran-drax-login.css"
+  "login/resources/img/accelleran-logo-white.svg"
+-}}
+{{- $binaryFiles := list
+  "common/resources/img/favicon.ico"
+  "login/resources/img/accelleran-drax-bg.jpg"
+-}}
+
+top: {{ $ | toYaml | nindent 2 }}
+
+name: {{ $.Release.Name }}-keycloak-theme-accelleran-drax
+
+data:
+{{- range $file := $textFiles }}
+  {{ $file | replace "/" "-" }}: {{ $.Files.Get (printf "configuration/keycloak/theme/accelleran-drax/%s" $file) | quote }}
+{{- end }}
+binaryData:
+{{- range $file := $binaryFiles }}
+  {{ $file | replace "/" "-" }}: {{ $.Files.Get (printf "configuration/keycloak/theme/accelleran-drax/%s" $file) | b64enc | quote }}
+{{- end }}
+{{- end -}}
