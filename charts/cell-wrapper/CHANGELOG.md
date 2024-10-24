@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.0.3](https://github.com/accelleran/helm-charts/compare/cell-wrapper-6.0.2...cell-wrapper-6.0.3) (2024-10-24)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release nats to v1.2.6 ([03f51f1](https://github.com/accelleran/helm-charts/commit/03f51f14411a15ad435709dfd2f9ced93e6236f2))
+
 ## [6.0.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-6.0.1...cell-wrapper-6.0.2) (2024-10-14)
 
 
