@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.0.0](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-4.0.1...xapp-hello-world-5.0.0) (2024-10-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* update xapp sdk to version 5
+
+### Features
+
+* Update xapp sdk to version 5 ([6de2970](https://github.com/accelleran/helm-charts/commit/6de29702a1106ff25321e0cde50cf2fd939fc507))
+
 ## [4.0.1](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-4.0.0...xapp-hello-world-4.0.1) (2024-10-11)
 
 
