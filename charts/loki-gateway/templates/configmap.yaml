@@ -114,6 +114,13 @@ data:
           {{- end }}
         }
 
+        location = /loki/api/v1/delete {
+          proxy_pass       http://{{ .Release.Name }}-loki-compactor.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+          {{- if (.Values.auth).enabled }}
+          proxy_set_header X-Scope-OrgID $loki_org_id;
+          {{- end }}
+        }
+
         location = /loki/api/v1/tail {
           proxy_pass       http://{{ .Release.Name }}-loki-querier.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
           {{- if (.Values.auth).enabled }}
