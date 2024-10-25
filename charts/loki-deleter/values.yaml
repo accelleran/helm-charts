@@ -15,25 +15,8 @@ imagePullSecrets:
   - name: accelleran-secret
 
 config:
-  log:
-    level: "info"
-  dryRun: false
-
-  period: "10m"
-  threshold: 80
-
-  pvcNames: []
-  namespace: "{{ $.Release.Namespace }}"
-
-  localPath: "/opt/local-path-provisioner"
-
   loki:
     host: ""
-    retentionPeriod: "672h" #28d
-    deletePeriod: "24h"
-    username: ""  # better to use env LOKI_USERNAME
-    password: ""  # better to use env LOKI_PASSWORD
-    tenantId: ""
 
 extraEnvs: []
 
