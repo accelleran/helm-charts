@@ -1,0 +1,3 @@
+config:
+  # kind uses /var iso /opt
+  localPath: "/var/local-path-provisioner"
