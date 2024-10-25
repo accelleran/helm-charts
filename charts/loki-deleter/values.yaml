@@ -17,6 +17,7 @@ imagePullSecrets:
 config:
   loki:
     host: ""
+  localPath: "/opt/local-path-provisioner"
 
 extraEnvs: []
 
