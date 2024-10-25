@@ -1,0 +1,73 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: accelleran/loki-deleter
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  pullPolicy: IfNotPresent
+
+accelleranLicense:
+  enabled: false
+
+imagePullSecrets:
+  - name: accelleran-secret
+
+config:
+  log:
+    level: "info"
+  dryRun: false
+
+  period: "10m"
+  threshold: 80
+
+  pvcNames: []
+  namespace: "{{ $.Release.Namespace }}"
+
+  localPath: "/opt/local-path-provisioner"
+
+  loki:
+    host: ""
+    retentionPeriod: "672h" #28d
+    deletePeriod: "24h"
+    username: ""  # better to use env LOKI_USERNAME
+    password: ""  # better to use env LOKI_PASSWORD
+    tenantId: ""
+
+extraEnvs: []
+
+annotations: {}
+
+replicaCount: 1
+
+resources: {}
+
+podSecurityContext:
+  fsGroupChangePolicy: Always
+  sysctls: []
+  supplementalGroups: []
+  fsGroup: 1001
+
+securityContext:
+  seLinuxOptions: {}
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+
+podLabels: {}
+podAnnotations: {}
+
+affinity: {}
+tolerations: []
+nodeSelector: {}
+
+extraVolumes: []
+extraVolumeMounts: []

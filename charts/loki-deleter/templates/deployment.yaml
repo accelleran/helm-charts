@@ -1,0 +1,29 @@
+{{-
+  include
+    "accelleran.common.deployment"
+    (fromYaml (include "accelleran.loki-deleter.deployment.args" $))
+-}}
+
+
+{{- define "accelleran.loki-deleter.deployment.args" -}}
+{{- $ := . -}}
+
+top: {{ $ | toYaml | nindent 2 }}
+
+volumeMounts:
+  - name: config
+    mountPath: /config/config.yaml
+    subPath: config.yaml
+  - name: local-path
+    mountPath: {{ .Values.config.localPath }}
+    readOnly: true
+
+volumes:
+  - name: config
+    configMap:
+      name: "{{ include "accelleran.common.fullname" (dict "top" $) }}-config"
+  - name: local-path
+    hostPath:
+      type: Directory
+      path: {{ .Values.config.localPath }}
+{{- end -}}

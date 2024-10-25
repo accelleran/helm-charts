@@ -42,6 +42,10 @@
       "component": "du-metrics-server",
       "package-name": "du-metrics-server"
     },
+    "charts/loki-deleter": {
+      "component": "loki-deleter",
+      "package-name": "loki-deleter"
+    },
     "charts/loki-gateway": {
       "component": "loki-gateway",
       "package-name": "loki-gateway"
