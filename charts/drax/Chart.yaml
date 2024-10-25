@@ -87,6 +87,12 @@ dependencies:
       - notifications
     version: 4.6.20
     repository: https://charts.bitnami.com/bitnami/
+  - name: loki-deleter
+    condition: loki-deleter.enabled
+    tags:
+      - logs
+    version: 0.1.0
+    repository: https://accelleran.github.io/helm-charts/
   - name: minio
     condition: minio.enabled
     tags:
