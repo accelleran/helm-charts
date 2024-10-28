@@ -953,6 +953,9 @@ loki-gateway:
       - username: "dashboard-notifications"
         password: ""
         organization: "notifications"
+      - username: "loki-deleter-logs"
+        password: ""
+        organization: "logs"
       - username: "external-logs"
         password: ""
         organization: "logs"
@@ -989,6 +992,7 @@ loki:
       compactor:
         retention_enabled: true
         delete_request_store: s3
+        delete_request_cancel_period: 1m
       runtime_config:
         file: "/runtime-config/tenants.yaml"
 
@@ -1265,6 +1269,34 @@ loki:
     resourcesPreset: "none"
   memcachedindexwrites:
     resourcesPreset: "none"
+
+
+loki-deleter:
+  enabled: false
+
+  config:
+    namespace: "{{ $.Release.Namespace }}"
+
+    # the names depend on minio.replicas and minio.drivesPerNode
+    pvcNames:
+      - "export-0-{{ $.Release.Name }}-minio-0"
+      - "export-1-{{ $.Release.Name }}-minio-0"
+
+    localPath: "/opt/local-path-provisioner"
+
+    loki:
+      host: "{{ $.Release.Name }}-loki-gateway"
+      retentionPeriod: "672h"
+      deletePeriod: "24h"
+
+  extraEnvs:
+    - name: LOKI_USERNAME
+      value: loki-deleter-logs
+    - name: LOKI_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: "{{ $.Release.Name }}-loki-gateway-auth"
+          key: loki-deleter-logs
 
 
 minio:
