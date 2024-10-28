@@ -1,0 +1,16 @@
+{{-
+  include
+    "accelleran.common.configMap"
+    (fromYaml (include "accelleran.loki-deleter.configMap.args" $))
+-}}
+
+
+{{- define "accelleran.loki-deleter.configMap.args" -}}
+{{- $ := . -}}
+
+top: {{ $ | toYaml | nindent 2 }}
+
+name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
+data:
+  config.yaml: {{ tpl (.Values.config | toYaml) $ | toYaml | indent 4 }}
+{{- end -}}
