@@ -1286,13 +1286,12 @@ loki-deleter:
 
     loki:
       host: "{{ $.Release.Name }}-loki-gateway"
-      retentionPeriod: "672h" #28d
+      retentionPeriod: "672h" # 28d
       deletePeriod: "24h"
 
   extraEnvs:
     - name: LOKI_USERNAME
       value: loki-deleter-logs
-      
     - name: LOKI_PASSWORD
       valueFrom:
         secretKeyRef:
