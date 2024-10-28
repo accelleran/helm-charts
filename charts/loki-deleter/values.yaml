@@ -1,0 +1,75 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: accelleran/loki-deleter
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  pullPolicy: IfNotPresent
+
+accelleranLicense:
+  enabled: false
+
+imagePullSecrets:
+  - name: accelleran-secret
+
+config:
+  loki:
+    host: ""
+  localPath: "/opt/local-path-provisioner"
+
+extraEnvs: []
+
+annotations: {}
+
+replicaCount: 1
+
+resources: {}
+
+podSecurityContext:
+  fsGroupChangePolicy: Always
+  sysctls: []
+  supplementalGroups: []
+  fsGroup: 1001
+
+securityContext:
+  seLinuxOptions: {}
+  runAsUser: 1001
+  runAsGroup: 1001
+  runAsNonRoot: true
+  privileged: false
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+
+podLabels: {}
+podAnnotations: {}
+
+affinity: {}
+tolerations: []
+nodeSelector: {}
+
+extraVolumes: []
+extraVolumeMounts: []
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+rbac:
+  enabled: true
+  rules:
+    - apiGroups:
+        - ""
+      resources:
+        - persistentvolumeclaims
+        - persistentvolumes
+      verbs:
+        - get
