@@ -994,7 +994,7 @@ loki:
         compaction_interval: 10m
         delete_request_store: s3
         delete_request_cancel_period: 1m
-        retention_delete_delay: 10m
+        retention_delete_delay: 1m
       runtime_config:
         file: "/runtime-config/tenants.yaml"
 
