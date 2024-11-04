@@ -5,7 +5,7 @@
 
 ### Features
 
-* Add loki-deleter to drax ([0800895](https://github.com/accelleran/helm-charts/commit/0800895de3442f52220ad7e9a09ff7c2807f8f34))
+* Open delete endpoint for loki-deleter to drax ([0800895](https://github.com/accelleran/helm-charts/commit/0800895de3442f52220ad7e9a09ff7c2807f8f34))
 
 
 ### Bug Fixes
