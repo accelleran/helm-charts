@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.4](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.3...loki-gateway-0.1.4) (2024-10-31)
+
+
+### Features
+
+* Open delete endpoint for loki-deleter to drax ([0800895](https://github.com/accelleran/helm-charts/commit/0800895de3442f52220ad7e9a09ff7c2807f8f34))
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.9 ([#621](https://github.com/accelleran/helm-charts/issues/621)) ([5783bbf](https://github.com/accelleran/helm-charts/commit/5783bbf75b6a5845dfc469d56849e2aae72d1d4c))
+
 ## [0.1.3](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.2...loki-gateway-0.1.3) (2024-10-03)
 
 
