@@ -1,5 +1,19 @@
 # Changelog
 
+## [11.0.1](https://github.com/accelleran/helm-charts/compare/drax-11.0.0...drax-11.0.1) (2024-11-04)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release grafana to v8.5.10 ([c7d207b](https://github.com/accelleran/helm-charts/commit/c7d207b6de4aa3403303825fb18c13a882813b1c))
+* **deps:** Update helm release grafana to v8.5.11 ([ece0ccc](https://github.com/accelleran/helm-charts/commit/ece0ccc1d09c3008e033d05a7ca6e55dfb15ae90))
+* **deps:** Update helm release grafana to v8.5.9 ([3715c13](https://github.com/accelleran/helm-charts/commit/3715c13799d898d1fb46eb4b55e26e3447774b0a))
+* **deps:** Update helm release grafana-loki to v4.6.21 ([6689b84](https://github.com/accelleran/helm-charts/commit/6689b84c05c2ecf72767a4f72c9b0d5c3c00b1f4))
+* **deps:** Update helm release kafka to v30.1.7 ([be08d22](https://github.com/accelleran/helm-charts/commit/be08d2227a83b457a4e619b95ec0d2e4ccacc42a))
+* **deps:** Update helm release kafka to v30.1.8 ([32af3cb](https://github.com/accelleran/helm-charts/commit/32af3cb7a18633c2ec2decf626bec8bbf71c378a))
+* **deps:** Update helm release loki-gateway to v0.1.4 ([023bb6d](https://github.com/accelleran/helm-charts/commit/023bb6da05713d9b3e3a0c4fca722ca9ae60ba80))
+* Set loki retention delete delay ([#705](https://github.com/accelleran/helm-charts/issues/705)) ([b91d392](https://github.com/accelleran/helm-charts/commit/b91d39263245b8d52ccfb716bd42d8a923531445))
+
 ## [11.0.0](https://github.com/accelleran/helm-charts/compare/drax-10.1.0...drax-11.0.0) (2024-10-28)
 
 
