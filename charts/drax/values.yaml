@@ -1279,6 +1279,12 @@ loki-deleter:
   config:
     namespace: "{{ $.Release.Namespace }}"
 
+    log:
+      level: info
+
+    period: "20m"
+    threshold: 80
+
     # the names depend on minio.replicas and minio.drivesPerNode
     pvcNames:
       - "export-0-{{ $.Release.Name }}-minio-0"
@@ -1287,7 +1293,7 @@ loki-deleter:
     localPath: "/opt/local-path-provisioner"
 
     loki:
-      host: "{{ $.Release.Name }}-loki-gateway"
+      host: "{{ $.Release.Name }}-loki-gateway.{{ $.Release.Namespace }}"
       retentionPeriod: "672h"
       deletePeriod: "24h"
 
