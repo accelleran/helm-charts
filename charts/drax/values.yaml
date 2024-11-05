@@ -1280,6 +1280,7 @@ loki-deleter:
     namespace: "{{ $.Release.Namespace }}"
 
     period: "20m"
+    threshold: 80
 
     # the names depend on minio.replicas and minio.drivesPerNode
     pvcNames:
