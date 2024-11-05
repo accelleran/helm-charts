@@ -1290,7 +1290,7 @@ loki-deleter:
     localPath: "/opt/local-path-provisioner"
 
     loki:
-      host: "{{ $.Release.Name }}-loki-gateway"
+      host: "{{ $.Release.Name }}-loki-gateway.{{ $.Release.Namespace }}"
       retentionPeriod: "672h"
       deletePeriod: "24h"
 
