@@ -1279,6 +1279,9 @@ loki-deleter:
   config:
     namespace: "{{ $.Release.Namespace }}"
 
+    log:
+      level: info
+
     period: "20m"
     threshold: 80
 
