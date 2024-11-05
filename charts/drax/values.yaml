@@ -1279,6 +1279,8 @@ loki-deleter:
   config:
     namespace: "{{ $.Release.Namespace }}"
 
+    period: "20m"
+
     # the names depend on minio.replicas and minio.drivesPerNode
     pvcNames:
       - "export-0-{{ $.Release.Name }}-minio-0"
