@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.3](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.2...telemetry-collector-1.1.3) (2024-11-06)
+
+
+### Bug Fixes
+
+* Add buckets, fix influx url ([#716](https://github.com/accelleran/helm-charts/issues/716)) ([70fcdca](https://github.com/accelleran/helm-charts/commit/70fcdca15e474685ee4f259f32eab2fbaa2e2230))
+* **deps:** Update accelleran/telemetry-collector docker tag to v1.3.0 ([eb05469](https://github.com/accelleran/helm-charts/commit/eb0546900e642c56875ce29f846c1ce4be1c1d11))
+
 ## [1.1.2](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.1...telemetry-collector-1.1.2) (2024-10-08)
 
 
