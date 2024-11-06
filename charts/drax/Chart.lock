@@ -25,7 +25,7 @@ dependencies:
   version: 0.4.1
 - name: telemetry-collector
   repository: https://accelleran.github.io/helm-charts/
-  version: 1.1.2
+  version: 1.1.3
 - name: e2-t
   repository: file://charts/e2-t
   version: 2.0.0
@@ -80,5 +80,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.2.1
-digest: sha256:5b3bdbb9665ee7129837ef8cac23296a7f78f88c6ea461ca029f2e1fed1bc29e
-generated: "2024-11-04T22:43:17.57385644Z"
+digest: sha256:c101b973eafe78709fee904a62164e6688823860270164ee386f46927cce2c87
+generated: "2024-11-06T11:38:22.267105551Z"
