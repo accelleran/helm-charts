@@ -319,7 +319,7 @@ telemetry-collector:
           kafkaPublisher:
             topic: "accelleran.drax.5g.ric.o1.ves"
           influxPublisher:
-            defaultBucket: "counters5g"
+            defaultBucket: "default_performance_metrics"
             buckets:
               RRCConnEstabAtt: "rrc_connection_metrics"
               RRCConnEstabSucc: "rrc_connection_metrics"
@@ -1549,6 +1549,7 @@ influxdb2:
     scripts:
       init.sh: |+
         #!/bin/bash
+        influx bucket create -n default_performance_metrics -o accelleran -r 1w
         influx bucket create -n rrc_measurements -o accelleran -r 1w
         influx bucket create -n rrc_connection_metrics -o accelleran -r 1w
         influx bucket create -n handover_and_mobility_metrics -o accelleran -r 1w
