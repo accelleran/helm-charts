@@ -289,7 +289,7 @@ telemetry-collector:
       kafka:
         url: "{{ $.Release.Name }}-kafka.{{ $.Release.Namespace }}:9092"
       influxDB:
-        url: "{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
+        url: "http://{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
         org: "accelleran"
     pipelines:
       - name: "cu_measurements"
@@ -363,6 +363,9 @@ telemetry-collector:
               DRBPdcpSduDelayDlDist: "radio_resource_utilization_metrics"
               DRBPdcpSduDelayDlDistSnssai: "radio_resource_utilization_metrics"
               AccDRBPdcpSduDelayDlDistQfiSnssaiPlmn: "radio_resource_utilization_metrics"
+              AccDRBEstabSucc5QiSnssai: "radio_resource_utilization_metrics"
+              DRBEstabAttSnssai: "radio_resource_utilization_metrics"
+              DRBEstabAtt5Qi: "radio_resource_utilization_metrics"
       - name: "acc_du_v3"
         component: "du"
         vendor: "accelleran"
