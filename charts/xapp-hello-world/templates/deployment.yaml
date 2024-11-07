@@ -80,6 +80,7 @@ spec:
               sudo service ssh start
               echo 'xapp:{{ .Values.developerMode.devPassword }}' | sudo chpasswd
               git init /home/xapp/xapp/
+              jq '.name = "{{ .Release.Name }}"' /home/xapp/xapp/core/xapp_metadata.json > temp.json && mv temp.json /home/xapp/xapp/core/xapp_metadata.json
               tail -f /dev/null
           {{ else }}
           command:
