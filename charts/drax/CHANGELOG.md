@@ -1,5 +1,21 @@
 # Changelog
 
+## [11.0.2](https://github.com/accelleran/helm-charts/compare/drax-11.0.1...drax-11.0.2) (2024-11-07)
+
+
+### Bug Fixes
+
+* Add buckets, fix influx url ([#716](https://github.com/accelleran/helm-charts/issues/716)) ([70fcdca](https://github.com/accelleran/helm-charts/commit/70fcdca15e474685ee4f259f32eab2fbaa2e2230))
+* Create default influxdb2 bucket ([#719](https://github.com/accelleran/helm-charts/issues/719)) ([eb22a44](https://github.com/accelleran/helm-charts/commit/eb22a44e86879c8c72b1d096a7eef4bf1825e0ea))
+* **deps:** Update accelleran/network-state-monitor docker tag to v1.3.0 ([9b032d0](https://github.com/accelleran/helm-charts/commit/9b032d05f2e5f2d6c8f95f2f4b56497d5793204f))
+* **deps:** Update helm release grafana to v8.5.12 ([aa87b72](https://github.com/accelleran/helm-charts/commit/aa87b7295779a2640fe449a722de4a75605ea635))
+* **deps:** Update helm release grafana-loki to v4.6.22 ([d292423](https://github.com/accelleran/helm-charts/commit/d292423a7e763e4a04e9f199b3c20db9519a947d))
+* **deps:** Update helm release loki-deleter to v0.1.1 ([4cf256c](https://github.com/accelleran/helm-charts/commit/4cf256c59088320a57d3f82efd48e8c245f5ba51))
+* **deps:** Update helm release prometheus to v25.29.0 ([e1a8adb](https://github.com/accelleran/helm-charts/commit/e1a8adbb47ecad8d849c1dbdddbb354aa8af3ba6))
+* **deps:** Update helm release telemetry-collector to v1.1.3 ([07cbdfa](https://github.com/accelleran/helm-charts/commit/07cbdfabf865c6f6b140776ee695f88e33533c10))
+* Set loki retention delete delay to 1m ([#708](https://github.com/accelleran/helm-charts/issues/708)) ([3373800](https://github.com/accelleran/helm-charts/commit/3373800c4c8d204090dde85d93ad5d5826e7be58))
+* Tune parameters to delete loki logs ([#713](https://github.com/accelleran/helm-charts/issues/713)) ([6283a4a](https://github.com/accelleran/helm-charts/commit/6283a4a2d39d99307d19e34bc75d3c3af26a8a7f))
+
 ## [11.0.1](https://github.com/accelleran/helm-charts/compare/drax-11.0.0...drax-11.0.1) (2024-11-04)
 
 
