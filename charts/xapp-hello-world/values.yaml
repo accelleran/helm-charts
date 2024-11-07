@@ -53,6 +53,7 @@ xappEndpoints:
   API_URL: "http://{{ .Values.global.kubeIp }}:31315"
   NATS_URL: "nats://{{ .Values.global.kubeIp }}:31100"
   NATS_URL_5G: "nats://{{ .Values.global.kubeIp }}:31100"
+  PROMETHEUS_URL: "http://{{ .Values.global.kubeIp }}:30304"
 
 ### Define the xapp_config.json
 xappConfig: {}
