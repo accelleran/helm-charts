@@ -1,5 +1,14 @@
 # Changelog
 
+## [9.0.6](https://github.com/accelleran/helm-charts/compare/cu-cp-9.0.5...cu-cp-9.0.6) (2024-11-11)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cucp-netconf docker tag to v6.0.10 ([600328c](https://github.com/accelleran/helm-charts/commit/600328cf3ac600a5233d3e4212af0c4fbc60b576))
+* **deps:** Update accelleran/cucp-netconf docker tag to v6.0.9 ([ba3f63c](https://github.com/accelleran/helm-charts/commit/ba3f63c8acc5869889ef5d8a47ca0eb02c1373db))
+* **deps:** Update helm release redis to v20.2.2 ([f1e258d](https://github.com/accelleran/helm-charts/commit/f1e258dcfb83ea74c5f7abc2ce6e6b56eb0bcf15))
+
 ## [9.0.5](https://github.com/accelleran/helm-charts/compare/cu-cp-9.0.4...cu-cp-9.0.5) (2024-11-05)
 
 
