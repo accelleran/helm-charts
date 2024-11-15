@@ -66,29 +66,3 @@ The Role this component serves in the overall application
 
 {{- ($values.drax).role | default ($.Values.drax).role -}}
 {{- end -}}
-
-
-{{/*
-The Accelleran Product set for the deployment
-*/}}
-{{- define "accelleran.common.drax.accelleranProduct" -}}
-{{- $ := get . "top" | required "The top context needs to be provided to common drax accelleranProduct" -}}
-{{- $values := get . "values" | default $.Values -}}
-{{- $accelleranProduct := $values.global.accelleranProduct -}}
-
-{{- $allowedProducts := list "P5G" "DRAX" }}
-
-{{- $validProduct := false -}}
-{{- range $allowedProducts -}}
-    {{- if eq $accelleranProduct . -}}
-        {{- $validProduct = true -}}
-        {{- break -}}
-    {{- end -}}
-{{- end -}}
-
-{{- if not $validProduct -}}
-    {{- fail (printf "Error: global.accelleranProduct must be one of [%s]. Current value: '%s'" (join ", " $allowedProducts) $accelleranProduct) -}}
-{{- end -}}
-
-{{- $accelleranProduct | default ($.Values.global).accelleranProduct -}}
-{{- end -}}

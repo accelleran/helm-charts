@@ -6,15 +6,25 @@
 {{- define "accelleran.dashboard.configMap.coreUi.args" -}}
 {{- $ := . -}}
 
+{{- $currentProduct := $.Values.global.accelleranProduct | default "" -}}
+{{- $validProducts := list "P5G" "DRAX" -}}
+{{- $isValid := false -}}
+{{- range $validProducts }}
+  {{- if eq . $currentProduct }}
+    {{- $isValid = true -}}
+  {{- end }}
+{{- end }}
+{{- if not $isValid -}}
+{{- fail (printf "Invalid value for global.accelleranProduct: '%s'. Allowed values are: %s" $currentProduct (join ", " $validProducts)) -}}
+{{- end }}
+
 top:
   {{ $ | toYaml | nindent 2 }}
 
 name: {{ include "accelleran.common.fullname" (dict "top" $) }}-core-ui
 
-{{- $product := include "accelleran.common.drax.accelleranProduct" (dict "top" $) }}
-
 data:
   config.js: |-
     window.GRAFANA_PORT = "{{ tpl (toString $.Values.config.grafanaPort) $ }}";
-    window.PRODUCT = "{{ $product }}";
+    window.PRODUCT = "{{ $currentProduct }}";
 {{- end -}}
