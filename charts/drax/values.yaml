@@ -1360,6 +1360,15 @@ promtail-logs:
         basic_auth:
           username: promtail-logs
           password_file: /etc/promtail/secrets/password
+    snippets:
+      pipelineStages:
+        - cri: {}
+        - drop:
+            expression: "(DEBUG|debug|Debug)"
+            drop_counter_reason: "debug message"
+        - drop:
+            expression: "(TRACE|trace|Trace)"
+            drop_counter_reason: "trace message"
 
   extraVolumeMounts:
     - name: loki-gateway-password
