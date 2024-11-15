@@ -11,7 +11,10 @@ top:
 
 name: {{ include "accelleran.common.fullname" (dict "top" $) }}-core-ui
 
+{{- $product := include "accelleran.common.drax.accelleranProduct" (dict "top" $) }}
+
 data:
   config.js: |-
     window.GRAFANA_PORT = "{{ tpl (toString $.Values.config.grafanaPort) $ }}";
+    window.PRODUCT = "{{ $product }}";
 {{- end -}}
