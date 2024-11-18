@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.4.0](https://github.com/accelleran/helm-charts/compare/common-v0.3.10...common-0.4.0) (2024-11-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* give an error message when a service is disabled without setting an (external) hostname ([#142](https://github.com/accelleran/helm-charts/issues/142))
+* switch to image values that renovate automatically updates ([#246](https://github.com/accelleran/helm-charts/issues/246))
+
+### Features
+
+* Add component label ([#318](https://github.com/accelleran/helm-charts/issues/318)) ([d300d88](https://github.com/accelleran/helm-charts/commit/d300d883b0fa36f6e960f348b8360a2179b2f265))
+* Add extraResources tpl ([#473](https://github.com/accelleran/helm-charts/issues/473)) ([bda16ce](https://github.com/accelleran/helm-charts/commit/bda16ced019635c08dc3c4472dd830e7111b6ce2))
+* Add ingress templates ([#372](https://github.com/accelleran/helm-charts/issues/372)) ([bfde558](https://github.com/accelleran/helm-charts/commit/bfde5584c16286d06ed552abbe8c444bda451ace))
+* Add pod disruption budget template ([#457](https://github.com/accelleran/helm-charts/issues/457)) ([86fbf9f](https://github.com/accelleran/helm-charts/commit/86fbf9fb0b8c7777a033df626478dc83e03369b0))
+* Add pod template ([#453](https://github.com/accelleran/helm-charts/issues/453)) ([4fffb98](https://github.com/accelleran/helm-charts/commit/4fffb98cd9bdca611409f222f1633b06ec737c1a))
+* Add statefulset template ([#502](https://github.com/accelleran/helm-charts/issues/502)) ([98b70c3](https://github.com/accelleran/helm-charts/commit/98b70c36cbf4ffa2ed1b82f544d32187772f7590))
+* Add tpl to load balancer service ip ([8130e21](https://github.com/accelleran/helm-charts/commit/8130e21b0b8e66635d8d88c1a69f42e9e0cfc410))
+* Add ttlSecondsAfterFinished to job ([50ee770](https://github.com/accelleran/helm-charts/commit/50ee770e3ba1e5ce478d5fb84a8094ae0f6514fc))
+* Allow to inject pod annotations via template args ([#743](https://github.com/accelleran/helm-charts/issues/743)) ([96896e8](https://github.com/accelleran/helm-charts/commit/96896e8f9ede25ca581fb59eeddf655e9e18b9c9))
+* Allow to inject templates in annotations ([#479](https://github.com/accelleran/helm-charts/issues/479)) ([70b66d4](https://github.com/accelleran/helm-charts/commit/70b66d40279f6a46d57636d9769c150d0f96a962))
+* Allow to provide binary data to configmap ([535a9aa](https://github.com/accelleran/helm-charts/commit/535a9aafc032bc5e53752f9e26cd90cfaa1fd962))
+* Allow to provide command and args via tpl args ([ae57227](https://github.com/accelleran/helm-charts/commit/ae57227ace6bc70f8fe8068125b6e1d8a906916a))
+* Give an error message when a service is disabled without setting an (external) hostname ([#142](https://github.com/accelleran/helm-charts/issues/142)) ([e297459](https://github.com/accelleran/helm-charts/commit/e297459fc9b51007616fd3ce5b862d594c5aa05a))
+
+
+### Bug Fixes
+
+* Add option to not set ingress tls secret name or hosts ([#416](https://github.com/accelleran/helm-charts/issues/416)) ([ef7b18e](https://github.com/accelleran/helm-charts/commit/ef7b18e0704f4fab9a3619b1481e729bacc62c97))
+* Fix app version when absent ([d4e64cc](https://github.com/accelleran/helm-charts/commit/d4e64cc9e3feb0db67f91c14af946500d69d8b92))
+* Fix missing service block resulting in panic ([#527](https://github.com/accelleran/helm-charts/issues/527)) ([0fae62a](https://github.com/accelleran/helm-charts/commit/0fae62a0987bf1f14505ac0c18323c2d5c36091d))
+* Switch to image values that renovate automatically updates ([#246](https://github.com/accelleran/helm-charts/issues/246)) ([e45b60a](https://github.com/accelleran/helm-charts/commit/e45b60af421cb985d8f3d25a9f190f00fcddee5d))
+
 ## [0.3.10](https://github.com/accelleran/helm-charts/compare/common-0.3.9...common-0.3.10) (2024-11-18)
 
 
