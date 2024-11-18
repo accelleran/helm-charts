@@ -27,6 +27,7 @@ clusterDomain: cluster.local
 auth:
   enabled: false
   preventSecretUninstall: true
+  overwriteExistingPasswords: false
   users: []
     # - username: "user"
     #   password: "pass"
