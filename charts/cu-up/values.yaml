@@ -121,6 +121,9 @@ netconf:
     initialDelaySeconds: 15
     periodSeconds: 30
 
+  podSecurityContext:
+    fsGroup: 1000
+
   persistence:
     - name: sysrepo
       mountPath: "/workdir/sysrepo"
