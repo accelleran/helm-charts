@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.3](https://github.com/accelleran/helm-charts/compare/cell-wrapper-6.0.2...cell-wrapper-6.0.3) (2024-11-19)
+
+
+### Bug Fixes
+
+* Add fsgroup for netconf sysrepo volume mount ([#745](https://github.com/accelleran/helm-charts/issues/745)) ([64c3f7f](https://github.com/accelleran/helm-charts/commit/64c3f7fb145ab46e1aeb6a04bb65d5c50f6dfe23))
+* **deps:** Update accelleran/cw-netconf docker tag to v6.0.3 ([69cfffe](https://github.com/accelleran/helm-charts/commit/69cfffe97114f69f0288ed975fbf40ee6d93bf6c))
+* **deps:** Update accelleran/instance-scaler docker tag to v0.2.2 ([08682be](https://github.com/accelleran/helm-charts/commit/08682beac3a00a1f108c14becbbc420a237b8d8d))
+* **deps:** Update helm release common to v0.3.10 ([#750](https://github.com/accelleran/helm-charts/issues/750)) ([76fda7f](https://github.com/accelleran/helm-charts/commit/76fda7fc76c6926b402b49f3348b14a785af92f8))
+* **deps:** Update helm release nats to v1.2.6 ([03f51f1](https://github.com/accelleran/helm-charts/commit/03f51f14411a15ad435709dfd2f9ced93e6236f2))
+
 ## [6.0.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-6.0.1...cell-wrapper-6.0.2) (2024-10-14)
 
 
