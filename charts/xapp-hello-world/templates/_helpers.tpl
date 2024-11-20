@@ -54,6 +54,7 @@ Selector labels
 {{- define "xapp_core.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "xapp_core.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/component: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
