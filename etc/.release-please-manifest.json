@@ -10,5 +10,5 @@
   "charts/loki-gateway": "0.1.6",
   "charts/telemetry-collector": "1.1.4",
   "charts/xapp-anr": "0.1.3",
-  "charts/xapp-hello-world": "5.0.0"
+  "charts/xapp-hello-world": "5.0.1"
 }
