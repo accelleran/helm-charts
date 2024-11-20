@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.5...loki-gateway-0.1.6) (2024-11-20)
+
+
+### Features
+
+* Automatically update pods on config changes ([#744](https://github.com/accelleran/helm-charts/issues/744)) ([213e8c2](https://github.com/accelleran/helm-charts/commit/213e8c27a7ab183498a53ebf7cfef94060ada2b2))
+
 ## [0.1.5](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.4...loki-gateway-0.1.5) (2024-11-20)
 
 
