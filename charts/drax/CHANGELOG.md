@@ -1,5 +1,34 @@
 # Changelog
 
+## [12.0.0](https://github.com/accelleran/helm-charts/compare/drax-11.0.2...drax-12.0.0) (2024-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop debug and trace messages for loki storage ([#738](https://github.com/accelleran/helm-charts/issues/738))
+* limit minio to a single drive ([#674](https://github.com/accelleran/helm-charts/issues/674))
+
+### Bug Fixes
+
+* **deps:** Update accelleran/service-monitor docker tag to v1.2.1 ([067ecef](https://github.com/accelleran/helm-charts/commit/067ecef7eb37d76adc07ddd8a766bc878c759b32))
+* **deps:** Update accelleran/service-monitor docker tag to v1.2.2 ([552355a](https://github.com/accelleran/helm-charts/commit/552355a97230a31d19186624d64bab5846987a88))
+* **deps:** Update accelleran/service-orchestrator docker tag to v1.3.0 ([316fcd0](https://github.com/accelleran/helm-charts/commit/316fcd09f432f827701fdeb77f387ac5fa186d8d))
+* **deps:** Update helm release cell-wrapper to v6.0.3 ([efbae96](https://github.com/accelleran/helm-charts/commit/efbae96138db21fc2264101f42652373f843a4b7))
+* **deps:** Update helm release common to v0.3.10 ([#750](https://github.com/accelleran/helm-charts/issues/750)) ([76fda7f](https://github.com/accelleran/helm-charts/commit/76fda7fc76c6926b402b49f3348b14a785af92f8))
+* **deps:** Update helm release du-metrics-server to v0.4.2 ([8182162](https://github.com/accelleran/helm-charts/commit/8182162007a16c482d0889311e098e1121e52250))
+* **deps:** Update helm release grafana to v8.6.0 ([219a77d](https://github.com/accelleran/helm-charts/commit/219a77dfbf9fd44b29114cd0aebfe27d610172dc))
+* **deps:** Update helm release grafana-loki to v4.6.23 ([6396783](https://github.com/accelleran/helm-charts/commit/63967834ea31e8c651b6b86033cbaef66cce44c6))
+* **deps:** Update helm release kafka to v31 ([#733](https://github.com/accelleran/helm-charts/issues/733)) ([ad16762](https://github.com/accelleran/helm-charts/commit/ad16762721caf12185047242eca9a26bb8df68c2))
+* **deps:** Update helm release loki-deleter to v0.1.2 ([8e37af2](https://github.com/accelleran/helm-charts/commit/8e37af2b05ccf4d8bec0d434cc85a43a247979bd))
+* **deps:** Update helm release loki-gateway to v0.1.6 ([3de6c81](https://github.com/accelleran/helm-charts/commit/3de6c81fe674f794da3a4e04688a827d047226e2))
+* **deps:** Update helm release prometheus to v25.30.0 ([cb6c478](https://github.com/accelleran/helm-charts/commit/cb6c478a726404cdf03c09f898491c75808513e3))
+* **deps:** Update helm release prometheus to v25.30.1 ([26d778f](https://github.com/accelleran/helm-charts/commit/26d778f8f664c86ca6d949faa79cfd26dc893f08))
+* **deps:** Update helm release redis to v20.2.2 ([f1e258d](https://github.com/accelleran/helm-charts/commit/f1e258dcfb83ea74c5f7abc2ce6e6b56eb0bcf15))
+* **deps:** Update helm release redis to v20.3.0 ([d2152bc](https://github.com/accelleran/helm-charts/commit/d2152bcdac7179661ab98c7d996cefeacebd532c))
+* **deps:** Update helm release telemetry-collector to v1.1.4 ([54bcb59](https://github.com/accelleran/helm-charts/commit/54bcb59dcbb029e2a1714cc94234d9a8e8f835db))
+* Drop debug and trace messages for loki storage ([#738](https://github.com/accelleran/helm-charts/issues/738)) ([f9cd9b4](https://github.com/accelleran/helm-charts/commit/f9cd9b4f2107474200201c290370ff0a51028d39))
+* Limit minio to a single drive ([#674](https://github.com/accelleran/helm-charts/issues/674)) ([23f42ad](https://github.com/accelleran/helm-charts/commit/23f42ade1c865d1699a402580cce32d4ac04896c))
+
 ## [11.0.2](https://github.com/accelleran/helm-charts/compare/drax-11.0.1...drax-11.0.2) (2024-11-07)
 
 
