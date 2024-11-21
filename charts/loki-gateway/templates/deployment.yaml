@@ -10,6 +10,15 @@
 
 top: {{ $ | toYaml | nindent 2 }}
 
+podAnnotations:
+  {{- with $.Values.podAnnotations }}
+  {{ . | toYaml | nindent 2 }}
+  {{- end }}
+  checksum/config: {{ include "accelleran.loki-gateway.configMap.args.data" $ | sha256sum | quote }}
+  {{- if ($.Values.auth).enabled }}
+  checksum/auth: {{ include "accelleran.loki-gateway.secretAuth.args.stringData" $ | sha256sum | quote }}
+  {{- end }}
+
 volumeMounts:
   - name: tmp
     mountPath: /tmp

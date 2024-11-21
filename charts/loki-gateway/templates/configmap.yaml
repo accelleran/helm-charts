@@ -11,131 +11,137 @@
 top: {{ $ | toYaml | nindent 2 }}
 
 name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
-data:
-  nginx.conf: |+
-    worker_processes  5;  ## Default: 1
-    error_log  /dev/stderr;
-    pid        /tmp/nginx.pid;
-    worker_rlimit_nofile 8192;
+data: {{ include "accelleran.loki-gateway.configMap.args.data" $ | nindent 2 }}
+{{- end -}}
 
-    events {
-      worker_connections  4096;  ## Default: 1024
-    }
 
-    http {
-      client_body_temp_path /tmp/client_temp;
-      proxy_temp_path       /tmp/proxy_temp_path;
-      fastcgi_temp_path     /tmp/fastcgi_temp;
-      uwsgi_temp_path       /tmp/uwsgi_temp;
-      scgi_temp_path        /tmp/scgi_temp;
+{{- define "accelleran.loki-gateway.configMap.args.data" -}}
+{{- $ := . -}}
 
-      sendfile     on;
-      tcp_nopush   on;
-      {{- if .Values.resolver }}
-      resolver {{ .Values.resolver }};
-      {{- else }}
-      resolver {{ .Values.dnsService }}.{{ .Values.dnsNamespace }}.svc.{{ .Values.clusterDomain }}.;
+nginx.conf: |+
+  worker_processes  5;  ## Default: 1
+  error_log  /dev/stderr;
+  pid        /tmp/nginx.pid;
+  worker_rlimit_nofile 8192;
+
+  events {
+    worker_connections  4096;  ## Default: 1024
+  }
+
+  http {
+    client_body_temp_path /tmp/client_temp;
+    proxy_temp_path       /tmp/proxy_temp_path;
+    fastcgi_temp_path     /tmp/fastcgi_temp;
+    uwsgi_temp_path       /tmp/uwsgi_temp;
+    scgi_temp_path        /tmp/scgi_temp;
+
+    sendfile     on;
+    tcp_nopush   on;
+    {{- if .Values.resolver }}
+    resolver {{ .Values.resolver }};
+    {{- else }}
+    resolver {{ .Values.dnsService }}.{{ .Values.dnsNamespace }}.svc.{{ .Values.clusterDomain }}.;
+    {{- end }}
+
+    {{- if (.Values.auth).enabled }}
+    map $remote_user $loki_org_id {
+      {{- range $index, $user := .Values.auth.users }}
+      {{ $user.username }} {{ $user.organization | required (printf "An organization is required when auth is enabled in loki-gateway (auth.users[%d].organization)" $index) }};
       {{- end }}
+    }
+    {{- end }}
+
+    server {
+      listen     8080;
 
       {{- if (.Values.auth).enabled }}
-      map $remote_user $loki_org_id {
-        {{- range $index, $user := .Values.auth.users }}
-        {{ $user.username }} {{ $user.organization | required (printf "An organization is required when auth is enabled in loki-gateway (auth.users[%d].organization)" $index) }};
-        {{- end }}
-      }
+      auth_basic           "Loki";
+      auth_basic_user_file /etc/nginx/secrets/.htpasswd;
       {{- end }}
 
-      server {
-        listen     8080;
+      location = / {
+        return 200 'OK';
+        auth_basic off;
+      }
 
+      location = /api/prom/push {
+        proxy_pass       http://{{ .Release.Name }}-loki-distributor.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
         {{- if (.Values.auth).enabled }}
-        auth_basic           "Loki";
-        auth_basic_user_file /etc/nginx/secrets/.htpasswd;
+        proxy_set_header X-Scope-OrgID $loki_org_id;
         {{- end }}
+      }
 
-        location = / {
-          return 200 'OK';
-          auth_basic off;
-        }
+      location = /api/prom/tail {
+        proxy_pass       http://{{ .Release.Name }}-loki-querier.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+      }
 
-        location = /api/prom/push {
-          proxy_pass       http://{{ .Release.Name }}-loki-distributor.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
+      # Ruler
+      location ~ /prometheus/api/v1/alerts.* {
+        proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+      }
+      location ~ /prometheus/api/v1/rules.* {
+        proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+      }
+      location ~ /api/prom/rules.* {
+        proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+      }
+      location ~ /api/prom/alerts.* {
+        proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+      }
 
-        location = /api/prom/tail {
-          proxy_pass       http://{{ .Release.Name }}-loki-querier.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection "upgrade";
-        }
+      location ~ /api/prom/.* {
+        proxy_pass       http://{{ .Release.Name }}-loki-query-frontend.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+      }
 
-        # Ruler
-        location ~ /prometheus/api/v1/alerts.* {
-          proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
-        location ~ /prometheus/api/v1/rules.* {
-          proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
-        location ~ /api/prom/rules.* {
-          proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
-        location ~ /api/prom/alerts.* {
-          proxy_pass       http://{{ .Release.Name }}-loki-ruler.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
+      location = /loki/api/v1/push {
+        proxy_pass       http://{{ .Release.Name }}-loki-distributor.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+      }
 
-        location ~ /api/prom/.* {
-          proxy_pass       http://{{ .Release.Name }}-loki-query-frontend.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
+      location = /loki/api/v1/delete {
+        proxy_pass       http://{{ .Release.Name }}-loki-compactor.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+      }
 
-        location = /loki/api/v1/push {
-          proxy_pass       http://{{ .Release.Name }}-loki-distributor.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
+      location = /loki/api/v1/tail {
+        proxy_pass       http://{{ .Release.Name }}-loki-querier.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+      }
 
-        location = /loki/api/v1/delete {
-          proxy_pass       http://{{ .Release.Name }}-loki-compactor.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
-
-        location = /loki/api/v1/tail {
-          proxy_pass       http://{{ .Release.Name }}-loki-querier.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection "upgrade";
-        }
-
-        location ~ /loki/api/.* {
-          proxy_pass       http://{{ .Release.Name }}-loki-query-frontend.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
-          {{- if (.Values.auth).enabled }}
-          proxy_set_header X-Scope-OrgID $loki_org_id;
-          {{- end }}
-        }
+      location ~ /loki/api/.* {
+        proxy_pass       http://{{ .Release.Name }}-loki-query-frontend.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:3100$request_uri;
+        {{- if (.Values.auth).enabled }}
+        proxy_set_header X-Scope-OrgID $loki_org_id;
+        {{- end }}
       }
     }
+  }
 {{- end -}}

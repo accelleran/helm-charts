@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.6](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.5...loki-gateway-0.1.6) (2024-11-20)
+
+
+### Features
+
+* Automatically update pods on config changes ([#744](https://github.com/accelleran/helm-charts/issues/744)) ([213e8c2](https://github.com/accelleran/helm-charts/commit/213e8c27a7ab183498a53ebf7cfef94060ada2b2))
+
+## [0.1.5](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.4...loki-gateway-0.1.5) (2024-11-20)
+
+
+### Bug Fixes
+
+* Allow to add users if the auth secret already exists ([#742](https://github.com/accelleran/helm-charts/issues/742)) ([bc8a0d8](https://github.com/accelleran/helm-charts/commit/bc8a0d827961b0362d9eee59fc9d0ec038d229e0))
+* **deps:** Update helm release common to v0.3.10 ([#750](https://github.com/accelleran/helm-charts/issues/750)) ([76fda7f](https://github.com/accelleran/helm-charts/commit/76fda7fc76c6926b402b49f3348b14a785af92f8))
+
 ## [0.1.4](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.3...loki-gateway-0.1.4) (2024-10-31)
 
 
