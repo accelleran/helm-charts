@@ -32413,6 +32413,25 @@ entries:
     version: 0.1.0
   du-metrics-server:
   - apiVersion: v2
+    appVersion: 3.0.2
+    created: "2024-11-21T11:40:26.101600031Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.3.10
+    - alias: influxdb
+      condition: influxdb.enabled
+      name: influxdb2
+      repository: https://helm.influxdata.com/
+      version: 2.1.2
+    description: Accelleran's DU metrics server
+    digest: 8cf187615b086693b17465741c80b5ec77adc2805dc18b29696ce7cd5cff239a
+    name: du-metrics-server
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/du-metrics-server-0.4.2/du-metrics-server-0.4.2.tgz
+    version: 0.4.2
+  - apiVersion: v2
     appVersion: 3.0.1
     created: "2024-10-09T11:30:25.589044855Z"
     dependencies:
@@ -35123,4 +35142,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2024-11-20T16:34:40.476669708Z"
+generated: "2024-11-21T11:40:26.103035877Z"
