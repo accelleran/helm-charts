@@ -34,6 +34,8 @@ global:
     enabled: true
     secretName: "accelleran-license"
 
+  persistentLogLevel: info
+
   nodeSelector: {}
 
 bootstrap:
@@ -936,6 +938,8 @@ grafana:
 
 loki-gateway:
   # enabled: true
+
+  persistentLogLevel: warning
 
   auth:
     enabled: true

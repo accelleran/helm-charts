@@ -1,3 +1,11 @@
+global:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  persistentLogLevel: warning
+
+  nodeSelector: {}
+
 nameOverride: ""
 fullnameOverride: ""
 

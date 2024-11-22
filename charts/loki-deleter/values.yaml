@@ -1,3 +1,14 @@
+global:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  persistentLogLevel: info
+
+  nodeSelector: {}
+
 nameOverride: ""
 fullnameOverride: ""
 
@@ -10,9 +21,6 @@ image:
 
 accelleranLicense:
   enabled: false
-
-imagePullSecrets:
-  - name: accelleran-secret
 
 config:
   loki:
