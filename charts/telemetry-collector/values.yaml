@@ -74,8 +74,8 @@ config:
           url: ""
         subjects: "*.5G_MEAS_INFO.*.*.*.*"
       publishers:
-        #kafkaPublisher:
-        #  topic: "accelleran.drax.5g.ric.o1.ves"
+        # kafkaPublisher:
+        #   topic: "accelleran.drax.5g.ric.o1.ves"
         influxPublisher:
           defaultBucket: "meas5g"
           buckets:
@@ -89,8 +89,8 @@ config:
           url: ""
           subjects: "*.CUCP_COUNTERS_INFO,*.CUUP_COUNTERS_INFO"
       publishers:
-        #kafkaPublisher:
-        #  topic: "accelleran.drax.5g.ric.o1.ves"
+        # kafkaPublisher:
+        #   topic: "accelleran.drax.5g.ric.o1.ves"
         influxPublisher:
           defaultBucket: "counters5g"
           buckets:
@@ -147,8 +147,8 @@ config:
         udpConsumer:
           port: "55555"
       publishers:
-        #kafkaPublisher:
-        #  topic: "accelleran.drax.5g.ric.o1.ves"
+        # kafkaPublisher:
+        #   topic: "accelleran.drax.5g.ric.o1.ves"
         influxPublisher:
           defaultBucket: "acc_du"
           buckets:
