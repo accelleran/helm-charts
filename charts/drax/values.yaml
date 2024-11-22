@@ -1364,6 +1364,13 @@ promtail-logs:
           username: promtail-logs
           password_file: /etc/promtail/secrets/password
     snippets:
+      extraRelabelConfigs:
+        # set drax.accelleran.com/persistent-log-level=info to store info and up, default warning
+        - source_labels:
+            - __meta_kubernetes_pod_label_drax_accelleran_com_persistent_log_level
+          regex: ^;*([^;]+)(;.*)?$
+          action: replace
+          target_label: persistent_level
       pipelineStages:
         - cri: {}
 
@@ -1372,37 +1379,56 @@ promtail-logs:
         - labels:
             level:
 
+        - template:
+            source: "persistent_level"
+            template: "{{ .Value | TrimSpace | default \"warning\" | ToLower }}"
         - replace:
-            expression: "(ERROR|Error)"
-            source: "level"
-            replace: "error"
-        - replace:
-            expression: "(WARN|Warn|WARNING|Warning)"
-            source: "level"
+            source: "persistent_level"
+            expression: "^(warn)$"
             replace: "warning"
-        - replace:
-            expression: "(INFO|Info)"
+        - labels:
+            persistent_level:
+
+        - template:
             source: "level"
-            replace: "info"
+            template: "{{ .Value | TrimSpace | ToLower }}"
         - replace:
-            expression: "(DEBUG|Debug)"
             source: "level"
-            replace: "debug"
-        - replace:
-            expression: "(TRACE|Trace)"
-            source: "level"
-            replace: "trace"
+            expression: "^(warn)$"
+            replace: "warning"
         - labels:
             level:
 
         - drop:
-            source: "level"
-            value: "debug"
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(trace);(debug|info|warning|error|none)"
+            drop_counter_reason: "trace level"
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(debug);(info|warning|error|none)"
             drop_counter_reason: "debug level"
         - drop:
-            source: "level"
-            value: "trace"
-            drop_counter_reason: "trace level"
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(info);(warning|error|none)"
+            drop_counter_reason: "info level"
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(warning);(error|none)"
+            drop_counter_reason: "warning level"
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(error);(none)"
+            drop_counter_reason: "error level"
 
   extraVolumeMounts:
     - name: loki-gateway-password
