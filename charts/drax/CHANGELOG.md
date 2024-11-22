@@ -1,5 +1,17 @@
 # Changelog
 
+## [12.0.1](https://github.com/accelleran/helm-charts/compare/drax-12.0.0...drax-12.0.1) (2024-11-22)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release cell-wrapper to v6.0.4 ([6d32660](https://github.com/accelleran/helm-charts/commit/6d3266049b559f8ba11a1a200d66ce1a78186ce9))
+* **deps:** Update helm release du-metrics-server to v0.4.3 ([2987412](https://github.com/accelleran/helm-charts/commit/29874127267c3bd032104b2280621262e20973c7))
+* **deps:** Update helm release grafana to v8.6.1 ([bf080b2](https://github.com/accelleran/helm-charts/commit/bf080b25949c946eb6fde9c17ec5ad9a0bb3bcbe))
+* **deps:** Update helm release kminion to v0.14.1 ([4ad2902](https://github.com/accelleran/helm-charts/commit/4ad29029ce1c61a3030b26927dfbe91ba46b81a2))
+* **deps:** Update helm release telemetry-collector to v1.1.5 ([6b5add3](https://github.com/accelleran/helm-charts/commit/6b5add3a45cfc4827a039ed2473ffc2db5c1064e))
+* Remove metrics publishing to kafka ([#784](https://github.com/accelleran/helm-charts/issues/784)) ([0d5aa04](https://github.com/accelleran/helm-charts/commit/0d5aa04627c300de2f39a4b879a67caf0207cd40))
+
 ## [12.0.0](https://github.com/accelleran/helm-charts/compare/drax-11.0.2...drax-12.0.0) (2024-11-21)
 
 
