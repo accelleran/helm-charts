@@ -1391,7 +1391,7 @@ promtail-logs:
 
         - template:
             source: "level"
-            template: "{{ .Value | TrimSpace | ToLower }}"
+            template: "{{ .Value | TrimSpace | default \"unknown\" | ToLower }}"
         - replace:
             source: "level"
             expression: "^(warn)$"

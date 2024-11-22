@@ -334,9 +334,14 @@
             "selected": false,
             "text": "trace",
             "value": "trace"
+          },
+          {
+            "selected": false,
+            "text": "unkown",
+            "value": "unknown"
           }
         ],
-        "query": "error, warning, info, debug, trace",
+        "query": "error, warning, info, debug, trace, unknown",
         "type": "custom"
       },
       {
