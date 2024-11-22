@@ -42,6 +42,9 @@ drax/technology: {{ . | quote }}
 {{- with (include "accelleran.common.bootstrap.instanceId" .) }}
 drax/instanceId: {{ . | quote }}
 {{- end }}
+{{- with (include "accelleran.common.drax.persistentLogLevel" .) }}
+drax.accelleran.com/persistent-log-level: {{ . | quote }}
+{{- end }}
 {{- with $values.extraLabels }}
 {{ toYaml . }}
 {{- end }}
