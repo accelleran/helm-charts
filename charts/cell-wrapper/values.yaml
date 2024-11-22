@@ -5,6 +5,8 @@ global:
   imagePullSecrets:
     - name: accelleran-secret
 
+  persistentLogLevel: info
+
   nodeSelector: {}
 
 
