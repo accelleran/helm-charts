@@ -301,12 +301,12 @@ telemetry-collector:
             url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
             subjects: "*.5G_MEAS_INFO.*.*.*.*"
         publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
-        influxPublisher:
-          defaultBucket: "meas5g"
-          buckets:
-            RrcMeasurementReport: "rrc_measurements"
+          #kafkaPublisher:
+          #  topic: "accelleran.drax.5g.ric.o1.ves"
+          influxPublisher:
+            defaultBucket: "meas5g"
+            buckets:
+              RrcMeasurementReport: "rrc_measurements"
       - name: "pm_counters"
         component: "cu"
         vendor: "accelleran"
@@ -316,8 +316,8 @@ telemetry-collector:
             url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
             subjects: "*.CUCP_COUNTERS_INFO,*.CUUP_COUNTERS_INFO"
         publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
+          #kafkaPublisher:
+          #  topic: "accelleran.drax.5g.ric.o1.ves"
           influxPublisher:
             defaultBucket: "default_performance_metrics"
             buckets:
@@ -374,8 +374,8 @@ telemetry-collector:
           udpConsumer:
             port: "55555"
         publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
+          #kafkaPublisher:
+          #  topic: "accelleran.drax.5g.ric.o1.ves"
           influxPublisher:
             defaultBucket: "acc_du"
             buckets:
