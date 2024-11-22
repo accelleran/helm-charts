@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.0.7](https://github.com/accelleran/helm-charts/compare/cu-cp-9.0.6...cu-cp-9.0.7) (2024-11-22)
+
+
+### Bug Fixes
+
+* Add fsgroup for netconf sysrepo volume mount ([#745](https://github.com/accelleran/helm-charts/issues/745)) ([64c3f7f](https://github.com/accelleran/helm-charts/commit/64c3f7fb145ab46e1aeb6a04bb65d5c50f6dfe23))
+* **deps:** Update accelleran/cucp-netconf docker tag to v6.0.11 ([5963739](https://github.com/accelleran/helm-charts/commit/5963739405f23794e94ae6be2d91a2e6551c9c82))
+* **deps:** Update helm release common to v0.3.10 ([#750](https://github.com/accelleran/helm-charts/issues/750)) ([76fda7f](https://github.com/accelleran/helm-charts/commit/76fda7fc76c6926b402b49f3348b14a785af92f8))
+* **deps:** Update helm release redis to v20.3.0 ([d2152bc](https://github.com/accelleran/helm-charts/commit/d2152bcdac7179661ab98c7d996cefeacebd532c))
+
 ## [9.0.6](https://github.com/accelleran/helm-charts/compare/cu-cp-9.0.5...cu-cp-9.0.6) (2024-11-11)
 
 
