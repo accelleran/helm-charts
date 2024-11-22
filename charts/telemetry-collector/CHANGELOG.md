@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.5](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.4...telemetry-collector-1.1.5) (2024-11-22)
+
+
+### Bug Fixes
+
+* Remove metrics publishing to kafka ([#784](https://github.com/accelleran/helm-charts/issues/784)) ([0d5aa04](https://github.com/accelleran/helm-charts/commit/0d5aa04627c300de2f39a4b879a67caf0207cd40))
+
 ## [1.1.4](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.3...telemetry-collector-1.1.4) (2024-11-19)
 
 
