@@ -4,7 +4,7 @@ description: Accelleran's DU metrics server
 type: application
 version: 0.4.3
 # renovate: image=accelleran/du-metrics-server versioning=semver
-appVersion: 3.0.3
+appVersion: 3.0.4
 dependencies:
   - name: common
     version: 0.3.10
