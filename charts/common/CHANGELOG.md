@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.11](https://github.com/accelleran/helm-charts/compare/common-0.3.10...common-0.3.11) (2024-11-25)
+
+
+### Features
+
+* Add drax persistent log level label ([#788](https://github.com/accelleran/helm-charts/issues/788)) ([47e4589](https://github.com/accelleran/helm-charts/commit/47e4589abc4d33d34a51838f9ab7d7022dca40fe))
+
 ## [0.3.10](https://github.com/accelleran/helm-charts/compare/common-0.3.9...common-0.3.10) (2024-11-18)
 
 
