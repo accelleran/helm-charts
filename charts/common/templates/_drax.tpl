@@ -46,6 +46,14 @@ readOnly: true
 {{- end -}}
 
 
+{{- define "accelleran.common.drax.persistentLogLevel" -}}
+{{- $ := get . "top" | required "The top context needs to be provided to common drax persistent log level" -}}
+{{- $values := get . "values" | default $.Values -}}
+
+{{- $values.persistentLogLevel | default ($.Values.global).persistentLogLevel -}}
+{{- end -}}
+
+
 {{/*
 The Radio Access Technology provided by this component
 */}}
