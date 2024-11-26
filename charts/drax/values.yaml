@@ -1462,7 +1462,16 @@ promtail-notifications:
                   stndDefinedNamespace: event.commonEventHeader.stndDefinedNamespace
                   version: event.commonEventHeader.version
                   timeZoneOffset: event.commonEventHeader.timeZoneOffset
+                  notificationType: event.stndDefinedFields.data.notificationType
                   vesEventListenerVersion: event.commonEventHeader.vesEventListenerVersion
+            - regex:
+               expression: '^(?P<keep>notifyEvent)$'
+               source: notificationType
+            - labels:
+               keep: '{{.keep}}'
+            - drop:
+               source: keep
+               value: ''
             - labels:
                 domain:
                 eventId:
