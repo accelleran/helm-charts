@@ -1581,6 +1581,14 @@ influxdb:
     nodePorts:
       http: "30303"
 
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+
   setDefaultUser:
     enabled: true
     user:
@@ -1626,6 +1634,14 @@ influxdb2:
     type: ClusterIP
     nodePorts:
       http: ""
+
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
 
   initScripts:
     enabled: true
