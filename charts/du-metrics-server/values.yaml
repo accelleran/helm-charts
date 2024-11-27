@@ -106,4 +106,12 @@ influxdb:
     port: 80
     targetPort: 8086
 
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+
 extraResources: []
