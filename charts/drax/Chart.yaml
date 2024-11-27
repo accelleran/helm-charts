@@ -39,7 +39,7 @@ dependencies:
     repository: https://accelleran.github.io/helm-charts/
   - name: telemetry-collector
     condition: telemetry-collector.enabled
-    version: 1.1.5
+    version: 1.1.6
     repository: https://accelleran.github.io/helm-charts/
 
   # ric
