@@ -5,6 +5,8 @@ global:
   imagePullSecrets:
     - name: accelleran-secret
 
+  persistentLogLevel: info
+
   nodeSelector: {}
 
 
@@ -192,7 +194,7 @@ instance-scaler:
   image:
     repository: accelleran/instance-scaler
     pullPolicy: IfNotPresent
-    tag: "v0.2.1"
+    tag: "v0.2.2"
 
   accelleranLicense:
     enabled: false
@@ -263,6 +265,9 @@ netconf:
 
   extraLabels: {}
   annotations: {}
+
+  podSecurityContext:
+    fsGroup: 1000
 
   persistence:
     - name: sysrepo

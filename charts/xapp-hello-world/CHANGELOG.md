@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.0.2](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-5.0.1...xapp-hello-world-5.0.2) (2024-11-20)
+
+
+### Bug Fixes
+
+* Add component label ([3cc46f2](https://github.com/accelleran/helm-charts/commit/3cc46f28392c90a88907a4acf5424b189e9d5f3c))
+* **deps:** Update accelleran/xapp-framework-package docker tag to v5.0.2 ([#773](https://github.com/accelleran/helm-charts/issues/773)) ([7b522c1](https://github.com/accelleran/helm-charts/commit/7b522c15a4f9f9b761ca642f58ffa383d612b802))
+* Fix Prometheus endpoint ([1976d88](https://github.com/accelleran/helm-charts/commit/1976d88486c090e30b67c6c739eb7999e38fa664))
+* Fix xApp Dev Env Naming ([1976d88](https://github.com/accelleran/helm-charts/commit/1976d88486c090e30b67c6c739eb7999e38fa664))
+
+## [5.0.1](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-5.0.0...xapp-hello-world-5.0.1) (2024-11-20)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/xapp-framework-package docker tag to v5.0.1 ([d34b55c](https://github.com/accelleran/helm-charts/commit/d34b55c660e84ea34a1a6d0184e743c155c330a9))
+
 ## [5.0.0](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-4.0.1...xapp-hello-world-5.0.0) (2024-10-24)
 
 

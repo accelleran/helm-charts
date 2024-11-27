@@ -2,10 +2,10 @@ apiVersion: v2
 name: drax
 description: Accelleran's dRAX helm chart
 type: application
-version: 11.0.2
+version: 12.0.1
 dependencies:
   - name: common
-    version: 0.3.9
+    version: 0.3.11
     repository: https://accelleran.github.io/helm-charts/
 
   # smo
@@ -31,15 +31,15 @@ dependencies:
     repository: file://charts/config-api
   - name: cell-wrapper
     condition: cell-wrapper.enabled
-    version: 6.0.2
+    version: 6.0.5
     repository: https://accelleran.github.io/helm-charts/
   - name: du-metrics-server
     condition: du-metrics-server.enabled
-    version: 0.4.1
+    version: 0.4.5
     repository: https://accelleran.github.io/helm-charts/
   - name: telemetry-collector
     condition: telemetry-collector.enabled
-    version: 1.1.3
+    version: 1.1.6
     repository: https://accelleran.github.io/helm-charts/
 
   # ric
@@ -66,18 +66,18 @@ dependencies:
   # monitoring
   - name: grafana
     condition: grafana.enabled
-    version: 8.6.0
+    version: 8.6.3
     repository: https://grafana.github.io/helm-charts
   - name: prometheus
     condition: prometheus.enabled
-    version: 25.30.0
+    version: 25.30.2
     repository: https://prometheus-community.github.io/helm-charts
   - name: loki-gateway
     condition: loki-gateway.enabled
     tags:
       - logs
       - notifications
-    version: 0.1.4
+    version: 0.1.7
     repository: https://accelleran.github.io/helm-charts/
   - name: grafana-loki
     alias: loki
@@ -85,13 +85,13 @@ dependencies:
     tags:
       - logs
       - notifications
-    version: 4.6.22
+    version: 4.6.23
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
     condition: loki-deleter.enabled
     tags:
       - logs
-    version: 0.1.1
+    version: 0.1.3
     repository: https://accelleran.github.io/helm-charts/
   - name: minio
     condition: minio.enabled
@@ -128,7 +128,7 @@ dependencies:
     repository: https://helm.vector.dev
   - name: kminion
     condition: kminion.enabled
-    version: 0.14.0
+    version: 0.14.1
     repository: https://charts.redpanda.com
 
   # infrastructure

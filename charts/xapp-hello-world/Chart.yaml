@@ -2,9 +2,9 @@ apiVersion: v2
 name: xapp-hello-world
 description: A Helm chart for Accelleran dRAX xApp
 type: application
-version: 5.0.0
+version: 5.0.2
 # renovate: image=accelleran/xapp-framework-package
-appVersion: 5.0.0
+appVersion: 5.0.2
 dependencies:
   - name: xapp-redis
     condition: xapp-redis.enabled

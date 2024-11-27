@@ -1,4 +1,13 @@
-global: {}
+global:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  persistentLogLevel: info
+
+  nodeSelector: {}
 
 nameOverride: ""
 fullnameOverride: ""
@@ -17,9 +26,6 @@ image:
   repository: accelleran/xapp-anr
   pullPolicy: IfNotPresent
   tag: ""
-
-imagePullSecrets:
-  - name: accelleran-secret
 
 accelleranLicense:
   enabled: true

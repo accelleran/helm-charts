@@ -1,4 +1,13 @@
-global: {}
+global:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  persistentLogLevel: info
+
+  nodeSelector: {}
 
 drax:
   role: "xapp"
@@ -36,9 +45,6 @@ image:
   repository: accelleran/acc-fiveg-pmcounters
   pullPolicy: IfNotPresent
   tag: ""
-
-imagePullSecrets:
-  - name: accelleran-secret
 
 accelleranLicense:
   enabled: false

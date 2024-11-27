@@ -2,12 +2,12 @@ apiVersion: v2
 name: cell-wrapper
 description: Accelleran's cell-wrapper helm chart
 type: application
-version: 6.0.2
+version: 6.0.5
 # renovate: image=accelleran/cw-netconf versioning=semver
-appVersion: "6.0.2"
+appVersion: "6.0.5"
 dependencies:
   - name: common
-    version: 0.3.9
+    version: 0.3.11
     repository: https://accelleran.github.io/helm-charts/
   - name: nats
     condition: nats.enabled

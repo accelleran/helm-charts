@@ -39,9 +39,9 @@ metadata:
     {{- with $values.podLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  {{- with $values.podAnnotations }}
+  {{- with (include "accelleran.common.annotations.pod" .) }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- . | nindent 4 }}
   {{- end }}
 spec:
   {{- with $restartPolicy }}

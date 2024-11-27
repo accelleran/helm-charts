@@ -1,3 +1,14 @@
+global:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  persistentLogLevel: info
+
+  nodeSelector: {}
+
 bootstrap:
   create: true
   name: ""
@@ -28,9 +39,6 @@ du-metrics-server:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
-
-  imagePullSecrets:
-    - name: accelleran-secret
 
   accelleranLicense:
     enabled: false
@@ -105,5 +113,13 @@ influxdb:
     portName: http
     port: 80
     targetPort: 8086
+
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
 
 extraResources: []

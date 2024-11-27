@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.6](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.5...telemetry-collector-1.1.6) (2024-11-27)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.11 ([f67bc1b](https://github.com/accelleran/helm-charts/commit/f67bc1bd548bbc2b91c6554e2df66f855c3e2120))
+* Set persistent log level to info ([9165d2f](https://github.com/accelleran/helm-charts/commit/9165d2f5a0015bfd9644f79c4b3a299ef322f8a1))
+
+## [1.1.5](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.4...telemetry-collector-1.1.5) (2024-11-22)
+
+
+### Bug Fixes
+
+* Remove metrics publishing to kafka ([#784](https://github.com/accelleran/helm-charts/issues/784)) ([0d5aa04](https://github.com/accelleran/helm-charts/commit/0d5aa04627c300de2f39a4b879a67caf0207cd40))
+
+## [1.1.4](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.3...telemetry-collector-1.1.4) (2024-11-19)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.10 ([#750](https://github.com/accelleran/helm-charts/issues/750)) ([76fda7f](https://github.com/accelleran/helm-charts/commit/76fda7fc76c6926b402b49f3348b14a785af92f8))
+
 ## [1.1.3](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.2...telemetry-collector-1.1.3) (2024-11-06)
 
 

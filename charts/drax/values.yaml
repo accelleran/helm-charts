@@ -49,6 +49,8 @@ global:
   #
   accelleranProduct: "P5G"
 
+  persistentLogLevel: info
+
   nodeSelector: {}
 
 bootstrap:
@@ -317,12 +319,12 @@ telemetry-collector:
             url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
             subjects: "*.5G_MEAS_INFO.*.*.*.*"
         publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
-        influxPublisher:
-          defaultBucket: "meas5g"
-          buckets:
-            RrcMeasurementReport: "rrc_measurements"
+          # kafkaPublisher:
+          #   topic: "accelleran.drax.5g.ric.o1.ves"
+          influxPublisher:
+            defaultBucket: "meas5g"
+            buckets:
+              RrcMeasurementReport: "rrc_measurements"
       - name: "pm_counters"
         component: "cu"
         vendor: "accelleran"
@@ -332,8 +334,8 @@ telemetry-collector:
             url: "{{ $.Release.Name }}-nats.{{ $.Release.Namespace }}:4222"
             subjects: "*.CUCP_COUNTERS_INFO,*.CUUP_COUNTERS_INFO"
         publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
+          # kafkaPublisher:
+          #   topic: "accelleran.drax.5g.ric.o1.ves"
           influxPublisher:
             defaultBucket: "default_performance_metrics"
             buckets:
@@ -390,8 +392,8 @@ telemetry-collector:
           udpConsumer:
             port: "55555"
         publishers:
-          kafkaPublisher:
-            topic: "accelleran.drax.5g.ric.o1.ves"
+          # kafkaPublisher:
+          #   topic: "accelleran.drax.5g.ric.o1.ves"
           influxPublisher:
             defaultBucket: "acc_du"
             buckets:
@@ -953,6 +955,8 @@ grafana:
 loki-gateway:
   # enabled: true
 
+  persistentLogLevel: warning
+
   auth:
     enabled: true
     preventSecretUninstall: true
@@ -1306,8 +1310,7 @@ loki-deleter:
 
     # the names depend on minio.replicas and minio.drivesPerNode
     pvcNames:
-      - "export-0-{{ $.Release.Name }}-minio-0"
-      - "export-1-{{ $.Release.Name }}-minio-0"
+      - "{{ $.Release.Name }}-minio"
 
     localPath: "/opt/local-path-provisioner"
 
@@ -1333,9 +1336,13 @@ minio:
   # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
   # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
   # Since we only have 1 replica, that means 2 drives must be used.
-  drivesPerNode: 2
+  # But for now we want to limit the amount of storage used, so 1 drive.
+  drivesPerNode: 1
   rootUser: ""
   rootPassword: ""
+
+  # With 1 replica and 1 drive we need to run in standalone mode
+  mode: standalone
 
   # Allow the address used by Loki to refer to Minio to be overridden
   address: null
@@ -1376,6 +1383,72 @@ promtail-logs:
         basic_auth:
           username: promtail-logs
           password_file: /etc/promtail/secrets/password
+    snippets:
+      extraRelabelConfigs:
+        # set drax.accelleran.com/persistent-log-level=info to store info and up, default warning
+        - source_labels:
+            - __meta_kubernetes_pod_label_drax_accelleran_com_persistent_log_level
+          regex: ^;*([^;]+)(;.*)?$
+          action: replace
+          target_label: persistent_level
+      pipelineStages:
+        - cri: {}
+
+        - regex:
+            expression: '(?P<level>ERROR|error|Error|WARN|warn|Warn|WARNING|warning|Warning|INFO|info|Info|DEBUG|debug|Debug|TRACE|trace|Trace)'
+        - labels:
+            level:
+
+        - template:
+            source: "persistent_level"
+            template: "{{ .Value | TrimSpace | default \"warning\" | ToLower }}"
+        - replace:
+            source: "persistent_level"
+            expression: "^(warn)$"
+            replace: "warning"
+        - labels:
+            persistent_level:
+
+        - template:
+            source: "level"
+            template: "{{ .Value | TrimSpace | default \"unknown\" | ToLower }}"
+        - replace:
+            source: "level"
+            expression: "^(warn)$"
+            replace: "warning"
+        - labels:
+            level:
+
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(trace);(debug|info|warning|error|none)"
+            drop_counter_reason: "trace level"
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(debug);(info|warning|error|none)"
+            drop_counter_reason: "debug level"
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(info);(warning|error|none)"
+            drop_counter_reason: "info level"
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(warning);(error|none)"
+            drop_counter_reason: "warning level"
+        - drop:
+            source:
+              - "level"
+              - "persistent_level"
+            expression: "(error);(none)"
+            drop_counter_reason: "error level"
 
   extraVolumeMounts:
     - name: loki-gateway-password
@@ -1436,6 +1509,16 @@ promtail-notifications:
                   version: event.commonEventHeader.version
                   timeZoneOffset: event.commonEventHeader.timeZoneOffset
                   vesEventListenerVersion: event.commonEventHeader.vesEventListenerVersion
+                  notificationType: event.stndDefinedFields.data.notificationType
+                drop_malformed: true
+            - regex:
+               expression: '^(?P<keep>notifyEvent)$'
+               source: notificationType
+            - labels:
+               keep:
+            - drop:
+               source: keep
+               value: ''
             - labels:
                 domain:
                 eventId:
@@ -1514,6 +1597,14 @@ influxdb:
     nodePorts:
       http: "30303"
 
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+
   setDefaultUser:
     enabled: true
     user:
@@ -1559,6 +1650,14 @@ influxdb2:
     type: ClusterIP
     nodePorts:
       http: ""
+
+  resources:
+    requests:
+      cpu: "0"
+      memory: "0"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
 
   initScripts:
     enabled: true

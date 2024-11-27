@@ -2,6 +2,16 @@ global:
   enable4G: false
   enable5G: true
 
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  persistentLogLevel: info
+
+  nodeSelector: {}
+
 bootstrap:
   create: true
   name: ""
@@ -63,9 +73,6 @@ image:
   repository: accelleran/dash-front-back-end
   pullPolicy: IfNotPresent
   tag: ""
-
-imagePullSecrets:
-  - name: accelleran-secret
 
 accelleranLicense:
   enabled: false

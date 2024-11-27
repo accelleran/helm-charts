@@ -2,10 +2,10 @@ apiVersion: v2
 name: loki-gateway
 description: Loki gateway
 type: application
-version: 0.1.4
+version: 0.1.7
 # renovate: image=nginx
-appVersion: 1.27.2
+appVersion: 1.27.3
 dependencies:
   - name: common
-    version: 0.3.9
+    version: 0.3.11
     repository: https://accelleran.github.io/helm-charts/
