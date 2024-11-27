@@ -34,6 +34,21 @@ global:
     enabled: true
     secretName: "accelleran-license"
 
+  # Accelleran Product Configuration
+  #   Description:  This configuration field allows you to specify the product variant for Accelleran deployments.
+  #
+  #   The `accelleranProduct` parameter can be used to select between the following two products:
+  #     - `P5G`: for configuring the Private 5G (P5G) product
+  #     - `DRAX`: for configuring the DRAX product
+  #
+  #   Value type:   accelleranProduct: string
+  #
+  #   Accepted values:
+  #     - "P5G" : Private 5G Product
+  #     - "DRAX": DRAX Product
+  #
+  accelleranProduct: "P5G"
+
   persistentLogLevel: info
 
   nodeSelector: {}
@@ -81,6 +96,7 @@ dashboard:
     nodeApiURL: "{{ $.Values.global.kubeIp }}"
     # Defined for core-ui config.js
     grafanaPort: "30300"
+    accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
 
