@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.4...du-metrics-server-0.4.5) (2024-11-27)
+
+
+### Features
+
+* Add limits to influxdb ([#805](https://github.com/accelleran/helm-charts/issues/805)) ([b800eef](https://github.com/accelleran/helm-charts/commit/b800eef77f65f0aa492758056cf8f1a6567e6d12))
+
 ## [0.4.4](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.3...du-metrics-server-0.4.4) (2024-11-27)
 
 
