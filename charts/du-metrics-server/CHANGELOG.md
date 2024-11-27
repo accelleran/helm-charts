@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.5](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.4...du-metrics-server-0.4.5) (2024-11-27)
+
+
+### Features
+
+* Add limits to influxdb ([#805](https://github.com/accelleran/helm-charts/issues/805)) ([b800eef](https://github.com/accelleran/helm-charts/commit/b800eef77f65f0aa492758056cf8f1a6567e6d12))
+
+## [0.4.4](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.3...du-metrics-server-0.4.4) (2024-11-27)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/du-metrics-server docker tag to v3.0.4 ([b3bdeba](https://github.com/accelleran/helm-charts/commit/b3bdeba4a7883a8d1feb30306318cb0d04513cc8))
+* **deps:** Update helm release common to v0.3.11 ([f67bc1b](https://github.com/accelleran/helm-charts/commit/f67bc1bd548bbc2b91c6554e2df66f855c3e2120))
+* Set persistent log level to info ([9165d2f](https://github.com/accelleran/helm-charts/commit/9165d2f5a0015bfd9644f79c4b3a299ef322f8a1))
+
 ## [0.4.3](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.2...du-metrics-server-0.4.3) (2024-11-22)
 
 

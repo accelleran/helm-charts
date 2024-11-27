@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.7](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.6...loki-gateway-0.1.7) (2024-11-27)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.11 ([f67bc1b](https://github.com/accelleran/helm-charts/commit/f67bc1bd548bbc2b91c6554e2df66f855c3e2120))
+* **deps:** Update nginx docker tag to v1.27.3 ([087d01a](https://github.com/accelleran/helm-charts/commit/087d01a920de26ba364984261fad910cbe7a43b9))
+* Set persistent log level to info ([9165d2f](https://github.com/accelleran/helm-charts/commit/9165d2f5a0015bfd9644f79c4b3a299ef322f8a1))
+
 ## [0.1.6](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.5...loki-gateway-0.1.6) (2024-11-20)
 
 
