@@ -8,45 +8,57 @@
   ],
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":semanticCommits",
     ":semanticCommitTypeAll(fix)",
     ":automergeMinor"
   ],
-"helmv3": {
+  "helmv3": {
     "fileMatch": [
       "(^|/)Chart\\.yaml$"
     ],
     "commitMessageTopic": "update {{depName}}",
     "registryAliases": {}
   },
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "datasourceTemplate": "docker",
-      "fileMatch": ["(^|/)Chart\\.yaml$"],
+      "fileMatch": [
+        "(^|/)Chart\\.yaml$"
+      ],
       "matchStrings": [
         "#\\s?renovate: image=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s?appVersion:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
     },
     {
+      "customType": "regex",
       "datasourceTemplate": "docker",
-      "fileMatch": ["(^|/)values\\.y[a]?ml$"],
+      "fileMatch": [
+        "(^|/)values\\.y[a]?ml$"
+      ],
       "matchStrings": [
         "#\\s?renovate:( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s+image:\\s?\"?(?<depName>[^:]*?):(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
     },
     {
+      "customType": "regex",
       "datasourceTemplate": "helm",
-      "fileMatch": ["(^|/)values\\.y[a]?ml$"],
+      "fileMatch": [
+        "(^|/)values\\.y[a]?ml$"
+      ],
       "matchStrings": [
         "#\\s?renovate: repository=(?<registryUrl>.*?) chart=(?<depName>.*?)\\s?[\\w\\-]*[vV]ersion:\\s?\"?(?<currentValue>[\\w\\.\\-]*)\"?"
       ]
     },
     {
+      "customType": "regex",
       "datasourceTemplate": "github-releases",
-      "fileMatch": ["(^|/)helm-charts\\.y[a]?ml$"],
+      "fileMatch": [
+        "(^|/)helm-charts\\.y[a]?ml$"
+      ],
       "matchStrings": [
         "#\\s?renovate: github_repository=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s*[\\w\\-]*_version:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
