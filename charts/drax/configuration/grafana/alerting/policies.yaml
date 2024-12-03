@@ -1,0 +1,12 @@
+{{- if $.Values.global.alerting.enabled -}}
+apiVersion: 1
+policies:
+  - orgId: 1
+    receiver: accelleran-slack
+    group_by:
+      - grafana_folder
+      - alertname
+{{- else -}}
+apiVersion: 1
+policies: []
+{{- end -}}

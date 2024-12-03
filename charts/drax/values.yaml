@@ -3,6 +3,18 @@ tags:
   notifications: true
 
 global:
+  # Deployment Configuration
+  #   Description: This section allows you to configure global settings for the Accelleran dRAX.
+  #
+  #   Parameters:
+  #     - `deploymentId`: Required: Represents the name of the dRAX installation. This value will be included
+  #                       as a label in generated notifications and should be unique for each deployment.
+  #
+  #   Value types:
+  #     - deploymentId: string
+  #
+  deploymentId: ""
+
   # Kubernetes advertise IP
   #   Description:  Supply the Kubernetes Advertise address of your Kubernetes cluster.
   #                 This is used by some services that are exposed via a nodePort.
@@ -48,6 +60,23 @@ global:
   #     - "DRAX": DRAX Product
   #
   accelleranProduct: "P5G"
+
+  # Alerting Configuration
+  #   Description: This section allows you to configure the alerting settings for the Accelleran dRAX.
+  #
+  #   Parameters:
+  #     - `enabled`:      A boolean flag to enable or disable alerting. When set to `true`, alerting is activated;
+  #                       when set to `false`, alerts are not provisioned.
+  #     - `slackToken`:   Required: The token used to configure the Slack contact point for alert notifications.
+  #                       This token allows alerts to be sent to the specified Slack channel.
+  #
+  #   Value types:
+  #     - enabled: boolean
+  #     - slackToken: string
+  #
+  alerting:
+    enabled: false
+    slackToken: ""
 
   persistentLogLevel: info
 
@@ -755,6 +784,8 @@ grafana:
       org_name: Main Org.
       # Role for unauthenticated users, other valid values are `Editor` and `Admin`
       org_role: Viewer
+    server:
+      root_url: "http://{{ .Values.global.kubeIp }}:30300/"
 
   envValueFrom:
     DU_INFLUXDB_ADMIN_TOKEN:
@@ -776,6 +807,11 @@ grafana:
       secretKeyRef:
         name: "drax-influxdb2-auth"
         key: admin-token
+
+    SLACK_TOKEN:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-slack-auth"
+        key: slack-token
 
   datasources:
     datasources.yaml:
@@ -853,6 +889,37 @@ grafana:
             organization: accelleran
             defaultBucket: default
             tlsSkipVerify: true
+
+  # Create and mount alerting configuration for the rules, contactpoints and the policies
+  alertingConfigMaps:
+    contactpoints: "{{ .Release.Name }}-grafana-contactpoints"
+    rules: "{{ .Release.Name }}-grafana-rules"
+    policies: "{{ .Release.Name }}-grafana-policies"
+
+  extraContainerVolumes:
+    - name: contactpoints-config
+      configMap:
+        name: "{{ .Release.Name }}-grafana-contactpoints"
+    - name: rules-config
+      configMap:
+        name: "{{ .Release.Name }}-grafana-rules"
+    - name: policies-config
+      configMap:
+        name: "{{ .Release.Name }}-grafana-policies"
+
+  extraVolumeMounts:
+    - name: contactpoints-config
+      mountPath: /etc/grafana/provisioning/alerting/contactpoints.yaml
+      subPath: contactpoints.yaml
+      readOnly: true
+    - name: rules-config
+      mountPath: /etc/grafana/provisioning/alerting/rules.yaml
+      subPath: rules.yaml
+      readOnly: true
+    - name: policies-config
+      mountPath: /etc/grafana/provisioning/alerting/policies.yaml
+      subPath: policies.yaml
+      readOnly: true
 
   dashboardProviders:
     dashboardproviders.yaml:
