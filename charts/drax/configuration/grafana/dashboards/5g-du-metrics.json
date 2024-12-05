@@ -18,8 +18,8 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 5,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "collapsed": false,
@@ -35,9 +35,9 @@
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "influxdb",
-        "uid": "JOSE3g9KVz"
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 4,
@@ -55,7 +55,8 @@
         "content": "<div style=\"text-align:center\"><img src=\"https://accelleran.com/wp-content/uploads/2023/07/acceleran-logo-300x89-1.png\" />",
         "mode": "html"
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
+      "title": "",
       "transparent": true,
       "type": "text"
     },
@@ -110,14 +111,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> map(fn: (r) => ({ r with ue_id: r[\"pci\"]+\".\"+r[\"rnti\"]}))\n  |> window(every: 2s)\n  |> group(columns: [\"_stop\"])\n  |> unique(column: \"ue_id\")\n  |> count(column: \"ue_id\")\n  |> map(fn: (r) => ({ r with _value: r[\"ue_id\"] }))\n  |> drop(columns: [\"ue_id\"])\n  |> group()\n",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> map(fn: (r) => ({ r with ue_id: r[\"pci\"]+\".\"+r[\"rnti\"]}))\n  |> window(every: 2s)\n  |> group(columns: [\"_stop\"])\n  |> unique(column: \"ue_id\")\n  |> count(column: \"ue_id\")\n  |> map(fn: (r) => ({ r with _value: r[\"ue_id\"] }))\n  |> drop(columns: [\"ue_id\"])\n  |> group()\n",
           "refId": "Downlink"
         }
       ],
@@ -182,14 +183,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -245,14 +246,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -308,14 +309,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -371,14 +372,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -464,6 +465,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -567,6 +569,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -674,6 +677,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -782,6 +786,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -892,6 +897,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -1001,6 +1007,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -1110,6 +1117,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -1216,6 +1224,7 @@
           "sort": "none"
         }
       },
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
@@ -4738,20 +4747,18 @@
       "type": "row"
     }
   ],
+  "preload": false,
   "refresh": "5s",
-  "schemaVersion": 39,
+  "schemaVersion": 40,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": false,
           "text": "1s",
           "value": "1s"
         },
-        "hide": 0,
         "includeAll": false,
-        "multi": false,
         "name": "AggregationTime",
         "options": [
           {
@@ -4796,15 +4803,13 @@
           }
         ],
         "query": "1s,5s,15s,30s,1m,15m,30m,1h",
-        "queryValue": "",
-        "skipUrlSync": false,
         "type": "custom"
       },
       {
         "hide": 2,
         "name": "bucket",
         "query": "default",
-        "skipUrlSync": false,
+        "skipUrlSync": true,
         "type": "constant"
       }
     ]
@@ -4815,7 +4820,6 @@
   },
   "timepicker": {
     "refresh_intervals": [
-      "1s",
       "5s",
       "10s",
       "30s",
