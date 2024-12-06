@@ -19,7 +19,7 @@ image:
 initImage:
   repository: accelleran/acc-generic-img
   pullPolicy: IfNotPresent
-  tag: "0.8.1"
+  tag: "0.9.0"
 
 imagePullSecrets:
   - name: accelleran-secret

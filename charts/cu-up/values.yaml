@@ -72,7 +72,7 @@ cu-up:
 
   natsInitImage:
     repository: accelleran/acc-generic-img
-    tag: "0.8.1"
+    tag: "0.9.0"
     pullPolicy: IfNotPresent
 
   serviceAccount:
@@ -107,7 +107,7 @@ netconf:
   natsInitImage:
     repository: accelleran/acc-generic-img
     pullPolicy: IfNotPresent
-    tag: "0.8.1"
+    tag: "0.9.0"
 
   image:
     repository: accelleran/cuup-netconf
@@ -212,7 +212,7 @@ ups:
 
   loadBalancerIPInitImage:
     repository: accelleran/acc-generic-img
-    tag: "0.8.1"
+    tag: "0.9.0"
     pullPolicy: IfNotPresent
 
   image:

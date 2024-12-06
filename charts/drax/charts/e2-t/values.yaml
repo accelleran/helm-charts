@@ -51,12 +51,12 @@ fullnameOverride: ""
 
 redisInitImage:
   repository: accelleran/acc-generic-img
-  tag: "0.8.1"
+  tag: "0.9.0"
   pullPolicy: IfNotPresent
 
 natsInitImage:
   repository: accelleran/acc-generic-img
-  tag: "0.8.1"
+  tag: "0.9.0"
   pullPolicy: IfNotPresent
 
 accelleranLicense:
