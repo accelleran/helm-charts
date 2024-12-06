@@ -58,12 +58,12 @@ replicaCount: 1
 natsInitImage:
   repository: accelleran/acc-generic-img
   pullPolicy: IfNotPresent
-  tag: "0.8.1"
+  tag: "0.9.0"
 
 kafkaInitImage:
   repository: accelleran/acc-generic-img
   pullPolicy: IfNotPresent
-  tag: "0.8.1"
+  tag: "0.9.0"
 
 image:
   repository: accelleran/golang-nkafka-5g
