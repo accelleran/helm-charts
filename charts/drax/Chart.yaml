@@ -138,7 +138,7 @@ dependencies:
     repository: https://charts.bitnami.com/bitnami/
   - name: nats
     condition: nats.enabled
-    version: 1.2.6
+    version: 1.2.7
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
