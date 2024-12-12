@@ -1,5 +1,14 @@
 # Changelog
 
+## [9.0.9](https://github.com/accelleran/helm-charts/compare/cu-up-9.0.8...cu-up-9.0.9) (2024-12-12)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.9.0 ([f9830e1](https://github.com/accelleran/helm-charts/commit/f9830e1069dd56c6e424d47faf06fb8c72caf2cc))
+* **deps:** Update accelleran/cuup-netconf docker tag to v6.0.12 ([09ebb52](https://github.com/accelleran/helm-charts/commit/09ebb525b1ac1ac096a6b52dc841a7a7d002f81b))
+* **deps:** Update helm release nats to v1.2.7 ([4e609cd](https://github.com/accelleran/helm-charts/commit/4e609cdd1dda8f0686366470a2d752548e8b6038))
+
 ## [9.0.8](https://github.com/accelleran/helm-charts/compare/cu-up-9.0.7...cu-up-9.0.8) (2024-11-28)
 
 
