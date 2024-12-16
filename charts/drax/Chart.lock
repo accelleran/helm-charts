@@ -59,15 +59,9 @@ dependencies:
 - name: promtail
   repository: https://grafana.github.io/helm-charts/
   version: 6.16.6
-- name: influxdb
-  repository: https://helm.influxdata.com/
-  version: 4.12.5
 - name: influxdb2
   repository: https://helm.influxdata.com/
   version: 2.1.2
-- name: vector
-  repository: https://helm.vector.dev
-  version: 0.38.1
 - name: kminion
   repository: https://charts.redpanda.com
   version: 0.14.1

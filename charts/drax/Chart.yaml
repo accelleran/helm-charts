@@ -114,18 +114,10 @@ dependencies:
       - notifications
     version: 6.16.6
     repository: https://grafana.github.io/helm-charts/
-  - name: influxdb
-    condition: influxdb.enabled
-    version: 4.12.5
-    repository: https://helm.influxdata.com/
   - name: influxdb2
     condition: influxdb2.enabled
     version: 2.1.2
     repository: https://helm.influxdata.com/
-  - name: vector
-    condition: global.enable5G
-    version: 0.38.1
-    repository: https://helm.vector.dev
   - name: kminion
     condition: kminion.enabled
     version: 0.14.1
