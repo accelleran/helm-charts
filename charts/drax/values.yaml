@@ -4,10 +4,10 @@ tags:
 
 global:
   # Deployment Configuration
-  #   Description: This section allows you to configure global settings for the Accelleran dRAX.
+  #   Description: This section allows you to configure global settings for the Accelleran deployment.
   #
   #   Parameters:
-  #     - `deploymentId`: Required: Represents the name of the dRAX installation. This value will be included
+  #     - `deploymentId`: Required: Represents the name of the Accelleran deployment. This value will be included
   #                       as a label in generated notifications and should be unique for each deployment.
   #
   #   Value types:
