@@ -96,21 +96,10 @@ promtail-notifications:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
 
-influxdb:
-  nodeSelector:
-    drax.accelleran.com/schedule: "true"
-  backup:
-    nodeSelector:
-      drax.accelleran.com/schedule: "true"
-
 influxdb2:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
     
-vector:
-  nodeSelector:
-    drax.accelleran.com/schedule: "true"
-
 kminion:
   nodeSelector:
     drax.accelleran.com/schedule: "true"

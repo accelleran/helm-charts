@@ -18,13 +18,13 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 14,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "P188D15F60707A73F"
+        "uid": "ddswjfzs92bk0b"
       },
       "description": "Measure of DL GTP data received during the  reporting period in the observed cell. Data for all UEs (all PDU sessions) in a cell is aggregated",
       "fieldConfig": {
@@ -65,6 +65,7 @@
               "mode": "off"
             }
           },
+          "decimals": 1,
           "links": [],
           "mappings": [],
           "min": 0,
@@ -104,13 +105,13 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "alias": "$tag_cuupId",
           "datasource": {
             "type": "influxdb",
-            "uid": "P188D15F60707A73F"
+            "uid": "ddswjfzs92bk0b"
           },
           "groupBy": [
             {
@@ -129,7 +130,7 @@
           "measurement": "uemeasurement.vector",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT sum(\"measurement.dlGtpThroughput\") *8 FROM \"uemeasurement.vector\" WHERE $timeFilter GROUP BY time(1s), \"cuupId\"::tag fill(null)",
+          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpDlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      snssaiPart: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.snssaiPart, set: ${SNSSAI:json})  )\n  |> group(columns: [\"snssaiPart\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 1s, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      snssaiPart: r.snssaiPart, \n      \"snssai:\": r._value * 8\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"snssai:\", \"snssaiPart\" ])\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -156,14 +157,14 @@
           "tags": []
         }
       ],
-      "title": "DL GTP Throughput",
+      "title": "DL GTP Throughput per SNSSAI",
       "transparent": true,
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "P188D15F60707A73F"
+        "uid": "ddswjfzs92bk0b"
       },
       "description": "Measure of UL GTP data received during the  reporting period in the observed cell. Data for all UEs (all PDU sessions) in a cell is aggregated",
       "fieldConfig": {
@@ -204,6 +205,7 @@
               "mode": "off"
             }
           },
+          "decimals": 1,
           "links": [],
           "mappings": [],
           "min": 0,
@@ -243,13 +245,13 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "alias": "$tag_cuupId",
           "datasource": {
             "type": "influxdb",
-            "uid": "P188D15F60707A73F"
+            "uid": "ddswjfzs92bk0b"
           },
           "groupBy": [
             {
@@ -268,7 +270,7 @@
           "measurement": "uemeasurement.vector",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT sum(\"measurement.ulGtpThroughput\") *8 FROM \"uemeasurement.vector\" WHERE $timeFilter GROUP BY time(1s), \"cuupId\"::tag fill(null)",
+          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpUlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      snssaiPart: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.snssaiPart, set: ${SNSSAI:json})  )\n  |> group(columns: [\"snssaiPart\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 1s, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      snssaiPart: r.snssaiPart, \n      \"snssai:\": r._value * 8\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"snssai:\", \"snssaiPart\" ])\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -295,16 +297,16 @@
           "tags": []
         }
       ],
-      "title": "UL GTP Throughput",
+      "title": "UL GTP Throughput per SNSSAI",
       "transparent": true,
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
       },
-      "description": "The fraction of PDCP SDU packets which are dropped on the downlink, due to high traffic load, traffic management etc",
+      "description": "This measurement provides the fraction of PDCP SDU packets which are not successfully received at gNB-CU-UP. It is a measure of the UL packet loss on the F1-U interface. The measurement is optionally split into subcounters per QoS level (mapped 5QI or QCI in NR option 3) and subcounters per supported S-NSSAI.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -345,6 +347,7 @@
           },
           "links": [],
           "mappings": [],
+          "max": 1,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
@@ -382,141 +385,27 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "10.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
           },
-          "disableTextWrap": false,
-          "editorMode": "code",
-          "expr": "avg by(reportedNode, sd, sst) (avg_over_time(DRB_PDCP_PACKET_DROP_RATE_DL_SNSSAI{sst=~\"$sliceType\", sd=~\"$sliceDifferentiator\"}[$MinStep]))",
-          "fullMetaSearch": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "interval": "$MinStep",
-          "legendFormat": "GNB_ID:{{reportedNode}},SST:{{sst}},SD{{sd}}",
-          "refId": "A",
-          "useBackend": false
+          "query": "timestart = uint(v: v.timeRangeStart)\ntimestop = uint(v: v.timeRangeStop)\nduration = duration(v:timestop - timestart)\n\nconditionalAggregate = (tables=<-) => \n  if int(v:duration) > int(v:15m) then\n    tables\n      |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: true)\n      |> fill(usePrevious: true) \n  else\n    tables\n    \nfrom(bucket: \"radio_resource_utilization_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccDRBF1UPacketLossRateUlSnssai\" and\n    r._field == \"Value\" and\n    (\n      \"${SNSSAI}\" == \"All\" or r.Snssai == \"${SNSSAI}\" or contains(value: r.Snssai, set: ${SNSSAI:json})\n    ) and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"Snssai\", \"NetworkFunctionId\"])\n  |> conditionalAggregate()\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId, \n      Snssai: r.Snssai, \n      \"snssai:\": r._value/1000000\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"snssai:\", \"Snssai\"]) \n",
+          "refId": "A"
         }
       ],
-      "title": "DRB PDCP PACKET DROP RATE DL PER SNSSAI",
+      "title": "DRB PACKET LOSS RATE UL per SNSSAI",
       "transparent": true,
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
       },
-      "description": "The fraction of PDCP SDU packets which are dropped on the downlink, due to high traffic load, traffic management etc",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "links": [],
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 15
-      },
-      "id": 79,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.2.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "disableTextWrap": false,
-          "editorMode": "code",
-          "expr": "avg by(reportedNode, qfi) (avg_over_time(DRB_PDCP_PACKET_DROP_RATE_DL_QOS{qfi=~\"$QFI\"}[$MinStep]))",
-          "fullMetaSearch": false,
-          "includeNullMetadata": true,
-          "instant": false,
-          "interval": "$MinStep",
-          "legendFormat": "GNB_ID:{{reportedNode}},QFI:{{qfi}}",
-          "refId": "A",
-          "useBackend": false
-        }
-      ],
-      "title": "DRB PDCP PACKET DROP RATE DL PER QFI",
-      "transparent": true,
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "description": "The average (arithmetic mean) PDCP SDU delay on the downlink within the gNB-CU-UP for all PDCP packets",
+      "description": "The average (arithmetic mean) PDCP SDU delay on the downlink within the gNB-CU-UP for all PDCP packets in ms",
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -545,16 +434,16 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 5,
+        "w": 10,
         "x": 0,
-        "y": 20
+        "y": 15
       },
       "id": 64,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
+        "justifyMode": "center",
+        "orientation": "auto",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
@@ -567,18 +456,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
           },
-          "editorMode": "code",
-          "expr": "avg by(reportedNode, sst, sd) (avg_over_time(AVERAGE_DELAY_DL_IN_CUUP_SNSSAI{sd=~\"$sliceDifferentiator\",sst=~\"$sliceType\"}[$__interval]))",
-          "instant": true,
-          "interval": "",
-          "legendFormat": "GNB_ID:{{reportedNode}},SST:{{sst}},SD{{sd}}",
+          "query": "from(bucket: \"radio_resource_utilization_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"DRBPdcpSduDelayDlSnssai\"  \n    and\n    (\n      \"${SNSSAI}\" == \"All\" or r.Snssai == \"${SNSSAI}\" or contains(value: r.Snssai, set: ${SNSSAI:json})\n    ) and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({ r with \"Snssai:\": float(v: r._value) * 0.1 }))\n  |> group(columns: [\"Snssai\"])\n  |> mean(column: \"Snssai:\")\n",
           "refId": "A"
         }
       ],
@@ -588,9 +473,10 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
       },
+      "description": "The distribution of PDCP SDU delay on the downlink within the gNB-CU-UP, for all PDCP packets (time when sending a PDCP SDU to the gNB-DU at the egress PDCP layer on F1-U/Xn-U, minus time of arrival of the same packet at NG-U ingress IP termination) distributed in following bins\n\n| bin  | value |\n| - | - | \n|bin0 | <= 5ms |\n|bin1 | 6ms to 10ms |\n|bin2 | 11ms to 20ms |\n|bin3 | 21ms to 30ms |\n|... | ... |\n|bin10 | 91ms to 100ms |\n|bin11 | 101ms to 200ms |\n|bin12 | 201ms to 300ms |\n|... |\t... |\n|bin19 | 901ms to 1000ms |\n|bin20 | >1s to <=2s |\n|bin21 | >2s to <=3s |\n|bin22 | >3s to <=4s |\n|bin23 | >4s to <=5s |\n|bin24 | > 5s |",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -608,13 +494,19 @@
       },
       "gridPos": {
         "h": 15,
-        "w": 18,
-        "x": 5,
+        "w": 24,
+        "x": 0,
         "y": 20
       },
       "id": 84,
       "options": {
         "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
         "maxVizHeight": 300,
         "minVizHeight": 10,
         "minVizWidth": 0,
@@ -631,434 +523,30 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.2.2",
+      "pluginVersion": "11.3.1",
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
           },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_0_total[$__range]))",
-          "interval": "",
-          "legendFormat": "0",
-          "refId": "H"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_1_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "1",
+          "query": "from(bucket: \"radio_resource_utilization_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"DRBPdcpSduDelayDlDistSnssai\" and\n    (\n      \"${SNSSAI}\" == \"All\" or r.Snssai == \"${SNSSAI}\" or contains(value: r.Snssai, set: ${SNSSAI:json})\n    ) and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n    )\n  |> group(columns: [\"BinX\"]) \n  |> sum(column: \"_value\") \n    |> map(fn: (r) => ({\n      \"Bin:\": r._value,\n      BinX: r.BinX \n  }))\n",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_2_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "2",
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_3_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "3",
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_4_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "4",
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_5_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "5",
-          "refId": "E"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_6_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "6",
-          "refId": "F"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_7_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "7",
-          "refId": "G"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_8_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "8",
-          "refId": "J"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_9_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "9",
-          "refId": "K"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_10_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "10",
-          "refId": "L"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_11_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "11",
-          "refId": "M"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_12_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "12",
-          "refId": "N"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_13_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "13",
-          "refId": "I"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_14_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "14",
-          "refId": "O"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_15_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "15",
-          "refId": "P"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_16_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "16",
-          "refId": "Q"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_17_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "17",
-          "refId": "R"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_18_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "18",
-          "refId": "S"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_19_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "19",
-          "refId": "T"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_20_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "20",
-          "refId": "U"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_21_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "21",
-          "refId": "V"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_22_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "22",
-          "refId": "W"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_23_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "23",
-          "refId": "X"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "expr": "sum(increase(DISTRIBUTION_OF_DELAY_DL_IN_CUUP_QOS_bin_24_total[$__range])) or vector(0) ",
-          "interval": "",
-          "legendFormat": "24",
-          "refId": "Y"
         }
       ],
       "title": "Distribution of delay DL in CU-UP",
       "transparent": true,
       "type": "bargauge"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "description": "The average (arithmetic mean) PDCP SDU delay on the downlink within the gNB-CU-UP for all PDCP packets",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "match": "null",
-                "result": {
-                  "text": "N/A"
-                }
-              },
-              "type": "special"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 5,
-        "x": 0,
-        "y": 25
-      },
-      "id": 78,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "last"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.2.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "editorMode": "code",
-          "expr": "avg by(reportedNode, qfi) (avg_over_time(AVERAGE_DELAY_DL_IN_CUUP_QOS{qfi=~\"$QFI\"}[$__interval]))",
-          "instant": true,
-          "interval": "",
-          "legendFormat": "{{reportedNode}},QFI:{{qfi}}",
-          "refId": "A"
-        }
-      ],
-      "title": "AVERAGE DELAY DL PER QFI",
-      "transparent": true,
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 24,
-        "x": 0,
-        "y": 35
-      },
-      "id": 67,
-      "options": {
-        "content": "<h4 style=\"text-align:center\"> <h4>\n<h4 style=\"text-align:center\"> <h4>\n",
-        "mode": "html"
-      },
-      "pluginVersion": "10.2.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "refId": "A"
-        }
-      ],
-      "transparent": true,
-      "type": "text"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 24,
-        "x": 0,
-        "y": 38
-      },
-      "id": 77,
-      "options": {
-        "content": "<h4 style=\"text-align:center\"> <h4>\n<h4 style=\"text-align:center\"> <h4>\n",
-        "mode": "html"
-      },
-      "pluginVersion": "10.2.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "refId": "A"
-        }
-      ],
-      "transparent": true,
-      "type": "text"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "PBFA97CFB590B2093"
-      },
-      "gridPos": {
-        "h": 2,
-        "w": 4,
-        "x": 0,
-        "y": 41
-      },
-      "id": 56,
-      "options": {
-        "content": "",
-        "mode": "html"
-      },
-      "pluginVersion": "10.2.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "PBFA97CFB590B2093"
-          },
-          "refId": "A"
-        }
-      ],
-      "transparent": true,
-      "type": "text"
     }
   ],
-  "refresh": "",
-  "schemaVersion": 39,
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 40,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
           "text": [
             "All"
           ],
@@ -1067,28 +555,24 @@
           ]
         },
         "datasource": {
-          "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "type": "influxdb",
+          "uid": "ddswjfzs92bk0b"
         },
-        "definition": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sst)",
-        "hide": 0,
+        "definition": "from(bucket: \"radio_resource_utilization_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccDRBPdcpPacketDropRateDlSnssai\") \n  |> keep(columns: [\"Snssai\"]) \n  |> distinct(column: \"Snssai\")\n  |> sort(columns: [\"Snssai\"], desc: false)\n",
+        "description": "The S-NSSAI is represented as an uint32 in format sD2…sD1…sD0…sST (MSB…LSB), 0xFFFFFFxx indicates null sD value",
         "includeAll": true,
         "multi": true,
-        "name": "sliceType",
+        "name": "SNSSAI",
         "options": [],
-        "query": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sst)",
+        "query": {
+          "query": "from(bucket: \"radio_resource_utilization_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccDRBPdcpPacketDropRateDlSnssai\") \n  |> keep(columns: [\"Snssai\"]) \n  |> distinct(column: \"Snssai\")\n  |> sort(columns: [\"Snssai\"], desc: false)\n"
+        },
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       },
       {
         "current": {
-          "selected": true,
           "text": [
             "All"
           ],
@@ -1097,96 +581,20 @@
           ]
         },
         "datasource": {
-          "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
+          "type": "influxdb",
+          "uid": "ddswjfzs92bk0b"
         },
-        "definition": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sd)",
-        "hide": 0,
+        "definition": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccGTPThpDl\") \n  |> keep(columns: [\"NetworkFunctionId\"]) \n  |> distinct(column: \"NetworkFunctionId\")\n  |> sort(columns: [\"NetworkFunctionId\"], desc: false)\n",
         "includeAll": true,
         "multi": true,
-        "name": "sliceDifferentiator",
+        "name": "NetworkFunctionId",
         "options": [],
-        "query": "label_values(DRB_PACKET_LOSS_UL_SNSSAI,sd)",
+        "query": {
+          "query": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccGTPThpDl\") \n  |> keep(columns: [\"NetworkFunctionId\"]) \n  |> distinct(column: \"NetworkFunctionId\")\n  |> sort(columns: [\"NetworkFunctionId\"], desc: false)\n"
+        },
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "current": {
-          "selected": true,
-          "text": [
-            "All"
-          ],
-          "value": [
-            "$__all"
-          ]
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "PBFA97CFB590B2093"
-        },
-        "definition": "label_values(DRB_PACKET_LOSS_UL_QOS,qfi)",
-        "hide": 0,
-        "includeAll": true,
-        "multi": true,
-        "name": "QFI",
-        "options": [],
-        "query": "label_values(DRB_PACKET_LOSS_UL_QOS,qfi)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "current": {
-          "selected": false,
-          "text": "1m",
-          "value": "1m"
-        },
-        "hide": 0,
-        "includeAll": false,
-        "multi": false,
-        "name": "MinStep",
-        "options": [
-          {
-            "selected": true,
-            "text": "1m",
-            "value": "1m"
-          },
-          {
-            "selected": false,
-            "text": "5m",
-            "value": "5m"
-          },
-          {
-            "selected": false,
-            "text": "10m",
-            "value": "10m"
-          },
-          {
-            "selected": false,
-            "text": "30m",
-            "value": "30m"
-          },
-          {
-            "selected": false,
-            "text": "1h",
-            "value": "1h"
-          }
-        ],
-        "query": "1m,5m,10m,30m,1h",
-        "queryValue": "",
-        "skipUrlSync": false,
-        "type": "custom"
+        "type": "query"
       }
     ]
   },
@@ -1194,23 +602,10 @@
     "from": "now-1h",
     "to": "now"
   },
-  "timepicker": {
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d"
-    ]
-  },
+  "timepicker": {},
   "timezone": "",
   "title": "5G CUUP PM Counters",
-  "uid": "sH2tHMJMl",
-  "version": 1,
+  "uid": "sH2tHMJM6",
+  "version": 6,
   "weekStart": ""
 }

@@ -118,7 +118,7 @@
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> map(fn: (r) => ({ r with ue_id: r[\"pci\"]+\".\"+r[\"rnti\"]}))\n  |> window(every: 2s)\n  |> group(columns: [\"_stop\"])\n  |> unique(column: \"ue_id\")\n  |> count(column: \"ue_id\")\n  |> map(fn: (r) => ({ r with _value: r[\"ue_id\"] }))\n  |> drop(columns: [\"ue_id\"])\n  |> group()\n",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> map(fn: (r) => ({ r with ue_id: r[\"pci\"]+\".\"+r[\"rnti\"]}))\n  |> window(every: 2s)\n  |> group(columns: [\"_stop\"])\n  |> unique(column: \"ue_id\")\n  |> count(column: \"ue_id\")\n  |> map(fn: (r) => ({ r with _value: r[\"ue_id\"] }))\n  |> drop(columns: [\"ue_id\"])\n  |> group()\n",
           "refId": "Downlink"
         }
       ],
@@ -190,7 +190,7 @@
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -253,7 +253,7 @@
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -316,7 +316,7 @@
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -379,7 +379,7 @@
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
           "refId": "A"
         }
       ],
@@ -4748,21 +4748,21 @@
     }
   ],
   "preload": false,
-  "refresh": "5s",
+  "refresh": "auto",
   "schemaVersion": 40,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "text": "1s",
-          "value": "1s"
+          "text": "15s",
+          "value": "15s"
         },
         "includeAll": false,
         "name": "AggregationTime",
         "options": [
           {
-            "selected": true,
+            "selected": false,
             "text": "1s",
             "value": "1s"
           },
@@ -4772,7 +4772,7 @@
             "value": "5s"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "15s",
             "value": "15s"
           },
@@ -4806,6 +4806,10 @@
         "type": "custom"
       },
       {
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
         "hide": 2,
         "name": "bucket",
         "query": "default",
