@@ -787,6 +787,10 @@ grafana:
     server:
       root_url: "http://{{ .Values.global.kubeIp }}:30300/"
 
+  envRenderSecret:
+      slack-token:
+        value: "{{ $.Values.global.alerting.slackToken }}"
+
   envValueFrom:
     DU_INFLUXDB_ADMIN_TOKEN:
       secretKeyRef:
@@ -834,6 +838,8 @@ grafana:
           basicAuthUser: grafana-logs
           secureJsonData:
             basicAuthPassword: ${LOKI_LOGS_BASIC_AUTH_PASSWORD}
+          jsonData:
+            manageAlerts: false
         - access: proxy
           isDefault: false
           name: Loki-Notifications
@@ -843,6 +849,8 @@ grafana:
           basicAuthUser: grafana-notifications
           secureJsonData:
             basicAuthPassword: ${LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD}
+          jsonData:
+            manageAlerts: false
         - access: proxy
           isDefault: false
           name: InfluxDB-4G
