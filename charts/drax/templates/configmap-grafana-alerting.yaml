@@ -1,0 +1,33 @@
+{{- $values := $.Values.grafana -}}
+
+{{- if $values.alertingConfigMaps }}
+{{- range $type, $configMapName := $values.alertingConfigMaps }}
+---
+{{
+  include
+    "accelleran.common.configMap"
+    (fromYaml (include "accelleran.drax.grafanaAlerting.configMap.args" (dict
+      "top" $
+      "type" $type
+      "configMapName" $configMapName
+    )))
+}}
+{{- end }}
+{{- end }}
+
+{{- define "accelleran.drax.grafanaAlerting.configMap.args" -}}
+{{- $ := get . "top" | required "The top context needs to be provided to drax grafana alerting configmap args" -}}
+{{- $type := get . "type" | required "The alerting type needs to be provided to drax grafana alerting configmap args" -}}
+{{- $configMapName := get . "configMapName" | required "The configmap name needs to be provided to drax grafana alerting configmap args" -}}
+
+{{- $file := printf "%s.yaml" $type -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+
+name: {{ tpl $configMapName $ | quote }}
+
+data:
+  {{ $file }}: |
+    {{ tpl ($.Files.Get (printf "configuration/grafana/alerting/%s" $file)) $ | nindent 4 }}
+{{- end }}
