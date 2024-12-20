@@ -1,4 +1,3 @@
-{{- if $.Values.global.alerting.enabled -}}
 apiVersion: 1
 contactPoints:
   - orgId: 1
@@ -8,10 +7,6 @@ contactPoints:
         type: slack
         settings:
           recipient: drax-notifications
-          token: ${SLACK_TOKEN}
+          token: {{- if $.Values.global.alerting.enabled }} ${SLACK_TOKEN}{{- else }} "-"{{- end }}
           username: Grafana Alert Bot
         disableResolveMessage: true
-{{- else -}}
-apiVersion: 1
-contactPoints: []
-{{- end -}}
