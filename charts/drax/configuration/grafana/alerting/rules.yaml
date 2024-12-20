@@ -1,4 +1,3 @@
-{{- if $.Values.global.alerting.enabled -}}
 apiVersion: 1
 groups:
   - orgId: 1
@@ -107,6 +106,8 @@ groups:
           severity: warning
         notification_settings:
           receiver: accelleran-slack
+        isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
+
   - orgId: 1
     name: Pods
     folder: Kubernetes
@@ -142,9 +143,6 @@ groups:
         labels:
           deploymentId: "{{ .Values.global.deploymentId }}"
           severity: critical
+        isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
         notification_settings:
           receiver: accelleran-slack
-{{- else -}}
-apiVersion: 1
-groups: []
-{{- end -}}
