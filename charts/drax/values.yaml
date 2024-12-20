@@ -788,10 +788,10 @@ grafana:
       root_url: "http://{{ .Values.global.kubeIp }}:30300/"
 
   envRenderSecret:
-      slack-token:
-        value: "{{ $.Values.global.alerting.slackToken }}"
-      alerting:
-        value: "{{ $.Values.global.alerting.enabled }}"
+    slack-token:
+      value: "{{ $.Values.global.alerting.slackToken }}"
+    alerting:
+      value: "{{ $.Values.global.alerting.enabled }}"
 
   envValueFrom:
     DU_INFLUXDB_ADMIN_TOKEN:
