@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.3](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-5.0.2...xapp-hello-world-5.0.3) (2024-12-23)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.9.0 ([f9830e1](https://github.com/accelleran/helm-charts/commit/f9830e1069dd56c6e424d47faf06fb8c72caf2cc))
+
 ## [5.0.2](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-5.0.1...xapp-hello-world-5.0.2) (2024-11-20)
 
 
