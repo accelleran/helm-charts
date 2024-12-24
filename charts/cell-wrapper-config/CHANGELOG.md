@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.5.1...cell-wrapper-config-0.5.2) (2024-12-24)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.9.0 ([f9830e1](https://github.com/accelleran/helm-charts/commit/f9830e1069dd56c6e424d47faf06fb8c72caf2cc))
+* **deps:** Update helm release common to v0.3.10 ([#750](https://github.com/accelleran/helm-charts/issues/750)) ([76fda7f](https://github.com/accelleran/helm-charts/commit/76fda7fc76c6926b402b49f3348b14a785af92f8))
+* **deps:** Update helm release common to v0.3.11 ([f67bc1b](https://github.com/accelleran/helm-charts/commit/f67bc1bd548bbc2b91c6554e2df66f855c3e2120))
+
 ## [0.5.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.5.0...cell-wrapper-config-0.5.1) (2024-10-07)
 
 
