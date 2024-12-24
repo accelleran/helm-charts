@@ -1689,15 +1689,42 @@ influxdb2:
     scripts:
       init.sh: |+
         #!/bin/bash
-        influx bucket create -n default_performance_metrics -o accelleran -r 1w
-        influx bucket create -n rrc_measurements -o accelleran -r 1w
-        influx bucket create -n rrc_connection_metrics -o accelleran -r 1w
-        influx bucket create -n handover_and_mobility_metrics -o accelleran -r 1w
-        influx bucket create -n pdu_session_management_metrics -o accelleran -r 1w
-        influx bucket create -n radio_resource_utilization_metrics -o accelleran -r 1w
-        influx bucket create -n throughput_metrics -o accelleran -r 1w
-        influx bucket create -n du_ue_measurements -o accelleran -r 1w
-        influx bucket create -n du_rlc_measurements -o accelleran -r 1w
+        influx bucket create -n default_performance_metrics -o accelleran -r 3h
+        influx bucket create -n default_performance_metrics_1m -o accelleran -r 18h
+        influx bucket create -n default_performance_metrics_5m -o accelleran -r 7d
+        influx bucket create -n default_performance_metrics_15m -o accelleran -r 28d
+        influx bucket create -n rrc_measurements -o accelleran -r 3h
+        influx bucket create -n rrc_measurements_1m -o accelleran -r 18h
+        influx bucket create -n rrc_measurements_5m -o accelleran -r 7d
+        influx bucket create -n rrc_measurements_15m -o accelleran -r 28d
+        influx bucket create -n rrc_connection_metrics -o accelleran -r 3h
+        influx bucket create -n rrc_connection_metrics_1m -o accelleran -r 18h
+        influx bucket create -n rrc_connection_metrics_5m -o accelleran -r 7d
+        influx bucket create -n rrc_connection_metrics_15m -o accelleran -r 28d
+        influx bucket create -n handover_and_mobility_metrics -o accelleran -r 3h
+        influx bucket create -n handover_and_mobility_metrics_1m -o accelleran -r 18h
+        influx bucket create -n handover_and_mobility_metrics_5m -o accelleran -r 7d
+        influx bucket create -n handover_and_mobility_metrics_15m -o accelleran -r 28d
+        influx bucket create -n pdu_session_management_metrics -o accelleran -r 3h
+        influx bucket create -n pdu_session_management_metrics_1m -o accelleran -r 18h
+        influx bucket create -n pdu_session_management_metrics_5m -o accelleran -r 7d
+        influx bucket create -n pdu_session_management_metrics_15m -o accelleran -r 28d
+        influx bucket create -n radio_resource_utilization_metrics -o accelleran -r 3h
+        influx bucket create -n radio_resource_utilization_metrics_1m -o accelleran -r 18h
+        influx bucket create -n radio_resource_utilization_metrics_5m -o accelleran -r 7d
+        influx bucket create -n radio_resource_utilization_metrics_15m -o accelleran -r 28d
+        influx bucket create -n throughput_metrics -o accelleran -r 3h
+        influx bucket create -n throughput_metrics_1m -o accelleran -r 18h
+        influx bucket create -n throughput_metrics_5m -o accelleran -r 7d
+        influx bucket create -n throughput_metrics_15m -o accelleran -r 28d
+        influx bucket create -n du_ue_measurements -o accelleran -r 3h
+        influx bucket create -n du_ue_measurements_1m -o accelleran -r 18h
+        influx bucket create -n du_ue_measurements_5m -o accelleran -r 7d
+        influx bucket create -n du_ue_measurements_15m -o accelleran -r 28d
+        influx bucket create -n du_rlc_measurements -o accelleran -r 3h
+        influx bucket create -n du_rlc_measurements_1m -o accelleran -r 18h
+        influx bucket create -n du_rlc_measurements_5m -o accelleran -r 7d
+        influx bucket create -n du_rlc_measurements_15m -o accelleran -r 28d
 
 kminion:
   enabled: true
