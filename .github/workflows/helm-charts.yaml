@@ -200,7 +200,9 @@ jobs:
           --namespace default
           --config etc/ct.yaml
           --charts ${{ matrix.chart_path }}
-          --helm-extra-set-args "--set=kafka.provisioning.useHelmHooks=false"
+          --helm-extra-set-args "
+            --set=kafka.provisioning.useHelmHooks=false \
+            --set=global.deploymentId=testGithub"
 
   release-charts:
     name: Release Charts
@@ -223,7 +225,7 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v4.2.0
-        
+
       - name: Install helm repo html plugin
         if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
         run: helm plugin install https://github.com/halkeye/helm-repo-html --version ${{ needs.vars.outputs.helm_repo_html_version }}
@@ -237,7 +239,7 @@ jobs:
           config: etc/cr.yaml
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      
+
       - name: Generate repo html index
         if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
         run: |-
