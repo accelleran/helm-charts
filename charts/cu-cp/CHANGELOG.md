@@ -1,5 +1,14 @@
 # Changelog
 
+## [9.0.10](https://github.com/accelleran/helm-charts/compare/cu-cp-9.0.9...cu-cp-9.0.10) (2024-12-24)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release nats to v1.2.8 ([a5d39e6](https://github.com/accelleran/helm-charts/commit/a5d39e66c43fa43476bc9d2d61eddce3e912b7f9))
+* **deps:** Update helm release redis to v20.6.0 ([f801f76](https://github.com/accelleran/helm-charts/commit/f801f765eb3a3d50f1871ec17f03aa15c064de4c))
+* **deps:** Update helm release redis to v20.6.1 ([6d1d96a](https://github.com/accelleran/helm-charts/commit/6d1d96a65419893e7dcea5e007d9b046d77fd60d))
+
 ## [9.0.9](https://github.com/accelleran/helm-charts/compare/cu-cp-9.0.8...cu-cp-9.0.9) (2024-12-11)
 
 
