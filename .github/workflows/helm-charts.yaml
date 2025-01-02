@@ -201,8 +201,9 @@ jobs:
           --config etc/ct.yaml
           --charts ${{ matrix.chart_path }}
           --helm-extra-set-args "
-            --set=kafka.provisioning.useHelmHooks=false \
-            --set=global.deploymentId=testGithub"
+            --set=kafka.provisioning.useHelmHooks=false
+            --set=global.deploymentId=testGithub
+          "
 
   release-charts:
     name: Release Charts
