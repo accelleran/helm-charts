@@ -2,7 +2,3 @@
       "accelleran.common.bootstrap.configMap"
       (dict "top" $)
 -}}
-
-{{- if eq $.Values.global.deploymentId "" -}}
-  {{- fail "Error: global.deploymentId must be defined." -}}
-{{- end -}}

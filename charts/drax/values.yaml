@@ -68,7 +68,7 @@ global:
   #     - `enabled`:      A boolean flag to enable or disable alerting. When set to `true`, alerting is activated;
   #                       when set to `false`, alerts are not provisioned.
   #     - `slackToken`:   Required: The token used to configure the Slack contact point for alert notifications.
-  #                       This token allows alerts to be sent to the specified Slack channel.
+  #                       This token allows alerts to be sent via Slack.
   #
   #   Value types:
   #     - enabled: boolean
