@@ -1,0 +1,3 @@
+{{- if eq $.Values.global.deploymentId "" -}}
+  {{- fail "Error: global.deploymentId must be defined." -}}
+{{- end -}}

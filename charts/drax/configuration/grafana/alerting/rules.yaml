@@ -1,0 +1,148 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: Disk
+    folder: System
+    interval: 1m
+    rules:
+      - uid: de4uk39bakc1sf
+        title: HighDiskUsage
+        condition: DiskUsageOver70
+        for: 5m
+        data:
+          - refId: TotalDiskSpace
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              editorMode: code
+              expr: avg by (app_kubernetes_io_instance,instance,namespace,node) (node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: TotalDiskSpace
+          - refId: FreeDiskSpace
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              datasource:
+                  type: prometheus
+                  uid: PBFA97CFB590B2093
+              editorMode: code
+              expr: avg by (app_kubernetes_io_instance,instance,namespace,node) (node_filesystem_free_bytes{fstype!~"tmpfs|overlay"})
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: FreeDiskSpace
+          - refId: DiskUsageOver70
+            datasourceUid: __expr__
+            model:
+              conditions:
+                  - evaluator:
+                      params:
+                          - 70
+                      type: gt
+                    operator:
+                      type: and
+                    query:
+                      params:
+                          - C
+                    reducer:
+                      params: []
+                      type: last
+                    type: query
+              datasource:
+                  type: __expr__
+                  uid: __expr__
+              expression: UsedDiskSpacePercentage
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: DiskUsageOver70
+              type: threshold
+          - refId: UsedDiskSpacePercentage
+            datasourceUid: __expr__
+            model:
+              conditions:
+                  - evaluator:
+                      params:
+                          - 0
+                          - 0
+                      type: gt
+                    operator:
+                      type: and
+                    query:
+                      params: []
+                    reducer:
+                      params: []
+                      type: avg
+                    type: query
+              datasource:
+                  name: Expression
+                  type: __expr__
+                  uid: __expr__
+              expression: (${TotalDiskSpace} - ${FreeDiskSpace}) / ${TotalDiskSpace} * 100
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: UsedDiskSpacePercentage
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          description: |
+            Disk usage has exceeded 70%, indicating high disk utilization on the node.
+            This could lead to performance degradation or failures in running workloads.
+            Please check the disk usage, free space, and any related pod or application logs to identify what is consuming the disk.
+            You may need to free up space, adjust resource limits, or investigate for any disk-related issues.
+          summary: Triggered when disk usage has exceeded 70% of space.
+        labels:
+          deploymentId: "{{ .Values.global.deploymentId }}"
+          severity: warning
+        notification_settings:
+          receiver: accelleran-slack
+        isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
+
+  - orgId: 1
+    name: Pods
+    folder: Kubernetes
+    interval: 1m
+    rules:
+      - uid: fe4uihq2gkxs0b
+        title: PodEvicted
+        condition: PodEvicted
+        for: 5m
+        data:
+          - refId: PodEvicted
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: PBFA97CFB590B2093
+            model:
+              editorMode: code
+              expr: sum by(namespace, pod) (kube_pod_status_phase{phase="Failed"} > 0 and on(namespace, pod) kube_pod_status_reason{reason="Evicted"} > 0) > 0
+              instant: true
+              intervalMs: 1000
+              legendFormat: __auto
+              maxDataPoints: 43200
+              range: false
+              refId: PodEvicted
+        noDataState: OK
+        execErrState: Alerting
+        annotations:
+          description: |
+            Pod has been evicted.
+            This indicates that the pod was evicted from the node due to resource constraints or other issues.
+            Please check the pod's events, resource allocation, or the node's health to identify and resolve the issue.
+          summary: Triggered when a pod has been evicted.
+        labels:
+          deploymentId: "{{ .Values.global.deploymentId }}"
+          severity: critical
+        isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
+        notification_settings:
+          receiver: accelleran-slack
