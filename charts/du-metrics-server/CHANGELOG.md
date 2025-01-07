@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.5...du-metrics-server-0.4.6) (2025-01-07)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.9.0 ([f9830e1](https://github.com/accelleran/helm-charts/commit/f9830e1069dd56c6e424d47faf06fb8c72caf2cc))
+
 ## [0.4.5](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.4...du-metrics-server-0.4.5) (2024-11-27)
 
 
