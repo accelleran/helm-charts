@@ -7,5 +7,5 @@ version: 0.1.7
 appVersion: 1.27.3
 dependencies:
   - name: common
-    version: 0.3.11
+    version: 0.3.12
     repository: https://accelleran.github.io/helm-charts/
