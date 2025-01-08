@@ -67,7 +67,17 @@ volumeMounts:
 {{- $imageTag := include "accelleran.common.appVersion" . -}}
 
 {{- if eq (include "accelleran.common.drax.license.enabled" .) "true" -}}
-{{- $imageRepository = (printf "%s-license" $imageRepository) -}}
+
+{{- $imageSuffix := "" -}}
+{{- if ne ($values.accelleranLicense).imageSuffix nil -}}
+{{- $imageSuffix = ($values.accelleranLicense).imageSuffix -}}
+{{- else if ne (($.Values.global).accelleranLicense).imageSuffix nil -}}
+{{- $imageSuffix = (($.Values.global).accelleranLicense).imageSuffix -}}
+{{- else -}}
+{{- $imageSuffix = "-license" -}}
+{{- end -}}
+
+{{- $imageRepository = (printf "%s%s" $imageRepository $imageSuffix) -}}
 {{- end -}}
 
 image: {{ printf "%s:%s" $imageRepository $imageTag | quote }}
