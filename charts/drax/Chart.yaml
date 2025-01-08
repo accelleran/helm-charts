@@ -5,7 +5,7 @@ type: application
 version: 13.0.0
 dependencies:
   - name: common
-    version: 0.3.11
+    version: 0.3.12
     repository: https://accelleran.github.io/helm-charts/
 
   # smo
