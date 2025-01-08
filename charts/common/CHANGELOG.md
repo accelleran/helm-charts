@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.12](https://github.com/accelleran/helm-charts/compare/common-0.3.11...common-0.3.12) (2025-01-08)
+
+
+### Features
+
+* Add accelleran license mount path ([#870](https://github.com/accelleran/helm-charts/issues/870)) ([0e34cbf](https://github.com/accelleran/helm-charts/commit/0e34cbf5b2e050836d0f0e187bd92e224576990f))
+
 ## [0.3.11](https://github.com/accelleran/helm-charts/compare/common-0.3.10...common-0.3.11) (2024-11-25)
 
 
