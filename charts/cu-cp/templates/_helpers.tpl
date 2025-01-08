@@ -39,3 +39,22 @@
 {{- $ := . -}}
 {{ index $.Values "sctp-f1" "service" "name" | default (include "accelleran.common.fullname" (dict "top" $ "values" (index $.Values "sctp-f1"))) }}
 {{- end -}}
+
+
+{{- define "accelleran.cu-cp.init.args" -}}
+{{- $ := . -}}
+{{- $values := (index $.Values "cu-cp") -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ mergeOverwrite (deepCopy $values) (fromYaml (include "accelleran.cu-cp.disabledLicense" .)) | toYaml | nindent 2 }}
+
+bootstrapConfigMapName: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
+{{- end -}}
+
+
+{{- define "accelleran.cu-cp.disabledLicense" -}}
+accelleranLicense:
+  enabled: false
+{{- end -}}

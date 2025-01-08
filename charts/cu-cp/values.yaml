@@ -10,6 +10,11 @@ global:
 
   nodeSelector: {}
 
+  accelleranLicense:
+    enabled: true
+    secretName: accelleran-cu-license
+    imageSuffix: ""
+
 
 # Number of supported components
 #   Description:  You have to specify the amount of different components that should be supported.
@@ -115,6 +120,9 @@ netconf:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
   readinessProbe:
     exec:
       command:
@@ -174,6 +182,9 @@ amf-ctrl:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
 
 cu-up-ctrl:
   enabled: true
@@ -187,6 +198,9 @@ cu-up-ctrl:
     repository: accelleran/cuupcontrollerappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
 
 du-ctrl:
@@ -216,6 +230,9 @@ pm-ctrl:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
 
 res-mgr:
   enabled: true
@@ -229,6 +246,9 @@ res-mgr:
     repository: accelleran/resmgrappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
 
 sctp-ng:
@@ -244,6 +264,9 @@ sctp-ng:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
 
 sctp-e1:
   enabled: true
@@ -257,6 +280,9 @@ sctp-e1:
     repository: accelleran/sctpcpe1appl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
   service:
     enabled: true
@@ -285,6 +311,9 @@ sctp-f1:
     repository: accelleran/sctpcpf1appl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
   service:
     enabled: true
@@ -315,6 +344,9 @@ ng-ap:
     repository: accelleran/ngapappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
   serviceAccount:
     # Specifies whether a service account should be created
@@ -350,6 +382,9 @@ e1-cp:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
   serviceAccount:
     # Specifies whether a service account should be created
     create: false
@@ -384,6 +419,9 @@ f1-ap:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
   serviceAccount:
     # Specifies whether a service account should be created
     create: false
@@ -417,6 +455,9 @@ rr-ctrl:
     repository: accelleran/rrctrlappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
   serviceAccount:
     # Specifies whether a service account should be created
@@ -456,6 +497,9 @@ ds-ctrl:
     repository: accelleran/dsctrlappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
   serviceAccount:
     # Specifies whether a service account should be created

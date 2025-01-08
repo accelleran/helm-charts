@@ -34,16 +34,3 @@ containers:
 - {{ fromYaml (include "accelleran.cu-cp.sctp-e1.container" $) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.cu-cp.sctp-f1.container" $) | toYaml | nindent 2 }}
 {{- end -}}
-
-
-{{- define "accelleran.cu-cp.init.args" -}}
-{{- $ := . -}}
-{{- $values := (index $.Values "cu-cp") -}}
-
-top:
-  {{ $ | toYaml | nindent 2 }}
-values:
-  {{ $values | toYaml | nindent 2 }}
-
-bootstrapConfigMapName: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
-{{- end -}}

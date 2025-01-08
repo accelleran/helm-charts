@@ -10,6 +10,11 @@ global:
 
   nodeSelector: {}
 
+  accelleranLicense:
+    enabled: true
+    secretName: accelleran-cu-license
+    imageSuffix: ""
+
 
 # Number of components
 #   Description:  You have to specify the amount of different components that should be supported.
@@ -114,6 +119,9 @@ netconf:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
   readinessProbe:
     exec:
       command:
@@ -159,6 +167,9 @@ controller-up:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
 
 pm-controller-up:
   enabled: true
@@ -172,6 +183,9 @@ pm-controller-up:
     repository: accelleran/pmcontrollerupappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
 
 res-mgr-up:
@@ -201,6 +215,9 @@ e1-sctp-up:
     tag: ""
     pullPolicy: IfNotPresent
 
+  accelleranLicense:
+    enabled: false
+
 
 ups:
   enabled: true
@@ -219,6 +236,9 @@ ups:
     repository: accelleran/upsappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
   args:
     - "--ng-u"
@@ -279,6 +299,9 @@ xdp-ups:
     repository: accelleran/xdpupsappl
     tag: ""
     pullPolicy: IfNotPresent
+
+  accelleranLicense:
+    enabled: false
 
   args:
     - "--ng-u"

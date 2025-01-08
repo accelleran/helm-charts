@@ -32,7 +32,7 @@ values:
 name: {{ printf "%s-%d" (include "accelleran.common.fullname" (dict "top" $ "values" $values)) $ordinal }}
 
 initContainers:
-- {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-up.init.args" $))) | toYaml | nindent 2 }}
+  - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-up.init.args" $))) | toYaml | nindent 4 }}
 
 env:
   - name: __APPNAME
