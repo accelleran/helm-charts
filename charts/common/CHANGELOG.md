@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.13](https://github.com/accelleran/helm-charts/compare/common-0.3.12...common-0.3.13) (2025-01-08)
+
+
+### Features
+
+* Allow to override license image suffix ([#879](https://github.com/accelleran/helm-charts/issues/879)) ([6a2050e](https://github.com/accelleran/helm-charts/commit/6a2050e863141346e6f87f219f60463b735d4e69))
+
 ## [0.3.12](https://github.com/accelleran/helm-charts/compare/common-0.3.11...common-0.3.12) (2025-01-08)
 
 
