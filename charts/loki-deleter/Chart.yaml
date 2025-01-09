@@ -2,7 +2,7 @@ apiVersion: v2
 name: loki-deleter
 description: Loki deleter
 type: application
-version: 0.1.4
+version: 0.1.5
 # renovate: image=accelleran/loki-deleter
 appVersion: 0.1.5
 dependencies:
