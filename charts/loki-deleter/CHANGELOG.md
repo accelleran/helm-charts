@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.5](https://github.com/accelleran/helm-charts/compare/loki-deleter-0.1.4...loki-deleter-0.1.5) (2025-01-09)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/loki-deleter docker tag to v0.1.5 ([#883](https://github.com/accelleran/helm-charts/issues/883)) ([987906c](https://github.com/accelleran/helm-charts/commit/987906ca108c9ceea114574cb3b4fc729ece4ae9))
+* **deps:** Update helm release common to v0.3.12 ([#873](https://github.com/accelleran/helm-charts/issues/873)) ([8e6ccb6](https://github.com/accelleran/helm-charts/commit/8e6ccb6e761d66a164ad951e0e2f9118dfcfc9ba))
+* **deps:** Update helm release common to v0.3.13 ([#882](https://github.com/accelleran/helm-charts/issues/882)) ([aec30be](https://github.com/accelleran/helm-charts/commit/aec30be5d86f444ad9d65ed18d580ac0c6410166))
+
 ## [0.1.4](https://github.com/accelleran/helm-charts/compare/loki-deleter-0.1.3...loki-deleter-0.1.4) (2024-12-09)
 
 
