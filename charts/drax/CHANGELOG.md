@@ -1,5 +1,16 @@
 # Changelog
 
+## [13.0.1](https://github.com/accelleran/helm-charts/compare/drax-13.0.0...drax-13.0.1) (2025-01-10)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.12 ([#873](https://github.com/accelleran/helm-charts/issues/873)) ([8e6ccb6](https://github.com/accelleran/helm-charts/commit/8e6ccb6e761d66a164ad951e0e2f9118dfcfc9ba))
+* **deps:** Update helm release common to v0.3.13 ([#882](https://github.com/accelleran/helm-charts/issues/882)) ([aec30be](https://github.com/accelleran/helm-charts/commit/aec30be5d86f444ad9d65ed18d580ac0c6410166))
+* **deps:** Update helm release kafka to v31.2.0 ([#881](https://github.com/accelleran/helm-charts/issues/881)) ([49c9f5a](https://github.com/accelleran/helm-charts/commit/49c9f5a8ef4f6f68f5f26a9aac8313b1c25231b4))
+* **deps:** Update helm release loki-deleter to v0.1.5 ([#885](https://github.com/accelleran/helm-charts/issues/885)) ([d4637b0](https://github.com/accelleran/helm-charts/commit/d4637b0063b4904743e2b161dafc584036f07509))
+* **deps:** Update helm release redis to v20.6.2 ([#868](https://github.com/accelleran/helm-charts/issues/868)) ([23a6de1](https://github.com/accelleran/helm-charts/commit/23a6de18ac72bb73d3cee080127bf9da32373a85))
+
 ## [13.0.0](https://github.com/accelleran/helm-charts/compare/drax-12.0.1...drax-13.0.0) (2025-01-07)
 
 
