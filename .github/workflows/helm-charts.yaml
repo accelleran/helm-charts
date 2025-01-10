@@ -193,6 +193,17 @@ jobs:
           accelleran-license \
           --from-file=license.crt
 
+      - name: Create CU license
+        run: |-
+          cat <<EOF > license.crt
+          ${{ secrets.ACCELLERAN_CU_LICENSE }}
+          EOF
+
+          kubectl create secret generic \
+          --namespace default \
+          accelleran-cu-license \
+          --from-file=license.crt
+
       - name: Test charts
         run: >-
           ct

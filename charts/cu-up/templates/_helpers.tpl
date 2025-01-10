@@ -30,7 +30,13 @@
 top:
   {{ $ | toYaml | nindent 2 }}
 values:
-  {{ $values | toYaml | nindent 2 }}
+  {{ mergeOverwrite (deepCopy $values) (fromYaml (include "accelleran.cu-up.disabledLicense" .)) | toYaml | nindent 2 }}
 
 bootstrapConfigMapName: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
+{{- end -}}
+
+
+{{- define "accelleran.cu-up.disabledLicense" -}}
+accelleranLicense:
+  enabled: false
 {{- end -}}
