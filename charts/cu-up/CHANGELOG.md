@@ -1,5 +1,19 @@
 # Changelog
 
+## [9.1.0](https://github.com/accelleran/helm-charts/compare/cu-up-9.0.9...cu-up-9.1.0) (2025-01-10)
+
+
+### Features
+
+* Mount license ([#871](https://github.com/accelleran/helm-charts/issues/871)) ([3789d1c](https://github.com/accelleran/helm-charts/commit/3789d1c45433b9f868be23f63b5040a657da1446))
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.12 ([#873](https://github.com/accelleran/helm-charts/issues/873)) ([8e6ccb6](https://github.com/accelleran/helm-charts/commit/8e6ccb6e761d66a164ad951e0e2f9118dfcfc9ba))
+* **deps:** Update helm release common to v0.3.13 ([#882](https://github.com/accelleran/helm-charts/issues/882)) ([aec30be](https://github.com/accelleran/helm-charts/commit/aec30be5d86f444ad9d65ed18d580ac0c6410166))
+* **deps:** Update helm release nats to v1.2.8 ([a5d39e6](https://github.com/accelleran/helm-charts/commit/a5d39e66c43fa43476bc9d2d61eddce3e912b7f9))
+
 ## [9.0.9](https://github.com/accelleran/helm-charts/compare/cu-up-9.0.8...cu-up-9.0.9) (2024-12-12)
 
 
