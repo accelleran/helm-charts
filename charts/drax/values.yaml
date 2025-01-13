@@ -1686,6 +1686,7 @@ influxdb2:
   
   influxdbDownsampling:
     enabled: true
+    containerName: create-downsampling-flux-tasks
     accelleranLicense:
       enabled: false
     # renovate:

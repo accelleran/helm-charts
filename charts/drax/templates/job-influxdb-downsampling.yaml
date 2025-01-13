@@ -1,4 +1,7 @@
-
+{{ include 
+  "accelleran.common.job" 
+  (fromYaml (include "accelleran.influxdb.downsampling.job.args" .)) 
+}}
 
 {{- define "accelleran.influxdb.downsampling.job.args" -}}
 top:
@@ -8,11 +11,6 @@ values: {{ index $.Values "influxdb2" "influxdbDownsampling" | toYaml | nindent 
 ttlSecondsAfterFinished: 300
 backoffLimit: 3
 restartPolicy: "OnFailure"
-spec:
-  template:
-    spec:
-      containers:
-        - name: create-downsampling-flux-tasks 
 env:
   - name: INFLUXDB_URL
     value: "http://{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
@@ -24,9 +22,3 @@ env:
         name: drax-influxdb2-auth
         key: admin-token
 {{- end }}
-
-
-{{ include 
-  "accelleran.common.job" 
-  (fromYaml (include "accelleran.influxdb.downsampling.job.args" .)) 
-}}
