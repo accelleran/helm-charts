@@ -1683,7 +1683,7 @@ influxdb2:
     limits:
       cpu: "4"
       memory: "8Gi"
-  
+
   influxdbDownsampling:
     enabled: true
     containerName: create-downsampling-flux-tasks
