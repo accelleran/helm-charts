@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/accelleran/helm-charts/compare/xapp-anr-0.1.4...xapp-anr-0.1.5) (2025-01-13)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.3.12 ([#873](https://github.com/accelleran/helm-charts/issues/873)) ([8e6ccb6](https://github.com/accelleran/helm-charts/commit/8e6ccb6e761d66a164ad951e0e2f9118dfcfc9ba))
+* **deps:** Update helm release common to v0.3.13 ([#882](https://github.com/accelleran/helm-charts/issues/882)) ([aec30be](https://github.com/accelleran/helm-charts/commit/aec30be5d86f444ad9d65ed18d580ac0c6410166))
+
 ## [0.1.4](https://github.com/accelleran/helm-charts/compare/xapp-anr-0.1.3...xapp-anr-0.1.4) (2024-11-27)
 
 
