@@ -1,0 +1,24 @@
+{{ include 
+  "accelleran.common.job" 
+  (fromYaml (include "accelleran.influxdb.downsampling.job.args" .)) 
+}}
+
+{{- define "accelleran.influxdb.downsampling.job.args" -}}
+top:
+  {{ $ | toYaml | nindent 2 }}
+name: "{{ $.Release.Name }}-influxdb2-downsampling-job"
+values: {{ index $.Values "influxdb2" "influxdbDownsampling" | toYaml | nindent 2 }}
+ttlSecondsAfterFinished: 300
+backoffLimit: 3
+restartPolicy: "OnFailure"
+env:
+  - name: INFLUXDB_URL
+    value: "http://{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
+  - name: ORG
+    value: "accelleran"
+  - name: INFLUXDB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: drax-influxdb2-auth
+        key: admin-token
+{{- end }}
