@@ -1,0 +1,17 @@
+name: Mergeability
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  check-main:
+    name: Check main
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: bennycode/stop-merging@a872a98c65e2388a0fcf2415c4a43f259bb338e7  # main
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_BRANCH: 'main'
+          BYPASS_PREFIX: 'fix(mergeability): '
