@@ -50,6 +50,8 @@ class Client(typing.Protocol):
     name: str
     kube_secret_name: NamespacedName
 
+    def set_secret(self, secret: str) -> None: ...
+
     def to_keycloak_json(self) -> dict[str, any]: ...
 
     def to_kubernetes_secret_data(self) -> dict[str, str]: ...
@@ -63,6 +65,9 @@ class Oauth2ProxyClient:
     secret: str
     kube_secret_name: str
     cookie_secret: str
+
+    def set_secret(self, secret: str) -> None:
+        self.secret = secret
 
     def to_keycloak_json(self) -> dict[str, any]:
         json = {
@@ -174,7 +179,7 @@ def main() -> None:
     init_kube_client()
     for client in clients:
         create_or_update_client(config, client)
-        client.secret = get_client_secret(config, client)
+        client.set_secret(get_client_secret(config, client))
         add_client_secret_to_kubernetes_secret(client)
     print("clients:", list_clients(config))
 
