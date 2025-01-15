@@ -6,6 +6,9 @@ import os
 import typing
 
 
+request_timeout: int = 60
+
+
 @dataclass
 class OAuth2Token:
     access: str
@@ -185,6 +188,7 @@ def sign_in(config: KeycloakConfig, user: User) -> OAuth2Token:
             "password": user.password,
             "grant_type": "password",
         },
+        timeout=request_timeout,
     )
     response.raise_for_status()
     data = response.json()
@@ -208,6 +212,7 @@ def update_admin(config: KeycloakConfig, admin: User) -> None:
         f"{config.base_url}/admin/realms/master/users/{admin_id}",
         headers=auth_headers(config),
         json=admin.to_keycloak_json(),
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -220,6 +225,7 @@ def get_admin_id(config: KeycloakConfig, admin: User) -> str:
             "exact": True,
             "username": f"{admin.username}",
         },
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -243,6 +249,7 @@ def list_realms(config: KeycloakConfig) -> list[str]:
     response = requests.get(
         f"{config.base_url}/admin/realms",
         headers=auth_headers(config),
+        timeout=request_timeout,
     )
     response.raise_for_status()
     realms = [r["realm"] for r in response.json()]
@@ -254,6 +261,7 @@ def create_realm(config: KeycloakConfig) -> None:
         f"{config.base_url}/admin/realms",
         headers=auth_headers(config),
         json=config.realm.to_keycloak_json(),
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -263,6 +271,7 @@ def update_realm(config: KeycloakConfig) -> None:
         f"{config.base_url}/admin/realms/{config.realm.name}",
         headers=auth_headers(config),
         json=config.realm.to_keycloak_json(),
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -271,6 +280,7 @@ def update_realm_user_profile(config: KeycloakConfig) -> None:
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/users/profile",
         headers=auth_headers(config),
+        timeout=request_timeout,
     )
     response.raise_for_status()
     
@@ -280,7 +290,8 @@ def update_realm_user_profile(config: KeycloakConfig) -> None:
     response = requests.put(
         f"{config.base_url}/admin/realms/{config.realm.name}/users/profile",
         headers=auth_headers(config),
-        json=user_profile
+        json=user_profile,
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -304,6 +315,7 @@ def list_users(config: KeycloakConfig) -> list[str]:
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/users",
         headers=auth_headers(config),
+        timeout=request_timeout,
     )
     response.raise_for_status()
     users = [r["username"] for r in response.json()]
@@ -315,6 +327,7 @@ def create_user(config: KeycloakConfig, user: User) -> None:
         f"{config.base_url}/admin/realms/{config.realm.name}/users",
         headers=auth_headers(config),
         json=user.to_keycloak_json(),
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -326,6 +339,7 @@ def update_user(config: KeycloakConfig, user: User) -> None:
         f"{config.base_url}/admin/realms/{config.realm.name}/users/{user_id}",
         headers=auth_headers(config),
         json=user.to_keycloak_json(),
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -338,6 +352,7 @@ def get_user_id(config: KeycloakConfig, user: User) -> str:
             "exact": True,
             "username": f"{user.username}",
         },
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -361,6 +376,7 @@ def list_clients(config: KeycloakConfig) -> list[str]:
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/clients",
         headers=auth_headers(config),
+        timeout=request_timeout,
     )
     response.raise_for_status()
     clients = [r["clientId"] for r in response.json()]
@@ -372,6 +388,7 @@ def create_client(config: KeycloakConfig, client: Client) -> None:
         f"{config.base_url}/admin/realms/{config.realm.name}/clients",
         headers=auth_headers(config),
         json=client.to_keycloak_json(),
+        timeout=request_timeout
     )
     resp.raise_for_status()
 
@@ -383,6 +400,7 @@ def update_client(config: KeycloakConfig, client: Client) -> None:
         f"{config.base_url}/admin/realms/{config.realm.name}/clients/{client_id}",
         headers=auth_headers(config),
         json=client.to_keycloak_json(),
+        timeout=request_timeout,
     )
     resp.raise_for_status()
 
@@ -393,6 +411,7 @@ def get_client_secret(config: KeycloakConfig, client: Client) -> str:
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/clients/{client_id}/client-secret",
         headers=auth_headers(config),
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
@@ -412,6 +431,7 @@ def get_client_id(config: KeycloakConfig, client: Client) -> str:
             "search": False,
             "clientId": f"{client.id}",
         },
+        timeout=request_timeout,
     )
     response.raise_for_status()
 
