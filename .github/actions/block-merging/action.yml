@@ -1,0 +1,82 @@
+name: Block Merge
+description: Block merging until the main branch is good to go
+inputs:
+  github_token:
+    description: Token to access github repo
+    required: true
+  branch:
+    description: Target branch to check
+    default: main
+  bypass_prefix:
+    description: Commit message prefix to bypass the check
+    default: "fix(mergeability): "
+runs:
+  using: "composite"
+  steps:
+    - name: Add Link to Description
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea  # v7.0.1
+      env:
+        BRANCH: ${{ inputs.branch }}
+        BYPASS_PREFIX: ${{ inputs.bypass_prefix }}
+        PR_TITLE: ${{ github.event.pull_request.title }}
+      with:
+        github-token: ${{ inputs.github_token }}
+        script: |-
+          const {owner,repo} = context.repo;
+          const branch = process.env.BRANCH;
+
+          const prTitle = process.env.PR_TITLE;
+          const bypassPrefix = process.env.BYPASS_PREFIX;
+
+          if (prTitle.startsWith(bypassPrefix)) {
+            console.log(`Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`);
+            process.exit(0);
+          }
+
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+          const retry = async (fn, maxAttempts) => {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              try {
+                return await fn();
+              } catch (err) {
+                console.error(`Error in attempt ${attempt}: ${err.message}`);
+                await sleep(5000);
+              }
+            }
+          };
+
+          const fetchCompletedChecks = async () => {
+            const checksResponse = await github.rest.checks.listForRef({
+              owner: owner,
+              repo: repo,
+              ref: `heads/${branch}`,
+            });
+            if (checksResponse.status != 200) {
+              throw new Error(`Checks for ${branch} couldn't be retrieved in attempt ${attempt}`);
+            }
+
+            const checks = checksResponse.data.check_runs;
+
+            for (const check of checks) {
+              if (check.status !== "completed") {
+                throw new Error(`Merging is blocked as the checks for ${branch} haven't completed yet`);
+              }
+            }
+
+            return checks;
+          };
+
+
+          const completedChecks = await retry(fetchCompletedChecks, Infinity);
+
+          for (const check of completedChecks) {
+            if (check.conclusion === "failure") {
+              core.setFailed(`Merging is blocked as the checks for ${branch} include a failure`);
+              process.exit(1);
+            }
+          }
+
+          console.log(`Merging is allowed as all checks for ${branch} have completed without failures`);
+          process.exit(0);
