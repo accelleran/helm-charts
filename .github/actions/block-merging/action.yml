@@ -54,7 +54,7 @@ runs:
               ref: `heads/${branch}`,
             });
             if (checksResponse.status != 200) {
-              throw new Error(`Checks for ${branch} couldn't be retrieved in attempt ${attempt}`);
+              throw new Error(`Checks for ${branch} couldn't be retrieved`);
             }
 
             const checks = checksResponse.data.check_runs;
