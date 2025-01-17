@@ -320,7 +320,7 @@ network-state-monitor:
     hosts:
       - paths:
           - path: /network-state-monitor(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             port: http
     tls: []
 
@@ -346,7 +346,7 @@ service-monitor:
     hosts:
       - paths:
           - path: /service-monitor(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             port: http
     tls: []
 
@@ -372,7 +372,7 @@ service-orchestrator:
     hosts:
       - paths:
           - path: /service-orchestrator(/|$)(.*)
-            pathType: Prefix
+            pathType: ImplementationSpecific
             port: http
     tls: []
 
@@ -403,7 +403,7 @@ config-api:
     hosts:
       - paths:
           - path: /config-api
-            pathType: ImplementationSpecific
+            pathType: Prefix
             port: http
     tls: []
 
