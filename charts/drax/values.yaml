@@ -911,7 +911,7 @@ oauth2-proxy:
 
       provider = "oidc"
       provider_display_name = "Accelleran dRAX"
-      oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/oidc/realms/drax"
+      oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/keycloak/realms/drax"
       redirect_url = "/oauth2/callback"
       email_domains = [ "*" ]
 
@@ -972,7 +972,7 @@ keycloak:
       existingSecret: "{{ $.Release.Name }}-keycloak-postgresql"
 
   proxyHeaders: "xforwarded"
-  httpRelativePath: "/oidc/"
+  httpRelativePath: "/keycloak/"
 
   ingress:
     # use ingress in extraDeploy as it allows to leave out the host
@@ -1014,7 +1014,7 @@ keycloak:
         rules:
           - http:
               paths:
-              - path: /oidc
+              - path: /keycloak
                 pathType: Prefix
                 backend:
                   service:
