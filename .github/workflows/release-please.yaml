@@ -15,8 +15,9 @@ jobs:
     steps:
       - name: Release please
         if: ${{ github.ref_name == 'main' || startsWith(github.ref_name, 'releases/') }}
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@7987652d64b4581673a76e33ad5e98e3dd56832f # v4.1.3
         with:
+          token: ${{ secrets.RELEASE_PLEASE_GITHUB_TOKEN }}
           target-branch: ${{ github.ref_name }}
           config-file: "etc/release-please-config.json"
           manifest-file: "etc/.release-please-manifest.json"
