@@ -124,6 +124,10 @@ bootstrap:
 
 drax:
   auth:
+    superadminUser: "superadmin"
+    superadminEmail: "support@accelleran.com"
+    superadminPassword: ""
+
     adminUser: "admin"
     adminEmail: "drax@example.com"
     adminPassword: ""
@@ -954,12 +958,11 @@ keycloak:
   # enabled: true
 
   auth:
-    adminUser: "superadmin"
-    adminEmail: "support@accelleran.com"
+    adminUser: "tmp"
     adminPassword: ""
 
     existingSecret: "{{ $.Release.Name }}-drax-auth"
-    passwordSecretKey: "superadmin-password"
+    passwordSecretKey: "tmp-password"
 
   postgresql:
     nameOverride: "keycloak-postgresql"
