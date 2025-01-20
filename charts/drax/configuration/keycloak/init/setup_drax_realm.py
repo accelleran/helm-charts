@@ -1,9 +1,9 @@
+import copy
 from dataclasses import dataclass
 from kubernetes import client as kubeclient, config as kubeconfig
 import requests
 import os
 import typing
-
 
 request_timeout: int = 60
 
@@ -17,25 +17,23 @@ class OAuth2Token:
 @dataclass
 class Realm:
     name: str
-    display_name: str
-    login_theme: str
+    display_name: str | None
+    login_theme: str | None
 
     def to_keycloak_json(self) -> dict[str, any]:
-        return {
+        json: dict[str, any] = {
             "realm": self.name,
             "enabled": True,
             "displayName": (
-                self.display_name
-                if not self.display_name is None
-                else self.name
+                self.display_name if self.display_name is not None else self.name
             ),
             "displayNameHtml": (
-                self.display_name
-                if not self.display_name is None
-                else self.name
+                self.display_name if self.display_name is not None else self.name
             ),
-            "loginTheme": self.login_theme,
         }
+        if self.login_theme is not None:
+            json["loginTheme"] = self.login_theme
+        return json
 
 
 @dataclass
@@ -62,7 +60,7 @@ class Oauth2ProxyClient:
     redirect: str
     logout: str
     secret: str
-    kube_secret_name: str
+    kube_secret_name: NamespacedName
     cookie_secret: str
 
     def set_secret(self, secret: str) -> None:
@@ -128,51 +126,75 @@ class KeycloakConfig:
 def main() -> None:
     drax_endpoint = os.environ.get("DRAX_ENDPOINT")
 
-    kubernetes_namespace = os.environ.get("KUBERNETES_NAMESPACE")
+    kubernetes_namespace = os.environ.get("KUBERNETES_NAMESPACE", "default")
 
     config: KeycloakConfig = KeycloakConfig()
-    config.base_url = os.environ.get("KEYCLOAK_URL")
+    config.base_url = os.environ.get("KEYCLOAK_URL", default="")
     config.realm = Realm(
-        name=os.environ.get("KEYCLOAK_REALM_NAME"),
+        name=os.environ.get("KEYCLOAK_REALM_NAME", default="master"),
         display_name=os.environ.get("KEYCLOAK_REALM_DISPLAY_NAME"),
-        login_theme=os.environ.get("KEYCLOAK_REALM_LOGIN_THEME")
+        login_theme=os.environ.get("KEYCLOAK_REALM_LOGIN_THEME"),
     )
 
-    admin = User(
-        username=os.environ.get("KEYCLOAK_ADMIN_USERNAME"),
-        email=os.environ.get("KEYCLOAK_ADMIN_EMAIL"),
-        password=os.environ.get("KEYCLOAK_ADMIN_PASSWORD"),
+    master_config: KeycloakConfig = copy.copy(config)
+    master_realm: Realm = Realm(name="master")
+    master_config.realm = master_realm
+
+    tmp_user = User(
+        username=os.environ.get("KEYCLOAK_TMP_USERNAME", default=""),
+        email="",
+        password=os.environ.get("KEYCLOAK_TMP_PASSWORD", default=""),
     )
-    user = User(
-        username=os.environ.get("KEYCLOAK_USERNAME"),
-        email=os.environ.get("KEYCLOAK_EMAIL"),
-        password=os.environ.get("KEYCLOAK_PASSWORD"),
+
+    superadmin = User(
+        username=os.environ.get("KEYCLOAK_SUPERADMIN_USERNAME", default="superadmin"),
+        email=os.environ.get("KEYCLOAK_SUPERADMIN_EMAIL", default=""),
+        password=os.environ.get("KEYCLOAK_SUPERADMIN_PASSWORD", default=""),
+    )
+    admin = User(
+        username=os.environ.get("KEYCLOAK_ADMIN_USERNAME", default="admin"),
+        email=os.environ.get("KEYCLOAK_ADMIN_EMAIL", default=""),
+        password=os.environ.get("KEYCLOAK_ADMIN_PASSWORD", default=""),
     )
 
     clients: list[Client] = list()
 
     oauth2_proxy_client = Oauth2ProxyClient()
-    oauth2_proxy_client.id = os.environ.get("OAUTH2_PROXY_CLIENT_ID")
+    oauth2_proxy_client.id = os.environ.get(
+        "OAUTH2_PROXY_CLIENT_ID", default="oauth2-proxy"
+    )
     oauth2_proxy_client.name = "OAuth2 Proxy"
     oauth2_proxy_client.redirect = "/oauth2/callback"
     oauth2_proxy_client.logout = f"https://{drax_endpoint}/oauth2/sign_out"
     oauth2_proxy_client.kube_secret_name = NamespacedName(
-        os.environ.get("OAUTH2_PROXY_SECRET_NAME"),
+        os.environ.get("OAUTH2_PROXY_SECRET_NAME", default=""),
         kubernetes_namespace,
     )
-    oauth2_proxy_client.cookie_secret = os.environ.get("OAUTH2_PROXY_COOKIE_SECRET")
+    oauth2_proxy_client.cookie_secret = os.environ.get(
+        "OAUTH2_PROXY_COOKIE_SECRET", default=""
+    )
     clients.append(oauth2_proxy_client)
 
-    config.token = sign_in(config, admin)
+    try:
+        master_config.token = sign_in(master_config, tmp_user)
+        create_or_update_user(master_config, superadmin)
+        delete_user(master_config, tmp_user)
+    except requests.HTTPError as err:
+        if 500 <= err.response.status_code < 600:
+            raise err
 
-    update_admin(config, admin)
+    master_config.token = sign_in(master_config, superadmin)
+    config.token = master_config.token
+
+    create_or_update_user(master_config, superadmin)
+    delete_user(master_config, tmp_user)
 
     create_or_update_realm(config)
     update_realm_user_profile(config)
     print("realms:", list_realms(config))
 
+    create_or_update_user(config, superadmin)
     create_or_update_user(config, admin)
-    create_or_update_user(config, user)
     print("users:", list_users(config))
 
     init_kube_client()
@@ -185,7 +207,7 @@ def main() -> None:
 
 def sign_in(config: KeycloakConfig, user: User) -> OAuth2Token:
     response = requests.post(
-        f"{config.base_url}/realms/master/protocol/openid-connect/token",
+        f"{config.base_url}/realms/{config.realm.name}/protocol/openid-connect/token",
         data={
             "client_id": "admin-cli",
             "username": user.username,
@@ -207,39 +229,6 @@ def auth_headers(config: KeycloakConfig) -> dict[str, str]:
     return {
         "Authorization": f"Bearer {config.token.access}",
     }
-
-
-def update_admin(config: KeycloakConfig, admin: User) -> None:
-    admin_id = get_admin_id(config, admin)
-
-    response = requests.put(
-        f"{config.base_url}/admin/realms/master/users/{admin_id}",
-        headers=auth_headers(config),
-        json=admin.to_keycloak_json(),
-        timeout=request_timeout,
-    )
-    response.raise_for_status()
-
-
-def get_admin_id(config: KeycloakConfig, admin: User) -> str:
-    response = requests.get(
-        f"{config.base_url}/admin/realms/master/users",
-        headers=auth_headers(config),
-        params={
-            "exact": True,
-            "username": f"{admin.username}",
-        },
-        timeout=request_timeout,
-    )
-    response.raise_for_status()
-
-    users = [r["id"] for r in response.json()]
-    if len(users) != 1:
-        raise RuntimeError(
-            f"found {len(users)} users with username '{admin.username}' (instead of 1)"
-        )
-
-    return users[0]
 
 
 def create_or_update_realm(config: KeycloakConfig) -> None:
@@ -287,7 +276,7 @@ def update_realm_user_profile(config: KeycloakConfig) -> None:
         timeout=request_timeout,
     )
     response.raise_for_status()
-    
+
     user_profile = response.json()
     user_profile = loosen_user_profile_requirements(user_profile)
 
@@ -348,6 +337,17 @@ def update_user(config: KeycloakConfig, user: User) -> None:
     response.raise_for_status()
 
 
+def delete_user(config: KeycloakConfig, user: User) -> None:
+    user_id = get_user_id(config, user)
+
+    response = requests.delete(
+        f"{config.base_url}/admin/realms/{config.realm.name}/users/{user_id}",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+    )
+    response.raise_for_status()
+
+
 def get_user_id(config: KeycloakConfig, user: User) -> str:
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/users",
@@ -392,7 +392,7 @@ def create_client(config: KeycloakConfig, client: Client) -> None:
         f"{config.base_url}/admin/realms/{config.realm.name}/clients",
         headers=auth_headers(config),
         json=client.to_keycloak_json(),
-        timeout=request_timeout
+        timeout=request_timeout,
     )
     resp.raise_for_status()
 
