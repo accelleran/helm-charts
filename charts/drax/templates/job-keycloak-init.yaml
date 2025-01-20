@@ -42,34 +42,45 @@ env:
     value: "{{ $.Values.drax.auth.realm.displayName }}"
   - name: KEYCLOAK_REALM_LOGIN_THEME
     value: "accelleran-drax"
-     
-  - name: KEYCLOAK_ADMIN_USERNAME
+
+  - name: KEYCLOAK_TMP_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: tmp-username
+  - name: KEYCLOAK_TMP_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: tmp-password
+
+  - name: KEYCLOAK_SUPERADMIN_USERNAME
     valueFrom:
       secretKeyRef:
         name: {{ $.Release.Name }}-drax-auth
         key: superadmin-username
-  - name: KEYCLOAK_ADMIN_EMAIL
+  - name: KEYCLOAK_SUPERADMIN_EMAIL
     valueFrom:
       secretKeyRef:
         name: {{ $.Release.Name }}-drax-auth
         key: superadmin-email
-  - name: KEYCLOAK_ADMIN_PASSWORD
+  - name: KEYCLOAK_SUPERADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
         name: {{ $.Release.Name }}-drax-auth
         key: superadmin-password
 
-  - name: KEYCLOAK_USERNAME
+  - name: KEYCLOAK_ADMIN_USERNAME
     valueFrom:
       secretKeyRef:
         name: {{ $.Release.Name }}-drax-auth
         key: admin-username
-  - name: KEYCLOAK_EMAIL
+  - name: KEYCLOAK_ADMIN_EMAIL
     valueFrom:
       secretKeyRef:
         name: {{ $.Release.Name }}-drax-auth
         key: admin-email
-  - name: KEYCLOAK_PASSWORD
+  - name: KEYCLOAK_ADMIN_PASSWORD
     valueFrom:
       secretKeyRef:
         name: {{ $.Release.Name }}-drax-auth
