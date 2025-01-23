@@ -1,0 +1,21 @@
+{{- include
+      "accelleran.common.configMap"
+      (fromYaml (include "accelleran.service-monitor.configMap.args" .))
+-}}
+
+{{- define "accelleran.service-monitor.configMap.args" -}}
+{{- $ := . -}}
+
+{{- $config := .Values.config }}
+{{- $instance := include "accelleran.common.instance" (dict "top" .) }}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+
+name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
+
+data:
+  config.json: |-
+    {{ .Values.config | toPrettyJson | nindent 4 }}
+{{- end -}}
+
