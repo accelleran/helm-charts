@@ -85,7 +85,7 @@ dependencies:
     tags:
       - logs
       - notifications
-    version: 4.7.2
+    version: 4.7.3
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
     condition: loki-deleter.enabled
