@@ -927,6 +927,10 @@ oauth2-proxy:
 
       skip_provider_button = true
 
+      api_routes = [
+        "^/api/",
+      ]
+
   extraObjects:
     - apiVersion: networking.k8s.io/v1
       kind: Ingress
