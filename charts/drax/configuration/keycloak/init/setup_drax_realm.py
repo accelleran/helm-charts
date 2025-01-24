@@ -137,7 +137,7 @@ def main() -> None:
     )
 
     master_config: KeycloakConfig = copy.copy(config)
-    master_realm: Realm = Realm(name="master")
+    master_realm: Realm = Realm(name="master", display_name=None, login_theme=None)
     master_config.realm = master_realm
 
     tmp_user = User(
