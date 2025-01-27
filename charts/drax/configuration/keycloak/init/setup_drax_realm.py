@@ -1,7 +1,7 @@
 import copy
 from dataclasses import dataclass
 import os
-import typing
+from typing import Protocol, Optional
 
 from kubernetes import client as kubeclient, config as kubeconfig
 import requests
@@ -23,8 +23,8 @@ class OAuth2Token:
 @dataclass
 class Realm:
     name: str
-    display_name: str | None
-    login_theme: str | None
+    display_name: Optional[str]
+    login_theme: Optional[str]
 
     def to_keycloak_json(self) -> dict[str, any]:
         json: dict[str, any] = {
@@ -48,7 +48,7 @@ class NamespacedName:
     namespace: str
 
 
-class Client(typing.Protocol):
+class Client(Protocol):
     id: str
     name: str
     kube_secret_name: NamespacedName
@@ -211,15 +211,21 @@ def main() -> None:
     print("clients:", list_clients(config))
 
 
-def sign_in(config: KeycloakConfig, user: User) -> OAuth2Token:
+def sign_in(
+    config: KeycloakConfig, user: User, scopes: Optional[list[str]] = None
+) -> OAuth2Token:
+    data: dict[str,str]={
+        "client_id": "admin-cli",
+        "username": user.username,
+        "password": user.password,
+        "grant_type": "password",
+    }
+    if scopes:
+        data["scopes"] = " ".join(scopes)
+
     response = requests.post(
         f"{config.base_url}/realms/{config.realm.name}/protocol/openid-connect/token",
-        data={
-            "client_id": "admin-cli",
-            "username": user.username,
-            "password": user.password,
-            "grant_type": "password",
-        },
+        data=data,
         timeout=request_timeout,
         verify=request_verify_certificate,
     )
