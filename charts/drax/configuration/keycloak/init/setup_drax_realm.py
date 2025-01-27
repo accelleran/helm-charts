@@ -185,6 +185,7 @@ def main() -> None:
         master_config.token = sign_in(master_config, tmp_user)
         create_or_update_user(master_config, superadmin)
         add_role(master_config, superadmin, "admin")
+        delete_user(master_config, tmp_user)
     except requests.HTTPError as err:
         if 500 <= err.response.status_code < 600:
             raise err
@@ -193,7 +194,6 @@ def main() -> None:
     config.token = master_config.token
 
     create_or_update_user(master_config, superadmin)
-    delete_user(master_config, tmp_user)
 
     create_or_update_realm(config)
     update_realm_user_profile(config)
