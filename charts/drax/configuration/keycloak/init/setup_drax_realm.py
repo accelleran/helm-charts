@@ -184,7 +184,7 @@ def main() -> None:
     try:
         master_config.token = sign_in(master_config, tmp_user)
         create_or_update_user(master_config, superadmin)
-        delete_user(master_config, tmp_user)
+        add_role(master_config, superadmin, "admin")
     except requests.HTTPError as err:
         if 500 <= err.response.status_code < 600:
             raise err
@@ -474,6 +474,34 @@ def get_client_id(config: KeycloakConfig, client: Client) -> str:
         )
 
     return clients[0]
+
+
+def add_role(config: KeycloakConfig, user: User, role: str) -> None:
+    user_id = get_user_id(config, user)
+    role_id = get_role_id(config, role)
+
+    response = requests.post(
+        f"{config.base_url}/admin/realms/{config.realm.name}/users/{user_id}/role-mappings/realm",
+        headers=auth_headers(config),
+        json=[{
+            "id": role_id,
+            "name": role
+        }],
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+
+
+def get_role_id(config: KeycloakConfig, role: str) -> str:
+    response = requests.get(
+        f"{config.base_url}/admin/realms/{config.realm.name}/roles/{role}",
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+    print(response.json())
+    return response.json()
 
 
 def init_kube_client():
