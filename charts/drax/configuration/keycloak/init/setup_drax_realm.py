@@ -424,7 +424,7 @@ def create_client(config: KeycloakConfig, client: Client) -> None:
         verify=request_verify_certificate,
     )
     resp.raise_for_status()
-    print(f"created client {client.name}")
+    print(f"created client {client.id}")
 
 
 def update_client(config: KeycloakConfig, client: Client) -> None:
@@ -438,7 +438,7 @@ def update_client(config: KeycloakConfig, client: Client) -> None:
         verify=request_verify_certificate,
     )
     resp.raise_for_status()
-    print(f"updated client {client.name}")
+    print(f"updated client {client.id}")
 
 
 def get_client_secret(config: KeycloakConfig, client: Client) -> str:
