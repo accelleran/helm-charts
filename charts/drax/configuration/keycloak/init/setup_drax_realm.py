@@ -214,21 +214,15 @@ def main() -> None:
     print("clients:", list_clients(config))
 
 
-def sign_in(
-    config: KeycloakConfig, user: User, scopes: Optional[list[str]] = None
-) -> OAuth2Token:
-    data: dict[str,str]={
-        "client_id": "admin-cli",
-        "username": user.username,
-        "password": user.password,
-        "grant_type": "password",
-    }
-    if scopes:
-        data["scopes"] = " ".join(scopes)
-
+def sign_in(config: KeycloakConfig, user: User) -> OAuth2Token:
     response = requests.post(
         f"{config.base_url}/realms/{config.realm.name}/protocol/openid-connect/token",
-        data=data,
+        data={
+            "client_id": "admin-cli",
+            "username": user.username,
+            "password": user.password,
+            "grant_type": "password",
+        },
         timeout=request_timeout,
         verify=request_verify_certificate,
     )
