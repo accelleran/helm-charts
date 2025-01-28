@@ -1,6 +1,10 @@
 global:
   deploymentId: test-helm-charts
 
+drax:
+  keycloak-init:
+    useHelmHooks: false
+
 keycloak:
   resourcesPreset: "none"
   postgresql:
