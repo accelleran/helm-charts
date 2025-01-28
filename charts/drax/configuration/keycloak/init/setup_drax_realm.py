@@ -14,6 +14,7 @@ request_verify_certificate: bool = False
 if not request_verify_certificate:
     urllib3.disable_warnings()
 
+
 @dataclass
 class OAuth2Token:
     access: str
@@ -189,6 +190,8 @@ def main() -> None:
     except requests.HTTPError as err:
         if 500 <= err.response.status_code < 600:
             raise err
+        else:
+            print("caught http error: ", err)
 
     master_config.token = sign_in(master_config, superadmin)
     config.token = master_config.token
@@ -230,8 +233,9 @@ def sign_in(
         verify=request_verify_certificate,
     )
     response.raise_for_status()
-    data = response.json()
+    print(f"signed in as user {user.username}")
 
+    data = response.json()
     access_token = data["access_token"]
     refresh_token = data["refresh_token"]
 
@@ -272,6 +276,7 @@ def create_realm(config: KeycloakConfig) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+    print(f"created realm {config.realm.name}")
 
 
 def update_realm(config: KeycloakConfig) -> None:
@@ -283,6 +288,7 @@ def update_realm(config: KeycloakConfig) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+    print(f"updated realm {config.realm.name}")
 
 
 def update_realm_user_profile(config: KeycloakConfig) -> None:
@@ -305,6 +311,7 @@ def update_realm_user_profile(config: KeycloakConfig) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+    print(f"updated realm {config.realm.name} user profile")
 
 
 def loosen_user_profile_requirements(user_profile: dict[str, any]) -> dict[str, any]:
@@ -343,6 +350,7 @@ def create_user(config: KeycloakConfig, user: User) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+    print(f"created user {user.username}")
 
 
 def update_user(config: KeycloakConfig, user: User) -> None:
@@ -356,6 +364,7 @@ def update_user(config: KeycloakConfig, user: User) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+    print(f"updated user {user.username}")
 
 
 def delete_user(config: KeycloakConfig, user: User) -> None:
@@ -368,6 +377,7 @@ def delete_user(config: KeycloakConfig, user: User) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+    print(f"deleted user {user.username}")
 
 
 def get_user_id(config: KeycloakConfig, user: User) -> str:
@@ -420,6 +430,7 @@ def create_client(config: KeycloakConfig, client: Client) -> None:
         verify=request_verify_certificate,
     )
     resp.raise_for_status()
+    print(f"created client {client.name}")
 
 
 def update_client(config: KeycloakConfig, client: Client) -> None:
@@ -433,6 +444,7 @@ def update_client(config: KeycloakConfig, client: Client) -> None:
         verify=request_verify_certificate,
     )
     resp.raise_for_status()
+    print(f"updated client {client.name}")
 
 
 def get_client_secret(config: KeycloakConfig, client: Client) -> str:
@@ -491,6 +503,7 @@ def add_role(config: KeycloakConfig, user: User, role: str) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+    print(f"added role {role} to user {user.username}")
 
 
 def get_role_id(config: KeycloakConfig, role: str) -> str:
@@ -535,6 +548,7 @@ def create_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) 
     core_v1_api.create_namespaced_secret(
         namespace=namespaced_name.namespace, body=secret
     )
+    print(f"created secret {namespaced_name.namespace}/{namespaced_name.name}")
 
 
 def update_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) -> None:
@@ -548,6 +562,7 @@ def update_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) 
     core_v1_api.patch_namespaced_secret(
         name=namespaced_name.name, namespace=namespaced_name.namespace, body=secret
     )
+    print(f"updated secret {namespaced_name.namespace}/{namespaced_name.name}")
 
 
 if __name__ == "__main__":
