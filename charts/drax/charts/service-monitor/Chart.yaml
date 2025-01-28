@@ -4,7 +4,7 @@ description: The Accelleran dRAX Service Monitor
 type: application
 version: 2.0.0
 # renovate: image=accelleran/service-monitor
-appVersion: 1.2.2
+appVersion: 1.3.0
 dependencies:
   - name: common
     version: 0.3.13
