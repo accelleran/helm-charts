@@ -1,3 +1,7 @@
+drax:
+  keycloak-init:
+    useHelmHooks: false
+
 keycloak:
   resourcesPreset: "none"
   postgresql:
