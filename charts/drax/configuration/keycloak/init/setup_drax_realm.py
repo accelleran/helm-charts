@@ -489,10 +489,7 @@ def add_role(config: KeycloakConfig, user: User, role: str) -> None:
     response = requests.post(
         f"{config.base_url}/admin/realms/{config.realm.name}/users/{user_id}/role-mappings/realm",
         headers=auth_headers(config),
-        json=[{
-            "id": role_id,
-            "name": role
-        }],
+        json=[{"id": role_id, "name": role}],
         timeout=request_timeout,
         verify=request_verify_certificate,
     )
@@ -503,12 +500,12 @@ def add_role(config: KeycloakConfig, user: User, role: str) -> None:
 def get_role_id(config: KeycloakConfig, role: str) -> str:
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/roles/{role}",
+        headers=auth_headers(config),
         timeout=request_timeout,
         verify=request_verify_certificate,
     )
     response.raise_for_status()
-    print(response.json())
-    return response.json()
+    return response.json()["id"]
 
 
 def init_kube_client():
