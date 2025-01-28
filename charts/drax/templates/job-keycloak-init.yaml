@@ -9,8 +9,24 @@
 {{- $values := index $.Values.drax "keycloak-init" -}}
 {{- $valuesOauth2Proxy := index $.Values "oauth2-proxy" -}}
 
+{{- $valuesAnnotations := dict -}}
+{{- if $values.useHelmHooks -}}
+{{-
+  $valuesAnnotations = (dict "annotations" (dict
+    "helm.sh/hook" "post-install,post-upgrade,post-rollback"
+    "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded"
+  ))
+-}}
+{{- end -}}
+
 top: {{ $ | toYaml | nindent 2 }}
-values: {{ $values | toYaml | nindent 2 }}
+values:
+  {{
+    (mergeOverwrite
+      (deepCopy $values)
+      $valuesAnnotations
+    ) | toYaml | nindent 2
+  }}
 
 name: {{ $.Release.Name }}-keycloak-init
 
@@ -98,6 +114,11 @@ env:
 {{- else }}
     value: {{ tpl $valuesOauth2Proxy.config.cookieSecret $ | default (randAlphaNum 32 | b64enc) }}
 {{- end }}
+
+  - name: EXTERNAL_CLIENT_SECRET_NAME
+    value: "{{ $.Release.Name }}-external-client"
+  - name: EXTERNAL_CLIENT_ID
+    value: external-client
 
 volumes:
   - name: {{ $.Release.Name }}-keycloak-init
