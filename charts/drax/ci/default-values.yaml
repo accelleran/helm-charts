@@ -35,6 +35,7 @@ kafka:
       resourcesPreset: "none"
   provisioning:
     resourcesPreset: "none"
+    useHelmHooks: false
 
 loki:
   compactor:
