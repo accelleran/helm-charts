@@ -935,6 +935,7 @@ oauth2-proxy:
       oidc_extra_audiences = [
         "account"
       ]
+      insecure_oidc_allow_unverified_email = true
 
   extraObjects:
     - apiVersion: networking.k8s.io/v1
