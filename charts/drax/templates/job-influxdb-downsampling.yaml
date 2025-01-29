@@ -6,8 +6,18 @@
 {{- define "accelleran.influxdb.downsampling.job.args" -}}
 top:
   {{ $ | toYaml | nindent 2 }}
+values:
+  {{
+    (mergeOverwrite
+      (deepCopy (index $.Values "influxdb2" "influxdbDownsampling"))
+      (dict "annotations" (dict
+        "helm.sh/hook" "post-install,post-upgrade,post-rollback"
+        "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded"
+      ))
+    ) | toYaml | nindent 2
+  }}
+
 name: "{{ $.Release.Name }}-influxdb2-downsampling-job"
-values: {{ index $.Values "influxdb2" "influxdbDownsampling" | toYaml | nindent 2 }}
 ttlSecondsAfterFinished: 300
 backoffLimit: 3
 restartPolicy: "OnFailure"

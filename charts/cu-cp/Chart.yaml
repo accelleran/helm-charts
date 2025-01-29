@@ -2,16 +2,16 @@ apiVersion: v2
 name: cu-cp
 description: Accelleran 5G CU-CP Components
 type: application
-version: 9.0.9
+version: 10.0.0
 # renovate: image=accelleran/cucp-netconf
-appVersion: "6.0.12"
+appVersion: "7.0.1"
 dependencies:
   - name: common
     version: 0.3.13
     repository: https://accelleran.github.io/helm-charts/
   - name: nats
     condition: nats.enabled
-    version: 1.2.9
+    version: 1.2.10
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled

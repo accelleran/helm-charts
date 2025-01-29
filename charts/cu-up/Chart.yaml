@@ -4,12 +4,12 @@ description: Accelleran 5G CU-UP Components
 type: application
 version: 9.0.9
 # renovate: image=accelleran/cuup-netconf
-appVersion: "6.0.12"
+appVersion: "7.0.1"
 dependencies:
   - name: common
     version: 0.3.13
     repository: https://accelleran.github.io/helm-charts/
   - name: nats
     condition: nats.enabled
-    version: 1.2.9
+    version: 1.2.10
     repository: https://nats-io.github.io/k8s/helm/charts/
