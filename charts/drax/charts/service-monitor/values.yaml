@@ -22,6 +22,12 @@ image:
   pullPolicy: IfNotPresent
   tag: ""
 
+config:
+  namespaces:
+    - "{{ .Release.Namespace }}"
+  log_level: "INFO"
+  clean_up_logs_period: "1h"
+  stored_log_time_limit: "6h"
 
 accelleranLicense:
   enabled: true
@@ -95,6 +101,7 @@ rbac:
         - pods
         - services
         - endpoints
+        - pods/log
       verbs:
         - get
         - watch
