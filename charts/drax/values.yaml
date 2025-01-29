@@ -928,7 +928,12 @@ oauth2-proxy:
       skip_provider_button = true
 
       api_routes = [
-        "^/api/",
+        "^/api"
+      ]
+
+      skip_jwt_bearer_tokens = true
+      oidc_extra_audiences = [
+        "account"
       ]
 
   extraObjects:
