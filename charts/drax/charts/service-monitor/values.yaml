@@ -24,7 +24,7 @@ image:
 
 config:
   namespaces:
-    - "default"
+    - "{{ .Release.Namespace }}"
   log_level: "INFO"
   clean_up_logs_period: "1h"
   stored_log_time_limit: "6h"
