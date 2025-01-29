@@ -13,4 +13,19 @@ top:
 env:
   - name: MONITORED_NAMESPACES
     value: "{{ tpl $.Values.monitoredNamespaces $ }}"
+
+volumes:
+  - name: {{ $fullname }}-config
+    configMap:
+      name: {{ $fullname }}-config
+  - name: {{ $fullname }}-logs
+    emptyDir: {}
+
+volumeMounts:
+  - name: {{ $fullname }}-config
+    mountPath: /app/config.json
+    subPath: "config.json"
+  - name: {{ $fullname }}-logs
+    mountPath: /app/logs
+
 {{- end -}}
