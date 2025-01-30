@@ -105,7 +105,7 @@ groups:
           deploymentId: "{{ .Values.global.deploymentId }}"
           severity: warning
         notification_settings:
-          receiver: accelleran-slack
+          receiver: accelleran-drax
         isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
 
   - orgId: 1
@@ -145,4 +145,4 @@ groups:
           severity: critical
         isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
         notification_settings:
-          receiver: accelleran-slack
+          receiver: accelleran-drax
