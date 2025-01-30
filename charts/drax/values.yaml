@@ -1607,12 +1607,11 @@ promtail-notifications:
                   startEpochMicrosec: event.commonEventHeader.startEpochMicrosec
                   stndDefinedNamespace: event.commonEventHeader.stndDefinedNamespace
                   version: event.commonEventHeader.version
-                  timeZoneOffset: event.commonEventHeader.timeZoneOffset
                   vesEventListenerVersion: event.commonEventHeader.vesEventListenerVersion
                   notificationType: event.stndDefinedFields.data.notificationType
                 drop_malformed: true
             - regex:
-               expression: '^(?P<keep>notifyEvent)$'
+               expression: '^(?P<keep>notify(NewAlarm|ClearedAlarm|Event))$'
                source: notificationType
             - labels:
                keep:
@@ -1631,7 +1630,6 @@ promtail-notifications:
                 startEpochMicrosec:
                 stndDefinedNamespace:
                 version:
-                timeZoneOffset:
                 vesEventListenerVersion:
 
   initContainer:

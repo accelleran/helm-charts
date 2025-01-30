@@ -1,0 +1,45 @@
+{
+    "events": [
+        {{- range $index, $alert := .Alerts }}
+        {{- if $index }},{{ end }}
+        {
+            "event": {
+                "commonEventHeader": {
+                    "domain": "stndDefined",
+                    "eventId": "stndDefined-DRAX-{{ $alert.Labels.alertname }}",
+                    "eventName": "stndDefined-DRAX-{{ $alert.Labels.alertname }}",
+                    "startEpochMicrosec": {{ $alert.StartsAt.UnixMilli }},
+                    "lastEpochMicrosec": {{ $alert.EndsAt.UnixMilli }},
+                    "priority": "High",
+                    "reportingEntityName": "? Needs to be defined in the labels list, now empty [{{ $alert.Labels.app_kubernetes_io_instance }}]",
+                    "sequence": 0,
+                    "version": "4.1",
+                    "sourceName": "{{ $alert.Labels.instance }}",
+                    "vesEventListenerVersion": "7.2.1",
+                    "stndDefinedNamespace": "3GPP-FaultSupervision"
+                },
+                "stndDefinedFields": {
+                    "schemaReference": "https://forge.3gpp.org/rep/sa5/MnS/-/blob/Rel-17/OpenAPI/TS28532_FaultMnS.yaml#/components/schemas/NotifyNewAlarm",
+                    "data": {
+                        "href": "? Not sure what this should be set to",
+                        "notificationId": "{{ $alert.Fingerprint }}",
+                        "notificationType": {{ if eq .Status "firing" }}"notifyNewAlarm"{{ else }}"notifyClearedAlarm"{{ end }},
+                        "eventTime": "{{ $alert.StartsAt.UnixMilli }}",
+                        "systemDN": "? Not sure what this should be set to",
+                        "alarmID": "{{ $alert.Labels.alertname }}",
+                        "alarmType": "DRAX_ALARM",
+                        "probableCause": "{{ $alert.Annotations.description }}",
+                        "specificProblem": "{{ $alert.Annotations.summary }}",
+                        "perceivedSeverity": "{{ if $alert.Labels.severity }}{{ $alert.Labels.severity | toUpper }}{{ else }}WARNING{{ end }}",
+                        "additionalText": "? What to put here: <valuesString>",
+                        "additionalInformation": {
+                            "? Converted string map from": "values"
+                        }
+                    },
+                    "stndDefinedFieldsVersion": "1.0"
+                }
+            }
+        }
+        {{- end }}
+    ]
+}
