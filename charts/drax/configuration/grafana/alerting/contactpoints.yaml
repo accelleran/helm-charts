@@ -10,3 +10,25 @@ contactPoints:
           token: {{- if $.Values.global.alerting.enabled }} ${SLACK_TOKEN}{{- else }} "-"{{- end }}
           username: Grafana Alert Bot
         disableResolveMessage: true
+  - orgId: 1
+    name: accelleran-drax
+    receivers:
+      - uid: aebke0ctqjxttd
+        type: slack
+        settings:
+          recipient: drax-notifications
+          token: {{- if $.Values.global.alerting.enabled }} ${SLACK_TOKEN}{{- else }} "-"{{- end }}
+          username: Grafana Alert Bot
+        disableResolveMessage: true
+      - uid: febke0ctqjxtua
+        type: webhook
+        settings:
+          httpMethod: POST
+          message: '{{`{{ template "o1_ves_format_template" . }}`}}'
+          url: http://drax-telemetry-collector.default.svc.cluster.local:55556/alert
+        disableResolveMessage: false
+templates:
+  - orgId: 1
+    name: o1_ves_format_template
+    template: |-
+{{ .Files.Get "configuration/grafana/alerting/o1_ves_format_template.json" | nindent 6 }}
