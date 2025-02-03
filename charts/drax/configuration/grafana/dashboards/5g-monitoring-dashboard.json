@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 8,
+  "id": 10,
   "links": [],
   "panels": [
     {
@@ -255,7 +255,7 @@
           }
         ]
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "nrCellId: $tag_nrCellId",
@@ -392,7 +392,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "datasource": {
@@ -534,7 +534,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "ueId: $tag_ueId",
@@ -565,7 +565,7 @@
           "measurement": "uemeasurement.vector",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpDl\" and\n    r._field == \"Value\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> group(columns: [\"UEID\"])\n  |> map(fn: (r) => ({\n      _time: r._time,\n      UEID: r.UEID, \n      \"UE:\": r._value * 8\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"UEID\", \"UE:\"])\n",
+          "query": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpDl\" and\n    r._field == \"Value\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> group(columns: [\"UEID\"])\n  |> map(fn: (r) => ({\n      _time: r._time,\n      UEID: r.UEID, \n      \"UE:\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"UEID\", \"UE:\"])\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -686,7 +686,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "nrCellId: $tag_nrCellId",
@@ -837,7 +837,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "ueId: $tag_ueId",
@@ -868,7 +868,7 @@
           "measurement": "uemeasurement.vector",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpUl\" and\n    r._field == \"Value\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> group(columns: [\"UEID\"])\n  |> map(fn: (r) => ({\n      _time: r._time,\n      UEID: r.UEID, \n      \"UE:\": r._value * 8\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"UEID\", \"UE:\"])\n",
+          "query": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpUl\" and\n    r._field == \"Value\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> group(columns: [\"UEID\"])\n  |> map(fn: (r) => ({\n      _time: r._time,\n      UEID: r.UEID, \n      \"UE:\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"UEID\", \"UE:\"])\n",
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -990,7 +990,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "nrcellId: $tag_nrCellId",
@@ -1110,8 +1110,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1143,7 +1142,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "nrcellId: $tag_nrCellId",
@@ -1273,8 +1272,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1427,8 +1425,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1581,8 +1578,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",

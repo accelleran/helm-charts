@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 14,
+  "id": 6,
   "links": [],
   "panels": [
     {
@@ -105,7 +105,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "$tag_cuupId",
@@ -130,7 +130,7 @@
           "measurement": "uemeasurement.vector",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpDlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      snssaiPart: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.snssaiPart, set: ${SNSSAI:json})  )\n  |> group(columns: [\"snssaiPart\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 1s, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      snssaiPart: r.snssaiPart, \n      \"snssai:\": r._value * 8\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"snssai:\", \"snssaiPart\" ])\n",
+          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpDlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      snssaiPart: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.snssaiPart, set: ${SNSSAI:json})  )\n  |> group(columns: [\"snssaiPart\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 1s, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      snssaiPart: r.snssaiPart, \n      \"snssai:\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"snssai:\", \"snssaiPart\" ])\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -245,7 +245,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "alias": "$tag_cuupId",
@@ -270,7 +270,7 @@
           "measurement": "uemeasurement.vector",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpUlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      snssaiPart: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.snssaiPart, set: ${SNSSAI:json})  )\n  |> group(columns: [\"snssaiPart\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 1s, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      snssaiPart: r.snssaiPart, \n      \"snssai:\": r._value * 8\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"snssai:\", \"snssaiPart\" ])\n",
+          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpUlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      snssaiPart: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.snssaiPart, set: ${SNSSAI:json})  )\n  |> group(columns: [\"snssaiPart\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 1s, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      snssaiPart: r.snssaiPart, \n      \"snssai:\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"snssai:\", \"snssaiPart\" ])\n",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -385,7 +385,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "datasource": {
@@ -456,7 +456,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "datasource": {
@@ -523,7 +523,7 @@
         "sizing": "auto",
         "valueMode": "color"
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "11.4.0",
       "targets": [
         {
           "datasource": {
