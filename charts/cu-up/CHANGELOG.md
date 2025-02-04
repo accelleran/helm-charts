@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.1](https://github.com/accelleran/helm-charts/compare/cu-up-10.0.0...cu-up-10.0.1) (2025-02-04)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cuup-netconf docker tag to v7.0.2 ([#942](https://github.com/accelleran/helm-charts/issues/942)) ([61ad5ae](https://github.com/accelleran/helm-charts/commit/61ad5ae24731bb8e65e60426fc28e21529000907))
+
 ## [10.0.0](https://github.com/accelleran/helm-charts/compare/cu-up-9.0.9...cu-up-10.0.0) (2025-01-29)
 
 
