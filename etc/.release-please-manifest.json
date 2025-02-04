@@ -2,7 +2,7 @@
   "charts/common": "0.3.13",
   "charts/cell-wrapper": "6.1.1",
   "charts/cell-wrapper-config": "0.5.2",
-  "charts/cu-cp": "10.0.0",
+  "charts/cu-cp": "10.0.1",
   "charts/cu-up": "10.0.1",
   "charts/drax": "13.1.0",
   "charts/du-metrics-server": "0.4.7",
