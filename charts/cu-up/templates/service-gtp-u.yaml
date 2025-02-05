@@ -16,18 +16,12 @@ top:
   {{ $ | toYaml | nindent 2 }}
 
 values:
-  {{
-    (mergeOverwrite
-      (deepCopy (index $.Values "cu-up"))
-      (dict "service" (index $.Values "ups" "service"))
-    )
-    | toYaml | nindent 2
-  }}
+  {{ (index $.Values "ups") | toYaml | nindent 2}}
 
 serviceName: {{ (include "accelleran.cu-up.gtp-u.service.name" (list $ $ordinal)) | quote }}
 
 selectorLabels:
-  app.kubernetes.io/name: "ups"
-  app.kubernetes.io/instance: {{ include "accelleran.common.instance" (dict "top" $ "values" $values) | quote }}
+  {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
+  app.kubernetes.io/component: {{ $values.component }}
   up-stack-id: {{ $ordinal | quote }}
 {{- end -}}

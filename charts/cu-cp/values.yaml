@@ -15,21 +15,6 @@ global:
     secretName: accelleran-cu-license
 
 
-# Number of supported components
-#   Description:  You have to specify the amount of different components that should be supported.
-#                 Therefore, you have to specify:
-#                 - the number of AMFs that will be used
-#                 - the number of CU-UPs that will be used
-#                 - the number of DUs that will be used
-#                 - the number of CELLSs that will be used
-#                   i.e. DU1 supporting 3 cells and DU2 supported 2 cells => numOfCells: 5
-#                 - the number of UEs that will be used
-numOfAmfs: 1
-numOfCuUps: 1
-numOfDus: 3
-numOfCells: 3
-numOfUes: 16
-
 bootstrap:
   create: true
   name: ""
@@ -61,466 +46,87 @@ drax:
   technology: "5g"
   role: "5g"
 
+nameOverride: ""
+fullnameOverride: ""
 
-cu-cp:
+component: "cu-cp"
+
+redisInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.0"
+  pullPolicy: IfNotPresent
+
+natsInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.0"
+  pullPolicy: IfNotPresent
+
+image:
+  repository: accelleran/cu-cp
+  tag: ""
+  pullPolicy: IfNotPresent
+
+service:
   enabled: true
+  name: ""
+  type: "LoadBalancer"
+  ports:
+    e1ap:
+      appProtocol: "e1-control"
+      protocol: "SCTP"
+      port: 38462
+      targetPort: 0
+      nodePort: 0
+    f1ap:
+      appProtocol: "f1-control"
+      protocol: "SCTP"
+      port: 38472
+      targetPort: 0
+      nodePort: 0
+    netconf:
+      appProtocol: "netconf-ssh"
+      protocol: "TCP"
+      port: 8300
+      targetPort: 0
+      nodePort: 0
+  loadBalancerIP: ""
+  externalTrafficPolicy: "Local"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+readinessProbe:
+  exec:
+    command:
+      - "test"
+      - "-f"
+      - "/tmp/netopeer2-server.pid"
+  initialDelaySeconds: 15
+  periodSeconds: 30
+
+securityContext:
+  fsGroup: 1000
+
+persistence:
+  - name: sysrepo
+    mountPath: "/workdir/sysrepo"
+    storageClassName: ""
+    accessModes:
+      - "ReadWriteOnce"
+    size: "128Mi"
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
 
-  nameOverride: "cu-cp"
-  fullnameOverride: ""
-
-  component: "cu-cp"
-
-  redisInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
-
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
-
-
-netconf:
-  enabled: true
-
-  nameOverride: "netconf"
-  fullnameOverride: ""
-
-  component: "netconf"
-
-  containerName: "netconf"
-
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.9.0"
-
-  image:
-    repository: accelleran/cucp-netconf
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  readinessProbe:
-    exec:
-      command:
-        - "test"
-        - "-f"
-        - "/tmp/netopeer2-server.pid"
-    initialDelaySeconds: 15
-    periodSeconds: 30
-
-  podSecurityContext:
-    fsGroup: 1000
-
-  persistence:
-    - name: sysrepo
-      mountPath: "/workdir/sysrepo"
-      storageClassName: ""
-      accessModes:
-        - "ReadWriteOnce"
-      size: "128Mi"
-
-  service:
-    enabled: true
-    name: ""
-    type: "ClusterIP"
-    ports:
-      netconf:
-        protocol: "TCP"
-        port: 8300
-        targetPort: null
-        nodePort: null
-
-
-gnb-ctrl:
-  enabled: true
-
-  nameOverride: "gnb-ctrl"
-  fullnameOverride: ""
-
-  containerName: "gnb-ctrl"
-
-  image:
-    repository: accelleran/gnbcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-
-amf-ctrl:
-  enabled: true
-
-  nameOverride: "amf-ctrl"
-  fullnameOverride: ""
-
-  containerName: "amf-ctrl"
-
-  image:
-    repository: accelleran/amfcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-cu-up-ctrl:
-  enabled: true
-
-  nameOverride: "cu-up-ctrl"
-  fullnameOverride: ""
-
-  containerName: "cu-up-ctrl"
-
-  image:
-    repository: accelleran/cuupcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-du-ctrl:
-  enabled: true
-
-  nameOverride: "du-ctrl"
-  fullnameOverride: ""
-
-  containerName: "du-ctrl"
-
-  image:
-    repository: accelleran/ducontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-
-pm-ctrl:
-  enabled: true
-
-  nameOverride: "pm-ctrl"
-  fullnameOverride: ""
-
-  containerName: "pm-ctrl"
-
-  image:
-    repository: accelleran/pmcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-res-mgr:
-  enabled: true
-
-  nameOverride: "res-mgr"
-  fullnameOverride: ""
-
-  containerName: "res-mgr"
-
-  image:
-    repository: accelleran/resmgrappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-sctp-ng:
-  enabled: true
-
-  nameOverride: "sctp-ng"
-  fullnameOverride: ""
-
-  containerName: "sctp-ng"
-
-  image:
-    repository: accelleran/sctpcpngappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-sctp-e1:
-  enabled: true
-
-  nameOverride: "sctp-e1"
-  fullnameOverride: ""
-
-  containerName: "sctp-e1"
-
-  image:
-    repository: accelleran/sctpcpe1appl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  service:
-    enabled: true
-    name: ""
-    type: "LoadBalancer"
-    ports:
-      e1ap:
-        appProtocol: "e1-interface"
-        protocol: "SCTP"
-        port: 38462
-        targetPort: 0
-        nodePort: 0
-    loadBalancerIP: ""
-    externalTrafficPolicy: "Local"
-
-
-sctp-f1:
-  enabled: true
-
-  nameOverride: "sctp-f1"
-  fullnameOverride: ""
-
-  containerName: "sctp-f1"
-
-  image:
-    repository: accelleran/sctpcpf1appl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  service:
-    enabled: true
-    name: ""
-    type: "LoadBalancer"
-    ports:
-      f1ap:
-        appProtocol: "f1-control"
-        protocol: "SCTP"
-        port: 38472
-        targetPort: 0
-        nodePort: 0
-    loadBalancerIP: ""
-    externalTrafficPolicy: "Local"
-
-
-ng-ap:
-  enabled: true
-
-  nameOverride: "ng-ap"
-  fullnameOverride: ""
-
-  containerName: "ng-ap"
-
-  replicaCount: null
-
-  image:
-    repository: accelleran/ngapappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
-
-
-e1-cp:
-  enabled: true
-
-  nameOverride: "e1-cp"
-  fullnameOverride: ""
-
-  containerName: "e1-cp"
-
-  replicaCount: null
-
-  image:
-    repository: accelleran/e1cpappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
-
-
-f1-ap:
-  enabled: true
-
-  nameOverride: "f1-ap"
-  fullnameOverride: ""
-
-  containerName: "f1-ap"
-
-  replicaCount: null
-
-  image:
-    repository: accelleran/f1apintfappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
-
-
-rr-ctrl:
-  enabled: true
-
-  nameOverride: "rr-ctrl"
-  fullnameOverride: ""
-
-  containerName: "rr-ctrl"
-
-  replicaCount: null
-
-  image:
-    repository: accelleran/rrctrlappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
-
-
-ds-ctrl:
-  enabled: true
-
-  nameOverride: "ds-ctrl"
-  fullnameOverride: ""
-
-  containerName: "ds-ctrl"
-
-  replicaCount: null
-
-  envInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
-
-  image:
-    repository: accelleran/dsctrlappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  autoscaling:
-    enabled: false
-    factorReplicas: 8
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
 
 nats:
   enabled: false
