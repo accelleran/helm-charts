@@ -71,6 +71,8 @@ cu-cp:
 
   component: "cu-cp"
 
+  containerName: "cu-cp"
+
   redisInitImage:
     repository: accelleran/acc-generic-img
     tag: "0.9.0"
@@ -80,6 +82,39 @@ cu-cp:
     repository: accelleran/acc-generic-img
     tag: "0.9.0"
     pullPolicy: IfNotPresent
+
+  image:
+    repository: accelleran/cucpappl
+    tag: ""
+    pullPolicy: IfNotPresent
+
+  e1Service:
+    enabled: true
+    name: ""
+    type: "LoadBalancer"
+    ports:
+      e1ap:
+        appProtocol: "e1-control"
+        protocol: "SCTP"
+        port: 38462
+        targetPort: 0
+        nodePort: 0
+    loadBalancerIP: ""
+    externalTrafficPolicy: "Local"
+
+  f1Service:
+    enabled: true
+    name: ""
+    type: "LoadBalancer"
+    ports:
+      f1ap:
+        appProtocol: "f1-control"
+        protocol: "SCTP"
+        port: 38472
+        targetPort: 0
+        nodePort: 0
+    loadBalancerIP: ""
+    externalTrafficPolicy: "Local"
 
   serviceAccount:
     # Specifies whether a service account should be created
@@ -153,181 +188,6 @@ netconf:
         port: 8300
         targetPort: null
         nodePort: null
-
-
-gnb-ctrl:
-  enabled: true
-
-  nameOverride: "gnb-ctrl"
-  fullnameOverride: ""
-
-  containerName: "gnb-ctrl"
-
-  image:
-    repository: accelleran/gnbcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-
-amf-ctrl:
-  enabled: true
-
-  nameOverride: "amf-ctrl"
-  fullnameOverride: ""
-
-  containerName: "amf-ctrl"
-
-  image:
-    repository: accelleran/amfcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-cu-up-ctrl:
-  enabled: true
-
-  nameOverride: "cu-up-ctrl"
-  fullnameOverride: ""
-
-  containerName: "cu-up-ctrl"
-
-  image:
-    repository: accelleran/cuupcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-du-ctrl:
-  enabled: true
-
-  nameOverride: "du-ctrl"
-  fullnameOverride: ""
-
-  containerName: "du-ctrl"
-
-  image:
-    repository: accelleran/ducontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-
-pm-ctrl:
-  enabled: true
-
-  nameOverride: "pm-ctrl"
-  fullnameOverride: ""
-
-  containerName: "pm-ctrl"
-
-  image:
-    repository: accelleran/pmcontrollerappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-res-mgr:
-  enabled: true
-
-  nameOverride: "res-mgr"
-  fullnameOverride: ""
-
-  containerName: "res-mgr"
-
-  image:
-    repository: accelleran/resmgrappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-sctp-ng:
-  enabled: true
-
-  nameOverride: "sctp-ng"
-  fullnameOverride: ""
-
-  containerName: "sctp-ng"
-
-  image:
-    repository: accelleran/sctpcpngappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-sctp-e1:
-  enabled: true
-
-  nameOverride: "sctp-e1"
-  fullnameOverride: ""
-
-  containerName: "sctp-e1"
-
-  image:
-    repository: accelleran/sctpcpe1appl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  service:
-    enabled: true
-    name: ""
-    type: "LoadBalancer"
-    ports:
-      e1ap:
-        appProtocol: "e1-interface"
-        protocol: "SCTP"
-        port: 38462
-        targetPort: 0
-        nodePort: 0
-    loadBalancerIP: ""
-    externalTrafficPolicy: "Local"
-
-
-sctp-f1:
-  enabled: true
-
-  nameOverride: "sctp-f1"
-  fullnameOverride: ""
-
-  containerName: "sctp-f1"
-
-  image:
-    repository: accelleran/sctpcpf1appl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  service:
-    enabled: true
-    name: ""
-    type: "LoadBalancer"
-    ports:
-      f1ap:
-        appProtocol: "f1-control"
-        protocol: "SCTP"
-        port: 38472
-        targetPort: 0
-        nodePort: 0
-    loadBalancerIP: ""
-    externalTrafficPolicy: "Local"
 
 
 ng-ap:
@@ -416,43 +276,6 @@ f1-ap:
 
   image:
     repository: accelleran/f1apintfappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
-
-
-rr-ctrl:
-  enabled: true
-
-  nameOverride: "rr-ctrl"
-  fullnameOverride: ""
-
-  containerName: "rr-ctrl"
-
-  replicaCount: null
-
-  image:
-    repository: accelleran/rrctrlappl
     tag: ""
     pullPolicy: IfNotPresent
 
