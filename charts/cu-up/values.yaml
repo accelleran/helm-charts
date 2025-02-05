@@ -75,9 +75,16 @@ cu-up:
   nameOverride: "cu-up"
   fullnameOverride: ""
 
+  containerName: "cu-up"
+
   natsInitImage:
     repository: accelleran/acc-generic-img
     tag: "0.9.0"
+    pullPolicy: IfNotPresent
+
+  image:
+    repository: accelleran/cuupappl
+    tag: ""
     pullPolicy: IfNotPresent
 
   serviceAccount:
@@ -152,71 +159,6 @@ netconf:
         port: 8300
         targetPort: null
         nodePort: null
-
-
-controller-up:
-  enabled: true
-
-  nameOverride: "controller-up"
-  fullnameOverride: ""
-
-  containerName: "controller-up"
-
-  image:
-    repository: accelleran/controllerupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-pm-controller-up:
-  enabled: true
-
-  nameOverride: "pm-controller-up"
-  fullnameOverride: ""
-
-  containerName: "pm-controller-up"
-
-  image:
-    repository: accelleran/pmcontrollerupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-res-mgr-up:
-  enabled: true
-
-  nameOverride: "res-mgr-up"
-  fullnameOverride: ""
-
-  containerName: "res-mgr-up"
-
-  image:
-    repository: accelleran/resmgrupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-
-e1-sctp-up:
-  enabled: true
-
-  nameOverride: "e1-sctp-up"
-  fullnameOverride: ""
-
-  containerName: "e1-sctp-up"
-
-  image:
-    repository: accelleran/e1sctpupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
 
 
 ups:

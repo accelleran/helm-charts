@@ -16,9 +16,21 @@ values:
 initContainers:
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-up.init.args" .))) | toYaml | nindent 2 }}
 
-containers:
-- {{ fromYaml (include "accelleran.cu-up.ctrl-up.container" $) | toYaml | nindent 2 }}
-- {{ fromYaml (include "accelleran.cu-up.pm-ctrl.container" $) | toYaml | nindent 2 }}
-- {{ fromYaml (include "accelleran.cu-up.res-mgr.container" $) | toYaml | nindent 2 }}
-- {{ fromYaml (include "accelleran.cu-up.sctp-e1.container" $) | toYaml | nindent 2 }}
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ $values | toYaml | nindent 2 }}
+
+env:
+  - name: __APPNAME
+    value: cuUp
+{{- with (include "accelleran.common.bootstrap.instanceId" (dict "top" $)) }}
+  - name: INSTANCE_FILTER
+    value: {{ . | quote }}
+{{- end }}
+  - name: LICENSE_PATH
+    value: {{ include "accelleran.common.drax.license.mountPath" (dict "top" $ "values" $values) | quote }}
+envFrom:
+  - configMapRef:
+      name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
 {{- end -}}

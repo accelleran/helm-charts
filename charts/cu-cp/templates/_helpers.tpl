@@ -31,13 +31,13 @@
 
 {{- define "accelleran.cu-cp.e1.service.name" -}}
 {{- $ := . -}}
-{{ index $.Values "sctp-e1" "service" "name" | default (include "accelleran.common.fullname" (dict "top" $ "values" (index $.Values "sctp-e1"))) }}
+{{ index $.Values "cu-cp" "e1Service" "name" | default (printf "%s-e1ap" (include "accelleran.common.fullname" (dict "top" $ "values" (index $.Values "cu-cp")))) }}
 {{- end -}}
 
 
 {{- define "accelleran.cu-cp.f1.service.name" -}}
 {{- $ := . -}}
-{{ index $.Values "sctp-f1" "service" "name" | default (include "accelleran.common.fullname" (dict "top" $ "values" (index $.Values "sctp-f1"))) }}
+{{ index $.Values "cu-cp" "f1Service" "name" | default (printf "%s-f1ap" (include "accelleran.common.fullname" (dict "top" $ "values" (index $.Values "cu-cp")))) }}
 {{- end -}}
 
 
