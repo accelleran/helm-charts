@@ -106,9 +106,9 @@ dashboard:
     name: "{{ $.Release.Name }}-bootstrap"
 
   secretRefs:
-  - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD"
+  - name: "LOKI_EVENTS_BASIC_AUTH_PASSWORD"
     secretName: "{{ $.Release.Name }}-loki-gateway-auth"
-    secretKey: "dashboard-notifications"
+    secretKey: "dashboard-events"
 
   config:
     # Defined for server config.json
@@ -129,8 +129,8 @@ dashboard:
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
 
   extraEnvs:
-  - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_USERNAME"
-    value: "dashboard-notifications"
+  - name: "LOKI_EVENTS_BASIC_AUTH_USERNAME"
+    value: "dashboard-events"
 
   service:
     type: NodePort
@@ -827,10 +827,10 @@ grafana:
         name: "{{ $.Release.Name }}-loki-gateway-auth"
         key: grafana-logs
 
-    LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD:
+    LOKI_EVENTS_BASIC_AUTH_PASSWORD:
       secretKeyRef:
         name: "{{ $.Release.Name }}-loki-gateway-auth"
-        key: grafana-notifications
+        key: grafana-events
 
     INFLUXDB2_ADMIN_TOKEN:
       secretKeyRef:
@@ -867,13 +867,13 @@ grafana:
             manageAlerts: false
         - access: proxy
           isDefault: false
-          name: Loki-Notifications
+          name: Loki-Events
           type: loki
           url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80
           basicAuth: true
-          basicAuthUser: grafana-notifications
+          basicAuthUser: grafana-events
           secureJsonData:
-            basicAuthPassword: ${LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD}
+            basicAuthPassword: ${LOKI_EVENTS_BASIC_AUTH_PASSWORD}
           jsonData:
             manageAlerts: false
         - access: proxy
@@ -1067,15 +1067,15 @@ loki-gateway:
       - username: "grafana-logs"
         password: ""
         organization: "logs"
-      - username: "promtail-notifications"
+      - username: "promtail-events"
         password: ""
-        organization: "notifications"
-      - username: "grafana-notifications"
+        organization: "events"
+      - username: "grafana-events"
         password: ""
-        organization: "notifications"
-      - username: "dashboard-notifications"
+        organization: "events"
+      - username: "dashboard-events"
         password: ""
-        organization: "notifications"
+        organization: "events"
       - username: "loki-deleter-logs"
         password: ""
         organization: "logs"
@@ -1563,10 +1563,10 @@ promtail-logs:
             path: password
 
 
-promtail-notifications:
+promtail-events:
   # enabled: true
 
-  nameOverride: "promtail-notifications"
+  nameOverride: "promtail-events"
 
   daemonset:
     enabled: false
@@ -1577,13 +1577,13 @@ promtail-notifications:
     enabled: true
     clients:
       - url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80/loki/api/v1/push
-        tenant_id: notifications
+        tenant_id: events
         basic_auth:
-          username: promtail-notifications
+          username: promtail-events
           password_file: /etc/promtail/secrets/password
     snippets:
       scrapeConfigs: |
-        - job_name: kafka-notifications
+        - job_name: kafka-events
           kafka:
             brokers:
               - {{ .Release.Name }}-kafka.{{ .Release.Namespace }}:9092
@@ -1591,8 +1591,8 @@ promtail-notifications:
               - "accelleran.drax.5g.ric.o1.ves"
             use_incoming_timestamp: true
             labels:
-              job: kafka-notifications
-              app: {{ .Release.Name }}-promtail-notifications
+              job: kafka-events
+              app: {{ .Release.Name }}-promtail-events
           pipeline_stages:
             - json:
                 expressions:
@@ -1667,7 +1667,7 @@ promtail-notifications:
       secret:
         secretName: "{{ $.Release.Name }}-loki-gateway-auth"
         items:
-          - key: promtail-notifications
+          - key: promtail-events
             path: password
 
 
