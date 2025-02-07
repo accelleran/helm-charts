@@ -13,7 +13,7 @@ name: "{{ $.Release.Name }}-drax-loki-tenants"
 data:
   tenants.yaml: |
     overrides:
-      "notifications":
+      "events":
         retention_period: 24h
       "logs":
         retention_period: 672h  # 28d
