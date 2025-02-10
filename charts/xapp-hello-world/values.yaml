@@ -70,8 +70,7 @@ serviceAccount:
   name:
 
 podSecurityContext:
-  {}
-  # fsGroup: 2000
+  fsGroup: 1000
 
 securityContext:
   # capabilities:
@@ -80,6 +79,12 @@ securityContext:
   # readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
+  runAsGroup: 1000
+
+persistence:
+  storageClass: "local-path"
+  accessMode: ReadWriteOnce
+  size: "1Gi"
 
 restService:
   enabled: true
