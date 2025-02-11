@@ -111,10 +111,6 @@ spec:
             - "xapp_main.py"
           {{ end }}
           volumeMounts:
-            {{ if and (.Values.developerMode.enabled) (.Values.developerMode.hostPath) }}
-            - name: dev-work-dir
-              mountPath: /home/xapp/dev/
-            {{ end }}
             - name: {{ include "xapp_core.fullname" . }}-xapp-config
               mountPath: /home/xapp/xapp/config/xapp_config.json
               subPath: "xapp_config.json"
@@ -152,9 +148,4 @@ spec:
         - name: {{ .Release.Name }}-data-storage 
           persistentVolumeClaim:
             claimName: {{ .Release.Name }}-data-storage        
-        {{ end }}
-        {{ if and (.Values.developerMode.enabled) (.Values.developerMode.hostPath) }}
-        - name: dev-work-dir
-          hostPath:
-            path: {{ .Values.developerMode.hostPath }}
         {{ end }}

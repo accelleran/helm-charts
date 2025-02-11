@@ -27,7 +27,6 @@ imagePullSecrets:
 ### Developer mode options
 developerMode:
   enabled: false
-  hostPath: ""
   devPassword: "password1!"
 
 nameOverride: ""
