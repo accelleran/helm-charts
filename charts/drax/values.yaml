@@ -122,8 +122,10 @@ dashboard:
     lokiPort: "80"
     ksqldbPodName: "{{ $.Values.global.kubeIp }}"
     nodeApiURL: "{{ $.Values.global.kubeIp }}"
+    grafanaHost: "{{ $.Release.Name }}-grafana"
+    grafanaPort: "80"
     # Defined for core-ui config.js
-    grafanaPort: "30300"
+    grafanaExternalPort: "30300"
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
