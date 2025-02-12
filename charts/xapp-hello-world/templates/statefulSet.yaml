@@ -75,7 +75,7 @@ spec:
             - "/bin/sh"
             - "-c"
             - |              
-              if [ ! -f "/mnt/data/core/xapp_main.py" ]; then
+              if [ -z "$(ls -A /mnt/data/ 2>/dev/null)" ]; then
                 echo "Copying initial files to persistent volume..."
                 cp -r /home/xapp/xapp/* /mnt/data/                
               else
@@ -117,8 +117,10 @@ spec:
             - name: {{ include "xapp_core.fullname" . }}-xapp-endpoints
               mountPath: /home/xapp/xapp/config/xapp_endpoints.json
               subPath: "xapp_endpoints.json"
+            {{ if .Values.developerMode.enabled }}
             - name: {{ .Release.Name }}-data-storage
               mountPath: /home/xapp/xapp
+            {{ end }}
           ports:
             - containerPort: {{ .Values.restService.port }}
             {{ if .Values.developerMode.enabled }}
@@ -139,13 +141,22 @@ spec:
         - name: {{ include "xapp_core.fullname" . }}-xapp-config
           configMap:
             name: {{ include "xapp_core.fullname" . }}-xapp-config
-            
         - name: {{ include "xapp_core.fullname" . }}-xapp-endpoints
           configMap:
             name: {{ include "xapp_core.fullname" . }}-xapp-endpoints
 
-        {{ if .Values.developerMode.enabled }}    
-        - name: {{ .Release.Name }}-data-storage 
+        {{ if .Values.developerMode.enabled }}
+        - name: {{ .Release.Name }}-data-storage
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-data-storage        
+            claimName: {{ .Release.Name }}-data-storage
         {{ end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ .Release.Name }}-data-storage
+    spec:
+      accessModes:
+        - {{ .Values.persistence.accessMode }}
+      storageClassName: {{ .Values.persistence.storageClass}}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size }}

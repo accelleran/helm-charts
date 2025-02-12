@@ -81,7 +81,7 @@ securityContext:
   runAsGroup: 1000
 
 persistence:
-  storageClass: "local-path"
+  storageClass: ""
   accessMode: ReadWriteOnce
   size: "1Gi"
 
