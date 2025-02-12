@@ -218,7 +218,7 @@ def main() -> None:
 
     external_client = ExternalClient()
     external_client.id = os.environ.get(
-        "EXTERNAL_CLIENT_ID", default="external-client"
+        "EXTERNAL_CLIENT_CLIENT_ID", default="external-client"
     )
     external_client.name = "External Client"
     external_client.kube_secret_name = NamespacedName(
