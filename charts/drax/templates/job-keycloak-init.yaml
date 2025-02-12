@@ -115,6 +115,11 @@ env:
     value: {{ tpl $valuesOauth2Proxy.config.cookieSecret $ | default (randAlphaNum 32 | b64enc) }}
 {{- end }}
 
+  - name: DASHBOARD_SECRET_NAME
+    value: "{{ $.Release.Name }}-auth-dashboard"
+  - name: DASHBOARD_CLIENT_ID
+    value: dashboard
+
   - name: EXTERNAL_CLIENT_CLIENT_ID
     value: external-client
 

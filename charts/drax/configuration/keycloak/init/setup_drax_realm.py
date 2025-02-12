@@ -105,6 +105,38 @@ class Oauth2ProxyClient:
         }
 
 
+class InternalClient:
+    id: str
+    name: str
+    secret: str
+    kube_secret_name: NamespacedName
+
+    def set_secret(self, secret: str) -> None:
+        self.secret = secret
+
+    def to_keycloak_json(self) -> dict[str, any]:
+        json = {
+            "protocol": "openid-connect",
+            "clientId": self.id,
+            "name": self.name,
+            "enabled": True,
+            "publicClient": False,
+            "standardFlowEnabled": False,
+            "implicitFlowEnabled": False,
+            "directAccessGrantsEnabled": False,
+            "serviceAccountsEnabled": True,
+            "authorizationServicesEnabled": False,
+        }
+
+        return json
+
+    def to_kubernetes_secret_data(self) -> dict[str, str]:
+        return {
+            "client-id": self.id,
+            "client-secret": self.secret,
+        }
+
+
 class ExternalClient:
     id: str
     name: str
@@ -213,6 +245,17 @@ def main() -> None:
         "OAUTH2_PROXY_COOKIE_SECRET", default=""
     )
     clients.append(oauth2_proxy_client)
+
+    dashboard_client = InternalClient()
+    dashboard_client.id = os.environ.get(
+        "DASHBOARD_CLIENT_ID", default="dashboard"
+    )
+    dashboard_client.name = "Dashboard"
+    dashboard_client.kube_secret_name = NamespacedName(
+        os.environ.get("DASHBOARD_SECRET_NAME", default=""),
+        kubernetes_namespace,
+    )
+    clients.append(dashboard_client)
 
     external_client = ExternalClient()
     external_client.id = os.environ.get(
