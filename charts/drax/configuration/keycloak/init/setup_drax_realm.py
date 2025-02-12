@@ -267,7 +267,7 @@ def main() -> None:
     try:
         master_config.token = sign_in(master_config, tmp_user)
         create_or_update_user(master_config, superadmin)
-        add_role(master_config, superadmin, "admin")
+        add_realm_role(master_config, superadmin, "admin")
         delete_user(master_config, tmp_user)
     except requests.HTTPError as err:
         if 500 <= err.response.status_code < 600:
@@ -564,9 +564,9 @@ def get_client_id(config: KeycloakConfig, client: Client) -> str:
     return clients[0]
 
 
-def add_role(config: KeycloakConfig, user: User, role: str) -> None:
+def add_realm_role(config: KeycloakConfig, user: User, role: str) -> None:
     user_id = get_user_id(config, user)
-    role_id = get_role_id(config, role)
+    role_id = get_realm_role_id(config, role)
 
     response = requests.post(
         f"{config.base_url}/admin/realms/{config.realm.name}/users/{user_id}/role-mappings/realm",
@@ -579,7 +579,7 @@ def add_role(config: KeycloakConfig, user: User, role: str) -> None:
     print(f"added role {role} to user {user.username}")
 
 
-def get_role_id(config: KeycloakConfig, role: str) -> str:
+def get_realm_role_id(config: KeycloakConfig, role: str) -> str:
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/roles/{role}",
         headers=auth_headers(config),
