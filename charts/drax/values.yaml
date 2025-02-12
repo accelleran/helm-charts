@@ -261,6 +261,16 @@ dashboard:
   extraEnvs:
   - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_USERNAME"
     value: "dashboard-notifications"
+  - name: "KEYCLOAK_CLIENT_ID"
+    valueFrom:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-auth-dashboard"
+        key: client-id
+  - name: "KEYCLOAK_CLIENT_SECRET"
+    valueFrom:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-auth-dashboard"
+        key: client-secret
 
   service:
     type: NodePort
