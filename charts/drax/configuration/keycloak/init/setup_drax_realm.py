@@ -52,7 +52,7 @@ class NamespacedName:
 class Client(Protocol):
     id: str
     name: str
-    kube_secret_name: NamespacedName
+    kube_secret_name: NamespacedName | None
 
     def set_secret(self, secret: str) -> None: ...
 
@@ -109,7 +109,7 @@ class ExternalClient:
     id: str
     name: str
     secret: str
-    kube_secret_name: NamespacedName
+    kube_secret_name: None = None
 
     def set_secret(self, secret: str) -> None:
         self.secret = secret
@@ -130,11 +130,9 @@ class ExternalClient:
 
         return json
 
-    def to_kubernetes_secret_data(self) -> dict[str, str]:
-        return {
-            "client-id": self.id,
-            "client-secret": self.secret,
-        }
+    def to_kubernetes_secret_data(self) -> dict[str,str]:
+        return {}
+
 
 @dataclass
 class User:
@@ -221,10 +219,6 @@ def main() -> None:
         "EXTERNAL_CLIENT_CLIENT_ID", default="external-client"
     )
     external_client.name = "External Client"
-    external_client.kube_secret_name = NamespacedName(
-        os.environ.get("EXTERNAL_CLIENT_SECRET_NAME", default=""),
-        kubernetes_namespace,
-    )
     clients.append(external_client)
 
     try:
@@ -561,6 +555,9 @@ def init_kube_client():
 
 
 def add_client_secret_to_kubernetes_secret(client: Client) -> None:
+    if client.kube_secret_name is None:
+        return
+
     if client.kube_secret_name.name not in list_secrets(client.kube_secret_name):
         create_secret(client.kube_secret_name, client.to_kubernetes_secret_data())
     else:
@@ -574,6 +571,9 @@ def list_secrets(namespaced_name: NamespacedName) -> list[str]:
 
 
 def create_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) -> None:
+    if string_data is None:
+        return
+
     core_v1_api = kubeclient.CoreV1Api()
     secret = kubeclient.V1Secret(
         api_version="v1",
@@ -588,6 +588,9 @@ def create_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) 
 
 
 def update_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) -> None:
+    if string_data is None:
+        return
+
     core_v1_api = kubeclient.CoreV1Api()
     secret = kubeclient.V1Secret(
         api_version="v1",
