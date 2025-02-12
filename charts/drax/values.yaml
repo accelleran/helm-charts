@@ -238,6 +238,18 @@ dashboard:
   - name: "LOKI_EVENTS_BASIC_AUTH_PASSWORD"
     secretName: "{{ $.Release.Name }}-loki-gateway-auth"
     secretKey: "dashboard-events"
+  - name: "GRAFANA_BASIC_AUTH_USERNAME"
+    secretName: "{{ $.Release.Name }}-drax-auth"
+    secretKey: admin-username
+  - name: "GRAFANA_BASIC_AUTH_PASSWORD"
+    secretName: "{{ $.Release.Name }}-drax-auth"
+    secretKey: admin-password
+  - name: "KEYCLOAK_CLIENT_ID"
+    secretName: "{{ $.Release.Name }}-auth-dashboard"
+    secretKey: client-id
+  - name: "KEYCLOAK_CLIENT_SECRET"
+    secretName: "{{ $.Release.Name }}-auth-dashboard"
+    secretKey: client-secret
 
   config:
     # Defined for server config.json
@@ -264,16 +276,6 @@ dashboard:
   extraEnvs:
   - name: "LOKI_EVENTS_BASIC_AUTH_USERNAME"
     value: "dashboard-events"
-  - name: "GRAFANA_BASIC_AUTH_USERNAME"
-    valueFrom:
-      secretKeyRef:
-        name: "{{ $.Release.Name }}-drax-auth"
-        key: admin-username
-  - name: "GRAFANA_BASIC_AUTH_PASSWORD"
-    valueFrom:
-      secretKeyRef:
-        name: "{{ $.Release.Name }}-drax-auth"
-        key: admin-password
 
   service:
     type: NodePort
