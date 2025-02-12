@@ -102,13 +102,13 @@ env:
         name: {{ $.Release.Name }}-drax-auth
         key: admin-password
 
-{{- $existingSecretName := tpl $valuesOauth2Proxy.config.existingSecret $ }}
+{{- $oauth2ProxySecretName := tpl $valuesOauth2Proxy.config.existingSecret $ }}
   - name: OAUTH2_PROXY_SECRET_NAME
-    value: {{ $existingSecretName }}
+    value: {{ $oauth2ProxySecretName }}
   - name: OAUTH2_PROXY_CLIENT_ID
     value: {{ $valuesOauth2Proxy.config.clientID }}
   - name: OAUTH2_PROXY_COOKIE_SECRET
-{{- $existingSecret := lookup "v1" "Secret" .Release.Namespace $existingSecretName -}}
+{{- $existingSecret := lookup "v1" "Secret" .Release.Namespace $oauth2ProxySecretName -}}
 {{- with dig "data" "cookie-secret" nil $existingSecret }}
     value: {{ . | b64dec }}
 {{- else }}
@@ -117,7 +117,7 @@ env:
 
   - name: EXTERNAL_CLIENT_SECRET_NAME
     value: "{{ $.Release.Name }}-external-client"
-  - name: EXTERNAL_CLIENT_ID
+  - name: EXTERNAL_CLIENT_CLIENT_ID
     value: external-client
 
 volumes:
