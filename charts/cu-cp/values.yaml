@@ -13,7 +13,6 @@ global:
   accelleranLicense:
     enabled: true
     secretName: accelleran-cu-license
-    imageSuffix: ""
 
 
 # Number of supported components
