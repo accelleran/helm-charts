@@ -1702,7 +1702,7 @@ influxdb2:
     # renovate:
     image:
       repository: curlimages/curl
-      tag: "8.12.0"
+      tag: "8.12.1"
       pullPolicy: IfNotPresent
     command:
       - /bin/sh
