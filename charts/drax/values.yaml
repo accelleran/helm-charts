@@ -572,6 +572,30 @@ kafka:
       - name: accelleran.drax.5g.ric.o1.ves
         partitions: 1
         replicationFactor: 1
+      - name: accelleran.drax.5g.ric.raw.pm_counters
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.ric.raw.messages
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.du_metrics.ue_mac
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.ric.raw.cu_state
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.ric.raw.ue_measurements
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.du_metrics.ue_rlc_rx
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.du_metrics.ue_rlc_tx
+        partitions: 1
+        replicationFactor: 1
+      - name: accelleran.drax.5g.ric.raw.ran_control_response
+        partitions: 1
+        replicationFactor: 1
 
   service:
     type: NodePort
