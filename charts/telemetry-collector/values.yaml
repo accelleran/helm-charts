@@ -19,9 +19,9 @@ image:
   pullPolicy: IfNotPresent
   tag: ""
 
-accelleranLicense:
-  enabled: true
-  secretName: "accelleran-license"
+ccelleranLicense:
+    enabled: "{{ $.Values.global.accelleranLicense.enabled }}"
+    secretName: "{{ $.Values.global.accelleranLicense.secretName }}"
 
 podSecurityContext:
   {}
@@ -59,6 +59,9 @@ service:
       port: 55555
       targetPort: 55555
       protocol: UDP
+    http:
+      port: 55556
+      targetPort: 55556
 
 influxdbAuthSecret: "{{ $.Release.Name }}-influxdb2-auth"
 
@@ -160,5 +163,16 @@ config:
           buckets:
             DUUEMeasurements: "du_ue_measurements"
             DURLCMeasurements: "du_rlc_measurements"
+    - name: "grafana_alerts"
+      component: "drax"
+      vendor: "accelleran"
+      enabled: "true"
+      consumers:
+        restConsumer:
+          endpoint: "/api/grafana_alert"
+          port: "55556"
+      publishers:
+        kafkaPublisher:
+          topic: "accelleran.drax.5g.ric.o1.ves"
 
 extraResources: []

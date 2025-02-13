@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.11](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.10...telemetry-collector-1.1.11) (2025-02-06)
+## [1.1.12](https://github.com/accelleran/helm-charts/compare/telemetry-collector-1.1.11...telemetry-collector-1.1.12) (2025-02-13)
 
 
 ### Bug Fixes
