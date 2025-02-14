@@ -1,5 +1,21 @@
 # Changelog
 
+## [6.0.0](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-5.0.3...xapp-hello-world-6.0.0) (2025-02-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* persistence files of xApp dev env ([#966](https://github.com/accelleran/helm-charts/issues/966))
+
+### Features
+
+* Persistence files of xApp dev env ([#966](https://github.com/accelleran/helm-charts/issues/966)) ([48952c5](https://github.com/accelleran/helm-charts/commit/48952c55ef6b9b33b27232eb9907a75533be930f))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/xapp-framework-package docker tag to v6 ([#975](https://github.com/accelleran/helm-charts/issues/975)) ([a989dbc](https://github.com/accelleran/helm-charts/commit/a989dbc34c2dfff7c01d9caae44234a926f7bc97))
+
 ## [5.0.3](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-5.0.2...xapp-hello-world-5.0.3) (2024-12-23)
 
 
