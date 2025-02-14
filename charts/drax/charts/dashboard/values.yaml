@@ -30,6 +30,8 @@ config:
   nodeApiPort: "{{ $.Values.service.ports.http.nodePort }}"
   serviceName: ""
   servicePort: "{{ $.Values.service.ports.http.port }}"
+  keycloakURL: ""
+  keycloakRealm: ""
   kafkaURL: ""
   kafkaPort: 9092
   networkStateMonitorHost: ""
