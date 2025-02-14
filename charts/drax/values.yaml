@@ -250,6 +250,8 @@ dashboard:
 
   config:
     # Defined for server config.json
+    keycloakURL: "http://{{ $.Release.Name }}-keycloak/keycloak"
+    keycloakRealm: "drax"
     kafkaURL: "{{ $.Release.Name }}-kafka"
     networkStateMonitorHost: "{{ $.Release.Name }}-network-state-monitor"
     svcMonitorHost: "{{ $.Release.Name }}-service-monitor"
