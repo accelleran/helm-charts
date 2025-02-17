@@ -49,10 +49,34 @@ class NamespacedName:
     namespace: str
 
 
+@dataclass
+class ClientScopeRole:
+    name: str
+    client: Client
+
+
+@dataclass
+class ClientScope:
+    name: str
+    roles: list[ClientScopeRole]
+
+    def to_keycloak_json(self) -> dict[str, any]:
+        return {
+            "name": self.name,
+            "description": "",
+            "protocol": "openid-connect",
+            "attributes": {
+                "include.in.token.scope": "true",
+                "display.on.consent.screen": "true",
+            },
+        }
+
+
 class Client(Protocol):
     id: str
     name: str
     kube_secret_name: NamespacedName | None
+    scopes: list[ClientScope]
 
     def set_secret(self, secret: str) -> None: ...
 
@@ -162,7 +186,7 @@ class ExternalClient:
 
         return json
 
-    def to_kubernetes_secret_data(self) -> dict[str,str]:
+    def to_kubernetes_secret_data(self) -> dict[str, str]:
         return {}
 
 
@@ -228,6 +252,20 @@ def main() -> None:
         password=os.environ.get("KEYCLOAK_ADMIN_PASSWORD", default=""),
     )
 
+    realm_management_client = ExternalClient()
+    realm_management_client.id = "realm-management"
+
+    realm_management_view_clients_role = ClientScopeRole(
+        client=realm_management_client, name="view-clients"
+    )
+
+    client_scopes: list[ClientScope] = list()
+
+    read_clients_client_scope = ClientScope(
+        name="read-clients", roles=[realm_management_view_clients_role]
+    )
+    client_scopes.append(read_clients_client_scope)
+
     clients: list[Client] = list()
 
     oauth2_proxy_client = Oauth2ProxyClient()
@@ -247,9 +285,7 @@ def main() -> None:
     clients.append(oauth2_proxy_client)
 
     dashboard_client = InternalClient()
-    dashboard_client.id = os.environ.get(
-        "DASHBOARD_CLIENT_ID", default="dashboard"
-    )
+    dashboard_client.id = os.environ.get("DASHBOARD_CLIENT_ID", default="dashboard")
     dashboard_client.name = "Dashboard"
     dashboard_client.kube_secret_name = NamespacedName(
         os.environ.get("DASHBOARD_SECRET_NAME", default=""),
@@ -287,6 +323,10 @@ def main() -> None:
     create_or_update_user(config, superadmin)
     create_or_update_user(config, admin)
     print("users:", list_users(config))
+
+    for client_scope in client_scopes:
+        create_or_update_client_scope(config, client_scope)
+    print("client scopes:", list_client_scopes(config))
 
     init_kube_client()
     for client in clients:
@@ -564,6 +604,29 @@ def get_client_id(config: KeycloakConfig, client: Client) -> str:
     return clients[0]
 
 
+def get_client_role_id(config: KeycloakConfig, client: Client, role_name: str) -> str:
+    client_id = get_client_id(config, client)
+
+    response = requests.get(
+        f"{config.base_url}/admin/realms/{config.realm.name}/clients/{client_id}/roles",
+        headers=auth_headers(config),
+        params={
+            "search": role_name,
+        },
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+
+    roles = [r["id"] for r in response.json()]
+    if len(roles) != 1:
+        raise RuntimeError(
+            f"found {len(roles)} roles associated with client '{client.id}' with name '{role_name}' (instead of 1)"
+        )
+
+    return roles[0]
+
+
 def add_realm_role(config: KeycloakConfig, user: User, role: str) -> None:
     user_id = get_user_id(config, user)
     role_id = get_realm_role_id(config, role)
@@ -588,6 +651,94 @@ def get_realm_role_id(config: KeycloakConfig, role: str) -> str:
     )
     response.raise_for_status()
     return response.json()["id"]
+
+
+def create_or_update_client_scope(
+    config: KeycloakConfig, client_scope: ClientScope
+) -> None:
+    if client_scope.name not in list_client_scopes(config):
+        create_client_scope(config, client_scope)
+    else:
+        update_client_scope(config, client_scope)
+
+    for role in client_scope.roles:
+        add_client_scope_role(config, client_scope, role)
+
+
+def list_client_scopes(config: KeycloakConfig) -> list[str]:
+    response = requests.get(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+
+    clients = [r["name"] for r in response.json()]
+    return clients
+
+
+def create_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> None:
+    response = requests.post(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes",
+        headers=auth_headers(config),
+        json=client_scope.to_keycloak_json(),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+    print(f"created client {client_scope.name}")
+
+
+def update_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> None:
+    client_scope_id = get_client_scope_id(config, client_scope)
+
+    response = requests.put(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes/{client_scope_id}",
+        headers=auth_headers(config),
+        json=client_scope.to_keycloak_json(),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+    print(f"updated client {client_scope.name}")
+
+
+def get_client_scope_id(config: KeycloakConfig, client_scope: ClientScope) -> str:
+    response = requests.get(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+
+    client_scopes = [r["id"] for r in response.json() if r["name"] == client_scope.name]
+    if len(client_scopes) != 1:
+        raise RuntimeError(
+            f"found {len(client_scopes)} client scopes with name '{client_scope.name}' (instead of 1)",
+        )
+
+    return client_scopes[0]
+
+
+def add_client_scope_role(
+    config: KeycloakConfig, client_scope: ClientScope, role: ClientScopeRole
+) -> None:
+    client_scope_id = get_client_scope_id(config, client_scope)
+    client_id = get_client_id(config, role.client)
+    view_clients_role_id = get_client_role_id(config, role.client, role.name)
+
+    response = requests.get(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes/{client_scope_id}/scope-mappings/clients/{client_id}",
+        headers=auth_headers(config),
+        json={
+            "id": view_clients_role_id,
+        },
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
 
 
 def init_kube_client():
