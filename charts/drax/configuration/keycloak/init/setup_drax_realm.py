@@ -1,7 +1,7 @@
 import copy
 from dataclasses import dataclass
 import os
-from typing import Protocol, Optional
+from typing import Protocol, Optional, Any
 
 from kubernetes import client as kubeclient, config as kubeconfig
 import requests
@@ -27,8 +27,8 @@ class Realm:
     display_name: Optional[str]
     login_theme: Optional[str]
 
-    def to_keycloak_json(self) -> dict[str, any]:
-        json: dict[str, any] = {
+    def to_keycloak_json(self) -> dict[str, Any]:
+        json: dict[str, Any] = {
             "realm": self.name,
             "enabled": True,
             "displayName": (
@@ -60,7 +60,7 @@ class ClientScope:
     name: str
     roles: list[ClientScopeRole]
 
-    def to_keycloak_json(self) -> dict[str, any]:
+    def to_keycloak_json(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "description": "",
@@ -80,7 +80,7 @@ class Client(Protocol):
 
     def set_secret(self, secret: str) -> None: ...
 
-    def to_keycloak_json(self) -> dict[str, any]: ...
+    def to_keycloak_json(self) -> dict[str, Any]: ...
 
     def to_kubernetes_secret_data(self) -> dict[str, str]: ...
 
@@ -97,7 +97,7 @@ class Oauth2ProxyClient:
     def set_secret(self, secret: str) -> None:
         self.secret = secret
 
-    def to_keycloak_json(self) -> dict[str, any]:
+    def to_keycloak_json(self) -> dict[str, Any]:
         json = {
             "protocol": "openid-connect",
             "clientId": self.id,
@@ -138,7 +138,7 @@ class InternalClient:
     def set_secret(self, secret: str) -> None:
         self.secret = secret
 
-    def to_keycloak_json(self) -> dict[str, any]:
+    def to_keycloak_json(self) -> dict[str, Any]:
         json = {
             "protocol": "openid-connect",
             "clientId": self.id,
@@ -170,7 +170,7 @@ class ExternalClient:
     def set_secret(self, secret: str) -> None:
         self.secret = secret
 
-    def to_keycloak_json(self) -> dict[str, any]:
+    def to_keycloak_json(self) -> dict[str, Any]:
         json = {
             "protocol": "openid-connect",
             "clientId": self.id,
@@ -196,7 +196,7 @@ class User:
     email: str
     password: str
 
-    def to_keycloak_json(self) -> dict[str, any]:
+    def to_keycloak_json(self) -> dict[str, Any]:
         return {
             "username": self.username,
             "enabled": True,
@@ -430,7 +430,7 @@ def update_realm_user_profile(config: KeycloakConfig) -> None:
     print(f"updated realm {config.realm.name} user profile")
 
 
-def loosen_user_profile_requirements(user_profile: dict[str, any]) -> dict[str, any]:
+def loosen_user_profile_requirements(user_profile: dict[str, Any]) -> dict[str, Any]:
     for attribute in user_profile["attributes"]:
         if attribute["name"] not in ["email"]:
             attribute.pop("required", None)
