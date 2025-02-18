@@ -77,8 +77,8 @@ class ClientScope:
 class Client(Protocol):
     id: str
     name: str
-    kube_secret_name: NamespacedName | None
     scopes: list[ClientScope]
+    kube_secret_name: NamespacedName | None
 
     def set_secret(self, secret: str) -> None: ...
 
@@ -90,6 +90,7 @@ class Client(Protocol):
 class Oauth2ProxyClient:
     id: str
     name: str
+    scopes: list[ClientScope] = list()
     redirect: str
     logout: str
     secret: str
@@ -111,6 +112,7 @@ class Oauth2ProxyClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": False,
             "authorizationServicesEnabled": False,
+            "optionalClientScopes": [scope.name for scope in self.scopes]
         }
 
         if self.redirect:
@@ -134,6 +136,7 @@ class Oauth2ProxyClient:
 class InternalClient:
     id: str
     name: str
+    scopes: list[ClientScope] = list()
     secret: str
     kube_secret_name: NamespacedName
 
@@ -152,6 +155,7 @@ class InternalClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": True,
             "authorizationServicesEnabled": False,
+            "optionalClientScopes": [scope.name for scope in self.scopes]
         }
 
         return json
@@ -166,6 +170,7 @@ class InternalClient:
 class ExternalClient:
     id: str
     name: str
+    scopes: list[ClientScope] = list()
     secret: str
     kube_secret_name: None = None
 
@@ -184,6 +189,7 @@ class ExternalClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": True,
             "authorizationServicesEnabled": False,
+            "optionalClientScopes": [scope.name for scope in self.scopes]
         }
 
         return json
@@ -293,6 +299,7 @@ def main() -> None:
         os.environ.get("DASHBOARD_SECRET_NAME", default=""),
         kubernetes_namespace,
     )
+    dashboard_client.scopes.append(read_clients_client_scope)
     clients.append(dashboard_client)
 
     external_client = ExternalClient()
