@@ -287,6 +287,10 @@ def main() -> None:
     realm_management_client = ExternalClient()
     realm_management_client.id = "realm-management"
 
+    realm_management_realm_admin_role = ClientRole(
+        client=realm_management_client, name="realm-admin"
+    )
+
     realm_management_view_clients_role = ClientRole(
         client=realm_management_client, name="view-clients"
     )
@@ -358,6 +362,9 @@ def main() -> None:
     superadmin.id = None
 
     create_or_update_user(config, superadmin)
+    add_client_role(config, get_user_id(config, superadmin), realm_management_realm_admin_role)
+    config.token = sign_in(config, superadmin)
+
     create_or_update_user(config, admin)
     print("users:", list_users(config))
 
