@@ -52,7 +52,7 @@ class NamespacedName:
 
 
 @dataclass
-class ClientScopeRole:
+class ClientRole:
     name: str
     client: Client
 
@@ -60,7 +60,7 @@ class ClientScopeRole:
 @dataclass
 class ClientScope:
     name: str
-    roles: list[ClientScopeRole]
+    roles: list[ClientRole]
 
     def to_keycloak_json(self) -> dict[str, Any]:
         return {
@@ -74,11 +74,18 @@ class ClientScope:
         }
 
 
+
+
 class Client(Protocol):
     id: str
     name: str
     scopes: list[ClientScope]
-    kube_secret_name: NamespacedName | None
+    kube_secret_name: Optional[NamespacedName]
+
+    uuid: Optional[str] = None
+    service_account_user_id: Optional[str] = None
+
+    roles: list[ClientRole] = list()
 
     def set_secret(self, secret: str) -> None: ...
 
@@ -96,6 +103,11 @@ class Oauth2ProxyClient:
     secret: str
     kube_secret_name: NamespacedName
     cookie_secret: str
+
+    uuid: Optional[str] = None
+    service_account_user_id: Optional[str] = None
+
+    roles: list[ClientRole] = list()
 
     def set_secret(self, secret: str) -> None:
         self.secret = secret
@@ -140,6 +152,11 @@ class InternalClient:
     secret: str
     kube_secret_name: NamespacedName
 
+    uuid: Optional[str] = None
+    service_account_user_id: Optional[str] = None
+
+    roles: list[ClientRole] = list()
+
     def set_secret(self, secret: str) -> None:
         self.secret = secret
 
@@ -174,6 +191,11 @@ class ExternalClient:
     secret: str
     kube_secret_name: None = None
 
+    uuid: Optional[str] = None
+    service_account_user_id: Optional[str] = None
+
+    roles: list[ClientRole] = list()
+
     def set_secret(self, secret: str) -> None:
         self.secret = secret
 
@@ -203,6 +225,8 @@ class User:
     username: str
     email: str
     password: str
+
+    id: Optional[str] = None
 
     def to_keycloak_json(self) -> dict[str, Any]:
         return {
@@ -263,7 +287,7 @@ def main() -> None:
     realm_management_client = ExternalClient()
     realm_management_client.id = "realm-management"
 
-    realm_management_view_clients_role = ClientScopeRole(
+    realm_management_view_clients_role = ClientRole(
         client=realm_management_client, name="view-clients"
     )
 
@@ -300,6 +324,7 @@ def main() -> None:
         kubernetes_namespace,
     )
     dashboard_client.scopes.append(read_clients_client_scope)
+    dashboard_client.roles.append(realm_management_view_clients_role)
     clients.append(dashboard_client)
 
     external_client = ExternalClient()
@@ -312,7 +337,7 @@ def main() -> None:
     try:
         master_config.token = sign_in(master_config, tmp_user)
         create_or_update_user(master_config, superadmin)
-        add_realm_role(master_config, superadmin, "admin")
+        add_realm_role(master_config, get_user_id(master_config, superadmin), "admin")
         delete_user(master_config, tmp_user)
     except requests.HTTPError as err:
         if 500 <= err.response.status_code < 600:
@@ -328,6 +353,9 @@ def main() -> None:
     create_or_update_realm(config)
     update_realm_user_profile(config)
     print("realms:", list_realms(config))
+
+    # get the superadmin id again in the drax realm from now on
+    superadmin.id = None
 
     create_or_update_user(config, superadmin)
     create_or_update_user(config, admin)
@@ -506,25 +534,29 @@ def delete_user(config: KeycloakConfig, user: User) -> None:
 
 
 def get_user_id(config: KeycloakConfig, user: User) -> str:
-    response = requests.get(
-        f"{config.base_url}/admin/realms/{config.realm.name}/users",
-        headers=auth_headers(config),
-        params={
-            "exact": True,
-            "username": f"{user.username}",
-        },
-        timeout=request_timeout,
-        verify=request_verify_certificate,
-    )
-    response.raise_for_status()
-
-    users = [r["id"] for r in response.json()]
-    if len(users) != 1:
-        raise RuntimeError(
-            f"found {len(users)} users with username '{user.username}' (instead of 1)"
+    if user.id is None:
+        response = requests.get(
+            f"{config.base_url}/admin/realms/{config.realm.name}/users",
+            headers=auth_headers(config),
+            params={
+                "exact": True,
+                "username": f"{user.username}",
+            },
+            timeout=request_timeout,
+            verify=request_verify_certificate,
         )
+        response.raise_for_status()
 
-    return users[0]
+        users = [r["id"] for r in response.json()]
+        if len(users) != 1:
+            raise RuntimeError(
+                f"found {len(users)} users with username '{user.username}' (instead of 1)"
+            )
+
+        user.id = users[0]
+        print(f"user {user.username} has uuid {user.id}")
+
+    return user.id
 
 
 def create_or_update_client(config: KeycloakConfig, client: Client) -> None:
@@ -532,6 +564,10 @@ def create_or_update_client(config: KeycloakConfig, client: Client) -> None:
         create_client(config, client)
     else:
         update_client(config, client)
+
+    for role in client.roles:
+        add_client_role(config, get_client_service_account_user_id(config, client), role)
+
 
 
 def list_clients(config: KeycloakConfig) -> list[str]:
@@ -592,25 +628,29 @@ def get_client_secret(config: KeycloakConfig, client: Client) -> str:
 
 
 def get_client_id(config: KeycloakConfig, client: Client) -> str:
-    response = requests.get(
-        f"{config.base_url}/admin/realms/{config.realm.name}/clients",
-        headers=auth_headers(config),
-        params={
-            "search": False,
-            "clientId": f"{client.id}",
-        },
-        timeout=request_timeout,
-        verify=request_verify_certificate,
-    )
-    response.raise_for_status()
-
-    clients = [r["id"] for r in response.json()]
-    if len(clients) != 1:
-        raise RuntimeError(
-            f"found {len(clients)} clients with id '{client.id}' (instead of 1)",
+    if client.uuid is None:
+        response = requests.get(
+            f"{config.base_url}/admin/realms/{config.realm.name}/clients",
+            headers=auth_headers(config),
+            params={
+                "search": False,
+                "clientId": f"{client.id}",
+            },
+            timeout=request_timeout,
+            verify=request_verify_certificate,
         )
+        response.raise_for_status()
 
-    return clients[0]
+        clients = [r["id"] for r in response.json()]
+        if len(clients) != 1:
+            raise RuntimeError(
+                f"found {len(clients)} clients with id '{client.id}' (instead of 1)",
+            )
+
+        client.uuid = clients[0]
+        print(f"client {client.id} has uuid {client.uuid}")
+
+    return client.uuid
 
 
 def get_client_role_id(config: KeycloakConfig, client: Client, role_name: str) -> str:
@@ -636,8 +676,24 @@ def get_client_role_id(config: KeycloakConfig, client: Client, role_name: str) -
     return roles[0]
 
 
-def add_realm_role(config: KeycloakConfig, user: User, role: str) -> None:
-    user_id = get_user_id(config, user)
+def get_client_service_account_user_id(config: KeycloakConfig, client: Client) -> str:
+    if client.service_account_user_id is None:
+        client_id = get_client_id(config, client)
+
+        response = requests.get(
+            f"{config.base_url}/admin/realms/{config.realm.name}/clients/{client_id}/service-account-user",
+            headers=auth_headers(config),
+            timeout=request_timeout,
+            verify=request_verify_certificate,
+        )
+        response.raise_for_status()
+
+        client.service_account_user_id = response.json()["id"]
+
+    return client.service_account_user_id
+
+
+def add_realm_role(config: KeycloakConfig, user_id: str, role: str) -> None:
     role_id = get_realm_role_id(config, role)
 
     response = requests.post(
@@ -648,7 +704,7 @@ def add_realm_role(config: KeycloakConfig, user: User, role: str) -> None:
         verify=request_verify_certificate,
     )
     response.raise_for_status()
-    print(f"added role {role} to user {user.username}")
+    print(f"added role {role} to user {user_id}")
 
 
 def get_realm_role_id(config: KeycloakConfig, role: str) -> str:
@@ -660,6 +716,21 @@ def get_realm_role_id(config: KeycloakConfig, role: str) -> str:
     )
     response.raise_for_status()
     return response.json()["id"]
+
+
+def add_client_role(config: KeycloakConfig, user_id: str, role: ClientRole) -> None:
+    client_id = get_client_id(config, role.client)
+    role_id = get_client_role_id(config, role.client, role.name)
+
+    response = requests.post(
+        f"{config.base_url}/admin/realms/{config.realm.name}/users/{user_id}/role-mappings/clients/{client_id}",
+        headers=auth_headers(config),
+        json=[{"id": role_id, "name": role.name}],
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+    print(f"added role {role.name} to user {user_id}")
 
 
 def create_or_update_client_scope(
@@ -732,7 +803,7 @@ def get_client_scope_id(config: KeycloakConfig, client_scope: ClientScope) -> st
 
 
 def add_client_scope_role(
-    config: KeycloakConfig, client_scope: ClientScope, role: ClientScopeRole
+    config: KeycloakConfig, client_scope: ClientScope, role: ClientRole
 ) -> None:
     client_scope_id = get_client_scope_id(config, client_scope)
     client_id = get_client_id(config, role.client)
