@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.0](https://github.com/accelleran/helm-charts/compare/common-0.3.13...common-0.4.0) (2025-02-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove default license image suffix
+* automatically update license in pods
+
+### Features
+
+* Automatically update license in pods ([880297c](https://github.com/accelleran/helm-charts/commit/880297c5e478d53b60974dd0380c5e956a9ced54))
+
+
+### Bug Fixes
+
+* Remove default license image suffix ([24a5f75](https://github.com/accelleran/helm-charts/commit/24a5f7547b76bf9a52a14fd59a5ef5d3510ecb58))
+
 ## [0.3.13](https://github.com/accelleran/helm-charts/compare/common-0.3.12...common-0.3.13) (2025-01-08)
 
 

@@ -73,8 +73,6 @@ volumeMounts:
 {{- $imageSuffix = ($values.accelleranLicense).imageSuffix -}}
 {{- else if ne (($.Values.global).accelleranLicense).imageSuffix nil -}}
 {{- $imageSuffix = (($.Values.global).accelleranLicense).imageSuffix -}}
-{{- else -}}
-{{- $imageSuffix = "-license" -}}
 {{- end -}}
 
 {{- $imageRepository = (printf "%s%s" $imageRepository $imageSuffix) -}}

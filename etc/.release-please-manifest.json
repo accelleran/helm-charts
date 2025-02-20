@@ -1,14 +1,14 @@
 {
-  "charts/common": "0.3.13",
+  "charts/common": "0.4.0",
   "charts/cell-wrapper": "6.1.2",
   "charts/cell-wrapper-config": "0.5.2",
   "charts/cu-cp": "10.0.2",
   "charts/cu-up": "10.0.2",
-  "charts/drax": "13.1.0",
-  "charts/du-metrics-server": "0.4.7",
+  "charts/drax": "13.1.1",
+  "charts/du-metrics-server": "0.4.8",
   "charts/loki-deleter": "0.1.5",
   "charts/loki-gateway": "0.1.9",
   "charts/telemetry-collector": "1.1.11",
   "charts/xapp-anr": "0.1.5",
-  "charts/xapp-hello-world": "5.0.3"
+  "charts/xapp-hello-world": "6.0.0"
 }

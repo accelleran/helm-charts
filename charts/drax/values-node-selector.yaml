@@ -82,6 +82,12 @@ loki:
   tableManager:
     nodeSelector:
       drax.accelleran.com/schedule: "true"
+  memcachedchunks:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
+  memcachedfrontend:
+    nodeSelector:
+      drax.accelleran.com/schedule: "true"
 
 minio:
   nodeSelector:

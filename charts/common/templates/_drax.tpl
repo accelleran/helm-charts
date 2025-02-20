@@ -40,7 +40,6 @@ secret:
 {{- $ := get . "top" | required "The top context needs to be provided to common drax license volumeMount" -}}
 
 name: accelleran-license
-subPath: "license.crt"
 mountPath: {{ include "accelleran.common.drax.license.mountPath" . | quote }}
 readOnly: true
 {{- end -}}
@@ -50,7 +49,7 @@ readOnly: true
 {{- $ := get . "top" | required "The top context needs to be provided to common drax license mountPath" -}}
 {{- $values := get . "values" | default $.Values -}}
 
-{{ ($values.accelleranLicense).mountPath | default (($.Values.global).accelleranLicense).mountPath | default "/etc/license/license.crt" }}
+{{ ($values.accelleranLicense).mountPath | default (($.Values.global).accelleranLicense).mountPath | default "/etc/license" }}
 {{- end -}}
 
 

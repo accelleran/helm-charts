@@ -22,7 +22,7 @@ dependencies:
   version: 6.1.2
 - name: du-metrics-server
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.4.7
+  version: 0.4.8
 - name: telemetry-collector
   repository: https://accelleran.github.io/helm-charts/
   version: 1.1.11
@@ -37,10 +37,10 @@ dependencies:
   version: 2.0.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.9.0
+  version: 8.10.0
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
-  version: 27.3.0
+  version: 27.3.1
 - name: loki-gateway
   repository: https://accelleran.github.io/helm-charts/
   version: 0.1.9
@@ -73,6 +73,6 @@ dependencies:
   version: 1.2.10
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
-  version: 20.7.0
-digest: sha256:5fbac1e631f383ecdf5f047d85bf112f387d608f5a05494b7605824496c17776
-generated: "2025-02-07T17:32:31.750287397Z"
+  version: 20.7.1
+digest: sha256:5c754951e6c63ee829f829205120d6e9ec9af09545b28b79b8ae0b82a6e2ecb9
+generated: "2025-02-19T16:50:34.070809709Z"
