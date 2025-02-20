@@ -60,6 +60,7 @@ values:
     enabled: true
     type: "ClusterIP"
     clusterIP: "None"
+    externalTrafficPolicy: null
 {{- end -}}
 
 
