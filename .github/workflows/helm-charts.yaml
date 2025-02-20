@@ -213,7 +213,6 @@ jobs:
           --charts ${{ matrix.chart_path }}
           --helm-extra-set-args "
           --set=kafka.provisioning.useHelmHooks=false
-          --set=global.deploymentId=testGithub
           "
 
   # This is a work-around for a required check with matrix in the branch protection rules
