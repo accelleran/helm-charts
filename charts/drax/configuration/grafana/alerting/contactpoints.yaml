@@ -1,16 +1,6 @@
 apiVersion: 1
 contactPoints:
   - orgId: 1
-    name: accelleran-slack
-    receivers:
-      - uid: ae4u1ugiyuhvka
-        type: slack
-        settings:
-          recipient: drax-notifications
-          token: {{- if $.Values.global.alerting.enabled }} ${SLACK_TOKEN}{{- else }} "-"{{- end }}
-          username: Grafana Alert Bot
-        disableResolveMessage: true
-  - orgId: 1
     name: accelleran-drax
     receivers:
       - uid: aebke0ctqjxttd
