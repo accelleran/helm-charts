@@ -13,7 +13,16 @@
 top:
   {{ $ | toYaml | nindent 2 }}
 values:
-  {{ $values | toYaml | nindent 2 }}
+  {{
+    mergeOverwrite
+      (omit $values "service")
+      (dict "service"
+        (mergeOverwrite
+          (omit $.Values.service "ports")
+          (dict "ports" (pick $.Values.service.ports "netconf"))
+        )
+      ) | toYaml | nindent 2
+  }}
 
 env:
   - name: __APPNAME
