@@ -23,7 +23,7 @@ env:
     value: {{ . | quote }}
 {{- end }}
   - name: LICENSE_PATH
-    value: {{ include "accelleran.common.drax.license.mountPath" (dict "top" $ "values" $values) | quote }}
+    value: {{ printf "%s/license.crt" (include "accelleran.common.drax.license.mountPath" (dict "top" $ "values" $values)) | quote }}
 envFrom:
   - configMapRef:
       name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
