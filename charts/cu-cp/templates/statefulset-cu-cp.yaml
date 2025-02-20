@@ -1,14 +1,21 @@
 {{- include
-      "accelleran.common.deployment"
-      (fromYaml (include "accelleran.cu-cp.deployment.args" .))
+      "accelleran.common.statefulset"
+      (fromYaml (include "accelleran.cu-cp.statefulset.args" .))
 -}}
 
 
-{{- define "accelleran.cu-cp.deployment.args" -}}
+{{- define "accelleran.cu-cp.statefulset.args" -}}
 {{- $ := . -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
+values:
+  {{
+    (mergeOverwrite
+      (deepCopy $.Values)
+      (dict "persistence" ($.Values.netconf.persistence | default list))
+    ) | toYaml | nindent 2
+  }}
 
 selectorLabels:
   {{ include "accelleran.common.selectorLabels" (dict "top" $) | nindent 2 }}
@@ -19,6 +26,10 @@ labels:
 initContainers:
 - {{ fromYaml (include "accelleran.common.init.redis" (fromYaml (include "accelleran.cu-cp.init.args" .))) | toYaml | nindent 2 }}
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-cp.init.args" .))) | toYaml | nindent 2 }}
+
+containers:
+- {{ fromYaml (include "accelleran.cu-cp.container" $) | toYaml | nindent 2 }}
+- {{ fromYaml (include "accelleran.cu-cp.netconf.container" $) | toYaml | nindent 2 }}
 
 env:
   - name: __APPNAME

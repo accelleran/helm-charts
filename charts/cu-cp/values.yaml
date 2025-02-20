@@ -98,6 +98,11 @@ service:
       port: 38472
       targetPort: 0
       nodePort: 0
+    netconf:
+      protocol: "TCP"
+      port: 8300
+      targetPort: 0
+      nodePort: 0
   loadBalancerIP: ""
   externalTrafficPolicy: "Local"
 
@@ -127,11 +132,6 @@ netconf:
 
   containerName: "netconf"
 
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.9.0"
-
   image:
     repository: accelleran/cucp-netconf
     tag: ""
@@ -149,7 +149,7 @@ netconf:
     initialDelaySeconds: 15
     periodSeconds: 30
 
-  podSecurityContext:
+  securityContext:
     fsGroup: 1000
 
   persistence:
@@ -159,17 +159,6 @@ netconf:
       accessModes:
         - "ReadWriteOnce"
       size: "128Mi"
-
-  service:
-    enabled: true
-    name: ""
-    type: "ClusterIP"
-    ports:
-      netconf:
-        protocol: "TCP"
-        port: 8300
-        targetPort: null
-        nodePort: null
 
 
 ng-ap:
