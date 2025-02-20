@@ -13,7 +13,7 @@ top:
 values:
   {{ $values | toYaml | nindent 2 }}
 
-name: {{ include "accelleran.common.fullname" (dict "top" $ "values" $values) | quote }}
+name: {{ printf "%s-%s" (include "accelleran.common.fullname" (dict "top" $ "values" $values)) ($values.component) | quote }}
 selectorLabels:
   {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
   app.kubernetes.io/component: {{ $values.component }}
