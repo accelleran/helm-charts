@@ -5,6 +5,10 @@ global:
   imagePullSecrets:
     - name: accelleran-secret
 
+  accelleranLicense:
+    enabled: true
+    imageSuffix: "-license"
+
   persistentLogLevel: info
 
   nodeSelector: {}
@@ -26,10 +30,6 @@ image:
   repository: accelleran/xapp-anr
   pullPolicy: IfNotPresent
   tag: ""
-
-accelleranLicense:
-  enabled: true
-  secretName: "accelleran-license"
 
 podSecurityContext: {}
   # fsGroup: 2000
