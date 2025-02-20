@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/accelleran/helm-charts/compare/common-0.4.0...common-0.4.1) (2025-02-20)
+
+
+### Bug Fixes
+
+* Fix statefulset headless service ([#999](https://github.com/accelleran/helm-charts/issues/999)) ([26523cd](https://github.com/accelleran/helm-charts/commit/26523cdddc59bca899f13fbbb3d433676f0c322a))
+
 ## [0.4.0](https://github.com/accelleran/helm-charts/compare/common-0.3.13...common-0.4.0) (2025-02-19)
 
 
