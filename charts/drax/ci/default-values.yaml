@@ -1,3 +1,6 @@
+global:
+  deploymentId: test-helm-charts
+
 kafka:
   controller:
     resourcesPreset: "none"
