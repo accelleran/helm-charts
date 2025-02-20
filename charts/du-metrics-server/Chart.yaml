@@ -7,7 +7,7 @@ version: 0.4.8
 appVersion: 3.1.1
 dependencies:
   - name: common
-    version: 0.3.13
+    version: 0.4.0
     repository: https://accelleran.github.io/helm-charts/
   - name: influxdb2
     alias: influxdb
