@@ -13,11 +13,6 @@
 {{- end -}}
 
 
-{{- define "accelleran.cu-cp.cellCount" -}}
-{{- .Values.numOfCells -}}
-{{- end -}}
-
-
 {{- define "accelleran.cu-cp.ueCount" -}}
 {{- .Values.numOfUes -}}
 {{- end -}}
