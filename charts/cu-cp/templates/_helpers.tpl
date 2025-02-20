@@ -29,26 +29,13 @@
 {{- end -}}
 
 
-{{- define "accelleran.cu-cp.e1.service.name" -}}
-{{- $ := . -}}
-{{ index $.Values "cu-cp" "e1Service" "name" | default (printf "%s-e1ap" (include "accelleran.common.fullname" (dict "top" $ "values" (index $.Values "cu-cp")))) }}
-{{- end -}}
-
-
-{{- define "accelleran.cu-cp.f1.service.name" -}}
-{{- $ := . -}}
-{{ index $.Values "cu-cp" "f1Service" "name" | default (printf "%s-f1ap" (include "accelleran.common.fullname" (dict "top" $ "values" (index $.Values "cu-cp")))) }}
-{{- end -}}
-
-
 {{- define "accelleran.cu-cp.init.args" -}}
 {{- $ := . -}}
-{{- $values := (index $.Values "cu-cp") -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
 values:
-  {{ mergeOverwrite (deepCopy $values) (fromYaml (include "accelleran.cu-cp.disabledLicense" .)) | toYaml | nindent 2 }}
+  {{ mergeOverwrite (deepCopy $.Values) (fromYaml (include "accelleran.cu-cp.disabledLicense" .)) | toYaml | nindent 2 }}
 
 bootstrapConfigMapName: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
 {{- end -}}

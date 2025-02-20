@@ -7,22 +7,18 @@
 {{- define "accelleran.cu-up.netconf.statefulset.args" -}}
 {{- $ := . -}}
 {{- $values := (index $.Values "netconf") -}}
-{{- $mergedValues := mergeOverwrite
-                      (deepCopy $values)
-                      (dict "nameOverride" (index $.Values "cu-up" "nameOverride"))
--}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
 values:
-  {{ $mergedValues | toYaml | nindent 2 }}
+  {{ $values | toYaml | nindent 2 }}
 
 name: {{ include "accelleran.common.fullname" (dict "top" $ "values" $values) | quote }}
 selectorLabels:
-  {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $mergedValues) | nindent 2 }}
+  {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
   app.kubernetes.io/component: {{ $values.component }}
 labels:
-  {{ include "accelleran.common.labels" (dict "top" $ "values" $mergedValues) | nindent 2 }}
+  {{ include "accelleran.common.labels" (dict "top" $ "values" $values) | nindent 2 }}
 
 initContainers:
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-up.netconf.init.args" .))) | toYaml | nindent 2 }}

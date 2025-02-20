@@ -61,84 +61,67 @@ drax:
   technology: "5g"
   role: "5g"
 
+nameOverride: ""
+fullnameOverride: ""
 
-cu-cp:
+component: "cu-cp"
+
+redisInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.0"
+  pullPolicy: IfNotPresent
+
+natsInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.0"
+  pullPolicy: IfNotPresent
+
+image:
+  repository: accelleran/cucpappl
+  tag: ""
+  pullPolicy: IfNotPresent
+
+service:
   enabled: true
+  name: ""
+  type: "LoadBalancer"
+  ports:
+    e1ap:
+      appProtocol: "e1-control"
+      protocol: "SCTP"
+      port: 38462
+      targetPort: 0
+      nodePort: 0
+    f1ap:
+      appProtocol: "f1-control"
+      protocol: "SCTP"
+      port: 38472
+      targetPort: 0
+      nodePort: 0
+  loadBalancerIP: ""
+  externalTrafficPolicy: "Local"
 
-  nameOverride: "cu-cp"
-  fullnameOverride: ""
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
 
-  component: "cu-cp"
+podSecurityContext: {}
+  # fsGroup: 2000
 
-  containerName: "cu-cp"
+nodeSelector: {}
 
-  redisInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
+tolerations: []
 
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
-
-  image:
-    repository: accelleran/cucpappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  e1Service:
-    enabled: true
-    name: ""
-    type: "LoadBalancer"
-    ports:
-      e1ap:
-        appProtocol: "e1-control"
-        protocol: "SCTP"
-        port: 38462
-        targetPort: 0
-        nodePort: 0
-    loadBalancerIP: ""
-    externalTrafficPolicy: "Local"
-
-  f1Service:
-    enabled: true
-    name: ""
-    type: "LoadBalancer"
-    ports:
-      f1ap:
-        appProtocol: "f1-control"
-        protocol: "SCTP"
-        port: 38472
-        targetPort: 0
-        nodePort: 0
-    loadBalancerIP: ""
-    externalTrafficPolicy: "Local"
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
+affinity: {}
 
 
 netconf:
   enabled: true
-
-  nameOverride: "netconf"
-  fullnameOverride: ""
 
   component: "netconf"
 
@@ -192,8 +175,7 @@ netconf:
 ng-ap:
   enabled: true
 
-  nameOverride: "ng-ap"
-  fullnameOverride: ""
+  component: "ng-ap"
 
   containerName: "ng-ap"
 
@@ -229,8 +211,7 @@ ng-ap:
 e1-cp:
   enabled: true
 
-  nameOverride: "e1-cp"
-  fullnameOverride: ""
+  component: "e1-cp"
 
   containerName: "e1-cp"
 
@@ -266,8 +247,7 @@ e1-cp:
 f1-ap:
   enabled: true
 
-  nameOverride: "f1-ap"
-  fullnameOverride: ""
+  component: "f1-ap"
 
   containerName: "f1-ap"
 
@@ -303,8 +283,7 @@ f1-ap:
 ds-ctrl:
   enabled: true
 
-  nameOverride: "ds-ctrl"
-  fullnameOverride: ""
+  component: "ds-ctrl"
 
   containerName: "ds-ctrl"
 

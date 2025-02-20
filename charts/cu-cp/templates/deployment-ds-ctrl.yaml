@@ -17,6 +17,12 @@ values:
     ) | toYaml | nindent 2
   }}
 
+selectorLabels:
+  {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
+  app.kubernetes.io/component: {{ $values.component }}
+labels:
+  {{ include "accelleran.common.labels" (dict "top" $ "values" $values) | nindent 2 }}
+
 volumes:
 {{- range $index, $ordinal := until ($values.autoscaling.factorReplicas | int) }}
   - name: {{ printf "config-%d" $ordinal | quote }}

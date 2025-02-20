@@ -67,49 +67,42 @@ drax:
   technology: "5g"
   role: "5g"
 
+nameOverride: ""
+fullnameOverride: ""
 
-cu-up:
-  enabled: true
+containerName: "cu-up"
 
-  nameOverride: "cu-up"
-  fullnameOverride: ""
+natsInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.0"
+  pullPolicy: IfNotPresent
 
-  containerName: "cu-up"
+image:
+  repository: accelleran/cuupappl
+  tag: ""
+  pullPolicy: IfNotPresent
 
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
 
-  image:
-    repository: accelleran/cuupappl
-    tag: ""
-    pullPolicy: IfNotPresent
+podSecurityContext: {}
+  # fsGroup: 2000
 
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
+nodeSelector: {}
 
-  podSecurityContext: {}
-    # fsGroup: 2000
+tolerations: []
 
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
+affinity: {}
 
 
 netconf:
   enabled: true
-
-  nameOverride: "netconf"
-  fullnameOverride: ""
 
   component: "netconf"
 
@@ -163,8 +156,7 @@ netconf:
 ups:
   enabled: true
 
-  nameOverride: "ups"
-  fullnameOverride: ""
+  component: "ups"
 
   containerName: "ups"
 
@@ -231,8 +223,7 @@ ups:
 xdp-ups:
   enabled: true
 
-  nameOverride: "xdp-ups"
-  fullnameOverride: ""
+  component: "xdp-ups"
 
   containerName: "xdp-ups"
 
