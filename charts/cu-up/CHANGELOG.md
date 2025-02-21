@@ -1,5 +1,22 @@
 # Changelog
 
+## [11.0.0](https://github.com/accelleran/helm-charts/compare/cu-up-10.0.2...cu-up-11.0.0) (2025-02-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update helm release common to v0.4.0 ([#993](https://github.com/accelleran/helm-charts/issues/993))
+
+### Features
+
+* **deps:** Update helm release common to v0.4.0 ([#993](https://github.com/accelleran/helm-charts/issues/993)) ([016796d](https://github.com/accelleran/helm-charts/commit/016796d84306ae3b5f17d39bcb0c85ed61467ac6))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cuup-netconf docker tag to v7.0.4 ([#1009](https://github.com/accelleran/helm-charts/issues/1009)) ([d1b4a45](https://github.com/accelleran/helm-charts/commit/d1b4a45e04965031e6c4f832770886bdf3be6dba))
+* **deps:** Update helm release common to v0.4.1 ([#1002](https://github.com/accelleran/helm-charts/issues/1002)) ([8eeac59](https://github.com/accelleran/helm-charts/commit/8eeac59549c5f0153cbaf02bfbeb7c4b5c4073b2))
+
 ## [10.0.2](https://github.com/accelleran/helm-charts/compare/cu-up-10.0.1...cu-up-10.0.2) (2025-02-07)
 
 
