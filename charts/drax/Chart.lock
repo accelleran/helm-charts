@@ -67,12 +67,12 @@ dependencies:
   version: 0.14.1
 - name: kafka
   repository: https://charts.bitnami.com/bitnami/
-  version: 31.3.1
+  version: 31.4.0
 - name: nats
   repository: https://nats-io.github.io/k8s/helm/charts/
   version: 1.2.10
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
-  version: 20.7.1
-digest: sha256:f4492376f747c2c97cd3dcc9da1c3879b1205adab239a06ab269806f237fb6b1
-generated: "2025-02-20T11:10:11.046402053Z"
+  version: 20.8.0
+digest: sha256:61a42fffcfec93780dc3f50f19fd05f5f382a0cfe7fb64b1ba20bceab19f4e65
+generated: "2025-02-20T19:21:09.4163007Z"
