@@ -922,6 +922,7 @@ oauth2-proxy:
       oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/keycloak/realms/drax"
       redirect_url = "/oauth2/callback"
       email_domains = [ "*" ]
+      scope = "openid email profile"
 
       whitelist_domains = [ {{ with $.Values.global.domain }}"{{ . }}",".{{ . }}",{{ end }}"{{ $.Values.global.ipAddress }}" ]
       cookie_domains = [ {{ with $.Values.global.domain }}"{{ . }}",".{{ . }}",{{ end }}"{{ $.Values.global.ipAddress }}" ]

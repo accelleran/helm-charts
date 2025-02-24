@@ -74,8 +74,6 @@ class ClientScope:
         }
 
 
-
-
 class Client(Protocol):
     id: str
     name: str
@@ -297,6 +295,19 @@ def main() -> None:
 
     client_scopes: list[ClientScope] = list()
 
+    openid_client_scope = ClientScope(
+        name="openid", roles=[]
+    )
+    client_scopes.append(openid_client_scope)
+
+    email_client_scope = ClientScope(
+        name="email", roles=[]
+    )
+
+    profile_client_scope = ClientScope(
+        name="profile", roles=[]
+    )
+
     read_clients_client_scope = ClientScope(
         name="read-clients", roles=[realm_management_view_clients_role]
     )
@@ -318,6 +329,9 @@ def main() -> None:
     oauth2_proxy_client.cookie_secret = os.environ.get(
         "OAUTH2_PROXY_COOKIE_SECRET", default=""
     )
+    oauth2_proxy_client.scopes.append(openid_client_scope)
+    oauth2_proxy_client.scopes.append(email_client_scope)
+    oauth2_proxy_client.scopes.append(profile_client_scope)
     clients.append(oauth2_proxy_client)
 
     dashboard_client = InternalClient()
