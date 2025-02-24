@@ -873,7 +873,16 @@ def create_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) 
     secret = kubeclient.V1Secret(
         api_version="v1",
         kind="Secret",
-        metadata=kubeclient.V1ObjectMeta(name=namespaced_name.name),
+        metadata=kubeclient.V1ObjectMeta(
+            name=namespaced_name.name,
+            labels={
+                "app.kubernetes.io/managed-by": "Helm"
+            },
+            annotations={
+                "meta.helm.sh/release-name": os.environ.get("HELM_RELEASE_NAME"),
+                "meta.helm.sh/release-namespace": os.environ.get("HELM_RELEASE_NAMESPACE"),
+            },
+        ),
         string_data=string_data,
     )
     core_v1_api.create_namespaced_secret(
@@ -890,7 +899,16 @@ def update_secret(namespaced_name: NamespacedName, string_data: dict[str, str]) 
     secret = kubeclient.V1Secret(
         api_version="v1",
         kind="Secret",
-        metadata=kubeclient.V1ObjectMeta(name=namespaced_name.name),
+        metadata=kubeclient.V1ObjectMeta(
+            name=namespaced_name.name,
+            labels={
+                "app.kubernetes.io/managed-by": "Helm"
+            },
+            annotations={
+                "meta.helm.sh/release-name": os.environ.get("HELM_RELEASE_NAME"),
+                "meta.helm.sh/release-namespace": os.environ.get("HELM_RELEASE_NAMESPACE"),
+            },
+        ),
         string_data=string_data,
     )
     core_v1_api.patch_namespaced_secret(

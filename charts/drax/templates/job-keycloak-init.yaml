@@ -44,6 +44,11 @@ args:
     python3 /setup_drax_realm.py
 
 env:
+  - name: HELM_RELEASE_NAME
+    value: {{ $.Release.Name }}
+  - name: HELM_RELEASE_NAMESPACE
+    value: {{ $.Release.Namespace }}
+
   - name: DRAX_ENDPOINT
     value: {{ $.Values.global.domain | default $.Values.global.ipAddress }}
 
