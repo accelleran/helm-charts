@@ -4,7 +4,7 @@
   "charts/cell-wrapper-config": "0.5.2",
   "charts/cu-cp": "10.0.2",
   "charts/cu-up": "10.0.2",
-  "charts/drax": "13.1.1",
+  "charts/drax": "13.1.2",
   "charts/du-metrics-server": "0.4.8",
   "charts/loki-deleter": "0.1.5",
   "charts/loki-gateway": "0.1.9",
