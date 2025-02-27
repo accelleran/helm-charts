@@ -67,42 +67,42 @@ drax:
   technology: "5g"
   role: "5g"
 
+nameOverride: ""
+fullnameOverride: ""
 
-cu-up:
-  enabled: true
+containerName: "cu-up"
 
-  nameOverride: "cu-up"
-  fullnameOverride: ""
+natsInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.0"
+  pullPolicy: IfNotPresent
 
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
+image:
+  repository: accelleran/cuupappl
+  tag: ""
+  pullPolicy: IfNotPresent
 
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
 
-  podSecurityContext: {}
-    # fsGroup: 2000
+podSecurityContext: {}
+  # fsGroup: 2000
 
-  nodeSelector: {}
+nodeSelector: {}
 
-  tolerations: []
+tolerations: []
 
-  affinity: {}
+affinity: {}
 
 
 netconf:
   enabled: true
-
-  nameOverride: "netconf"
-  fullnameOverride: ""
 
   component: "netconf"
 
@@ -153,76 +153,10 @@ netconf:
         nodePort: null
 
 
-controller-up:
-  enabled: true
-
-  nameOverride: "controller-up"
-  fullnameOverride: ""
-
-  containerName: "controller-up"
-
-  image:
-    repository: accelleran/controllerupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-pm-controller-up:
-  enabled: true
-
-  nameOverride: "pm-controller-up"
-  fullnameOverride: ""
-
-  containerName: "pm-controller-up"
-
-  image:
-    repository: accelleran/pmcontrollerupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-res-mgr-up:
-  enabled: true
-
-  nameOverride: "res-mgr-up"
-  fullnameOverride: ""
-
-  containerName: "res-mgr-up"
-
-  image:
-    repository: accelleran/resmgrupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-
-e1-sctp-up:
-  enabled: true
-
-  nameOverride: "e1-sctp-up"
-  fullnameOverride: ""
-
-  containerName: "e1-sctp-up"
-
-  image:
-    repository: accelleran/e1sctpupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
 ups:
   enabled: true
 
-  nameOverride: "ups"
-  fullnameOverride: ""
+  component: "ups"
 
   containerName: "ups"
 
@@ -289,8 +223,7 @@ ups:
 xdp-ups:
   enabled: true
 
-  nameOverride: "xdp-ups"
-  fullnameOverride: ""
+  component: "xdp-ups"
 
   containerName: "xdp-ups"
 
