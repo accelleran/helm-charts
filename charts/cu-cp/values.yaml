@@ -534,5 +534,6 @@ redis:
   architecture: standalone
   auth:
     enabled: false
+    usePasswordFiles: false
 
 extraResources: []
