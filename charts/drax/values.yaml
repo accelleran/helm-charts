@@ -273,6 +273,26 @@ dashboard:
       secretKeyRef:
         name: "{{ $.Release.Name }}-auth-dashboard"
         key: client-secret
+  
+  - name: "LOKI_LOGS_EXTERNAL_USERNAME"
+    value: "external-logs"
+  - name: "LOKI_LOGS_EXTERNAL_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-loki-gateway-auth"
+        key: external-logs
+  - name: "LOKI_EVENTS_EXTERNAL_USERNAME"
+    value: "external-events"
+  - name: "LOKI_EVENTS_EXTERNAL_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-loki-gateway-auth"
+        key: external-events
+  - name: INFLUXDB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: "drax-influxdb2-auth"
+        key: admin-token
 
   service:
     type: NodePort
@@ -1442,6 +1462,9 @@ loki-gateway:
       - username: "external-logs"
         password: ""
         organization: "logs"
+      - username: "external-events"
+        password: ""
+        organization: "notifications"
 
   ingress:
     enabled: false
