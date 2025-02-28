@@ -250,6 +250,15 @@ dashboard:
   - name: "KEYCLOAK_CLIENT_SECRET"
     secretName: "{{ $.Release.Name }}-auth-dashboard"
     secretKey: client-secret
+  - name: "LOKI_LOGS_EXTERNAL_PASSWORD"
+    secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+    secretKey: external-logs
+  - name: "LOKI_EVENTS_EXTERNAL_PASSWORD"
+    secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+    secretKey: external-events
+  - name: INFLUXDB_TOKEN
+    secretName: "drax-influxdb2-auth"
+    secretKey: admin-token
 
   config:
     # Defined for server config.json
@@ -278,6 +287,10 @@ dashboard:
   extraEnvs:
   - name: "LOKI_EVENTS_BASIC_AUTH_USERNAME"
     value: "dashboard-events"
+  - name: "LOKI_LOGS_EXTERNAL_USERNAME"
+    value: "external-logs"
+  - name: "LOKI_EVENTS_EXTERNAL_USERNAME"
+    value: "external-events"
 
   service:
     type: NodePort
@@ -1451,6 +1464,9 @@ loki-gateway:
       - username: "external-logs"
         password: ""
         organization: "logs"
+      - username: "external-events"
+        password: ""
+        organization: "events"
 
   ingress:
     enabled: false
