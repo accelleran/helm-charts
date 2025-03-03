@@ -11,7 +11,6 @@ with the following details:
   AMFs:   {{ include "accelleran.cu-cp.amfCount" . }}
   CU-UPs: {{ include "accelleran.cu-cp.cuUpCount" . }}
   DUs:    {{ include "accelleran.cu-cp.duCount" . }}
-  CELLs:  {{ include "accelleran.cu-cp.cellCount" . }}
   UEs:    {{ include "accelleran.cu-cp.ueCount" . }}
 
   Instance ID: {{ include "accelleran.common.bootstrap.instanceId" (dict "top" $) }}
