@@ -15,7 +15,7 @@ contactPoints:
         settings:
           httpMethod: POST
           message: '{{`{{ template "o1_ves_format_template" . }}`}}'
-          url: http://drax-telemetry-collector.default.svc.cluster.local:55556/alert
+          url: '{{ tpl (index $.Values "telemetry-collector" "grafanaWebhookUrl") . }}'
         disableResolveMessage: false
 templates:
   - orgId: 1
