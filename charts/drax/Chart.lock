@@ -73,6 +73,6 @@ dependencies:
   version: 1.2.10
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
-  version: 20.11.1
-digest: sha256:24ab570f16de4c24ffc2294a52d0f1beca4f69fe36d1a05927e78186704d29dd
-generated: "2025-03-05T06:10:58.281958789Z"
+  version: 20.11.2
+digest: sha256:a2dea90e46d661c7ceb25875317d4f3f65156870e2821e839a76a4224b9dafa4
+generated: "2025-03-05T09:37:44.627519902Z"
