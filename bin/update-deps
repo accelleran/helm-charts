@@ -88,8 +88,7 @@ function package_and_copy_local_deps() {
     local dependent_charts=("${@:2}")
 
     printf "Packaging %s chart...\n" "$chart"
-    chart_package_stdout=$(helm package "$chart" --destination /tmp)
-    chart_tgz=$(echo "$chart_package_stdout" | cut -d':' -f2 | sed 's/ //g')
+    chart_tgz="$(helm package "$chart" --destination /tmp | sed 's/^Successfully packaged chart and saved it to: //')"
 
     printf "Copying %s chart tgz to dependents...\n\n" "$chart_tgz"
     for dependent_chart in "${dependent_charts[@]}" ; do
