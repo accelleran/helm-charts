@@ -118,7 +118,6 @@ while getopts ":hRl" opt; do
         ;;
     esac
 done
-shift $((OPTIND -1))
 
 if [ "${skip_remote_deps}" != true ] ; then
     update_remote_deps
