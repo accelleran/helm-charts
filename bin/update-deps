@@ -1,0 +1,130 @@
+#!/bin/bash
+
+BASE_DIR=$(dirname "$0")
+GIT_ROOT=$(cd "${BASE_DIR}/.." && pwd)
+CHARTS_ROOT="${GIT_ROOT}/charts"
+
+function usage() {
+    echo "Usage:"
+    echo "update-deps"
+    echo "    -h                Display usage."
+    echo "    -r                Skip downloading remote dependencies."
+    echo "    -l                Package local dependencies and copy them to the dependendents."
+    echo "                      Skipped by default."
+    echo ""
+    exit 0
+}
+
+function fatal() {
+    error "${@}"
+    exit 1
+}
+
+function error() {
+    echo "${1}" 1>&2
+}
+
+function update_remote_deps() {
+    printf "Updating local repo cache...\n\n"
+    helm repo update
+
+    for chart in "${CHARTS_ROOT}"/*/ "${CHARTS_ROOT}"/drax/charts/*/ ; do
+        printf "\nUpdating remote dependencies of %s...\n\n" "$chart"
+        helm dependency update "$chart" --skip-refresh
+    done
+}
+
+function update_local_deps() {
+    package_and_copy_local_deps "${CHARTS_ROOT}/common" \
+        "${CHARTS_ROOT}/cell-wrapper" \
+        "${CHARTS_ROOT}/cell-wrapper-config" \
+        "${CHARTS_ROOT}/cu-cp" \
+        "${CHARTS_ROOT}/cu-up" \
+        "${CHARTS_ROOT}/drax" \
+            "${CHARTS_ROOT}/drax/charts/config-api" \
+            "${CHARTS_ROOT}/drax/charts/dashboard" \
+            "${CHARTS_ROOT}/drax/charts/e2-t" \
+            "${CHARTS_ROOT}/drax/charts/golang-nkafka" \
+            "${CHARTS_ROOT}/drax/charts/network-state-monitor" \
+            "${CHARTS_ROOT}/drax/charts/pm-counters" \
+            "${CHARTS_ROOT}/drax/charts/service-monitor" \
+            "${CHARTS_ROOT}/drax/charts/service-orchestrator" \
+        "${CHARTS_ROOT}/du-metrics-server" \
+        "${CHARTS_ROOT}/loki-deleter" \
+        "${CHARTS_ROOT}/loki-gateway" \
+        "${CHARTS_ROOT}/telemetry-collector" \
+        "${CHARTS_ROOT}/xapp-anr"
+
+    package_and_copy_local_deps "${CHARTS_ROOT}/cell-wrapper" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/config-api" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/dashboard" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/e2-t" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/golang-nkafka" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/network-state-monitor" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/pm-counters" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/service-monitor" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/drax/charts/service-orchestrator" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/du-metrics-server" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/loki-deleter" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/loki-gateway" \
+        "${CHARTS_ROOT}/drax"
+    package_and_copy_local_deps "${CHARTS_ROOT}/telemetry-collector" \
+        "${CHARTS_ROOT}/drax"
+}
+
+function package_and_copy_local_deps() {
+    local chart="$1"
+    local dependent_charts=("${@:2}")
+
+    printf "Packaging %s chart...\n" "$chart"
+    chart_package_stdout=$(helm package "$chart" --destination /tmp)
+    chart_tgz=$(echo "$chart_package_stdout" | cut -d':' -f2 | sed 's/ //g')
+
+    printf "Copying %s chart tgz to dependents...\n\n" "$chart_tgz"
+    for dependent_chart in "${dependent_charts[@]}" ; do
+        cp "$chart_tgz" "$dependent_chart/charts/"
+    done
+}
+
+skip_remote_deps=false
+package_local_deps=false
+
+while getopts ":hRl" opt; do
+    case ${opt} in
+        h )
+            usage
+        ;;
+        R )
+            skip_remote_deps=true
+        ;;
+        l )
+            package_local_deps=true
+        ;;
+        \? )
+            fatal "Invalid Option: -${OPTARG}"
+        ;;
+        : )
+            fatal "Invalid option: ${OPTARG} requires an argument"
+        ;;
+    esac
+done
+shift $((OPTIND -1))
+
+if [ "${skip_remote_deps}" != true ] ; then
+    update_remote_deps
+fi
+
+if [ "${package_local_deps}" == true ] ; then
+    update_local_deps
+fi
