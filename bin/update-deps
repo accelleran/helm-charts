@@ -8,7 +8,7 @@ function usage() {
     echo "Usage:"
     echo "update-deps"
     echo "    -h                Display usage."
-    echo "    -r                Skip downloading remote dependencies."
+    echo "    -R                Skip downloading remote dependencies."
     echo "    -l                Package local dependencies and copy them to the dependendents."
     echo "                      Skipped by default."
     echo ""
