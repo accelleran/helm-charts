@@ -85,7 +85,7 @@ dependencies:
     tags:
       - logs
       - events
-    version: 4.7.5
+    version: 4.7.6
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
     condition: loki-deleter.enabled
@@ -126,13 +126,13 @@ dependencies:
   # infrastructure
   - name: kafka
     condition: kafka.enabled
-    version: 31.4.0
+    version: 31.5.0
     repository: https://charts.bitnami.com/bitnami/
   - name: nats
     condition: nats.enabled
-    version: 1.2.10
+    version: 1.2.11
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 20.11.0
+    version: 20.11.2
     repository: https://charts.bitnami.com/bitnami/
