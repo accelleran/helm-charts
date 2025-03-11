@@ -342,7 +342,7 @@ telemetry-collector:
         targetPort: 9020
         protocol: TCP
 
-  grafanaWebhookUrl: "http://{{ $.Release.Name }}-telemetry-collector.default.svc:9020/alert"
+  grafanaWebhookUrl: "http://{{ $.Release.Name }}-telemetry-collector.{{ $.Release.Namespace }}:9020/alert"
 
   influxdbAuthSecret: "drax-influxdb2-auth"
 
