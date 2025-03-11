@@ -82,6 +82,17 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
+service:
+  enabled: true
+  name: ""
+  type: "ClusterIP"
+  ports:
+    netconf:
+      protocol: "TCP"
+      port: 8300
+      targetPort: 0
+      nodePort: 0
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: false
@@ -108,11 +119,6 @@ netconf:
 
   containerName: "netconf"
 
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.9.0"
-
   image:
     repository: accelleran/cuup-netconf
     tag: ""
@@ -130,7 +136,7 @@ netconf:
     initialDelaySeconds: 15
     periodSeconds: 30
 
-  podSecurityContext:
+  securityContext:
     fsGroup: 1000
 
   persistence:
@@ -140,17 +146,6 @@ netconf:
       accessModes:
         - "ReadWriteOnce"
       size: "128Mi"
-
-  service:
-    enabled: true
-    name: ""
-    type: "ClusterIP"
-    ports:
-      netconf:
-        protocol: "TCP"
-        port: 8300
-        targetPort: null
-        nodePort: null
 
 
 ups:
