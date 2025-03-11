@@ -92,8 +92,8 @@ groups:
               maxDataPoints: 43200
               refId: UsedDiskSpacePercentage
               type: math
-        noDataState: Alerting
-        execErrState: Alerting
+        noDataState: OK
+        execErrState: OK
         annotations:
           description: |
             Disk usage has exceeded 70%, indicating high disk utilization on the node.
@@ -137,7 +137,7 @@ groups:
               range: false
               refId: PodEvicted
         noDataState: OK
-        execErrState: Alerting
+        execErrState: OK
         annotations:
           description: |
             Pod has been evicted.
