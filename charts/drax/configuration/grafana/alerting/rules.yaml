@@ -150,7 +150,7 @@ groups:
           deploymentId: "{{ .Values.global.deploymentId }}"
           alarmType: PROCESSING_ERROR_ALARM
           priority: High
-          perceivedSeverity: WARNING
+          perceivedSeverity: MAJOR
         isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
         notification_settings:
           receiver: accelleran-drax
