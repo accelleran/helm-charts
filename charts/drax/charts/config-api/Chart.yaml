@@ -4,7 +4,7 @@ description: Backend of the Accelleran Dashboard
 type: application
 version: 3.0.0
 # renovate: image=accelleran/config-api
-appVersion: 2.1.1
+appVersion: 2.1.2
 dependencies:
   - name: common
     version: 0.3.13

@@ -2,7 +2,7 @@ apiVersion: v2
 name: drax
 description: Accelleran's dRAX helm chart
 type: application
-version: 13.1.1
+version: 13.1.2
 dependencies:
   - name: common
     version: 0.3.13
@@ -31,7 +31,7 @@ dependencies:
     repository: file://charts/config-api
   - name: cell-wrapper
     condition: cell-wrapper.enabled
-    version: 6.1.2
+    version: 6.2.0
     repository: https://accelleran.github.io/helm-charts/
   - name: du-metrics-server
     condition: du-metrics-server.enabled
@@ -66,11 +66,11 @@ dependencies:
   # monitoring
   - name: grafana
     condition: grafana.enabled
-    version: 8.10.0
+    version: 8.10.3
     repository: https://grafana.github.io/helm-charts
   - name: prometheus
     condition: prometheus.enabled
-    version: 27.3.1
+    version: 27.5.1
     repository: https://prometheus-community.github.io/helm-charts
   - name: loki-gateway
     condition: loki-gateway.enabled
@@ -85,7 +85,7 @@ dependencies:
     tags:
       - logs
       - notifications
-    version: 4.7.5
+    version: 4.7.6
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
     condition: loki-deleter.enabled
@@ -126,13 +126,13 @@ dependencies:
   # infrastructure
   - name: kafka
     condition: kafka.enabled
-    version: 31.4.0
+    version: 31.5.0
     repository: https://charts.bitnami.com/bitnami/
   - name: nats
     condition: nats.enabled
-    version: 1.2.10
+    version: 1.2.11
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 20.8.0
+    version: 20.11.3
     repository: https://charts.bitnami.com/bitnami/

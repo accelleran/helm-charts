@@ -19,7 +19,7 @@ dependencies:
   version: 3.0.0
 - name: cell-wrapper
   repository: https://accelleran.github.io/helm-charts/
-  version: 6.1.2
+  version: 6.2.0
 - name: du-metrics-server
   repository: https://accelleran.github.io/helm-charts/
   version: 0.4.8
@@ -37,16 +37,16 @@ dependencies:
   version: 2.0.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.10.0
+  version: 8.10.3
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
-  version: 27.3.1
+  version: 27.5.1
 - name: loki-gateway
   repository: https://accelleran.github.io/helm-charts/
   version: 0.1.9
 - name: grafana-loki
   repository: https://charts.bitnami.com/bitnami/
-  version: 4.7.5
+  version: 4.7.6
 - name: loki-deleter
   repository: https://accelleran.github.io/helm-charts/
   version: 0.1.5
@@ -67,12 +67,12 @@ dependencies:
   version: 0.14.1
 - name: kafka
   repository: https://charts.bitnami.com/bitnami/
-  version: 31.4.0
+  version: 31.5.0
 - name: nats
   repository: https://nats-io.github.io/k8s/helm/charts/
-  version: 1.2.10
+  version: 1.2.11
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
-  version: 20.8.0
-digest: sha256:61a42fffcfec93780dc3f50f19fd05f5f382a0cfe7fb64b1ba20bceab19f4e65
-generated: "2025-02-20T19:21:09.4163007Z"
+  version: 20.11.3
+digest: sha256:f1d3a0009db22a4ffd0dcf948064e09f15ee00cc4e15d45490474a2a4cf43a9d
+generated: "2025-03-10T14:47:04.758502312Z"
