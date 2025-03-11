@@ -70,7 +70,7 @@ drax:
 nameOverride: ""
 fullnameOverride: ""
 
-containerName: "cu-up"
+component: "cu-up"
 
 natsInitImage:
   repository: accelleran/acc-generic-img
