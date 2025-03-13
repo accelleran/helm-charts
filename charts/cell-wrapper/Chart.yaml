@@ -2,7 +2,7 @@ apiVersion: v2
 name: cell-wrapper
 description: Accelleran's cell-wrapper helm chart
 type: application
-version: 6.2.0
+version: 7.0.0
 # renovate: image=accelleran/cw-netconf versioning=semver
 appVersion: "6.2.1"
 dependencies:
