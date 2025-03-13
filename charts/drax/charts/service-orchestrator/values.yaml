@@ -5,6 +5,10 @@ global:
   imagePullSecrets:
     - name: accelleran-secret
 
+  accelleranLicense:
+    enabled: true
+    imageSuffix: "-license"
+
   persistentLogLevel: info
 
   nodeSelector: {}
@@ -39,10 +43,6 @@ image:
   repository: accelleran/service-orchestrator
   pullPolicy: IfNotPresent
   tag: ""
-
-accelleranLicense:
-  enabled: true
-  secretName: "accelleran-license"
 
 podAnnotations: {}
 

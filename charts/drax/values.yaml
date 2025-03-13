@@ -44,7 +44,6 @@ global:
   #
   accelleranLicense:
     enabled: true
-    secretName: "accelleran-license"
 
   # Accelleran Product Configuration
   #   Description:  This configuration field allows you to specify the product variant for Accelleran deployments.
@@ -188,10 +187,6 @@ service-monitor:
 
   monitoredNamespaces: "{{ .Release.Namespace }}"
 
-  accelleranLicense:
-    enabled: "{{ $.Values.global.accelleranLicense.enabled }}"
-    secretName: "{{ $.Values.global.accelleranLicense.secretName }}"
-
   ingress:
     enabled: false
     className: ""
@@ -214,10 +209,6 @@ service-orchestrator:
   enabled: true
 
   kubeIp: "{{ .Values.global.kubeIp }}"
-
-  accelleranLicense:
-    enabled: "{{ $.Values.global.accelleranLicense.enabled }}"
-    secretName: "{{ $.Values.global.accelleranLicense.secretName }}"
 
   ingress:
     enabled: false
@@ -493,10 +484,6 @@ golang-nkafka-5g:
       #   - natsSubject: "PM-REPORT-COUNTERS"
       #     kafkaTopic: "accelleran.drax.5g.ric.raw.pm_counters"
       #   ...
-
-  accelleranLicense:
-    enabled: "{{ $.Values.global.accelleranLicense.enabled }}"
-    secretName: "{{ $.Values.global.accelleranLicense.secretName }}"
 
 
 kafka:
