@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.5.2...cell-wrapper-config-0.6.0) (2025-03-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update helm release common to v0.4.1 in dRAX ([#994](https://github.com/accelleran/helm-charts/issues/994))
+
+### Features
+
+* **deps:** Update helm release common to v0.4.1 in dRAX ([#994](https://github.com/accelleran/helm-charts/issues/994)) ([1061caf](https://github.com/accelleran/helm-charts/commit/1061caff716b4988667b3f2d11937b89b1ab2b1c))
+
 ## [0.5.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.5.1...cell-wrapper-config-0.5.2) (2025-01-15)
 
 
