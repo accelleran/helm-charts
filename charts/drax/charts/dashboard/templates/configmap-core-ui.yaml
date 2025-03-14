@@ -25,6 +25,6 @@ name: {{ include "accelleran.common.fullname" (dict "top" $) }}-core-ui
 
 data:
   config.js: |-
-    window.GRAFANA_PORT = "{{ tpl (toString $.Values.config.grafanaPort) $ }}";
+    window.GRAFANA_PORT = "{{ tpl (toString $.Values.config.grafanaNodePort) $ }}";
     window.PRODUCT = "{{ $currentProduct }}";
 {{- end -}}

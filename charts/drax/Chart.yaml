@@ -76,7 +76,7 @@ dependencies:
     condition: loki-gateway.enabled
     tags:
       - logs
-      - notifications
+      - events
     version: 0.1.10
     repository: https://accelleran.github.io/helm-charts/
   - name: grafana-loki
@@ -84,7 +84,7 @@ dependencies:
     condition: loki.enabled
     tags:
       - logs
-      - notifications
+      - events
     version: 4.7.6
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
@@ -97,7 +97,7 @@ dependencies:
     condition: minio.enabled
     tags:
       - logs
-      - notifications
+      - events
     version: 5.4.0
     repository: https://charts.min.io/
   - name: promtail
@@ -108,10 +108,10 @@ dependencies:
     version: 6.16.6
     repository: https://grafana.github.io/helm-charts/
   - name: promtail
-    alias: promtail-notifications
-    condition: promtail-notifications.enabled
+    alias: promtail-events
+    condition: promtail-events.enabled
     tags:
-      - notifications
+      - events
     version: 6.16.6
     repository: https://grafana.github.io/helm-charts/
   - name: influxdb2

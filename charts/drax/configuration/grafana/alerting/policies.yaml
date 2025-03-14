@@ -1,8 +1,10 @@
 apiVersion: 1
 policies:
   - orgId: 1
-    receiver: accelleran-slack
+    receiver: accelleran-drax
     group_by:
       - grafana_folder
       - alertname
-    repeat_interval: "1h"
+    group_wait: 10s       # default 30s
+    group_interval: 10s   # default 5m
+    repeat_interval: 1h   # default 4h
