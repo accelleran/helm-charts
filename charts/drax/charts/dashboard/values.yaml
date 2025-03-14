@@ -54,7 +54,7 @@ config:
     - "accelleran.drax.4g.ric.raw.network_state"
     - "accelleran.drax.all.ric.processed.anr"
   # Defined for core-ui config.js
-  grafanaExternalPort: 0
+  grafanaNodePort: 0
   accelleranProduct: "P5G"
   # Defined for environment variable DRAX_VERSION
   draxVersionConfigmap: ""
