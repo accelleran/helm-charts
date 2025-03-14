@@ -128,8 +128,8 @@ dashboard:
     lokiPort: "80"
     ksqldbPodName: "{{ $.Values.global.kubeIp }}"
     nodeApiURL: "{{ $.Values.global.kubeIp }}"
-    grafanaHost: "{{ $.Release.Name }}-grafana"
-    grafanaPort: "80"
+    grafanaHost: "{{ $.Release.Name }}-grafana.{{ .Release.Namespace }}"
+    grafanaApiPort: "80"
     # Defined for core-ui config.js
     grafanaNodePort: "30300"
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
