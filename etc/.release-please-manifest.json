@@ -6,7 +6,7 @@
   "charts/cu-up": "10.0.2",
   "charts/drax": "13.1.2",
   "charts/du-metrics-server": "0.4.8",
-  "charts/loki-deleter": "0.1.5",
+  "charts/loki-deleter": "0.1.6",
   "charts/loki-gateway": "0.1.10",
   "charts/telemetry-collector": "1.1.12",
   "charts/xapp-anr": "0.1.5",
