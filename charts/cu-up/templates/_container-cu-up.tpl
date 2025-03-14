@@ -1,27 +1,26 @@
-{{- define "accelleran.cu-up.ctrl-up.container" -}}
+{{- define "accelleran.cu-up.container" -}}
 {{- include
       "accelleran.common.container"
-      (fromYaml (include "accelleran.cu-up.ctrl-up.container.args" .))
+      (fromYaml (include "accelleran.cu-up.container.args" .))
 -}}
 {{- end -}}
 
 
-{{- define "accelleran.cu-up.ctrl-up.container.args" -}}
+{{- define "accelleran.cu-up.container.args" -}}
 {{- $ := . -}}
-{{- $values := index $.Values "controller-up" -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
-values:
-  {{ $values | toYaml | nindent 2 }}
 
 env:
   - name: __APPNAME
-    value: controllerUp
+    value: cuUp
 {{- with (include "accelleran.common.bootstrap.instanceId" (dict "top" $)) }}
   - name: INSTANCE_FILTER
     value: {{ . | quote }}
 {{- end }}
+  - name: LICENSE_PATH
+    value: {{ printf "%s/license.crt" (include "accelleran.common.drax.license.mountPath" (dict "top" $)) | quote }}
 envFrom:
   - configMapRef:
       name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
