@@ -38,6 +38,8 @@ config:
   svcMonitorPort: 80
   svcOrchestratorHost: ""
   svcOrchestratorPort: 80
+  grafanaHost: ""
+  grafanaApiPort: 80
   lokiHost: ""
   lokiPort: ""
   configApiHost: ""
