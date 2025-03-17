@@ -98,6 +98,12 @@ bootstrap:
     port: 0
 
 
+drax:
+  auth:
+    adminUser: "accelleran"
+    adminPassword: "accelleran"
+
+
 dashboard:
   enabled: true
 
@@ -106,9 +112,9 @@ dashboard:
     name: "{{ $.Release.Name }}-bootstrap"
 
   secretRefs:
-  - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD"
+  - name: "LOKI_EVENTS_BASIC_AUTH_PASSWORD"
     secretName: "{{ $.Release.Name }}-loki-gateway-auth"
-    secretKey: "dashboard-notifications"
+    secretKey: "dashboard-events"
 
   config:
     # Defined for server config.json
@@ -122,15 +128,27 @@ dashboard:
     lokiPort: "80"
     ksqldbPodName: "{{ $.Values.global.kubeIp }}"
     nodeApiURL: "{{ $.Values.global.kubeIp }}"
+    grafanaHost: "{{ $.Release.Name }}-grafana.{{ .Release.Namespace }}"
+    grafanaApiPort: "80"
     # Defined for core-ui config.js
-    grafanaPort: "30300"
+    grafanaNodePort: "30300"
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
 
   extraEnvs:
-  - name: "LOKI_NOTIFICATIONS_BASIC_AUTH_USERNAME"
-    value: "dashboard-notifications"
+  - name: "LOKI_EVENTS_BASIC_AUTH_USERNAME"
+    value: "dashboard-events"
+  - name: "GRAFANA_BASIC_AUTH_USERNAME"
+    valueFrom:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-drax-auth"
+        key: admin-username
+  - name: "GRAFANA_BASIC_AUTH_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-drax-auth"
+        key: admin-password
 
   service:
     type: NodePort
@@ -319,6 +337,12 @@ telemetry-collector:
         port: 55555
         targetPort: 55555
         protocol: UDP
+      http:
+        port: 9020
+        targetPort: 9020
+        protocol: TCP
+
+  grafanaWebhookUrl: "http://{{ $.Release.Name }}-telemetry-collector.{{ $.Release.Namespace }}:9020/alert"
 
   influxdbAuthSecret: "drax-influxdb2-auth"
 
@@ -430,7 +454,17 @@ telemetry-collector:
         publishers:
           kafkaPublisher:
             topic: "accelleran.drax.5g.ric.o1.ves"
-
+      - name: "grafana_alerts"
+        component: "drax"
+        vendor: "accelleran"
+        enabled: "true"
+        consumers:
+          restConsumer:
+            endpoint: "/alert"
+            port: "9020"
+        publishers:
+          kafkaPublisher:
+            topic: "accelleran.drax.5g.ric.o1.ves"
 
 e2-t:
   enabled: true
@@ -794,13 +828,14 @@ grafana:
     targetPort: 3000
     nodePort: 30300
 
-  # Administrator credentials when not using an existing secret (see below)
-  adminUser: accelleran
-  adminPassword: accelleran
+  admin:
+    existingSecret: "{{ $.Release.Name }}-drax-auth"
+    userKey: "admin-username"
+    passwordKey: "admin-password"
 
   grafana.ini:
     auth.basic:
-      enabled: false
+      enabled: true
     auth.anonymous:
       enabled: true
       # Organization name that should be used for unauthenticated users
@@ -827,10 +862,10 @@ grafana:
         name: "{{ $.Release.Name }}-loki-gateway-auth"
         key: grafana-logs
 
-    LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD:
+    LOKI_EVENTS_BASIC_AUTH_PASSWORD:
       secretKeyRef:
         name: "{{ $.Release.Name }}-loki-gateway-auth"
-        key: grafana-notifications
+        key: grafana-events
 
     INFLUXDB2_ADMIN_TOKEN:
       secretKeyRef:
@@ -867,13 +902,13 @@ grafana:
             manageAlerts: false
         - access: proxy
           isDefault: false
-          name: Loki-Notifications
+          name: Loki-Events
           type: loki
           url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80
           basicAuth: true
-          basicAuthUser: grafana-notifications
+          basicAuthUser: grafana-events
           secureJsonData:
-            basicAuthPassword: ${LOKI_NOTIFICATIONS_BASIC_AUTH_PASSWORD}
+            basicAuthPassword: ${LOKI_EVENTS_BASIC_AUTH_PASSWORD}
           jsonData:
             manageAlerts: false
         - access: proxy
@@ -1067,15 +1102,15 @@ loki-gateway:
       - username: "grafana-logs"
         password: ""
         organization: "logs"
-      - username: "promtail-notifications"
+      - username: "promtail-events"
         password: ""
-        organization: "notifications"
-      - username: "grafana-notifications"
+        organization: "events"
+      - username: "grafana-events"
         password: ""
-        organization: "notifications"
-      - username: "dashboard-notifications"
+        organization: "events"
+      - username: "dashboard-events"
         password: ""
-        organization: "notifications"
+        organization: "events"
       - username: "loki-deleter-logs"
         password: ""
         organization: "logs"
@@ -1563,10 +1598,10 @@ promtail-logs:
             path: password
 
 
-promtail-notifications:
+promtail-events:
   # enabled: true
 
-  nameOverride: "promtail-notifications"
+  nameOverride: "promtail-events"
 
   daemonset:
     enabled: false
@@ -1577,13 +1612,13 @@ promtail-notifications:
     enabled: true
     clients:
       - url: http://{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}:80/loki/api/v1/push
-        tenant_id: notifications
+        tenant_id: events
         basic_auth:
-          username: promtail-notifications
+          username: promtail-events
           password_file: /etc/promtail/secrets/password
     snippets:
       scrapeConfigs: |
-        - job_name: kafka-notifications
+        - job_name: kafka-events
           kafka:
             brokers:
               - {{ .Release.Name }}-kafka.{{ .Release.Namespace }}:9092
@@ -1591,8 +1626,8 @@ promtail-notifications:
               - "accelleran.drax.5g.ric.o1.ves"
             use_incoming_timestamp: true
             labels:
-              job: kafka-notifications
-              app: {{ .Release.Name }}-promtail-notifications
+              job: kafka-events
+              app: {{ .Release.Name }}-promtail-events
           pipeline_stages:
             - json:
                 expressions:
@@ -1607,12 +1642,11 @@ promtail-notifications:
                   startEpochMicrosec: event.commonEventHeader.startEpochMicrosec
                   stndDefinedNamespace: event.commonEventHeader.stndDefinedNamespace
                   version: event.commonEventHeader.version
-                  timeZoneOffset: event.commonEventHeader.timeZoneOffset
                   vesEventListenerVersion: event.commonEventHeader.vesEventListenerVersion
                   notificationType: event.stndDefinedFields.data.notificationType
                 drop_malformed: true
             - regex:
-               expression: '^(?P<keep>notifyEvent)$'
+               expression: '^(?P<keep>notify(NewAlarm|ClearedAlarm|Event))$'
                source: notificationType
             - labels:
                keep:
@@ -1631,7 +1665,6 @@ promtail-notifications:
                 startEpochMicrosec:
                 stndDefinedNamespace:
                 version:
-                timeZoneOffset:
                 vesEventListenerVersion:
 
   initContainer:
@@ -1669,7 +1702,7 @@ promtail-notifications:
       secret:
         secretName: "{{ $.Release.Name }}-loki-gateway-auth"
         items:
-          - key: promtail-notifications
+          - key: promtail-events
             path: password
 
 

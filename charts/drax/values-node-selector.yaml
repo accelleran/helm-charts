@@ -98,14 +98,14 @@ minio:
 
 promtail-logs: {}
 
-promtail-notifications:
+promtail-events:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
 
 influxdb2:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
-    
+
 kminion:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
