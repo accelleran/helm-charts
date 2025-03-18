@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.9](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.8...du-metrics-server-0.4.9) (2025-03-18)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.4.1 in dRAX ([#994](https://github.com/accelleran/helm-charts/issues/994)) ([1061caf](https://github.com/accelleran/helm-charts/commit/1061caff716b4988667b3f2d11937b89b1ab2b1c))
+
 ## [0.4.8](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.7...du-metrics-server-0.4.8) (2025-02-19)
 
 
