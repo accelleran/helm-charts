@@ -1,0 +1,24 @@
+{{- if not ($.Values.global.ipAddress) }}
+  {{- fail "An IP address for dRAX is required (global.ipAddress)!" }}
+{{- end }}
+
+{{-
+  include
+    "accelleran.common.service"
+    (include "accelleran.drax.service.args" . | fromYaml)
+-}}
+
+
+{{- define "accelleran.drax.service.args" -}}
+{{- $ := . -}}
+
+top: {{ $ | toYaml | nindent 2 }}
+values: {{ $.Values.drax | toYaml | nindent 2 }}
+
+serviceName: {{ $.Release.Name }}
+labels: {{ include "accelleran.common.labels" (dict "top" $ "values" $.Values.drax) | nindent 2 }}
+selectorLabels:
+  app.kubernetes.io/name: ingress-nginx
+  app.kubernetes.io/instance: {{ $.Release.Name }}
+  app.kubernetes.io/component: controller
+{{- end -}}
