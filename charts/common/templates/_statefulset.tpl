@@ -8,7 +8,7 @@
 {{- end -}}
 
 {{- $autoscaling := default (dict "enabled" false) (get $values "autoscaling") -}}
-{{- $serviceName := printf "%s-headless" (include "accelleran.common.service.name" .) -}}
+{{- $serviceName := printf "%s-headless" (include "accelleran.common.service.name" (mergeOverwrite (deepCopy .) (dict "serviceName" (get . "name")))) -}}
 
 {{- $volumeClaimTemplates := list -}}
 {{- range $persistence -}}
@@ -23,7 +23,7 @@
 {{- $volumeMounts = append $volumeMounts (dict "name" .name "mountPath" .mountPath) -}}
 {{- end -}}
 
-{{- include "accelleran.common.statefulset.headlessService" (mergeOverwrite (deepCopy .) (dict "name" $serviceName)) }}
+{{- include "accelleran.common.statefulset.headlessService" (mergeOverwrite (deepCopy .) (dict "serviceName" $serviceName)) }}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
