@@ -9,7 +9,7 @@
       (dict
         "top" $
         "values" $mergedValues
-        "name" (include "accelleran.cu-cp.netconf.service.name" .)
+        "serviceName" (include "accelleran.cu-cp.netconf.service.name" .)
         "selectorLabels" (merge
           (include "accelleran.common.selectorLabels" (dict "top" $ "values" $mergedValues) | fromYaml)
           (dict "app.kubernetes.io/component" $values.component)
