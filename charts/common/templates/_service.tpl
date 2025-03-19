@@ -36,7 +36,7 @@ spec:
 {{- $ := get . "top" | required "The top context needs to be provided to common service name" -}}
 {{- $values := get . "values" | default $.Values -}}
 
-{{- get . "name" | default (get $values.service "name") | default (include "accelleran.common.fullname" .) -}}
+{{- get . "serviceName" | default (get $values.service "name") | default (include "accelleran.common.fullname" .) -}}
 {{- end -}}
 
 
