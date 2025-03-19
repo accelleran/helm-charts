@@ -160,6 +160,23 @@ drax:
       #   targetPort: 9092
       #   protocol: TCP
 
+  wellKnownOpenidConfigurationIngress:
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/keycloak/realms/{{ $.Values.drax.auth.realm.name }}/.well-known/openid-configuration"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
+    hosts:
+      - paths:
+          - path: /.well-known/openid-configuration
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+
   keycloak-init:
     nameOverride: "keycloak-init"
 
