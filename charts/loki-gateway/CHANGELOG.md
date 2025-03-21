@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.10...loki-gateway-0.1.11) (2025-03-21)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.5.0 ([#1064](https://github.com/accelleran/helm-charts/issues/1064)) ([4c5a645](https://github.com/accelleran/helm-charts/commit/4c5a645145d14bc528d3d20798091be42d4d6009))
+
 ## [0.1.10](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.9...loki-gateway-0.1.10) (2025-03-13)
 
 ### Bug Fixes
