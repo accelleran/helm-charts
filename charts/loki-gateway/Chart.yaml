@@ -2,7 +2,7 @@ apiVersion: v2
 name: loki-gateway
 description: Loki gateway
 type: application
-version: 0.1.10
+version: 0.1.11
 # renovate: image=nginx
 appVersion: 1.27.4
 dependencies:
