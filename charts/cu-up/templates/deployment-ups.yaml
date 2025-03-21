@@ -21,8 +21,8 @@ values:
 name: {{ printf "%s-%d" (include "accelleran.common.fullname" (dict "top" $ "values" $values)) $ordinal }}
 
 selectorLabels:
-  app.kubernetes.io/name: "ups"
-  app.kubernetes.io/instance: {{ include "accelleran.common.instance" (dict "top" $ "values" $values) | quote }}
+  {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
+  app.kubernetes.io/component: {{ $values.component }}
   up-stack-id: {{ $ordinal | quote }}
 
 volumes:

@@ -1,14 +1,14 @@
-{{- define "accelleran.cu-cp.sctp-f1.container" -}}
+{{- define "accelleran.cu-up.netconf.container" -}}
 {{- include
       "accelleran.common.container"
-      (fromYaml (include "accelleran.cu-cp.sctp-f1.container.args" .))
+      (fromYaml (include "accelleran.cu-up.netconf.container.args" .))
 -}}
 {{- end -}}
 
 
-{{- define "accelleran.cu-cp.sctp-f1.container.args" -}}
+{{- define "accelleran.cu-up.netconf.container.args" -}}
 {{- $ := . -}}
-{{- $values := index $.Values "sctp-f1" -}}
+{{- $values := $.Values.netconf -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
@@ -17,7 +17,7 @@ values:
 
 env:
   - name: __APPNAME
-    value: sctpF1
+    value: cuUpNetconf
 {{- with (include "accelleran.common.bootstrap.instanceId" (dict "top" $)) }}
   - name: INSTANCE_FILTER
     value: {{ . | quote }}
@@ -25,4 +25,13 @@ env:
 envFrom:
   - configMapRef:
       name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
+
+{{- if gt (len $values.persistence) 0 }}
+volumeMounts:
+{{- range $values.persistence }}
+  - name: {{ .name }}
+    mountPath: {{ .mountPath }}
+{{ end -}}
+{{- end -}}
+
 {{- end -}}
