@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.4](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.5.3...cell-wrapper-config-0.5.4) (2025-03-24)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.5.0 ([#1064](https://github.com/accelleran/helm-charts/issues/1064)) ([4c5a645](https://github.com/accelleran/helm-charts/commit/4c5a645145d14bc528d3d20798091be42d4d6009))
+
 ## [0.5.3](https://github.com/accelleran/helm-charts/compare/cell-wrapper-config-0.5.2...cell-wrapper-config-0.5.3) (2025-03-17)
 
 
