@@ -118,17 +118,17 @@ dashboard:
 
   config:
     # Defined for server config.json
-    kafkaURL: "{{ $.Release.Name }}-kafka"
-    networkStateMonitorHost: "{{ $.Release.Name }}-network-state-monitor"
-    svcMonitorHost: "{{ $.Release.Name }}-service-monitor"
-    svcOrchestratorHost: "{{ $.Release.Name }}-service-orchestrator"
-    configApiHost: "{{ $.Release.Name }}-config-api"
+    kafkaURL: "{{ $.Release.Name }}-kafka.{{ $.Release.Namespace }}"
+    networkStateMonitorHost: "{{ $.Release.Name }}-network-state-monitor.{{ $.Release.Namespace }}"
+    svcMonitorHost: "{{ $.Release.Name }}-service-monitor.{{ $.Release.Namespace }}"
+    svcOrchestratorHost: "{{ $.Release.Name }}-service-orchestrator.{{ $.Release.Namespace }}"
+    configApiHost: "{{ $.Release.Name }}-config-api.{{ $.Release.Namespace }}"
     pcixAppPodName: "accelleran-drax-pci-010-pci-xapp-api"
-    lokiHost: "{{ .Release.Name }}-loki-gateway.{{ .Release.Namespace }}"
+    lokiHost: "{{ .Release.Name }}-loki-gateway.{{ $.Release.Namespace }}"
     lokiPort: "80"
     ksqldbPodName: "{{ $.Values.global.kubeIp }}"
     nodeApiURL: "{{ $.Values.global.kubeIp }}"
-    grafanaHost: "{{ $.Release.Name }}-grafana.{{ .Release.Namespace }}"
+    grafanaHost: "{{ $.Release.Name }}-grafana.{{ $.Release.Namespace }}"
     grafanaApiPort: "80"
     # Defined for core-ui config.js
     grafanaNodePort: "30300"
@@ -251,7 +251,7 @@ config-api:
   config:
     default_service_namespace_5g: "default"
     default_oran_namespace_4g: "default"
-    service_monitor_host: "{{ .Release.Name }}-service-monitor"
+    service_monitor_host: "{{ .Release.Name }}-service-monitor.{{ .Release.Namespace }}"
     service_monitor_port: "80"
 
   ingress:
@@ -1191,7 +1191,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1216,7 +1216,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1241,7 +1241,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1266,7 +1266,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1291,7 +1291,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1316,7 +1316,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1341,7 +1341,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1366,7 +1366,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -1391,7 +1391,7 @@ loki:
     - -config.expand-env=true
     extraEnvVars:
       - name: MINIO_ENDPOINT
-        value: "{{ $.Release.Name }}-minio.default.svc:9000"
+        value: "{{ $.Release.Name }}-minio.{{ $.Release.Namespace }}.svc:9000"
       - name: MINIO_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
