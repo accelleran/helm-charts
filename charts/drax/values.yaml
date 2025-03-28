@@ -310,11 +310,10 @@ dashboard:
     value: "external-events"
 
   service:
-    type: NodePort
+    type: ClusterIP
     ports:
       http:
         port: 5000
-        nodePort: 31315
 
   ingress:
     enabled: true
@@ -1165,10 +1164,9 @@ grafana:
 
   service:
     enabled: true
-    type: NodePort
+    type: ClusterIP
     port: 80
     targetPort: 3000
-    nodePort: 30300
 
   ingress:
     enabled: true
