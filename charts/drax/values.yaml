@@ -68,14 +68,17 @@ global:
   #                       when set to `false`, alerts are not provisioned.
   #     - `slackToken`:   Required: The token used to configure the Slack contact point for alert notifications.
   #                       This token allows alerts to be sent via Slack.
+  #     - `channel`:      Required: The Slack channel name or channel ID where alerts will be sent.
   #
   #   Value types:
   #     - enabled: boolean
   #     - slackToken: string
+  #     - channel: string
   #
   alerting:
     enabled: false
     slackToken: ""
+    channel: ""
 
   persistentLogLevel: info
 
