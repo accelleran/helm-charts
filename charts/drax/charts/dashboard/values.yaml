@@ -110,12 +110,11 @@ affinity: {}
 service:
   enabled: true
   name: ""
-  type: NodePort
+  type: ClusterIP
   ports:
     http:
       port: 5000
       targetPort: 5000
-      nodePort: 31315
       protocol: TCP
 
 ingress:
