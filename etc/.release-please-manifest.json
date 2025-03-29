@@ -8,7 +8,7 @@
   "charts/du-metrics-server": "0.4.12",
   "charts/loki-deleter": "0.1.7",
   "charts/loki-gateway": "0.1.11",
-  "charts/telemetry-collector": "1.1.12",
+  "charts/telemetry-collector": "2.0.0",
   "charts/xapp-anr": "0.2.0",
   "charts/xapp-hello-world": "6.0.0"
 }
