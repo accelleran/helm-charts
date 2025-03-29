@@ -1,18 +1,3 @@
-{{- define "accelleran.cu-cp.amfCount" -}}
-{{- .Values.numOfAmfs -}}
-{{- end -}}
-
-
-{{- define "accelleran.cu-cp.cuUpCount" -}}
-{{- .Values.numOfCuUps -}}
-{{- end -}}
-
-
-{{- define "accelleran.cu-cp.duCount" -}}
-{{- .Values.numOfDus -}}
-{{- end -}}
-
-
 {{- define "accelleran.cu-cp.ueCount" -}}
 {{- .Values.numOfUes -}}
 {{- end -}}
