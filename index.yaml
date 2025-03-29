@@ -36291,6 +36291,20 @@ entries:
   telemetry-collector:
   - apiVersion: v2
     appVersion: 1.4.3
+    created: "2025-03-29T10:14:11.826272084Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.5.0
+    description: A Helm chart for the Telemetry Collector
+    digest: a3fb2f7cee185a9587a2db7cb922b3542dbcf5d080439bc24e84883cd767691b
+    name: telemetry-collector
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/telemetry-collector-2.0.0/telemetry-collector-2.0.0.tgz
+    version: 2.0.0
+  - apiVersion: v2
+    appVersion: 1.4.3
     created: "2025-02-20T09:17:10.407905946Z"
     dependencies:
     - name: common
@@ -36926,4 +36940,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2025-03-26T16:17:38.432006894Z"
+generated: "2025-03-29T10:14:11.82774355Z"
