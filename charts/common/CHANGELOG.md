@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/accelleran/helm-charts/compare/common-0.4.1...common-0.5.0) (2025-03-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* use specific name args ([#1056](https://github.com/accelleran/helm-charts/issues/1056))
+
+### Bug Fixes
+
+* Use specific name args ([#1056](https://github.com/accelleran/helm-charts/issues/1056)) ([f6be998](https://github.com/accelleran/helm-charts/commit/f6be998cce384d9f792babbcb5177810208d731e))
+
 ## [0.4.1](https://github.com/accelleran/helm-charts/compare/common-0.4.0...common-0.4.1) (2025-02-20)
 
 

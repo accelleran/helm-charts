@@ -38,6 +38,8 @@ config:
   svcMonitorPort: 80
   svcOrchestratorHost: ""
   svcOrchestratorPort: 80
+  grafanaHost: ""
+  grafanaApiPort: 80
   lokiHost: ""
   lokiPort: ""
   configApiHost: ""
@@ -54,7 +56,7 @@ config:
     - "accelleran.drax.4g.ric.raw.network_state"
     - "accelleran.drax.all.ric.processed.anr"
   # Defined for core-ui config.js
-  grafanaPort: 0
+  grafanaNodePort: 0
   accelleranProduct: "P5G"
   # Defined for environment variable DRAX_VERSION
   draxVersionConfigmap: ""

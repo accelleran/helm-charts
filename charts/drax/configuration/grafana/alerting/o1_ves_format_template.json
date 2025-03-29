@@ -1,0 +1,50 @@
+{
+    "events": [
+        {{- range $index, $alert := .Alerts }}
+        {{- $labels := $alert.Labels }}
+        {{- $annotations := $alert.Annotations }}
+        {{- $status := $.Status }}
+        {{- if $index }},{{ end }}
+        {
+            "event": {
+                "commonEventHeader": {
+                    "domain": "stndDefined",
+                    "eventId": "stndDefined-DRAX-{{ $alert.Fingerprint }}",
+                    "eventName": "stndDefined-DRAX-{{ $labels.alertname }}",
+                    "startEpochMicrosec": {{ $alert.StartsAt.UnixMilli }}000,
+                    "lastEpochMicrosec": {{ if $alert.EndsAt.IsZero }}0{{ else }}{{ $alert.EndsAt.UnixMilli }}000{{ end }},
+                    "priority": "{{ if $labels.priority }}{{ $labels.priority }}{{ else }}Medium{{ end }}",
+                    "reportingEntityName": "DRAX",
+                    "sequence": 1,
+                    "version": "4.1",
+                    "sourceName": "{{ if $labels.instance }}{{ $labels.instance }}{{ else }}DRAX-{{ $labels.alertname }}{{ end }}",
+                    "vesEventListenerVersion": "7.2.1",
+                    "stndDefinedNamespace": "3GPP-FaultSupervision"
+                },
+                "stndDefinedFields": {
+                    "schemaReference": "{{- if eq $status "firing" -}}
+                        https://forge.3gpp.org/rep/sa5/MnS/-/blob/Rel-17/OpenAPI/TS28532_FaultMnS.yaml#/components/schemas/NotifyNewAlarm
+                    {{- else if eq $status "resolved" -}}
+                        https://forge.3gpp.org/rep/sa5/MnS/-/blob/Rel-17/OpenAPI/TS28532_FaultMnS.yaml#/components/schemas/NotifyClearedAlarm
+                    {{- else -}}
+                        ""
+                    {{- end }}",
+                    "data": {
+                        "href": "",
+                        "notificationId": "{{ $alert.Fingerprint }}",
+                        "notificationType": "{{ if eq $status "firing" }}notifyNewAlarm{{ else if eq $status "resolved" }}notifyClearedAlarm{{ else }}unknown{{ end }}",
+                        "eventTime": "{{ $alert.StartsAt.UTC.Format `2006-01-02T15:04:05Z` }}",
+                        "systemDN": "",
+                        "alarmID": "{{ $labels.alertname }}",
+                        "alarmType": "{{ if $labels.alarmType }}{{ $labels.alarmType }}{{ else }}PROCESSING_ERROR_ALARM{{ end }}",
+                        "probableCause": "{{ $annotations.probableCause }}",
+                        "specificProblem": "{{ $annotations.specificProblem }}",
+                        "perceivedSeverity": "{{ if $labels.perceivedSeverity }}{{ $labels.perceivedSeverity | toUpper }}{{ else }}WARNING{{ end }}"
+                    },
+                    "stndDefinedFieldsVersion": "1.0"
+                }
+            }
+        }
+        {{- end }}
+    ]
+}

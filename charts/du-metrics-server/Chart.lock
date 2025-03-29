@@ -1,9 +1,9 @@
 dependencies:
 - name: common
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.3.13
+  version: 0.5.0
 - name: influxdb2
   repository: https://helm.influxdata.com/
   version: 2.1.2
-digest: sha256:9a91e79219611d68dd27ffc17110a6329a2c29c3160176524f9202cd607f9d83
-generated: "2025-01-09T06:15:05.286940493Z"
+digest: sha256:b8780294796babcb4dc58d0f75b968fb4c824a42fd4ba7dde6510898a6cfd2d4
+generated: "2025-03-21T08:44:11.9320572Z"

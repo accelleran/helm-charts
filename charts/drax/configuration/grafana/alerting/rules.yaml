@@ -92,8 +92,8 @@ groups:
               maxDataPoints: 43200
               refId: UsedDiskSpacePercentage
               type: math
-        noDataState: Alerting
-        execErrState: Alerting
+        noDataState: OK
+        execErrState: OK
         annotations:
           description: |
             Disk usage has exceeded 70%, indicating high disk utilization on the node.
@@ -101,11 +101,15 @@ groups:
             Please check the disk usage, free space, and any related pod or application logs to identify what is consuming the disk.
             You may need to free up space, adjust resource limits, or investigate for any disk-related issues.
           summary: Triggered when disk usage has exceeded 70% of space.
+          probableCause: DiskPressure due to high disk usage.
+          specificProblem: Node storage usage exceeded 70%.
         labels:
           deploymentId: "{{ .Values.global.deploymentId }}"
-          severity: warning
+          alarmType: PROCESSING_ERROR_ALARM
+          priority: Medium
+          perceivedSeverity: WARNING
         notification_settings:
-          receiver: accelleran-slack
+          receiver: accelleran-drax
         isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
 
   - orgId: 1
@@ -133,16 +137,20 @@ groups:
               range: false
               refId: PodEvicted
         noDataState: OK
-        execErrState: Alerting
+        execErrState: OK
         annotations:
           description: |
             Pod has been evicted.
             This indicates that the pod was evicted from the node due to resource constraints or other issues.
             Please check the pod's events, resource allocation, or the node's health to identify and resolve the issue.
           summary: Triggered when a pod has been evicted.
+          probableCause: Resource constraints or node conditions.
+          specificProblem: Pod eviction.
         labels:
           deploymentId: "{{ .Values.global.deploymentId }}"
-          severity: critical
+          alarmType: PROCESSING_ERROR_ALARM
+          priority: High
+          perceivedSeverity: MAJOR
         isPaused: {{- if $.Values.global.alerting.enabled }} false{{- else }} true{{- end }}
         notification_settings:
-          receiver: accelleran-slack
+          receiver: accelleran-drax

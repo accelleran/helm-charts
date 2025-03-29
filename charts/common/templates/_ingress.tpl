@@ -63,7 +63,7 @@ spec:
 {{- $ := get . "top" | required "The top context needs to be provided to common ingress name" -}}
 {{- $values := get . "values" | default $.Values -}}
 
-{{- get . "name" | default (get $values.ingress "name") | default (include "accelleran.common.fullname" .) -}}
+{{- get . "ingressName" | default (get $values.ingress "name") | default (include "accelleran.common.fullname" .) -}}
 {{- end -}}
 
 

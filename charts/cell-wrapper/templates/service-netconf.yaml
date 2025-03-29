@@ -3,6 +3,6 @@
       (dict
         "top" $
         "values" (index $.Values "netconf")
-        "name" (include "accelleran.cell-wrapper.netconf.service.name" .)
+        "serviceName" (include "accelleran.cell-wrapper.netconf.service.name" .)
       )
 -}}
