@@ -1,15 +1,23 @@
+{{- if $.Values.global.alerting.enabled -}}
+{{- if eq $.Values.global.alerting.channel "" -}}
+  {{- fail "A slack channel needs to be provided when alerting is enabled (global.alerting.channel). Please set a valid Slack channel name or Slack ID." }}
+{{- end -}}
+{{- end -}}
+
 apiVersion: 1
 contactPoints:
   - orgId: 1
     name: accelleran-drax
     receivers:
+      {{- if and ((($.Values.global).alerting).enabled) (not (empty (($.Values.global).alerting).channel)) }}
       - uid: aebke0ctqjxttd
         type: slack
         settings:
-          recipient: drax-notifications
+          recipient: {{ $.Values.global.alerting.channel }}
           token: {{- if $.Values.global.alerting.enabled }} ${SLACK_TOKEN}{{- else }} "-"{{- end }}
           username: Grafana Alert Bot
         disableResolveMessage: true
+      {{- end }}
       - uid: febke0ctqjxtua
         type: webhook
         settings:
