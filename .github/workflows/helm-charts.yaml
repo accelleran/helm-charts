@@ -222,7 +222,7 @@ jobs:
       - vars
       - lint-charts
       - test-charts
-    if: ${{ needs.vars.outputs.is_pull_request == 'true' && always() }}
+    if: ${{ needs.vars.outputs.is_pull_request == 'true' && !cancelled() }}
     runs-on: ubuntu-24.04
     steps:
       - name: Successful checks
