@@ -78,7 +78,7 @@ natsInitImage:
   pullPolicy: IfNotPresent
 
 image:
-  repository: accelleran/cuupappl
+  repository: accelleran/cu-up
   tag: ""
   pullPolicy: IfNotPresent
 
@@ -88,6 +88,7 @@ service:
   type: "ClusterIP"
   ports:
     netconf:
+      appProtocol: "netconf-ssh"
       protocol: "TCP"
       port: 8300
       targetPort: 0
@@ -102,8 +103,25 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podSecurityContext: {}
-  # fsGroup: 2000
+readinessProbe:
+  exec:
+    command:
+      - "test"
+      - "-f"
+      - "/tmp/netopeer2-server.pid"
+  initialDelaySeconds: 15
+  periodSeconds: 30
+
+securityContext:
+  fsGroup: 1000
+
+persistence:
+  - name: sysrepo
+    mountPath: "/workdir/sysrepo"
+    storageClassName: ""
+    accessModes:
+      - "ReadWriteOnce"
+    size: "128Mi"
 
 nodeSelector: {}
 
@@ -112,45 +130,10 @@ tolerations: []
 affinity: {}
 
 
-netconf:
-  enabled: true
-
-  component: "netconf"
-
-  containerName: "netconf"
-
-  image:
-    repository: accelleran/cuup-netconf
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  readinessProbe:
-    exec:
-      command:
-        - "test"
-        - "-f"
-        - "/tmp/netopeer2-server.pid"
-    initialDelaySeconds: 15
-    periodSeconds: 30
-
-  securityContext:
-    fsGroup: 1000
-
-  persistence:
-    - name: sysrepo
-      mountPath: "/workdir/sysrepo"
-      storageClassName: ""
-      accessModes:
-        - "ReadWriteOnce"
-      size: "128Mi"
-
-
 ups:
   enabled: true
 
+  nameOverride: "ups"
   component: "ups"
 
   containerName: "ups"
@@ -218,6 +201,7 @@ ups:
 xdp-ups:
   enabled: true
 
+  nameOverride: "xdp-ups"
   component: "xdp-ups"
 
   containerName: "xdp-ups"

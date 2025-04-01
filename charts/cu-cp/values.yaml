@@ -67,7 +67,7 @@ natsInitImage:
   pullPolicy: IfNotPresent
 
 image:
-  repository: accelleran/cucpappl
+  repository: accelleran/cu-cp
   tag: ""
   pullPolicy: IfNotPresent
 
@@ -89,6 +89,7 @@ service:
       targetPort: 0
       nodePort: 0
     netconf:
+      appProtocol: "netconf-ssh"
       protocol: "TCP"
       port: 8300
       targetPort: 0
@@ -105,8 +106,25 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podSecurityContext: {}
-  # fsGroup: 2000
+readinessProbe:
+  exec:
+    command:
+      - "test"
+      - "-f"
+      - "/tmp/netopeer2-server.pid"
+  initialDelaySeconds: 15
+  periodSeconds: 30
+
+securityContext:
+  fsGroup: 1000
+
+persistence:
+  - name: sysrepo
+    mountPath: "/workdir/sysrepo"
+    storageClassName: ""
+    accessModes:
+      - "ReadWriteOnce"
+    size: "128Mi"
 
 nodeSelector: {}
 
@@ -115,45 +133,10 @@ tolerations: []
 affinity: {}
 
 
-netconf:
-  enabled: true
-
-  component: "netconf"
-
-  containerName: "netconf"
-
-  image:
-    repository: accelleran/cucp-netconf
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  readinessProbe:
-    exec:
-      command:
-        - "test"
-        - "-f"
-        - "/tmp/netopeer2-server.pid"
-    initialDelaySeconds: 15
-    periodSeconds: 30
-
-  securityContext:
-    fsGroup: 1000
-
-  persistence:
-    - name: sysrepo
-      mountPath: "/workdir/sysrepo"
-      storageClassName: ""
-      accessModes:
-        - "ReadWriteOnce"
-      size: "128Mi"
-
-
 ds-ctrl:
   enabled: true
 
+  nameOverride: "ds-ctrl"
   component: "ds-ctrl"
 
   containerName: "ds-ctrl"

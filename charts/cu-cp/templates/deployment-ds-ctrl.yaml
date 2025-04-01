@@ -140,7 +140,7 @@ values:
 
 env:
   - name: __APPNAME
-    value: dsController
+    value: dsCtrl
 {{- with (include "accelleran.common.bootstrap.instanceId" (dict "top" $)) }}
   - name: INSTANCE_FILTER
     value: {{ . | quote }}
