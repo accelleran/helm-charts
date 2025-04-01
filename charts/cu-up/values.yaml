@@ -144,7 +144,7 @@ ups:
     pullPolicy: IfNotPresent
 
   image:
-    repository: accelleran/upsappl
+    repository: accelleran/ups
     tag: ""
     pullPolicy: IfNotPresent
 
@@ -207,7 +207,7 @@ xdp-ups:
   containerName: "xdp-ups"
 
   image:
-    repository: accelleran/xdpupsappl
+    repository: accelleran/xdp-ups
     tag: ""
     pullPolicy: IfNotPresent
 
