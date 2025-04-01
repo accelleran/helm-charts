@@ -9,6 +9,12 @@
 
 top:
   {{ $ | toYaml | nindent 2 }}
+values:
+  {{ mergeOverwrite
+       (omit (deepCopy $.Values) "service")
+       (dict "service" (dict "ports" (($.Values).service).ports))
+     | toYaml | nindent 2
+  }}
 
 selectorLabels:
   {{ include "accelleran.common.selectorLabels" (dict "top" $) | nindent 2 }}
