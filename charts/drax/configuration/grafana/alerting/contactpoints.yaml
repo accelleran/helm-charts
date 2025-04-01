@@ -9,7 +9,7 @@ contactPoints:
   - orgId: 1
     name: accelleran-drax
     receivers:
-      {{- if and ((($.Values.global).alerting).enabled) (ne (($.Values.global).alerting).channel "") }}
+      {{- if and ((($.Values.global).alerting).enabled) (not (empty (($.Values.global).alerting).channel)) }}
       - uid: aebke0ctqjxttd
         type: slack
         settings:
