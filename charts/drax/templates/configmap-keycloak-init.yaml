@@ -1,0 +1,16 @@
+{{
+  include
+    "accelleran.common.configMap"
+    (fromYaml (include "accelleran.drax.keycloakInit.configMap.args" .))
+}}
+
+
+{{- define "accelleran.drax.keycloakInit.configMap.args" -}}
+{{- $ := . -}}
+{{- $file := "setup_drax_realm.py" -}}
+
+top: {{ $ | toYaml | nindent 2 }}
+name: {{ $.Release.Name }}-keycloak-init
+data:
+  {{ $file }}: {{ $.Files.Get (printf "configuration/keycloak/init/%s" $file) | toYaml | nindent 4 }}
+{{- end -}}

@@ -1,0 +1,21 @@
+{{- include
+      "accelleran.common.ingress"
+      (dict
+        "top" $
+        "values" (mergeOverwrite
+          (omit (deepCopy $.Values.drax) "service")
+          (dict
+            "ingress" $.Values.drax.wellKnownOpenidConfigurationIngress
+            "service" (dict
+              "ports" (dict
+                "http" (dict
+                  "port" 80
+                )
+              )
+            )
+          )
+        )
+        "ingressName" (printf "%s-well-known-openid-configuration" $.Release.Name)
+        "serviceName" (printf "%s-keycloak" $.Release.Name)
+      )
+-}}

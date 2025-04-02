@@ -1,4 +1,5 @@
 tags:
+  authentication: true
   logs: true
   notifications: true
 
@@ -22,6 +23,25 @@ global:
   #   Value type:   string
   #
   kubeIp: "10.20.20.20"
+  # dRAX IP address
+  #   Description:  REQUIRED
+  #                 Supply the IP address to access dRAX.
+  #                 The IP address should be unique to dRAX,
+  #                 so for example the `kubeIp` can't be (re)used here.
+  #                 Also the used service loadbalancer (e.g. metallb or kube-vip)
+  #                 should be allowed to use this IP address.
+  #                 This may require additional configuration there.
+  #
+  #   Value type:   string
+  #   Example:      10.1.2.3
+  ipAddress: ""
+  # dRAX domain name
+  #   Description:  Optionally, supply the domain name to access dRAX.
+  #                 It should be setup externally to resolve to the dRAX IP address.
+  #
+  #   Value type:   string
+  #   Example:      drax.accelleran.com
+  domain: ""
 
   # 4G/5G Options
   #   Description:  Depending on the product bought, you may enable or disable the accompanying features.
@@ -84,6 +104,7 @@ global:
 
   nodeSelector: {}
 
+
 bootstrap:
   create: true
   name: "{{ $.Release.Name }}-bootstrap"
@@ -103,8 +124,124 @@ bootstrap:
 
 drax:
   auth:
-    adminUser: "accelleran"
-    adminPassword: "accelleran"
+    superadminUser: "superadmin"
+    superadminEmail: "support@accelleran.com"
+    superadminPassword: ""
+
+    adminUser: "admin"
+    adminEmail: "drax@example.com"
+    adminPassword: ""
+
+    realm:
+      name: "drax"
+      displayName: "dRAX"
+
+  service:
+    enabled: true
+    type: LoadBalancer
+    loadBalancerIP: "{{ $.Values.global.ipAddress }}"
+    ports:
+      http:
+        port: 80
+        targetPort: http
+        protocol: TCP
+        appProtocol: http
+      https:
+        port: 443
+        targetPort: https
+        protocol: TCP
+        appProtocol: https
+      # nats:
+      #   port: 4222
+      #   targetPort: 4222
+      #   protocol: TCP
+      # kafka:
+      #   port: 9092
+      #   targetPort: 9092
+      #   protocol: TCP
+
+  wellKnownOpenidConfigurationIngress:
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: "/keycloak/realms/{{ $.Values.drax.auth.realm.name }}/.well-known/openid-configuration"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
+    hosts:
+      - paths:
+          - path: /.well-known/openid-configuration
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
+
+  keycloak-init:
+    nameOverride: "keycloak-init"
+
+    keycloakInitImage:
+      repository: accelleran/acc-generic-img
+      pullPolicy: IfNotPresent
+      tag: "0.8.1"
+
+    image:
+      repository: accelleran/acc-generic-img
+      pullPolicy: IfNotPresent
+      tag: "0.8.1"
+
+    imagePullSecrets:
+      - name: accelleran-secret
+
+    accelleranLicense:
+      enabled: false
+
+    useHelmHooks: true
+
+    podSecurityContext: {}
+      # fsGroup: 2000
+
+    securityContext:
+      # capabilities:
+      #   drop:
+      #   - ALL
+      # readOnlyRootFilesystem: true
+      # runAsNonRoot: true
+      runAsUser: 0
+
+    resources: {}
+      # limits:
+      #   cpu: 100m
+      #   memory: 128Mi
+      # requests:
+      #   cpu: 100m
+      #   memory: 128Mi
+
+    nodeSelector: {}
+
+    tolerations: []
+
+    affinity: {}
+
+    serviceAccount:
+      # Specifies whether a service account should be created
+      create: true
+      # The name of the service account to use.
+      # If not set and create is true, a name is generated using the fullname template
+      name: ""
+
+    rbac:
+      enabled: true
+      rules:
+        - apiGroups:
+            - ""
+          resources:
+            - "secrets"
+          verbs:
+            - "list"
+            - "get"
+            - "create"
+            - "patch"
 
 
 dashboard:
@@ -118,9 +255,32 @@ dashboard:
   - name: "LOKI_EVENTS_BASIC_AUTH_PASSWORD"
     secretName: "{{ $.Release.Name }}-loki-gateway-auth"
     secretKey: "dashboard-events"
+  - name: "GRAFANA_BASIC_AUTH_USERNAME"
+    secretName: "{{ $.Release.Name }}-drax-auth"
+    secretKey: admin-username
+  - name: "GRAFANA_BASIC_AUTH_PASSWORD"
+    secretName: "{{ $.Release.Name }}-drax-auth"
+    secretKey: admin-password
+  - name: "KEYCLOAK_CLIENT_ID"
+    secretName: "{{ $.Release.Name }}-auth-dashboard"
+    secretKey: client-id
+  - name: "KEYCLOAK_CLIENT_SECRET"
+    secretName: "{{ $.Release.Name }}-auth-dashboard"
+    secretKey: client-secret
+  - name: "LOKI_LOGS_EXTERNAL_PASSWORD"
+    secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+    secretKey: external-logs
+  - name: "LOKI_EVENTS_EXTERNAL_PASSWORD"
+    secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+    secretKey: external-events
+  - name: INFLUXDB_TOKEN
+    secretName: "drax-influxdb2-auth"
+    secretKey: admin-token
 
   config:
     # Defined for server config.json
+    keycloakURL: "http://{{ $.Release.Name }}-keycloak.{{ $.Release.Namespace }}/keycloak"
+    keycloakRealm: "drax"
     kafkaURL: "{{ $.Release.Name }}-kafka.{{ $.Release.Namespace }}"
     networkStateMonitorHost: "{{ $.Release.Name }}-network-state-monitor.{{ $.Release.Namespace }}"
     svcMonitorHost: "{{ $.Release.Name }}-service-monitor.{{ $.Release.Namespace }}"
@@ -130,11 +290,13 @@ dashboard:
     lokiHost: "{{ .Release.Name }}-loki-gateway.{{ $.Release.Namespace }}"
     lokiPort: "80"
     ksqldbPodName: "{{ $.Values.global.kubeIp }}"
-    nodeApiURL: "{{ $.Values.global.kubeIp }}"
+    nodeApiURL: "{{ $.Values.global.domain | default $.Values.global.ipAddress }}"
+    nodeApiPort: "80"
     grafanaHost: "{{ $.Release.Name }}-grafana.{{ $.Release.Namespace }}"
     grafanaApiPort: "80"
     # Defined for core-ui config.js
-    grafanaNodePort: "30300"
+    grafanaNodePort: ""
+    grafanaPathPrefix: "/grafana"
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
@@ -142,39 +304,34 @@ dashboard:
   extraEnvs:
   - name: "LOKI_EVENTS_BASIC_AUTH_USERNAME"
     value: "dashboard-events"
-  - name: "GRAFANA_BASIC_AUTH_USERNAME"
-    valueFrom:
-      secretKeyRef:
-        name: "{{ $.Release.Name }}-drax-auth"
-        key: admin-username
-  - name: "GRAFANA_BASIC_AUTH_PASSWORD"
-    valueFrom:
-      secretKeyRef:
-        name: "{{ $.Release.Name }}-drax-auth"
-        key: admin-password
+  - name: "LOKI_LOGS_EXTERNAL_USERNAME"
+    value: "external-logs"
+  - name: "LOKI_EVENTS_EXTERNAL_USERNAME"
+    value: "external-events"
 
   service:
-    type: NodePort
+    type: ClusterIP
     ports:
       http:
         port: 5000
-        nodePort: 31315
 
   ingress:
-    enabled: false
-    className: ""
-    annotations: {}
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
     hosts:
-      -
-        # host: example.local
-        paths:
+      - paths:
           - path: /
-            pathType: ImplementationSpecific
+            pathType: Prefix
             port: http
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
 
 
 network-state-monitor:
@@ -185,21 +342,24 @@ network-state-monitor:
     create: false
     name: "{{ $.Release.Name }}-bootstrap"
 
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  hosts:
-    -
-      # host: example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-          port: http
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+  ingress:
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
+    hosts:
+      - paths:
+          - path: /network-state-monitor(/|$)(.*)
+            pathType: ImplementationSpecific
+            port: http
+    tls: []
 
 
 service-monitor:
@@ -209,20 +369,23 @@ service-monitor:
   monitoredNamespaces: "{{ .Release.Namespace }}"
 
   ingress:
-    enabled: false
-    className: ""
-    annotations: {}
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
     hosts:
-      -
-        # host: example.local
-        paths:
-          - path: /
+      - paths:
+          - path: /service-monitor(/|$)(.*)
             pathType: ImplementationSpecific
             port: http
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
 
 
 service-orchestrator:
@@ -232,20 +395,23 @@ service-orchestrator:
   kubeIp: "{{ .Values.global.kubeIp }}"
 
   ingress:
-    enabled: false
-    className: ""
-    annotations: {}
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
     hosts:
-      -
-        # host: example.local
-        paths:
-          - path: /
+      - paths:
+          - path: /service-orchestrator(/|$)(.*)
             pathType: ImplementationSpecific
             port: http
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
 
 
 config-api:
@@ -257,21 +423,26 @@ config-api:
     service_monitor_host: "{{ .Release.Name }}-service-monitor.{{ .Release.Namespace }}"
     service_monitor_port: "80"
 
+  extraEnvs:
+    - name: ROOT_PATH
+      value: /config-api
+
   ingress:
-    enabled: false
-    className: ""
-    annotations: {}
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
     hosts:
-      -
-        # host: example.local
-        paths:
-          - path: /
-            pathType: ImplementationSpecific
+      - paths:
+          - path: /config-api
+            pathType: Prefix
             port: http
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
 
 
 cell-wrapper:
@@ -483,20 +654,23 @@ pm-counters:
   enabled: true
 
   ingress:
-    enabled: false
-    className: ""
-    annotations: {}
+    enabled: true
+    className: drax
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/rewrite-target: /$2
+      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
     hosts:
-      -
-        # host: example.local
-        paths:
-          - path: /
+      - paths:
+          - path: /pm-counters(/|$)(.*)
             pathType: ImplementationSpecific
             port: http
     tls: []
-    #  - secretName: chart-example-tls
-    #    hosts:
-    #      - chart-example.local
 
 
 golang-nkafka-5g:
@@ -734,6 +908,170 @@ redis:
     nodeSelector: {}
 
 
+ingress-nginx:
+  # enabled: true
+
+  controller:
+    watchIngressWithoutClass: false
+    ingressClassResource:
+      enabled: true
+      # No release name as there is no tpl here and also in most ingress resources of third-party helm charts.
+      # The consequence is only 1 drax installation per kubernetes cluster by default.
+      name: drax
+      default: false
+
+    service:
+      # replaced with dRAX service to allow templating
+      enabled: false
+
+  tcp: {}
+    # "4222": "{{ $.Release.Namespace }}/{{ $.Release.Name }}-nats:4222"
+    # "9092": "{{ $.Release.Namespace }}/{{ $.Release.Name }}-kafka:9095"
+
+
+oauth2-proxy:
+  # enabled: true
+
+  strategy:
+    type: Recreate
+
+  config:
+    existingSecret: "drax-oauth2-proxy"  # no tpl
+    clientID: "oauth2-proxy"
+    clientSecret: ""
+    cookieSecret: ""
+
+    configFile: |-
+      http_address = "0.0.0.0:4180"
+      reverse_proxy = true
+      ssl_insecure_skip_verify = true
+
+      provider = "oidc"
+      provider_display_name = "Accelleran dRAX"
+      oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/keycloak/realms/drax"
+      redirect_url = "/oauth2/callback"
+      email_domains = [ "*" ]
+      scope = "openid email profile"
+
+      whitelist_domains = [ {{ with $.Values.global.domain }}"{{ . }}",".{{ . }}",{{ end }}"{{ $.Values.global.ipAddress }}" ]
+      cookie_domains = [ {{ with $.Values.global.domain }}"{{ . }}",".{{ . }}",{{ end }}"{{ $.Values.global.ipAddress }}" ]
+
+      cookie_csrf_per_request = true
+      cookie_csrf_expire = "5m"
+
+      skip_provider_button = true
+
+      api_routes = [
+        "^/api"
+      ]
+
+      skip_jwt_bearer_tokens = true
+      oidc_extra_audiences = [
+        "account"
+      ]
+      insecure_oidc_allow_unverified_email = true
+
+  extraObjects:
+    - apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ $.Release.Name }}-oauth2-proxy"
+        annotations:
+          nginx.ingress.kubernetes.io/proxy-body-size: 30m
+          nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+          nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+          nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+          nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
+      spec:
+        ingressClassName: drax
+        rules:
+          - http:
+              paths:
+              - path: /oauth2
+                pathType: Prefix
+                backend:
+                  service:
+                    name: "{{ template \"oauth2-proxy.fullname\" . }}"
+                    port:
+                      number: 80
+        tls:
+          - {}
+
+
+keycloak:
+  # enabled: true
+
+  auth:
+    adminUser: "tmp"
+    adminPassword: ""
+
+    existingSecret: "{{ $.Release.Name }}-drax-auth"
+    passwordSecretKey: "tmp-password"
+
+  postgresql:
+    nameOverride: "keycloak-postgresql"
+
+    auth:
+      postgresPassword: ""
+      username: "accelleran-drax-keycloak"
+      password: ""
+      database: "accelleran-drax-keycloak"
+      existingSecret: "{{ $.Release.Name }}-keycloak-postgresql"
+
+  proxyHeaders: "xforwarded"
+  httpRelativePath: "/keycloak/"
+
+  ingress:
+    # use ingress in extraDeploy as it allows to leave out the host
+    enabled: false
+
+  extraVolumes:
+    - name: accelleran-drax-theme
+      configMap:
+        name: "{{ $.Release.Name }}-keycloak-theme-accelleran-drax"
+        items:
+          - key: common-resources-img-favicon.ico
+            path: common/resources/img/favicon.ico
+          - key: login-theme.properties
+            path: login/theme.properties
+          - key: login-resources-css-accelleran-drax-login.css
+            path: login/resources/css/accelleran-drax-login.css
+          - key: login-resources-img-accelleran-logo-white.svg
+            path: login/resources/img/accelleran-logo-white.svg
+          - key: login-resources-img-accelleran-drax-bg.jpg
+            path: login/resources/img/accelleran-drax-bg.jpg
+
+  extraVolumeMounts:
+    - name: accelleran-drax-theme
+      mountPath: /opt/bitnami/keycloak/themes/accelleran-drax/
+
+  extraDeploy:
+    - apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: "{{ $.Release.Name }}-keycloak"
+        annotations:
+          nginx.ingress.kubernetes.io/proxy-body-size: 30m
+          nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+          nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+          nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+          nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
+      spec:
+        ingressClassName: drax
+        rules:
+          - http:
+              paths:
+              - path: /keycloak
+                pathType: Prefix
+                backend:
+                  service:
+                    name: "{{ $.Release.Name }}-keycloak"
+                    port:
+                      number: 80
+        tls:
+          - {}
+
+
 prometheus:
   enabled: true
   nodeSelector: {}
@@ -826,10 +1164,27 @@ grafana:
 
   service:
     enabled: true
-    type: NodePort
+    type: ClusterIP
     port: 80
     targetPort: 3000
-    nodePort: 30300
+
+  ingress:
+    enabled: true
+    ingressClassName: "drax"
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
+      nginx.ingress.kubernetes.io/proxy-body-size: 30m
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
+      nginx.ingress.kubernetes.io/proxy-buffering: 'on'
+      nginx.ingress.kubernetes.io/proxy-buffers-number: '4'
+      nginx.ingress.kubernetes.io/proxy-max-temp-file-size: 1024m
+    labels: {}
+    hosts: []
+    path: /grafana
+    pathType: Prefix
+    extraPaths: []
+    tls: []
 
   admin:
     existingSecret: "{{ $.Release.Name }}-drax-auth"
@@ -846,7 +1201,11 @@ grafana:
       # Role for unauthenticated users, other valid values are `Editor` and `Admin`
       org_role: Viewer
     server:
-      root_url: "http://{{ .Values.global.kubeIp }}:30300/"
+      protocol: http
+      domain: "0.0.0.0"
+      http_port: 3000
+      root_url: "/grafana/"
+      serve_from_sub_path: true
 
   envRenderSecret:
     slack-token:
@@ -1120,6 +1479,9 @@ loki-gateway:
       - username: "external-logs"
         password: ""
         organization: "logs"
+      - username: "external-events"
+        password: ""
+        organization: "events"
 
   ingress:
     enabled: false
