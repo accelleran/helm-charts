@@ -78,11 +78,12 @@ du-metrics-server:
   service:
     enabled: true
     name: ""
-    type: ClusterIP
+    type: NodePort
     ports:
       metric:
         port: 55555
         targetPort: 55555
+        nodePort: 31555
         protocol: UDP
 
 
