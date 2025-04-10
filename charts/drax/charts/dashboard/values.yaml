@@ -30,6 +30,8 @@ config:
   nodeApiPort: "{{ $.Values.service.ports.http.nodePort }}"
   serviceName: ""
   servicePort: "{{ $.Values.service.ports.http.port }}"
+  keycloakURL: ""
+  keycloakRealm: ""
   kafkaURL: ""
   kafkaPort: 9092
   networkStateMonitorHost: ""
@@ -57,6 +59,7 @@ config:
     - "accelleran.drax.all.ric.processed.anr"
   # Defined for core-ui config.js
   grafanaNodePort: 0
+  grafanaPathPrefix: ""
   accelleranProduct: "P5G"
   # Defined for environment variable DRAX_VERSION
   draxVersionConfigmap: ""
@@ -107,12 +110,11 @@ affinity: {}
 service:
   enabled: true
   name: ""
-  type: NodePort
+  type: ClusterIP
   ports:
     http:
       port: 5000
       targetPort: 5000
-      nodePort: 31315
       protocol: TCP
 
 ingress:

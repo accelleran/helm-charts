@@ -1,5 +1,30 @@
 # Changelog
 
+## [11.0.0](https://github.com/accelleran/helm-charts/compare/cu-up-10.0.2...cu-up-11.0.0) (2025-04-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update helm release common to v0.4.0 ([#993](https://github.com/accelleran/helm-charts/issues/993))
+
+### Features
+
+* **deps:** Update helm release common to v0.4.0 ([#993](https://github.com/accelleran/helm-charts/issues/993)) ([016796d](https://github.com/accelleran/helm-charts/commit/016796d84306ae3b5f17d39bcb0c85ed61467ac6))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cuup-netconf docker tag to v7.0.4 ([#1009](https://github.com/accelleran/helm-charts/issues/1009)) ([d1b4a45](https://github.com/accelleran/helm-charts/commit/d1b4a45e04965031e6c4f832770886bdf3be6dba))
+* **deps:** Update accelleran/cuup-netconf docker tag to v7.0.5 ([#1015](https://github.com/accelleran/helm-charts/issues/1015)) ([57e4bcb](https://github.com/accelleran/helm-charts/commit/57e4bcbf0a328c6da947c48128dec6cfefc90097))
+* **deps:** Update accelleran/cuup-netconf docker tag to v7.0.6 ([#1035](https://github.com/accelleran/helm-charts/issues/1035)) ([3a2f58e](https://github.com/accelleran/helm-charts/commit/3a2f58edeb16da560403581338d313bbe9671575))
+* **deps:** Update accelleran/cuup-netconf docker tag to v7.0.7 ([#1116](https://github.com/accelleran/helm-charts/issues/1116)) ([f23d059](https://github.com/accelleran/helm-charts/commit/f23d059228fd2e6a2292f5ca5138381a741e56b9))
+* **deps:** Update helm release common to v0.4.1 ([#1002](https://github.com/accelleran/helm-charts/issues/1002)) ([8eeac59](https://github.com/accelleran/helm-charts/commit/8eeac59549c5f0153cbaf02bfbeb7c4b5c4073b2))
+* **deps:** Update helm release common to v0.5.0 ([#1064](https://github.com/accelleran/helm-charts/issues/1064)) ([4c5a645](https://github.com/accelleran/helm-charts/commit/4c5a645145d14bc528d3d20798091be42d4d6009))
+* **deps:** Update helm release nats to v1.2.11 ([#1028](https://github.com/accelleran/helm-charts/issues/1028)) ([cce96d6](https://github.com/accelleran/helm-charts/commit/cce96d6d2b11f238e73945653184f40f6b57af17))
+* **deps:** Update helm release nats to v1.3.0 ([#1061](https://github.com/accelleran/helm-charts/issues/1061)) ([0956778](https://github.com/accelleran/helm-charts/commit/0956778e8abe169ef9a5d80f67cd7b90103ba991))
+* **deps:** Update helm release nats to v1.3.1 ([#1063](https://github.com/accelleran/helm-charts/issues/1063)) ([5dc2d58](https://github.com/accelleran/helm-charts/commit/5dc2d585f197ba9a5b8dd9273b7e8c3cfb508e93))
+* **deps:** Update helm release nats to v1.3.2 ([#1095](https://github.com/accelleran/helm-charts/issues/1095)) ([4ddb707](https://github.com/accelleran/helm-charts/commit/4ddb707b56be5bfad2847d1986e33e354d8c40c5))
+
 ## [10.0.2](https://github.com/accelleran/helm-charts/compare/cu-up-10.0.1...cu-up-10.0.2) (2025-02-07)
 
 

@@ -1,0 +1,184 @@
+{{
+  include
+    "accelleran.common.job"
+    (fromYaml (include "accelleran.drax.keycloakInit.job.args" .))
+}}
+
+
+{{- define "accelleran.drax.keycloakInit.job.args" -}}
+{{- $values := index $.Values.drax "keycloak-init" -}}
+{{- $valuesOauth2Proxy := index $.Values "oauth2-proxy" -}}
+
+{{- $valuesAnnotations := dict -}}
+{{- if $values.useHelmHooks -}}
+{{-
+  $valuesAnnotations = (dict "annotations" (dict
+    "helm.sh/hook" "post-install,post-upgrade,post-rollback"
+    "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded"
+  ))
+-}}
+{{- end -}}
+
+top: {{ $ | toYaml | nindent 2 }}
+values:
+  {{
+    (mergeOverwrite
+      (deepCopy $values)
+      $valuesAnnotations
+    ) | toYaml | nindent 2
+  }}
+
+name: {{ $.Release.Name }}-keycloak-init
+
+ttlSecondsAfterFinished: 5
+
+initContainers:
+- {{ fromYaml (include "accelleran.drax.keycloakInit.job.init" $) | toYaml | nindent 2 }}
+
+command:
+  - /bin/sh
+args:
+  - -c
+  - |-
+    apk add py3-requests py3-kubernetes
+    python3 /setup_drax_realm.py
+
+env:
+  - name: HELM_RELEASE_NAME
+    value: {{ $.Release.Name }}
+  - name: HELM_RELEASE_NAMESPACE
+    value: {{ $.Release.Namespace }}
+
+  - name: DRAX_ENDPOINT
+    value: {{ $.Values.global.domain | default $.Values.global.ipAddress }}
+
+  - name: KUBERNETES_NAMESPACE
+    value: {{ $.Release.Namespace }}
+
+  - name: KEYCLOAK_URL
+    value: "http://{{ $.Release.Name }}-keycloak.{{ $.Release.Namespace }}{{ with (trimSuffix "/" $.Values.keycloak.httpRelativePath) }}{{ . }}{{ end }}"
+  - name: KEYCLOAK_REALM_NAME
+    value: "{{ $.Values.drax.auth.realm.name }}"
+  - name: KEYCLOAK_REALM_DISPLAY_NAME
+    value: "{{ $.Values.drax.auth.realm.displayName }}"
+  - name: KEYCLOAK_REALM_LOGIN_THEME
+    value: "accelleran-drax"
+
+  - name: KEYCLOAK_TMP_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: tmp-username
+  - name: KEYCLOAK_TMP_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: tmp-password
+
+  - name: KEYCLOAK_SUPERADMIN_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: superadmin-username
+  - name: KEYCLOAK_SUPERADMIN_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: superadmin-email
+  - name: KEYCLOAK_SUPERADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: superadmin-password
+
+  - name: KEYCLOAK_ADMIN_USERNAME
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: admin-username
+  - name: KEYCLOAK_ADMIN_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: admin-email
+  - name: KEYCLOAK_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ $.Release.Name }}-drax-auth
+        key: admin-password
+
+{{- $oauth2ProxySecretName := tpl $valuesOauth2Proxy.config.existingSecret $ }}
+  - name: OAUTH2_PROXY_SECRET_NAME
+    value: {{ $oauth2ProxySecretName }}
+  - name: OAUTH2_PROXY_CLIENT_ID
+    value: {{ $valuesOauth2Proxy.config.clientID }}
+  - name: OAUTH2_PROXY_COOKIE_SECRET
+{{- $existingSecret := lookup "v1" "Secret" .Release.Namespace $oauth2ProxySecretName -}}
+{{- with dig "data" "cookie-secret" nil $existingSecret }}
+    value: {{ . | b64dec }}
+{{- else }}
+    value: {{ tpl $valuesOauth2Proxy.config.cookieSecret $ | default (randAlphaNum 32 | b64enc) }}
+{{- end }}
+
+  - name: DASHBOARD_SECRET_NAME
+    value: "{{ $.Release.Name }}-auth-dashboard"
+  - name: DASHBOARD_CLIENT_ID
+    value: dashboard
+
+  - name: EXTERNAL_CLIENT_CLIENT_ID
+    value: external-client
+
+volumes:
+  - name: {{ $.Release.Name }}-keycloak-init
+    configMap:
+      name: {{ $.Release.Name }}-keycloak-init
+volumeMounts:
+  - name: {{ $.Release.Name }}-keycloak-init
+    mountPath: "/setup_drax_realm.py"
+    subPath: "setup_drax_realm.py"
+    readOnly: true
+{{- end -}}
+
+
+{{/*
+Init container check waiting until keycloak is available
+*/}}
+{{- define "accelleran.drax.keycloakInit.job.init" -}}
+
+{{ include "accelleran.common.init.container"
+    (include "accelleran.drax.keycloakInit.job.init.args" . | fromYaml)
+}}
+{{- end -}}
+
+{{- define "accelleran.drax.keycloakInit.job.init.args" -}}
+{{- $values := index $.Values.drax "keycloak-init" -}}
+
+{{- $image := $values.keycloakInitImage | required "The keycloak init image needs to be provided to drax keycloak init job init args" -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{
+    (mergeOverwrite
+      (deepCopy $values)
+      (dict "image" $image)
+    ) | toYaml | nindent 2
+  }}
+
+
+name: check-keycloak
+command:
+  - "/bin/sh"
+  - "-c"
+  - |
+    until nc -z -v -w1 ${KEYCLOAK_HOSTNAME} ${KEYCLOAK_PORT}
+    do
+      sleep 1
+    done
+    echo "$(date) Keycloak ready"
+env:
+  - name: KEYCLOAK_HOSTNAME
+    value: {{ $.Release.Name }}-keycloak.{{ $.Release.Namespace }}
+  - name: KEYCLOAK_PORT
+    value: "80"
+{{- end -}}
