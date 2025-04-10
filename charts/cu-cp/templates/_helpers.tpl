@@ -1,8 +1,3 @@
-{{- define "accelleran.cu-cp.ueCount" -}}
-{{- .Values.numOfUes -}}
-{{- end -}}
-
-
 {{- define "accelleran.cu-cp.init.args" -}}
 {{- $ := . -}}
 

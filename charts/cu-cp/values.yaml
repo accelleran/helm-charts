@@ -15,11 +15,6 @@ global:
     secretName: accelleran-cu-license
 
 
-# Number of supported UEs
-#   Description:  You have to specify the amount of UEs that should be supported.
-#
-numOfUes: 16
-
 bootstrap:
   create: true
   name: ""
@@ -132,51 +127,6 @@ tolerations: []
 
 affinity: {}
 
-
-ds-ctrl:
-  enabled: true
-
-  nameOverride: "ds-ctrl"
-  component: "ds-ctrl"
-
-  containerName: "ds-ctrl"
-
-  replicaCount: null
-
-  envInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
-
-  image:
-    repository: accelleran/dsctrlappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
-
-  podSecurityContext: {}
-    # fsGroup: 2000
-
-  autoscaling:
-    enabled: false
-    factorReplicas: 8
-
-  nodeSelector: {}
-
-  tolerations: []
-
-  affinity: {}
 
 nats:
   enabled: false
