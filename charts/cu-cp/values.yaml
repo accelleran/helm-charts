@@ -32,11 +32,6 @@ bootstrap:
   #
   instanceId: "cucp-1"
 
-  redis:
-    enabled: true
-    hostname: ""
-    port: 0
-
   nats:
     enabled: true
     hostname: ""
@@ -50,11 +45,6 @@ nameOverride: ""
 fullnameOverride: ""
 
 component: "cu-cp"
-
-redisInitImage:
-  repository: accelleran/acc-generic-img
-  tag: "0.9.0"
-  pullPolicy: IfNotPresent
 
 natsInitImage:
   repository: accelleran/acc-generic-img
@@ -133,13 +123,5 @@ nats:
 
   natsBox:
     enabled: false
-
-redis:
-  enabled: false
-
-  architecture: standalone
-  auth:
-    enabled: false
-    usePasswordFiles: false
 
 extraResources: []
