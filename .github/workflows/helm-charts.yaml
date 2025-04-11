@@ -263,6 +263,15 @@ jobs:
       - name: Add helm repositories
         run: ./bin/add-repos
 
+      - name: Login to Docker Hub
+        run: helm registry login --username ${{ secrets.DOCKER_LOGIN }} --password ${{ secrets.DOCKER_ACCESS_TOKEN }} docker.io
+      
+      - name: Login to GHCR
+        run: helm registry login --username app/github-actions --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+      - name: Pull external helm charts
+        run: ./bin/pull-external-charts
+
       - name: Run chart releaser
         uses: helm/chart-releaser-action@v1.7.0
         with:
