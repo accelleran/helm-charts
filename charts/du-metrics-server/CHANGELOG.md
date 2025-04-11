@@ -1,11 +1,7 @@
 # Changelog
 
-## [0.5.0](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.12...du-metrics-server-0.5.0) (2025-04-10)
+## [0.4.13](https://github.com/accelleran/helm-charts/compare/du-metrics-server-0.4.12...du-metrics-server-0.4.13) (2025-04-10)
 
-
-### ⚠ BREAKING CHANGES
-
-* add authentication for external drax access ([#595](https://github.com/accelleran/helm-charts/issues/595))
 
 ### Features
 
