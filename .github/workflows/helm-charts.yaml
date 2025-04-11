@@ -271,6 +271,15 @@ jobs:
       - name: Add helm repositories
         run: ./bin/add-repos
 
+      - name: Login to Docker Hub
+        run: helm registry login --username ${{ secrets.DOCKER_LOGIN }} --password ${{ secrets.DOCKER_ACCESS_TOKEN }} docker.io
+
+      - name: Login to GHCR
+        run: helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+      - name: Pull external helm charts
+        run: ./bin/pull-external-charts
+
       - name: Generate release notes
         run: ./bin/generate-release-notes
 
