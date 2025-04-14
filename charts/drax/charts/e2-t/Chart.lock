@@ -4,9 +4,9 @@ dependencies:
   version: 0.5.0
 - name: nats
   repository: https://nats-io.github.io/k8s/helm/charts/
-  version: 1.3.2
+  version: 1.3.3
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.11.5
-digest: sha256:34ab8cbc6a13ccb7d4e293a21bfc9309a3add24d823422ab8aa70336bb5d4da8
-generated: "2025-04-09T11:37:17.44557867Z"
+digest: sha256:8df77f63166012949715432374c51d97e7bb8ad2f52cf2a1f5229a7561c6794b
+generated: "2025-04-14T00:39:56.505527853Z"
