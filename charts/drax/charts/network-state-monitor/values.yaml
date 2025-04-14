@@ -28,7 +28,7 @@ config:
   topics: "accelleran.drax.5g.ric.raw.messages,accelleran.drax.5g.ric.raw.cu_state"
   offset: "latest"
   kafka_client_verbose: "false"
-  is_core_available: false
+  core_agent_available: false
 
 nameOverride: ""
 fullnameOverride: ""

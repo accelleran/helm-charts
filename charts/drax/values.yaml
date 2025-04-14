@@ -339,7 +339,7 @@ network-state-monitor:
   enabled: true
 
   config:
-    is_core_available: false
+    core_agent_available: false
 
   bootstrap:
     create: false
