@@ -338,6 +338,9 @@ network-state-monitor:
   # Enable/disable installation of the Network State Monitor
   enabled: true
 
+  config:
+    core_agent_available: false
+
   bootstrap:
     create: false
     name: "{{ $.Release.Name }}-bootstrap"
