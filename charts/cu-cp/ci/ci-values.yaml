@@ -1,5 +1,2 @@
 nats:
   enabled: true
-
-redis:
-  enabled: true
