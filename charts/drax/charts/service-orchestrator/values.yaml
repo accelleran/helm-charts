@@ -15,7 +15,7 @@ global:
 
 kubeIp: "10.55.1.2"
 # renovate: repository=https://accelleran.github.io/helm-charts chart=cu-cp
-default5gVersion: "10"
+default5gVersion: "11"
 # renovate: repository=https://accelleran.github.io/helm-charts chart=xapp-hello-world
 defaultDevEnvVersion: "6"
 
