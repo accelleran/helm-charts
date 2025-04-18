@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.2.3](https://github.com/accelleran/helm-charts/compare/cell-wrapper-6.2.2...cell-wrapper-6.2.3) (2025-04-18)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cw-netconf docker tag to v6.2.3 ([#1142](https://github.com/accelleran/helm-charts/issues/1142)) ([43e50db](https://github.com/accelleran/helm-charts/commit/43e50db1e1eab18b6eac00cb80e0b9594675bd16))
+* **deps:** Update accelleran/instance-scaler docker tag to v0.2.5 ([#1102](https://github.com/accelleran/helm-charts/issues/1102)) ([5abb127](https://github.com/accelleran/helm-charts/commit/5abb127ea39b7e909d307c280516dc2969cbb052))
+* **deps:** Update accelleran/instance-scaler docker tag to v0.2.6 ([#1141](https://github.com/accelleran/helm-charts/issues/1141)) ([17e4be4](https://github.com/accelleran/helm-charts/commit/17e4be419e713f3ea7482a5bdb5666721807f24a))
+* **deps:** Update helm release nats to v1.3.2 ([#1095](https://github.com/accelleran/helm-charts/issues/1095)) ([4ddb707](https://github.com/accelleran/helm-charts/commit/4ddb707b56be5bfad2847d1986e33e354d8c40c5))
+* **deps:** Update helm release nats to v1.3.3 ([#1125](https://github.com/accelleran/helm-charts/issues/1125)) ([8239402](https://github.com/accelleran/helm-charts/commit/823940279cbcc481208a8651fd838c64cab91a95))
+
 ## [6.2.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-6.2.1...cell-wrapper-6.2.2) (2025-03-26)
 
 
