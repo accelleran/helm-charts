@@ -80,7 +80,7 @@ dependencies:
     condition: keycloak.enabled
     tags:
       - authentication
-    version: 24.5.2
+    version: 24.5.7
     repository: https://charts.bitnami.com/bitnami/
 
   # monitoring
