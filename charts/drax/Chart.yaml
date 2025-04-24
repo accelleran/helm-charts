@@ -80,13 +80,13 @@ dependencies:
     condition: keycloak.enabled
     tags:
       - authentication
-    version: 24.5.7
+    version: 24.6.1
     repository: https://charts.bitnami.com/bitnami/
 
   # monitoring
   - name: grafana
     condition: grafana.enabled
-    version: 8.12.1
+    version: 8.13.1
     repository: https://grafana.github.io/helm-charts
   - name: prometheus
     condition: prometheus.enabled
@@ -105,7 +105,7 @@ dependencies:
     tags:
       - logs
       - events
-    version: 4.8.1
+    version: 4.8.2
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
     condition: loki-deleter.enabled
@@ -154,5 +154,5 @@ dependencies:
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 20.13.0
+    version: 20.13.1
     repository: https://charts.bitnami.com/bitnami/
