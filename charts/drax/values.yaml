@@ -562,6 +562,8 @@ telemetry-collector:
             buckets:
               RRCConnEstabAtt: "rrc_connection_metrics"
               RRCConnEstabSucc: "rrc_connection_metrics"
+              RRCConnReestabAtt: "rrc_connection_metrics"
+              RRCConnReestabSucc: "rrc_connection_metrics"
               MMHoExeIntraReq: "handover_and_mobility_metrics"
               MMHoExeIntraSucc: "handover_and_mobility_metrics"
               RRCConnMean: "rrc_connection_metrics"
