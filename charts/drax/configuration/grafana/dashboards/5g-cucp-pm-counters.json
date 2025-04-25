@@ -719,7 +719,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<h4 style=\"text-align:center\"> <h4>\n<h4 style=\"text-align:center\"> <h4>\n",
+        "content": "",
         "mode": "html"
       },
       "pluginVersion": "11.6.0",
@@ -1284,7 +1284,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<h4 style=\"text-align:center\"> <h4>\n<h4 style=\"text-align:center\"> <h4>\n",
+        "content": "",
         "mode": "html"
       },
       "pluginVersion": "11.6.0",
@@ -2732,7 +2732,7 @@
             "h": 4,
             "w": 6,
             "x": 0,
-            "y": 94
+            "y": 66
           },
           "id": 85,
           "options": {
@@ -2752,7 +2752,7 @@
             "textMode": "auto",
             "wideLayout": true
           },
-          "pluginVersion": "11.3.1",
+          "pluginVersion": "11.6.0",
           "targets": [
             {
               "datasource": {
@@ -2802,7 +2802,7 @@
             "h": 4,
             "w": 6,
             "x": 6,
-            "y": 94
+            "y": 66
           },
           "id": 62,
           "options": {
@@ -2822,7 +2822,7 @@
             "textMode": "auto",
             "wideLayout": true
           },
-          "pluginVersion": "11.3.1",
+          "pluginVersion": "11.6.0",
           "targets": [
             {
               "datasource": {
@@ -2846,7 +2846,7 @@
             "h": 4,
             "w": 12,
             "x": 12,
-            "y": 94
+            "y": 66
           },
           "id": 71,
           "options": {
@@ -2855,10 +2855,10 @@
               "showLineNumbers": false,
               "showMiniMap": false
             },
-            "content": "<h4 style=\"text-align:center\"> <h4>\n<h4 style=\"text-align:center\"> <h4>\n",
+            "content": "",
             "mode": "html"
           },
-          "pluginVersion": "11.3.1",
+          "pluginVersion": "11.6.0",
           "title": "",
           "transparent": true,
           "type": "text"
@@ -2912,7 +2912,7 @@
             "h": 4,
             "w": 6,
             "x": 0,
-            "y": 103
+            "y": 67
           },
           "id": 68,
           "options": {
@@ -2932,7 +2932,7 @@
             "textMode": "auto",
             "wideLayout": true
           },
-          "pluginVersion": "11.3.1",
+          "pluginVersion": "11.6.0",
           "targets": [
             {
               "datasource": {
@@ -2982,7 +2982,7 @@
             "h": 4,
             "w": 6,
             "x": 6,
-            "y": 103
+            "y": 67
           },
           "id": 73,
           "options": {
@@ -3002,7 +3002,7 @@
             "textMode": "auto",
             "wideLayout": true
           },
-          "pluginVersion": "11.3.1",
+          "pluginVersion": "11.6.0",
           "targets": [
             {
               "datasource": {
