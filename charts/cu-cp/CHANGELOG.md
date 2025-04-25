@@ -1,5 +1,30 @@
 # Changelog
 
+## [12.0.0](https://github.com/accelleran/helm-charts/compare/cu-cp-11.0.0...cu-cp-12.0.0) (2025-04-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove Redis
+* use monolithic CU-CP/CU-UP instead of separate microservices
+
+### Features
+
+* Remove Redis ([77713c0](https://github.com/accelleran/helm-charts/commit/77713c0fbd42806c4a5a97b77453522365e4ac3d))
+* Use monolithic CU-CP/CU-UP instead of separate microservices ([1bf86b5](https://github.com/accelleran/helm-charts/commit/1bf86b595fd2b8c80d4852bf0e6eead5a4951c23))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cucp-netconf docker tag to v8 ([#1162](https://github.com/accelleran/helm-charts/issues/1162)) ([3aba8a3](https://github.com/accelleran/helm-charts/commit/3aba8a39548b08c630e56574b8677055cde44d2d))
+* **deps:** Update helm release nats to v1.3.3 ([#1125](https://github.com/accelleran/helm-charts/issues/1125)) ([8239402](https://github.com/accelleran/helm-charts/commit/823940279cbcc481208a8651fd838c64cab91a95))
+* **deps:** Update helm release redis to v20.12.0 ([#1129](https://github.com/accelleran/helm-charts/issues/1129)) ([7a0cc6c](https://github.com/accelleran/helm-charts/commit/7a0cc6ca1e2e56f0c9b7b3a0d7e73b2dedc89d8d))
+* **deps:** Update helm release redis to v20.12.1 ([#1133](https://github.com/accelleran/helm-charts/issues/1133)) ([e205637](https://github.com/accelleran/helm-charts/commit/e205637aeb0ca8e6250c53ee679547bd0e3ea485))
+* **deps:** Update helm release redis to v20.12.2 ([#1145](https://github.com/accelleran/helm-charts/issues/1145)) ([a29965a](https://github.com/accelleran/helm-charts/commit/a29965a549d0278b23437c05393d1a334b0b4f5b))
+* **deps:** Update helm release redis to v20.13.0 ([#1147](https://github.com/accelleran/helm-charts/issues/1147)) ([a223e84](https://github.com/accelleran/helm-charts/commit/a223e8470cc9beb4bba1237c3d9edb4b7d0f8492))
+* **deps:** Update helm release redis to v20.13.1 ([#1152](https://github.com/accelleran/helm-charts/issues/1152)) ([90e30ed](https://github.com/accelleran/helm-charts/commit/90e30ed285769a70f206baefeb9157fe346ed2b5))
+* **deps:** Update helm release redis to v20.13.2 ([#1161](https://github.com/accelleran/helm-charts/issues/1161)) ([8872bb1](https://github.com/accelleran/helm-charts/commit/8872bb152e7c2867104d562a5135adcf91529fbc))
+
 ## [11.0.0](https://github.com/accelleran/helm-charts/compare/cu-cp-10.0.2...cu-cp-11.0.0) (2025-04-09)
 
 
