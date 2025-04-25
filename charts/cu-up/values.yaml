@@ -67,162 +67,74 @@ drax:
   technology: "5g"
   role: "5g"
 
+nameOverride: ""
+fullnameOverride: ""
 
-cu-up:
+component: "cu-up"
+
+natsInitImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.0"
+  pullPolicy: IfNotPresent
+
+image:
+  repository: accelleran/cu-up
+  tag: ""
+  pullPolicy: IfNotPresent
+
+service:
   enabled: true
+  name: ""
+  type: "ClusterIP"
+  ports:
+    netconf:
+      appProtocol: "netconf-ssh"
+      protocol: "TCP"
+      port: 8300
+      targetPort: 0
+      nodePort: 0
 
-  nameOverride: "cu-up"
-  fullnameOverride: ""
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
 
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    tag: "0.9.0"
-    pullPolicy: IfNotPresent
+readinessProbe:
+  exec:
+    command:
+      - "test"
+      - "-f"
+      - "/tmp/netopeer2-server.pid"
+  initialDelaySeconds: 15
+  periodSeconds: 30
 
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
-    # Annotations to add to the service account
-    annotations: {}
-    # The name of the service account to use.
-    # If not set and create is true, a name is generated using the fullname template
-    name: ""
+securityContext:
+  fsGroup: 1000
 
-  podSecurityContext: {}
-    # fsGroup: 2000
+persistence:
+  - name: sysrepo
+    mountPath: "/workdir/sysrepo"
+    storageClassName: ""
+    accessModes:
+      - "ReadWriteOnce"
+    size: "128Mi"
 
-  nodeSelector: {}
+nodeSelector: {}
 
-  tolerations: []
+tolerations: []
 
-  affinity: {}
-
-
-netconf:
-  enabled: true
-
-  nameOverride: "netconf"
-  fullnameOverride: ""
-
-  component: "netconf"
-
-  containerName: "netconf"
-
-  natsInitImage:
-    repository: accelleran/acc-generic-img
-    pullPolicy: IfNotPresent
-    tag: "0.9.0"
-
-  image:
-    repository: accelleran/cuup-netconf
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-  readinessProbe:
-    exec:
-      command:
-        - "test"
-        - "-f"
-        - "/tmp/netopeer2-server.pid"
-    initialDelaySeconds: 15
-    periodSeconds: 30
-
-  podSecurityContext:
-    fsGroup: 1000
-
-  persistence:
-    - name: sysrepo
-      mountPath: "/workdir/sysrepo"
-      storageClassName: ""
-      accessModes:
-        - "ReadWriteOnce"
-      size: "128Mi"
-
-  service:
-    enabled: true
-    name: ""
-    type: "ClusterIP"
-    ports:
-      netconf:
-        protocol: "TCP"
-        port: 8300
-        targetPort: null
-        nodePort: null
-
-
-controller-up:
-  enabled: true
-
-  nameOverride: "controller-up"
-  fullnameOverride: ""
-
-  containerName: "controller-up"
-
-  image:
-    repository: accelleran/controllerupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-pm-controller-up:
-  enabled: true
-
-  nameOverride: "pm-controller-up"
-  fullnameOverride: ""
-
-  containerName: "pm-controller-up"
-
-  image:
-    repository: accelleran/pmcontrollerupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
-
-
-res-mgr-up:
-  enabled: true
-
-  nameOverride: "res-mgr-up"
-  fullnameOverride: ""
-
-  containerName: "res-mgr-up"
-
-  image:
-    repository: accelleran/resmgrupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-
-e1-sctp-up:
-  enabled: true
-
-  nameOverride: "e1-sctp-up"
-  fullnameOverride: ""
-
-  containerName: "e1-sctp-up"
-
-  image:
-    repository: accelleran/e1sctpupappl
-    tag: ""
-    pullPolicy: IfNotPresent
-
-  accelleranLicense:
-    enabled: false
+affinity: {}
 
 
 ups:
   enabled: true
 
   nameOverride: "ups"
-  fullnameOverride: ""
+  component: "ups"
 
   containerName: "ups"
 
@@ -232,7 +144,7 @@ ups:
     pullPolicy: IfNotPresent
 
   image:
-    repository: accelleran/upsappl
+    repository: accelleran/ups
     tag: ""
     pullPolicy: IfNotPresent
 
@@ -290,12 +202,12 @@ xdp-ups:
   enabled: true
 
   nameOverride: "xdp-ups"
-  fullnameOverride: ""
+  component: "xdp-ups"
 
   containerName: "xdp-ups"
 
   image:
-    repository: accelleran/xdpupsappl
+    repository: accelleran/xdp-ups
     tag: ""
     pullPolicy: IfNotPresent
 

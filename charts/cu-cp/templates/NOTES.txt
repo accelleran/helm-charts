@@ -6,16 +6,7 @@ Deployed Accelleran CU-CP components [{{ $.Release.Name }}]
 with the following details:
 
   Tag: {{ include "accelleran.common.appVersion" (dict "top" $) }}
-
-  Number of components:
-  AMFs:   {{ include "accelleran.cu-cp.amfCount" . }}
-  CU-UPs: {{ include "accelleran.cu-cp.cuUpCount" . }}
-  DUs:    {{ include "accelleran.cu-cp.duCount" . }}
-  CELLs:  {{ include "accelleran.cu-cp.cellCount" . }}
-  UEs:    {{ include "accelleran.cu-cp.ueCount" . }}
-
   Instance ID: {{ include "accelleran.common.bootstrap.instanceId" (dict "top" $) }}
-  Redis Configuration: {{ include "accelleran.common.bootstrap.redis.hostname" (dict "top" $) }}:{{ include "accelleran.common.bootstrap.redis.port" (dict "top" $) }}
   Nats Configuration: {{ include "accelleran.common.bootstrap.nats.hostname" (dict "top" $) }}:{{ include "accelleran.common.bootstrap.nats.port" (dict "top" $) }}
 
 Discover the IPs given to the services using the following command and

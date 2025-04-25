@@ -1,0 +1,40 @@
+{{- include
+      "accelleran.common.statefulset"
+      (fromYaml (include "accelleran.cu-cp.statefulset.args" .))
+-}}
+
+
+{{- define "accelleran.cu-cp.statefulset.args" -}}
+{{- $ := . -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ mergeOverwrite
+       (omit (deepCopy $.Values) "service")
+       (dict "service" (dict "ports" (($.Values).service).ports))
+     | toYaml | nindent 2
+  }}
+
+selectorLabels:
+  {{ include "accelleran.common.selectorLabels" (dict "top" $) | nindent 2 }}
+  app.kubernetes.io/component: {{ $.Values.component }}
+labels:
+  {{ include "accelleran.common.labels" (dict "top" $) | nindent 2 }}
+
+initContainers:
+- {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-cp.init.args" .))) | toYaml | nindent 2 }}
+
+env:
+  - name: __APPNAME
+    value: cuCp
+{{- with (include "accelleran.common.bootstrap.instanceId" (dict "top" $)) }}
+  - name: INSTANCE_FILTER
+    value: {{ . | quote }}
+{{- end }}
+  - name: LICENSE_PATH
+    value: {{ printf "%s/license.crt" (include "accelleran.common.drax.license.mountPath" (dict "top" $)) | quote }}
+envFrom:
+  - configMapRef:
+      name: {{ include "accelleran.common.bootstrap.configMapName" (dict "top" $) | quote }}
+{{- end -}}

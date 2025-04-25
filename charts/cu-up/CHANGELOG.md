@@ -1,5 +1,22 @@
 # Changelog
 
+## [12.0.0](https://github.com/accelleran/helm-charts/compare/cu-up-11.0.0...cu-up-12.0.0) (2025-04-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* use monolithic CU-CP/CU-UP instead of separate microservices
+
+### Features
+
+* Use monolithic CU-CP/CU-UP instead of separate microservices ([1bf86b5](https://github.com/accelleran/helm-charts/commit/1bf86b595fd2b8c80d4852bf0e6eead5a4951c23))
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cuup-netconf docker tag to v8 ([#1163](https://github.com/accelleran/helm-charts/issues/1163)) ([ed7257c](https://github.com/accelleran/helm-charts/commit/ed7257c0d00635b36e692130a4eae589b2720068))
+* **deps:** Update helm release nats to v1.3.3 ([#1125](https://github.com/accelleran/helm-charts/issues/1125)) ([8239402](https://github.com/accelleran/helm-charts/commit/823940279cbcc481208a8651fd838c64cab91a95))
+
 ## [11.0.0](https://github.com/accelleran/helm-charts/compare/cu-up-10.0.2...cu-up-11.0.0) (2025-04-09)
 
 
