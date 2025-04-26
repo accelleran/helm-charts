@@ -72,7 +72,7 @@ kafkaInitImage:
 image:
   repository: accelleran/golang-nkafka-5g
   pullPolicy: IfNotPresent
-  tag: "1.3.10_cu-7.0.1-orval_cw-6.1.1"
+  tag: "1.3.11_cu-8.0.0-primus_cw-6.2.3"
 
 command:
   - "/home/nats-kafka"
