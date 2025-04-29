@@ -78,7 +78,7 @@ config:
       consumers:
         natsConsumer:
           url: ""
-        subjects: "*.5G_MEAS_INFO.*.*.*.*"
+          subjects: "*.5G_MEAS_INFO.*.*.*.*"
       publishers:
         # kafkaPublisher:
         #   topic: "accelleran.drax.5g.ric.o1.ves"
@@ -98,10 +98,12 @@ config:
         # kafkaPublisher:
         #   topic: "accelleran.drax.5g.ric.o1.ves"
         influxPublisher:
-          defaultBucket: "counters5g"
+          defaultBucket: "default_performance_metrics"
           buckets:
             RRCConnEstabAtt: "rrc_connection_metrics"
             RRCConnEstabSucc: "rrc_connection_metrics"
+            RRCConnReestabAtt: "rrc_connection_metrics"
+            RRCConnReestabSucc: "rrc_connection_metrics"
             MMHoExeIntraReq: "handover_and_mobility_metrics"
             MMHoExeIntraSucc: "handover_and_mobility_metrics"
             RRCConnMean: "rrc_connection_metrics"
@@ -160,5 +162,27 @@ config:
           buckets:
             DUUEMeasurements: "du_ue_measurements"
             DURLCMeasurements: "du_rlc_measurements"
+    - name: "cu_events"
+      component: "cu"
+      vendor: "accelleran"
+      enabled: "true"
+      consumers:
+        natsConsumer:
+          url: ""
+          subjects: "*.F1-SCTP-ASSOC-FAILURE-IND"
+      publishers:
+        kafkaPublisher:
+          topic: "accelleran.drax.5g.ric.o1.ves"
+    - name: "grafana_alerts"
+      component: "drax"
+      vendor: "accelleran"
+      enabled: "true"
+      consumers:
+        restConsumer:
+          endpoint: "/alert"
+          port: "9020"
+      publishers:
+        kafkaPublisher:
+          topic: "accelleran.drax.5g.ric.o1.ves"
 
 extraResources: []
