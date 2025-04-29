@@ -40,7 +40,7 @@ dependencies:
   version: 4.12.1
 - name: oauth2-proxy
   repository: https://oauth2-proxy.github.io/manifests
-  version: 7.12.10
+  version: 7.12.11
 - name: keycloak
   repository: https://charts.bitnami.com/bitnami/
   version: 24.6.1
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.13.3
-digest: sha256:f2f97b44e6ce988d88dd9dc611689257dcaa2944c91ca629cdb618067cb73578
-generated: "2025-04-28T21:46:49.069708533Z"
+digest: sha256:12d6e7d9c4258ba95b75f196387db61240c6899fd36889f085ab4650abe20e4c
+generated: "2025-04-29T07:52:07.995351094Z"
