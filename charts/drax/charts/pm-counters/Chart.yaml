@@ -4,7 +4,7 @@ description: The Accelleran dRAX PM Counters xAPP
 type: application
 version: 2.0.0
 # renovate: image=accelleran/acc-fiveg-pmcounters
-appVersion: 1.1.1
+appVersion: 1.1.2
 dependencies:
   - name: common
     version: 0.5.0
