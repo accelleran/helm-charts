@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3](https://github.com/accelleran/helm-charts/compare/telemetry-collector-2.0.2...telemetry-collector-2.0.3) (2025-04-30)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/telemetry-collector docker tag to v1.4.6 ([#1185](https://github.com/accelleran/helm-charts/issues/1185)) ([9be766c](https://github.com/accelleran/helm-charts/commit/9be766cb87d8aa9247a63f7cfe5a8c6fb0236c48))
+
 ## [2.0.2](https://github.com/accelleran/helm-charts/compare/telemetry-collector-2.0.1...telemetry-collector-2.0.2) (2025-04-24)
 
 
