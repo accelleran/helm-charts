@@ -25,7 +25,7 @@ dependencies:
   version: 0.4.13
 - name: telemetry-collector
   repository: https://accelleran.github.io/helm-charts/
-  version: 2.0.2
+  version: 2.0.3
 - name: e2-t
   repository: file://charts/e2-t
   version: 2.0.0
@@ -40,13 +40,13 @@ dependencies:
   version: 4.12.1
 - name: oauth2-proxy
   repository: https://oauth2-proxy.github.io/manifests
-  version: 7.12.11
+  version: 7.12.12
 - name: keycloak
   repository: https://charts.bitnami.com/bitnami/
-  version: 24.6.2
+  version: 24.6.3
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.13.2
+  version: 8.14.0
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
   version: 27.11.0
@@ -82,6 +82,6 @@ dependencies:
   version: 1.3.4
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
-  version: 20.13.3
-digest: sha256:493d389458e32617ba203dccc6db8e2e998aaa3f714bd79937514d7b3ba676df
-generated: "2025-04-29T16:30:35.178939677Z"
+  version: 20.13.4
+digest: sha256:962b89be49e33b9c1c53fe3f6cbbb42f694c2ff5681ec871aa436ffa412f2394
+generated: "2025-04-30T11:46:24.194660706Z"

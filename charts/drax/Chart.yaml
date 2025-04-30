@@ -39,7 +39,7 @@ dependencies:
     repository: https://accelleran.github.io/helm-charts/
   - name: telemetry-collector
     condition: telemetry-collector.enabled
-    version: 2.0.2
+    version: 2.0.3
     repository: https://accelleran.github.io/helm-charts/
 
   # ric
@@ -74,19 +74,19 @@ dependencies:
     condition: oauth2-proxy.enabled
     tags:
       - authentication
-    version: 7.12.11
+    version: 7.12.12
     repository: https://oauth2-proxy.github.io/manifests
   - name: keycloak
     condition: keycloak.enabled
     tags:
       - authentication
-    version: 24.6.2
+    version: 24.6.3
     repository: https://charts.bitnami.com/bitnami/
 
   # monitoring
   - name: grafana
     condition: grafana.enabled
-    version: 8.13.2
+    version: 8.14.0
     repository: https://grafana.github.io/helm-charts
   - name: prometheus
     condition: prometheus.enabled
@@ -154,5 +154,5 @@ dependencies:
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 20.13.3
+    version: 20.13.4
     repository: https://charts.bitnami.com/bitnami/
