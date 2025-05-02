@@ -833,13 +833,26 @@ def add_client_scope_role(
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes/{client_scope_id}/scope-mappings/clients/{client_id}",
         headers=auth_headers(config),
-        json={
-            "id": view_clients_role_id,
-        },
         timeout=request_timeout,
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+
+    if view_clients_role_id not in [role["id"] for role in response.json()]:
+        response = requests.post(
+            f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes/{client_scope_id}/scope-mappings/clients/{client_id}",
+            headers=auth_headers(config),
+            json=[
+                {
+                    "id": view_clients_role_id,
+                    "name": role.name,
+                },
+            ],
+            timeout=request_timeout,
+            verify=request_verify_certificate,
+        )
+        response.raise_for_status()
+        print(f"added role {role.name} to client scope {client_scope.name}")
 
 
 def init_kube_client():
