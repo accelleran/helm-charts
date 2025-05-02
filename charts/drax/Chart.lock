@@ -46,7 +46,7 @@ dependencies:
   version: 24.6.3
 - name: grafana
   repository: https://grafana.github.io/helm-charts
-  version: 8.14.0
+  version: 8.14.1
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
   version: 27.11.0
@@ -55,7 +55,7 @@ dependencies:
   version: 0.1.12
 - name: grafana-loki
   repository: https://charts.bitnami.com/bitnami/
-  version: 4.8.4
+  version: 4.8.5
 - name: loki-deleter
   repository: https://accelleran.github.io/helm-charts/
   version: 0.1.8
@@ -79,9 +79,9 @@ dependencies:
   version: 31.5.0
 - name: nats
   repository: https://nats-io.github.io/k8s/helm/charts/
-  version: 1.3.4
+  version: 1.3.5
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 20.13.4
-digest: sha256:6b80fe2caa671d23fddab6648263371e4dc8023c77f0014898784cc5596e2eb1
-generated: "2025-04-30T12:18:42.628685831Z"
+digest: sha256:f987e8442da48aca3afefdaed9519d82f4230409a18f16873972a52b4c596037
+generated: "2025-05-01T21:14:31.478280178Z"
