@@ -84,6 +84,7 @@ class ClientScope:
     name: str
     roles: list[ClientRole]
     mappers: list[Mapper]
+    is_default: bool
 
     def to_keycloak_json(self) -> dict[str, Any]:
         return {
@@ -100,7 +101,7 @@ class ClientScope:
 class OAuth2ProxyAudienceClientScope(ClientScope):
     def __init__(self) -> None:
         oauth2_proxy_mapper: Mapper = Mapper(name="OAuth2 Proxy Audience", client_audience="oauth2-proxy")
-        super().__init__(name="oauth2-proxy", roles=[], mappers=[oauth2_proxy_mapper])
+        super().__init__(name="oauth2-proxy", roles=[], mappers=[oauth2_proxy_mapper], is_default=True)
     def to_keycloak_json(self) -> dict[str, Any]:
         return {
             "name": self.name,
@@ -161,7 +162,8 @@ class Oauth2ProxyClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": False,
             "authorizationServicesEnabled": False,
-            "optionalClientScopes": [scope.name for scope in self.scopes]
+            "defaultClientScopes": [scope.name for scope in self.scopes if scope.is_default],
+            "optionalClientScopes": [scope.name for scope in self.scopes if not scope.is_default],
         }
 
         if self.redirect:
@@ -209,7 +211,8 @@ class InternalClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": True,
             "authorizationServicesEnabled": False,
-            "optionalClientScopes": [scope.name for scope in self.scopes]
+            "defaultClientScopes": [scope.name for scope in self.scopes if scope.is_default],
+            "optionalClientScopes": [scope.name for scope in self.scopes if not scope.is_default],
         }
 
         return json
@@ -248,7 +251,8 @@ class ExternalClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": True,
             "authorizationServicesEnabled": False,
-            "optionalClientScopes": [scope.name for scope in self.scopes]
+            "defaultClientScopes": [scope.name for scope in self.scopes if scope.is_default],
+            "optionalClientScopes": [scope.name for scope in self.scopes if not scope.is_default],
         }
 
         return json
@@ -335,20 +339,20 @@ def main() -> None:
     client_scopes: list[ClientScope] = list()
 
     openid_client_scope = ClientScope(
-        name="openid", roles=[], mappers=[]
+        name="openid", roles=[], mappers=[], is_default=False
     )
     client_scopes.append(openid_client_scope)
 
     email_client_scope = ClientScope(
-        name="email", roles=[], mappers=[]
+        name="email", roles=[], mappers=[], is_default=True
     )
 
     profile_client_scope = ClientScope(
-        name="profile", roles=[], mappers=[]
+        name="profile", roles=[], mappers=[], is_default=True
     )
 
     read_clients_client_scope = ClientScope(
-        name="read-clients", roles=[realm_management_view_clients_role], mappers=[]
+        name="read-clients", roles=[realm_management_view_clients_role], mappers=[], is_default=False
     )
     client_scopes.append(read_clients_client_scope)
 
@@ -805,6 +809,8 @@ def create_or_update_client_scope(
     else:
         update_client_scope(config, client_scope)
 
+    set_client_scope_assigned_type(config, client_scope)
+
     for role in client_scope.roles:
         add_client_scope_role(config, client_scope, role)
     
@@ -867,6 +873,29 @@ def get_client_scope_id(config: KeycloakConfig, client_scope: ClientScope) -> st
         )
 
     return client_scopes[0]
+
+
+def set_client_scope_assigned_type(config: KeycloakConfig, client_scope: ClientScope) -> None:
+    client_scope_id = get_client_scope_id(config, client_scope)
+
+    assigned_type: str = "default" if client_scope.is_default else "optional"
+    opposite_assigned_type: str = "optional" if client_scope.is_default else "default"
+
+    requests.delete(
+        f"{config.base_url}/admin/realms/{config.realm.name}/default-{opposite_assigned_type}-client-scopes/{client_scope_id}",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+
+    response = requests.put(
+        f"{config.base_url}/admin/realms/{config.realm.name}/default-{assigned_type}-client-scopes/{client_scope_id}",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+    print(f"set client scope {client_scope.name} assigned type to {assigned_type}")
 
 
 def add_client_scope_role(
