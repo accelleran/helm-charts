@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.4](https://github.com/accelleran/helm-charts/compare/telemetry-collector-2.0.3...telemetry-collector-2.0.4) (2025-05-05)
+
+
+### Bug Fixes
+
+* Adapt config for cu_events ([#1181](https://github.com/accelleran/helm-charts/issues/1181)) ([a64b8af](https://github.com/accelleran/helm-charts/commit/a64b8af03c9a1723f6c197cb532cd76131ae855a))
+
 ## [2.0.3](https://github.com/accelleran/helm-charts/compare/telemetry-collector-2.0.2...telemetry-collector-2.0.3) (2025-04-30)
 
 
