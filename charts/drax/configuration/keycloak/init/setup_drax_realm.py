@@ -983,8 +983,11 @@ def update_client_scope_mapper(
         timeout=request_timeout,
         verify=request_verify_certificate,
     )
-    response.raise_for_status()
-    print(f"updated client scope {client_scope.name} mapper {mapper.name}")
+    try:
+        response.raise_for_status()
+        print(f"updated client scope {client_scope.name} mapper {mapper.name}")
+    except requests.HTTPError as e:
+        print(f"failed updating client scope {client_scope.name} mapper {mapper.name} - ignoring due to null pointer exception in keycloak - {e}")
 
 
 def get_client_scope_mapper_id(config: KeycloakConfig, client_scope: ClientScope, mapper: Mapper) -> list[str]:
