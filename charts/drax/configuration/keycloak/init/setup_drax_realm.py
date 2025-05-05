@@ -788,7 +788,7 @@ def create_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> No
         verify=request_verify_certificate,
     )
     response.raise_for_status()
-    print(f"created client {client_scope.name}")
+    print(f"created client scope {client_scope.name}")
 
 
 def update_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> None:
@@ -802,7 +802,7 @@ def update_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> No
         verify=request_verify_certificate,
     )
     response.raise_for_status()
-    print(f"updated client {client_scope.name}")
+    print(f"updated client scope {client_scope.name}")
 
 
 def get_client_scope_id(config: KeycloakConfig, client_scope: ClientScope) -> str:
