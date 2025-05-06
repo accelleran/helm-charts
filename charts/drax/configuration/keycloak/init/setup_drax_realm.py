@@ -58,9 +58,33 @@ class ClientRole:
 
 
 @dataclass
+class Mapper:
+    name: str
+    client_audience: str
+
+    def to_keycloak_json(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "protocol":"openid-connect",
+            "protocolMapper":"oidc-audience-mapper",
+            "consentRequired": False,
+            "config": {
+                "included.client.audience": self.client_audience,
+                "included.custom.audience":"",
+                "id.token.claim":"false",
+                "access.token.claim":"true",
+                "lightweight.claim":"false",
+                "introspection.token.claim":"true"
+            }
+        }
+
+
+@dataclass
 class ClientScope:
     name: str
     roles: list[ClientRole]
+    mappers: list[Mapper]
+    is_default: bool
 
     def to_keycloak_json(self) -> dict[str, Any]:
         return {
@@ -70,6 +94,22 @@ class ClientScope:
             "attributes": {
                 "include.in.token.scope": "true",
                 "display.on.consent.screen": "true",
+            },
+        }
+
+
+class OAuth2ProxyAudienceClientScope(ClientScope):
+    def __init__(self) -> None:
+        oauth2_proxy_mapper: Mapper = Mapper(name="OAuth2 Proxy Audience", client_audience="oauth2-proxy")
+        super().__init__(name="oauth2-proxy", roles=[], mappers=[oauth2_proxy_mapper], is_default=True)
+    def to_keycloak_json(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": "",
+            "protocol": "openid-connect",
+            "attributes": {
+                "include.in.token.scope": "false",
+                "display.on.consent.screen": "false",
             },
         }
 
@@ -122,7 +162,8 @@ class Oauth2ProxyClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": False,
             "authorizationServicesEnabled": False,
-            "optionalClientScopes": [scope.name for scope in self.scopes]
+            "defaultClientScopes": [scope.name for scope in self.scopes if scope.is_default],
+            "optionalClientScopes": [scope.name for scope in self.scopes if not scope.is_default],
         }
 
         if self.redirect:
@@ -170,7 +211,8 @@ class InternalClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": True,
             "authorizationServicesEnabled": False,
-            "optionalClientScopes": [scope.name for scope in self.scopes]
+            "defaultClientScopes": [scope.name for scope in self.scopes if scope.is_default],
+            "optionalClientScopes": [scope.name for scope in self.scopes if not scope.is_default],
         }
 
         return json
@@ -209,7 +251,8 @@ class ExternalClient:
             "directAccessGrantsEnabled": False,
             "serviceAccountsEnabled": True,
             "authorizationServicesEnabled": False,
-            "optionalClientScopes": [scope.name for scope in self.scopes]
+            "defaultClientScopes": [scope.name for scope in self.scopes if scope.is_default],
+            "optionalClientScopes": [scope.name for scope in self.scopes if not scope.is_default],
         }
 
         return json
@@ -296,22 +339,25 @@ def main() -> None:
     client_scopes: list[ClientScope] = list()
 
     openid_client_scope = ClientScope(
-        name="openid", roles=[]
+        name="openid", roles=[], mappers=[], is_default=False
     )
     client_scopes.append(openid_client_scope)
 
     email_client_scope = ClientScope(
-        name="email", roles=[]
+        name="email", roles=[], mappers=[], is_default=True
     )
 
     profile_client_scope = ClientScope(
-        name="profile", roles=[]
+        name="profile", roles=[], mappers=[], is_default=True
     )
 
     read_clients_client_scope = ClientScope(
-        name="read-clients", roles=[realm_management_view_clients_role]
+        name="read-clients", roles=[realm_management_view_clients_role], mappers=[], is_default=False
     )
     client_scopes.append(read_clients_client_scope)
+
+    oauth2_proxy_audience_client_scope = OAuth2ProxyAudienceClientScope()
+    client_scopes.append(oauth2_proxy_audience_client_scope)
 
     clients: list[Client] = list()
 
@@ -350,6 +396,7 @@ def main() -> None:
         "EXTERNAL_CLIENT_CLIENT_ID", default="external-client"
     )
     external_client.name = "External Client"
+    external_client.scopes.append(oauth2_proxy_audience_client_scope)
     clients.append(external_client)
 
     try:
@@ -762,8 +809,13 @@ def create_or_update_client_scope(
     else:
         update_client_scope(config, client_scope)
 
+    set_client_scope_assigned_type(config, client_scope)
+
     for role in client_scope.roles:
         add_client_scope_role(config, client_scope, role)
+    
+    for mapper in client_scope.mappers:
+        add_client_scope_mapper(config, client_scope, mapper)
 
 
 def list_client_scopes(config: KeycloakConfig) -> list[str]:
@@ -788,7 +840,7 @@ def create_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> No
         verify=request_verify_certificate,
     )
     response.raise_for_status()
-    print(f"created client {client_scope.name}")
+    print(f"created client scope {client_scope.name}")
 
 
 def update_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> None:
@@ -802,7 +854,7 @@ def update_client_scope(config: KeycloakConfig, client_scope: ClientScope) -> No
         verify=request_verify_certificate,
     )
     response.raise_for_status()
-    print(f"updated client {client_scope.name}")
+    print(f"updated client scope {client_scope.name}")
 
 
 def get_client_scope_id(config: KeycloakConfig, client_scope: ClientScope) -> str:
@@ -823,6 +875,29 @@ def get_client_scope_id(config: KeycloakConfig, client_scope: ClientScope) -> st
     return client_scopes[0]
 
 
+def set_client_scope_assigned_type(config: KeycloakConfig, client_scope: ClientScope) -> None:
+    client_scope_id = get_client_scope_id(config, client_scope)
+
+    assigned_type: str = "default" if client_scope.is_default else "optional"
+    opposite_assigned_type: str = "optional" if client_scope.is_default else "default"
+
+    requests.delete(
+        f"{config.base_url}/admin/realms/{config.realm.name}/default-{opposite_assigned_type}-client-scopes/{client_scope_id}",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+
+    response = requests.put(
+        f"{config.base_url}/admin/realms/{config.realm.name}/default-{assigned_type}-client-scopes/{client_scope_id}",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+    print(f"set client scope {client_scope.name} assigned type to {assigned_type}")
+
+
 def add_client_scope_role(
     config: KeycloakConfig, client_scope: ClientScope, role: ClientRole
 ) -> None:
@@ -833,13 +908,106 @@ def add_client_scope_role(
     response = requests.get(
         f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes/{client_scope_id}/scope-mappings/clients/{client_id}",
         headers=auth_headers(config),
-        json={
-            "id": view_clients_role_id,
-        },
         timeout=request_timeout,
         verify=request_verify_certificate,
     )
     response.raise_for_status()
+
+    if view_clients_role_id not in [role["id"] for role in response.json()]:
+        response = requests.post(
+            f"{config.base_url}/admin/realms/{config.realm.name}/client-scopes/{client_scope_id}/scope-mappings/clients/{client_id}",
+            headers=auth_headers(config),
+            json=[
+                {
+                    "id": view_clients_role_id,
+                    "name": role.name,
+                },
+            ],
+            timeout=request_timeout,
+            verify=request_verify_certificate,
+        )
+        response.raise_for_status()
+        print(f"added role {role.name} to client scope {client_scope.name}")
+
+
+def add_client_scope_mapper(
+    config: KeycloakConfig, client_scope: ClientScope, mapper: Mapper
+) -> None:
+    if mapper.name not in list_client_scope_mappers(config, client_scope):
+        create_client_scope_mapper(config, client_scope, mapper)
+    else:
+        update_client_scope_mapper(config, client_scope, mapper)
+
+
+def list_client_scope_mappers(config: KeycloakConfig, client_scope: ClientScope) -> list[str]:
+    client_scope_id = get_client_scope_id(config, client_scope)
+
+    response = requests.get(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-templates/{client_scope_id}/protocol-mappers/models",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+
+    clients = [r["name"] for r in response.json()]
+    return clients
+
+
+def create_client_scope_mapper(
+    config: KeycloakConfig, client_scope: ClientScope, mapper: Mapper
+) -> None:
+    client_scope_id = get_client_scope_id(config, client_scope)
+
+    response = requests.post(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-templates/{client_scope_id}/protocol-mappers/models",
+        headers=auth_headers(config),
+        json=mapper.to_keycloak_json(),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+    print(f"created client scope {client_scope.name} mapper {mapper.name}")
+
+
+def update_client_scope_mapper(
+    config: KeycloakConfig, client_scope: ClientScope, mapper: Mapper
+) -> None:
+    client_scope_id = get_client_scope_id(config, client_scope)
+    mapper_id = get_client_scope_mapper_id(config, client_scope, mapper)
+
+    response = requests.put(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-templates/{client_scope_id}/protocol-mappers/models/{mapper_id}",
+        headers=auth_headers(config),
+        json=mapper.to_keycloak_json(),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    try:
+        response.raise_for_status()
+        print(f"updated client scope {client_scope.name} mapper {mapper.name}")
+    except requests.HTTPError as e:
+        print(f"failed updating client scope {client_scope.name} mapper {mapper.name} - ignoring due to null pointer exception in keycloak - {e}")
+
+
+def get_client_scope_mapper_id(config: KeycloakConfig, client_scope: ClientScope, mapper: Mapper) -> list[str]:
+    client_scope_id = get_client_scope_id(config, client_scope)
+
+    response = requests.get(
+        f"{config.base_url}/admin/realms/{config.realm.name}/client-templates/{client_scope_id}/protocol-mappers/models",
+        headers=auth_headers(config),
+        timeout=request_timeout,
+        verify=request_verify_certificate,
+    )
+    response.raise_for_status()
+
+    mappers = [m["id"] for m in response.json() if m["name"] == mapper.name]
+    if len(mappers) != 1:
+        raise RuntimeError(
+            f"found {len(mappers)} client scope mappers with name '{client_scope.name}' (instead of 1)",
+        )
+
+    return mappers[0]
 
 
 def init_kube_client():

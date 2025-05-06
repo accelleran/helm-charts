@@ -956,6 +956,7 @@ oauth2-proxy:
       oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/keycloak/realms/drax"
       redirect_url = "/oauth2/callback"
       email_domains = [ "*" ]
+      insecure_oidc_allow_unverified_email = true
       scope = "openid email profile"
 
       whitelist_domains = [ {{ with $.Values.global.domain }}"{{ . }}",".{{ . }}",{{ end }}"{{ $.Values.global.ipAddress }}" ]
@@ -966,15 +967,12 @@ oauth2-proxy:
 
       skip_provider_button = true
 
+      skip_jwt_bearer_tokens = true
+      bearer_token_login_fallback = false
+
       api_routes = [
         "^/api"
       ]
-
-      skip_jwt_bearer_tokens = true
-      oidc_extra_audiences = [
-        "account"
-      ]
-      insecure_oidc_allow_unverified_email = true
 
   extraObjects:
     - apiVersion: networking.k8s.io/v1
