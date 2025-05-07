@@ -62,7 +62,7 @@ service:
   type: "LoadBalancer"
   ports:
     e1ap:
-      appProtocol: "e1-control"
+      appProtocol: "e1-interface"
       protocol: "SCTP"
       port: 38462
       targetPort: 0
