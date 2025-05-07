@@ -39,6 +39,7 @@ class Realm:
             "displayNameHtml": (
                 self.display_name if self.display_name is not None else self.name
             ),
+            "accessTokenLifespan": 900, # 15 minutes
         }
         if self.login_theme is not None:
             json["loginTheme"] = self.login_theme
