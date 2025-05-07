@@ -4,7 +4,7 @@ description: Accelleran's cell-wrapper helm chart
 type: application
 version: 6.2.3
 # renovate: image=accelleran/cw-netconf versioning=semver
-appVersion: "6.2.3"
+appVersion: "7.0.0"
 dependencies:
   - name: common
     version: 0.5.0
