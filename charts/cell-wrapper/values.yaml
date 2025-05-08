@@ -284,6 +284,7 @@ netconf:
     type: "ClusterIP"
     ports:
       netconf:
+        appProtocol: "netconf-ssh"
         protocol: "TCP"
         port: 8300
         targetPort: null
