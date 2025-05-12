@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.0.3](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.0.2...cell-wrapper-7.0.3) (2025-05-12)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cw-netconf docker tag to v7.0.3 ([#1235](https://github.com/accelleran/helm-charts/issues/1235)) ([07a7a9d](https://github.com/accelleran/helm-charts/commit/07a7a9d71925b9e13391de6cbd3be71b2936ec69))
+
 ## [7.0.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.0.1...cell-wrapper-7.0.2) (2025-05-12)
 
 
