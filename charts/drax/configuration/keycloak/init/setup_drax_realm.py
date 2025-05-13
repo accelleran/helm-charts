@@ -674,6 +674,10 @@ def update_client(config: KeycloakConfig, client: Client) -> None:
         verify=request_verify_certificate,
     )
     resp.raise_for_status()
+
+    for client_scope in client.scopes:
+        set_client_client_scope_assigned_type(config, client, client_scope)
+
     print(f"updated client {client.id}")
 
 
@@ -760,6 +764,30 @@ def get_client_service_account_user_id(config: KeycloakConfig, client: Client) -
         client.service_account_user_id = response.json()["id"]
 
     return client.service_account_user_id
+
+
+def set_client_client_scope_assigned_type(config: KeycloakConfig, client: Client, client_scope: ClientScope) -> None:
+        client_id = get_client_id(config, client)
+        client_scope_id = get_client_scope_id(config, client_scope)
+
+        assigned_type: str = "default" if client_scope.is_default else "optional"
+        opposite_assigned_type: str = "optional" if client_scope.is_default else "default"
+
+        requests.delete(
+            f"{config.base_url}/admin/realms/{config.realm.name}/clients/{client_id}/{opposite_assigned_type}-client-scopes/{client_scope_id}",
+            headers=auth_headers(config),
+            timeout=request_timeout,
+            verify=request_verify_certificate,
+        )
+
+        response = requests.put(
+            f"{config.base_url}/admin/realms/{config.realm.name}/clients/{client_id}/{assigned_type}-client-scopes/{client_scope_id}",
+            headers=auth_headers(config),
+            timeout=request_timeout,
+            verify=request_verify_certificate,
+        )
+        response.raise_for_status()
+        print(f"set client {client.name} client scope {client_scope.name} assigned type to {assigned_type}")
 
 
 def add_realm_role(config: KeycloakConfig, user_id: str, role: str) -> None:
