@@ -1,3 +1,3 @@
 charts-dir: charts
 skip-existing: true
-release-notes-file: CHANGELOG.md
+release-notes-file: RELEASE_NOTES.md

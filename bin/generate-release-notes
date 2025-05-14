@@ -1,0 +1,16 @@
+#!/bin/bash
+
+BASE_DIR=$(dirname "$0")
+GIT_ROOT=$(cd "${BASE_DIR}/.." && pwd)
+CHARTS_ROOT="${GIT_ROOT}/charts"
+
+printf "Generating release notes\n"
+
+for chart in "${CHARTS_ROOT}"/*/ "${CHARTS_ROOT}"/drax/charts/*/ ; do
+    if [[ ! -f "$chart/CHANGELOG.md" ]] ; then
+        printf "\nNo changelog - Skip generating release notes for %s\n\n" "$chart"
+    else
+        printf "\nGenerating release notes for %s...\n\n" "$chart"
+        sed -n '/# Changelog/{:a;N;s/^## /&/mp2;Ta}' "$chart/CHANGELOG.md" | head -n -2 > "$chart/RELEASE_NOTES.md"
+    fi
+done
