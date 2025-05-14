@@ -263,6 +263,9 @@ jobs:
       - name: Add helm repositories
         run: ./bin/add-repos
 
+      - name: Generate release notes
+        run: ./bin/generate-release-notes
+
       - name: Run chart releaser
         uses: helm/chart-releaser-action@v1.7.0
         with:
