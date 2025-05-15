@@ -4,7 +4,7 @@ description: Accelleran 5G CU-CP Components
 type: application
 version: 12.0.1
 # renovate: image=accelleran/cu-cp
-appVersion: "8.0.1"
+appVersion: "8.0.2"
 dependencies:
   - name: common
     version: 0.5.0
