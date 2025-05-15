@@ -2,7 +2,7 @@ apiVersion: v2
 name: du-metrics-server
 description: Accelleran's DU metrics server
 type: application
-version: 0.5.0
+version: 0.5.1
 # renovate: image=accelleran/du-metrics-server versioning=semver
 appVersion: 4.0.2
 dependencies:
