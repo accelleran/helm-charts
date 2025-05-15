@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -eu -o pipefail
+shopt -s nullglob
+
 GIT_ROOT="$(realpath "$(dirname "$0")/..")"
 CHARTS_ROOT="${GIT_ROOT}/charts"
 
@@ -23,12 +26,12 @@ exit_status=0
 
 for ext in "$CHARTS_ROOT"/**/External.yaml ; do
     chart_dir="$(dirname "$ext")"
-    chart_name="$(yq ".name" "$ext")"
-    chart_alias="$(yq ".alias // \"\"" "$ext")"
-    chart_repository="$(yq ".repository" "$ext")"
-    chart_version="$(yq ".version" "$ext")"
+    chart_name="$(yq '.name' "$ext")"
+    chart_alias="$(yq '.alias // ""' "$ext")"
+    chart_repository="$(yq '.repository' "$ext")"
+    chart_version="$(yq '.version' "$ext")"
 
-    if [[ "$(echo "$chart_repository" | cut -d: -f 1)" != "oci" ]] ; then
+    if [[ "$chart_repository" != oci://* ]] ; then
         error "Only OCI repositories are supported for external charts"
         exit_status=1
         continue
