@@ -1,5 +1,14 @@
 # Changelog
 
+## [14.0.1](https://github.com/accelleran/helm-charts/compare/drax-14.0.0...drax-14.0.1) (2025-05-15)
+
+### Bug Fixes
+
+* **deps:** Update helm release cell-wrapper to v7.0.5 ([#1261](https://github.com/accelleran/helm-charts/issues/1261)) ([b31e823](https://github.com/accelleran/helm-charts/commit/b31e8233365dbe0e29605e432715098b400efc47))
+* **deps:** Update helm release du-metrics-server to v0.5.1 ([#1260](https://github.com/accelleran/helm-charts/issues/1260)) ([efc6613](https://github.com/accelleran/helm-charts/commit/efc6613fd43276b98a942956e2fc2049cb562814))
+* **deps:** Update helm release redis to v21.1.1 ([#1254](https://github.com/accelleran/helm-charts/issues/1254)) ([266447e](https://github.com/accelleran/helm-charts/commit/266447e5b55b6a04be6d527fb2fa2b2344a5a3d2))
+* **deps:** Update helm release redis to v21.1.2 ([#1262](https://github.com/accelleran/helm-charts/issues/1262)) ([9766c2e](https://github.com/accelleran/helm-charts/commit/9766c2eb64d0cbb2c0520ffa06f1b097558d3599))
+
 ## [14.0.0](https://github.com/accelleran/helm-charts/compare/drax-13.1.2...drax-14.0.0) (2025-05-14)
 
 
