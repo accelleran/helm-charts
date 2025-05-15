@@ -1,7 +1,6 @@
 #!/bin/bash
 
-BASE_DIR=$(dirname "$0")
-GIT_ROOT=$(cd "${BASE_DIR}/.." && pwd)
+GIT_ROOT="$(realpath "$(dirname "$0")/..")"
 
 function print_error() {
     echo "${1}" 1>&2
