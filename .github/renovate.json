@@ -39,8 +39,9 @@
         "(^|/)External\\.yaml$"
       ],
       "matchStrings": [
-        "name:\\s+\"?(?<depName>.*?)\"?\\s+(.*\\s)?repository:\\s+\"?oci://(?<registryUrl>.*?)\"?\\s+(.*\\s)?version:\\s+\"?(?<currentValue>[\\w\\.\\-]*)\"?"
-      ]
+        "name:\\s+\"?(?<chartName>.*?)\"?\\s+(.*\\s)?repository:\\s+\"?oci://(?<registryRef>.*?)\"?\\s+(.*\\s)?version:\\s+\"?(?<currentValue>[\\w\\.\\-]*)\"?"
+      ],
+      "packageNameTemplate": "{{registryRef}}/{{chartName}}"
     },
     {
       "customType": "regex",
