@@ -1,5 +1,13 @@
 # Changelog
 
+## [14.0.2](https://github.com/accelleran/helm-charts/compare/drax-14.0.1...drax-14.0.2) (2025-05-16)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release prometheus to v27.15.0 ([#1264](https://github.com/accelleran/helm-charts/issues/1264)) ([d90dd08](https://github.com/accelleran/helm-charts/commit/d90dd0890d852d6d292f12b57544f4e646342334))
+* **deps:** Update helm release redis to v21.1.3 ([#1263](https://github.com/accelleran/helm-charts/issues/1263)) ([5e511a9](https://github.com/accelleran/helm-charts/commit/5e511a96f0198d3653d93871dbdfb10df5b8a0a0))
+
 ## [14.0.1](https://github.com/accelleran/helm-charts/compare/drax-14.0.0...drax-14.0.1) (2025-05-15)
 
 ### Bug Fixes
