@@ -1,7 +1,6 @@
 #!/bin/bash
 
-BASE_DIR=$(dirname "$0")
-GIT_ROOT=$(cd "${BASE_DIR}/.." && pwd)
+GIT_ROOT="$(realpath "$(dirname "$0")/..")"
 CHARTS_ROOT="${GIT_ROOT}/charts"
 
 function usage() {

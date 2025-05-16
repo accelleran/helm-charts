@@ -48,6 +48,27 @@ then a flag can be added to the script:
 
 This is for example handy during development on the `common` library chart.
 
+## External charts
+
+It is possible to pull in an external chart.
+
+To do this, in the `charts` directory a new chart directory should be created.
+This directory should then contain the file `External.yaml`.
+A format similar to an entry in `dependencies` in a `Chart.yaml` file can be provided in there.
+
+```yaml
+name: example-chart
+alias: example
+repository: oci://ghcr.io/accelleran
+version: 0.1.0
+```
+
+`alias` is an optional field here, in case we want to use a different name as the original chart.
+
+Also note that the version should be specific.
+So a version expressing a range like `0.1` is not supported.
+Renovate will bump the version automatically to always release the latest version of an external chart.
+
 ## New charts
 
 A bit of setup is needed for release please when adding a new chart.
