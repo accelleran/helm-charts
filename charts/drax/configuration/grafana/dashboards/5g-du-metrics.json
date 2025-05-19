@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 5,
+  "id": 20,
   "links": [],
   "panels": [
     {
@@ -55,7 +55,7 @@
         "content": "<div style=\"text-align:center\"><img src=\"https://accelleran.com/wp-content/uploads/2023/07/acceleran-logo-300x89-1.png\" />",
         "mode": "html"
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "title": "",
       "transparent": true,
       "type": "text"
@@ -78,8 +78,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -111,27 +110,18 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> map(fn: (r) => ({ r with ue_id: r[\"pci\"]+\".\"+r[\"rnti\"]}))\n  |> window(every: 2s)\n  |> group(columns: [\"_stop\"])\n  |> unique(column: \"ue_id\")\n  |> count(column: \"ue_id\")\n  |> map(fn: (r) => ({ r with _value: r[\"ue_id\"] }))\n  |> drop(columns: [\"ue_id\"])\n  |> group()\n",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => \n      r[\"_measurement\"] == \"ue_info\" and \n      r[\"testbed\"] == \"default\" and\n      r[\"_field\"] == \"dl_brate\" and\n      ( (r[\"pci\"] == \"${PCI}\") or (contains(value: r.pci, set: ${PCI:json})) )\n    )\n  |> map(fn: (r) => ({ r with ue_id: r[\"pci\"]+\".\"+r[\"rnti\"]}))\n  |> window(every: ${AggregationTime})\n  |> group(columns: [\"_stop\"])\n  |> unique(column: \"ue_id\")\n  |> count(column: \"ue_id\")\n  |> map(fn: (r) => ({ r with _value: r[\"ue_id\"] }))\n  |> keep(columns: [\"_value\"])\n",
           "refId": "Downlink"
         }
       ],
       "title": "Active UEs",
-      "transformations": [
-        {
-          "id": "renameByRegex",
-          "options": {
-            "regex": ".*",
-            "renamePattern": "Active UEs"
-          }
-        }
-      ],
       "type": "stat"
     },
     {
@@ -150,8 +140,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -183,14 +172,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_brate\"\n  )\n  |> drop(columns: [\"rnti\"])\n  |> drop(columns: [\"pci\"])\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> map(fn: (r) => ({\n      r with \n      _value: float(v: r._value) / (float(v: int(v: duration(v: \"${AggregationTime}\"))) / 1000000000.0)\n  }))\n\n",
           "refId": "A"
         }
       ],
@@ -213,8 +202,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -246,14 +234,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_brate\"\n  )\n  |> drop(columns: [\"rnti\"])\n  |> drop(columns: [\"pci\"])\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> map(fn: (r) => ({\n      r with \n      _value: float(v: r._value) / (float(v: int(v: duration(v: \"${AggregationTime}\"))) / 1000000000.0)\n  }))\n\n",
           "refId": "A"
         }
       ],
@@ -276,8 +264,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -309,14 +296,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ul_brate\"\n  )\n  |> drop(columns: [\"rnti\"])\n  |> drop(columns: [\"pci\"])\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> map(fn: (r) => ({\n      r with \n      _value: float(v: r._value) / (float(v: int(v: duration(v: \"${AggregationTime}\"))) / 1000000000.0)\n  }))\n\n",
           "refId": "A"
         }
       ],
@@ -339,8 +326,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -372,14 +358,14 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> window(every: 1s)\n  |> group(columns: [\"_stop\"])\n  |> sum(column: \"_value\")\n  |> group()\n  |> movingAverage(n: 2)\n  ",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ul_brate\"\n  )\n  |> drop(columns: [\"rnti\"])\n  |> drop(columns: [\"pci\"])\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> map(fn: (r) => ({\n      r with \n      _value: float(v: r._value) / (float(v: int(v: duration(v: \"${AggregationTime}\"))) / 1000000000.0)\n  }))\n\n",
           "refId": "A"
         }
       ],
@@ -403,6 +389,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -435,8 +422,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -456,23 +442,24 @@
           "calcs": [],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_brate\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
           "refId": "Downlink"
         }
       ],
@@ -505,6 +492,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -537,8 +525,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -560,23 +547,24 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_brate\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ul_brate\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
           "refId": "Downlink"
         }
       ],
@@ -610,6 +598,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -646,8 +635,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -668,16 +656,17 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
@@ -685,7 +674,7 @@
             "uid": "JOSE3g9KVz"
           },
           "hide": false,
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"mean_dl_prbs_used\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"mean_pdsch_prbs_used\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
           "refId": "A"
         }
       ],
@@ -719,6 +708,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -755,8 +745,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -777,16 +766,17 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
@@ -794,7 +784,7 @@
             "uid": "JOSE3g9KVz"
           },
           "hide": false,
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"mean_ul_prbs_used\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"mean_pusch_prbs_used\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
           "refId": "A"
         }
       ],
@@ -827,6 +817,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -865,8 +856,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -888,23 +878,24 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_mcs\")\n  |> filter(fn: (r) => r[\"_value\"] != 0)\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_mcs\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
           "refId": "Downlink"
         }
       ],
@@ -937,6 +928,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -975,8 +967,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -998,23 +989,24 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_mcs\")\n  |> filter(fn: (r) => r[\"_value\"] != 0)\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ul_mcs\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
           "refId": "Downlink"
         }
       ],
@@ -1047,6 +1039,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -1085,8 +1078,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -1108,23 +1100,24 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"cqi\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"cqi\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
           "refId": "Downlink"
         }
       ],
@@ -1157,6 +1150,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisWidth": 80,
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -1192,8 +1186,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           },
@@ -1215,23 +1208,24 @@
           ],
           "displayMode": "table",
           "placement": "right",
-          "showLegend": true,
+          "showLegend": false,
           "sortBy": "Last",
           "sortDesc": true
         },
         "tooltip": {
-          "mode": "single",
+          "hideZeros": false,
+          "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "11.3.1",
+      "pluginVersion": "12.0.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"pusch_snr_db\")\n  |> filter(fn: (r) => r[\"_value\"] != 0)\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+          "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"pusch_snr_db\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )\n",
           "refId": "Downlink"
         }
       ],
@@ -1262,7 +1256,7 @@
             "type": "influxdb",
             "uid": "JOSE3g9KVz"
           },
-          "description": "DRB.RlcSduTransmittedVolumeDL*\n\n",
+          "description": "",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1274,6 +1268,7 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
+                "axisWidth": 80,
                 "barAlignment": 0,
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
@@ -1313,7 +1308,7 @@
                   }
                 ]
               },
-              "unit": "decbytes"
+              "unit": "percentunit"
             },
             "overrides": []
           },
@@ -1323,250 +1318,43 @@
             "x": 0,
             "y": 30
           },
-          "id": 44,
+          "id": 24,
           "options": {
             "legend": {
               "calcs": [
-                "lastNotNull"
+                "last"
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true,
+              "showLegend": false,
               "sortBy": "Last",
               "sortDesc": true
             },
             "tooltip": {
-              "mode": "single",
+              "hideZeros": false,
+              "mode": "multi",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.0",
           "targets": [
             {
               "datasource": {
                 "type": "influxdb",
                 "uid": "JOSE3g9KVz"
               },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_sdu_bytes\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
+              "hide": false,
+              "query": "data_nok = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_nof_nok\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> keep(columns: [\"_time\", \"pci\", \"rnti\", \"_value\"])\n\ndata_ok = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_nof_ok\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> keep(columns: [\"_time\", \"pci\", \"rnti\", \"_value\"])\n\n\njoin(\n  tables: {nok: data_nok, ok: data_ok},\n  on: [\"_time\", \"pci\", \"rnti\"]\n)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )\n  |> map(fn: (r) => ({ r with ratio: float(v: r._value_nok) / (float(v: r._value_ok) + float(v: r._value_nok)) }))\n  |> keep(columns: [\"_time\", \"ratio\", \"pci\", \"rnti\"])\n",
+              "refId": "A"
             }
           ],
-          "title": "DL Traffic Volume",
+          "title": "DL Retransmission %",
           "transformations": [
             {
               "id": "renameByRegex",
               "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "DRB.RlcSduTransmittedVolumeUL*",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 30
-          },
-          "id": 41,
-          "options": {
-            "legend": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_sdu_bytes\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "UL Traffic Volume",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "DRB.RlcSduDelayDl\n\nav_ue_sdu_latency_us = sum_sdu_latency_us / num_of_pulled_sdus",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "µs"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 36
-          },
-          "id": 51,
-          "options": {
-            "legend": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"av_ue_sdu_latency_us\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "Average delay DL in gNB-DU",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
               }
             }
           ],
@@ -1589,6 +1377,7 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
+                "axisWidth": 80,
                 "barAlignment": 0,
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
@@ -1628,7 +1417,229 @@
                   }
                 ]
               },
-              "unit": "dBFS"
+              "unit": "percentunit"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 12,
+            "y": 30
+          },
+          "id": 25,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": false,
+              "sortBy": "Last",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+              },
+              "hide": false,
+              "query": "data_nok = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ul_nof_nok\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> keep(columns: [\"_time\", \"pci\", \"rnti\", \"_value\"])\n\ndata_ok = from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ul_nof_ok\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)\n  |> keep(columns: [\"_time\", \"pci\", \"rnti\", \"_value\"])\n\n\njoin(\n  tables: {nok: data_nok, ok: data_ok},\n  on: [\"_time\", \"pci\", \"rnti\"]\n)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )\n  |> map(fn: (r) => ({ r with ratio: float(v: r._value_nok) / (float(v: r._value_ok) + float(v: r._value_nok)) }))\n  |> keep(columns: [\"_time\", \"ratio\", \"pci\", \"rnti\"])\n",
+              "refId": "A"
+            }
+          ],
+          "title": "UL Retransmission %",
+          "transformations": [
+            {
+              "id": "renameByRegex",
+              "options": {
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
+              }
+            }
+          ],
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "JOSE3g9KVz"
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "axisWidth": 80,
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": 3600000,
+                "lineInterpolation": "linear",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "always",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "dashed"
+                }
+              },
+              "mappings": [],
+              "max": 4,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 0,
+            "y": 36
+          },
+          "id": 28,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": false,
+              "sortBy": "Last",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+              },
+              "hide": false,
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_ri\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )\n",
+              "refId": "A"
+            }
+          ],
+          "title": "DL Rank Indicator",
+          "transformations": [
+            {
+              "id": "renameByRegex",
+              "options": {
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
+              }
+            }
+          ],
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "JOSE3g9KVz"
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "axisWidth": 80,
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": 3600000,
+                "lineInterpolation": "linear",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "always",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "dashed"
+                }
+              },
+              "mappings": [],
+              "max": 4,
+              "min": 0,
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  }
+                ]
+              },
+              "unit": "none"
             },
             "overrides": []
           },
@@ -1638,7 +1649,7 @@
             "x": 12,
             "y": 36
           },
-          "id": 68,
+          "id": 69,
           "options": {
             "legend": {
               "calcs": [
@@ -1646,26 +1657,29 @@
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true,
+              "showLegend": false,
               "sortBy": "Last",
               "sortDesc": true
             },
             "tooltip": {
-              "mode": "single",
+              "hideZeros": false,
+              "mode": "multi",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.0",
           "targets": [
             {
               "datasource": {
                 "type": "influxdb",
                 "uid": "JOSE3g9KVz"
               },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"pusch_rsrp_db\")\n  |> filter(fn: (r) => r[\"_value\"] != 0)\n  |> filter(fn: (r) => r[\"_value\"] > -200)\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
-              "refId": "Downlink"
+              "hide": false,
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ul_ri\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )\n",
+              "refId": "A"
             }
           ],
-          "title": "Uplink RSRP (PUSCH)",
+          "title": "UL Rank Indicator",
           "transformations": [
             {
               "id": "renameByRegex",
@@ -1695,6 +1709,7 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
+                "axisWidth": 80,
                 "barAlignment": 0,
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
@@ -1754,15 +1769,17 @@
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true,
+              "showLegend": false,
               "sortBy": "Last",
               "sortDesc": true
             },
             "tooltip": {
-              "mode": "single",
+              "hideZeros": false,
+              "mode": "multi",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.0",
           "targets": [
             {
               "datasource": {
@@ -1770,7 +1787,7 @@
                 "uid": "JOSE3g9KVz"
               },
               "hide": false,
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"last_ta\")\n  |> filter(fn: (r) => r[\"_value\"] != 0)\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n",
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"ta_ns\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
               "refId": "A"
             }
           ],
@@ -1803,6 +1820,7 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
+                "axisWidth": 80,
                 "barAlignment": 0,
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
@@ -1861,15 +1879,17 @@
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true,
+              "showLegend": false,
               "sortBy": "Last",
               "sortDesc": true
             },
             "tooltip": {
-              "mode": "single",
+              "hideZeros": false,
+              "mode": "multi",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.0",
           "targets": [
             {
               "datasource": {
@@ -1877,7 +1897,7 @@
                 "uid": "JOSE3g9KVz"
               },
               "hide": false,
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"last_phr\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"last_phr\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
               "refId": "A"
             }
           ],
@@ -1910,218 +1930,7 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 48
-          },
-          "id": 24,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "hide": false,
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_retr\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
-              "refId": "A"
-            }
-          ],
-          "title": "DL Retransmission %",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $2 [PCI:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "percentunit"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 48
-          },
-          "id": 25,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "hide": false,
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ul_retr\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
-              "refId": "A"
-            }
-          ],
-          "title": "UL Retransmission %",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $2 [PCI:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
+                "axisWidth": 80,
                 "barAlignment": 0,
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
@@ -2171,7 +1980,7 @@
             "h": 6,
             "w": 12,
             "x": 0,
-            "y": 54
+            "y": 48
           },
           "id": 32,
           "options": {
@@ -2181,15 +1990,17 @@
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true,
+              "showLegend": false,
               "sortBy": "Last",
               "sortDesc": true
             },
             "tooltip": {
-              "mode": "single",
+              "hideZeros": false,
+              "mode": "multi",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.0",
           "targets": [
             {
               "datasource": {
@@ -2197,7 +2008,7 @@
                 "uid": "JOSE3g9KVz"
               },
               "hide": false,
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"dl_bs\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"dl_bs\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
               "refId": "A"
             }
           ],
@@ -2230,6 +2041,115 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
+                "axisWidth": 80,
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": 3600000,
+                "lineInterpolation": "linear",
+                "lineStyle": {
+                  "fill": "solid"
+                },
+                "lineWidth": 1,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "always",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "dashed"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  }
+                ]
+              },
+              "unit": "dBFS"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 6,
+            "w": 12,
+            "x": 12,
+            "y": 48
+          },
+          "id": 68,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": false,
+              "sortBy": "Last",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "JOSE3g9KVz"
+              },
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"pusch_rsrp_db\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
+              "refId": "Downlink"
+            }
+          ],
+          "title": "Uplink RSRP (PUSCH)",
+          "transformations": [
+            {
+              "id": "renameByRegex",
+              "options": {
+                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
+                "renamePattern": "UE $2 [PCI:$1]"
+              }
+            }
+          ],
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "JOSE3g9KVz"
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "axisWidth": 80,
                 "barAlignment": 0,
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
@@ -2289,15 +2209,17 @@
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true,
+              "showLegend": false,
               "sortBy": "Last",
               "sortDesc": true
             },
             "tooltip": {
-              "mode": "single",
+              "hideZeros": false,
+              "mode": "multi",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.0",
           "targets": [
             {
               "datasource": {
@@ -2305,7 +2227,7 @@
                 "uid": "JOSE3g9KVz"
               },
               "hide": false,
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"bsr\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"bsr\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
               "refId": "A"
             }
           ],
@@ -2338,115 +2260,7 @@
                 "axisColorMode": "text",
                 "axisLabel": "",
                 "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "decimals": 0,
-              "mappings": [],
-              "max": 4,
-              "min": 0,
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 60
-          },
-          "id": 28,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "hide": false,
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ri\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
-              "refId": "A"
-            }
-          ],
-          "title": "Rank Indicator",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*pci=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $2 [PCI:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
+                "axisWidth": 80,
                 "barAlignment": 0,
                 "barWidthFactor": 0.6,
                 "drawStyle": "line",
@@ -2504,22 +2318,24 @@
               ],
               "displayMode": "table",
               "placement": "right",
-              "showLegend": true,
+              "showLegend": false,
               "sortBy": "Last",
               "sortDesc": true
             },
             "tooltip": {
-              "mode": "single",
+              "hideZeros": false,
+              "mode": "multi",
               "sort": "none"
             }
           },
+          "pluginVersion": "12.0.0",
           "targets": [
             {
               "datasource": {
                 "type": "influxdb",
                 "uid": "JOSE3g9KVz"
               },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ue_info\")  \n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_field\"] == \"pucch_snr_db\")\n  |> filter(fn: (r) => r[\"_value\"] != 0)\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)",
+              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => \n    r[\"_measurement\"] == \"ue_info\" and \n    r[\"testbed\"] == \"default\" and\n    r[\"_field\"] == \"pucch_snr_db\"\n  )\n  |> aggregateWindow(every: ${AggregationTime}, fn: mean)\n  |> filter(fn: (r) => \n    contains(value: r.rnti, set: ${RNTI:json}) and\n    contains(value: r.pci, set: ${PCI:json})\n  )",
               "refId": "Downlink"
             }
           ],
@@ -2538,2225 +2354,18 @@
       ],
       "title": "UE Metrics - Extra",
       "type": "row"
-    },
-    {
-      "collapsed": true,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 30
-      },
-      "id": 36,
-      "panels": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 31
-          },
-          "id": 47,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_dropped_sdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Number of dropped SDUs (due to full queue)",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 31
-          },
-          "id": 66,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_sdu_segments\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX:  Number of SDU segments RX'ed",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 37
-          },
-          "id": 48,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_discarded_sdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Number of discarded SDUs (instructed from higher layer)",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 37
-          },
-          "id": 67,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_sdu_segment_bytes\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX: Size of SDU segments RX'ed",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 43
-          },
-          "id": 49,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_discard_failures\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Number of failed SDU discards (instructed from higher layer)",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 43
-          },
-          "id": 42,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_sdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX: Number of SDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 49
-          },
-          "id": 43,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_sdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Number of SDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        }
-      ],
-      "title": "RLC Metrics - SDU",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 31
-      },
-      "id": 50,
-      "panels": [
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 38
-          },
-          "id": 46,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_pdus_no_segmentation\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX:  Number of transmitted PDUs without segmentation",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 38
-          },
-          "id": 38,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_pdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX: Number of PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 44
-          },
-          "id": 45,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_pdu_bytes_no_segmentation\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Size of PDUs without segmentation",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 44
-          },
-          "id": 37,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_pdu_bytes\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX: Size of PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 50
-          },
-          "id": 55,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_pdus_with_segmentation\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX:  Number of transmitted PDUs with segmentation",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 50
-          },
-          "id": 39,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_lost_pdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX: Number of dropped PDUs (reassembly timeout expiry or out of rx window)",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 56
-          },
-          "id": 58,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_pdu_bytes_with_segmentation\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Size of PDUs with segmentation",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 56
-          },
-          "id": 40,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"num_malformed_pdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX: Number of malformed PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 62
-          },
-          "id": 62,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_ctrl_pdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX:  Number of control PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 62
-          },
-          "id": 64,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_ctrl_pdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX:  Number of control PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 68
-          },
-          "id": 63,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_ctrl_pdu_bytes\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Size of control PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 12,
-            "y": 68
-          },
-          "id": 65,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_rx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_ctrl_pdu_bytes\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "RX: Size of control PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 74
-          },
-          "id": 60,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "sortBy": "Last",
-              "sortDesc": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_retx_pdus\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX:  Number of RETX'ed PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "influxdb",
-            "uid": "JOSE3g9KVz"
-          },
-          "description": "",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": 3600000,
-                "lineInterpolation": "linear",
-                "lineStyle": {
-                  "fill": "solid"
-                },
-                "lineWidth": 1,
-                "pointSize": 4,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "always",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "dashed"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  }
-                ]
-              },
-              "unit": "decbytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 6,
-            "w": 12,
-            "x": 0,
-            "y": 80
-          },
-          "id": 61,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "influxdb",
-                "uid": "JOSE3g9KVz"
-              },
-              "query": "from(bucket: \"${bucket}\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rlc_tx\")\n  |> filter(fn: (r) => r[\"_field\"] == \"am_num_retx_pdu_bytes\")\n  |> aggregateWindow(every: ${AggregationTime}, fn: sum)",
-              "refId": "Downlink"
-            }
-          ],
-          "title": "TX: Size of RETX'ed PDUs",
-          "transformations": [
-            {
-              "id": "renameByRegex",
-              "options": {
-                "regex": "^.*drb=\"(\\d+)\".*du=\"(\\d+)\".*rnti=\"(\\d+)\".*$",
-                "renamePattern": "UE $3 [DU:$2,DRB:$1]"
-              }
-            }
-          ],
-          "type": "timeseries"
-        }
-      ],
-      "title": "RLC Metrics - PDU",
-      "type": "row"
     }
   ],
   "preload": false,
-  "refresh": "auto",
-  "schemaVersion": 40,
+  "refresh": "30s",
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "text": "15s",
-          "value": "15s"
+          "text": "30s",
+          "value": "30s"
         },
         "includeAll": false,
         "name": "AggregationTime",
@@ -4772,12 +2381,12 @@
             "value": "5s"
           },
           {
-            "selected": true,
+            "selected": false,
             "text": "15s",
             "value": "15s"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "30s",
             "value": "30s"
           },
@@ -4815,11 +2424,55 @@
         "query": "default",
         "skipUrlSync": true,
         "type": "constant"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "JOSE3g9KVz"
+        },
+        "definition": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"ue_info\") \n  |> keep(columns: [\"pci\"]) \n  |> distinct(column: \"pci\")\n  |> sort(columns: [\"pci\"], desc: false)",
+        "includeAll": true,
+        "multi": true,
+        "name": "PCI",
+        "options": [],
+        "query": {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"ue_info\") \n  |> keep(columns: [\"pci\"]) \n  |> distinct(column: \"pci\")\n  |> sort(columns: [\"pci\"], desc: false)"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "JOSE3g9KVz"
+        },
+        "definition": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"ue_info\") \n  |> keep(columns: [\"rnti\"]) \n  |> distinct(column: \"rnti\")\n  |> sort(columns: [\"rnti\"], desc: false)",
+        "includeAll": true,
+        "multi": true,
+        "name": "RNTI",
+        "options": [],
+        "query": {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"ue_info\") \n  |> keep(columns: [\"rnti\"]) \n  |> distinct(column: \"rnti\")\n  |> sort(columns: [\"rnti\"], desc: false)"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
       }
     ]
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-3h",
     "to": "now"
   },
   "timepicker": {
@@ -4839,7 +2492,6 @@
   },
   "timezone": "",
   "title": "DU Metrics",
-  "uid": "a8a69f8a-1dd1-4496-8f3f-33de8988a823",
-  "version": 1,
-  "weekStart": ""
+  "uid": "a8a69f8a-1dd1-4496-8f3f-33de8988a821",
+  "version": 4
 }
