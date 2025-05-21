@@ -26,6 +26,8 @@ jobs:
       charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
       # renovate: github_repository=metallb/metallb versioning=semver
       metallb_version: v0.14.9
+      # renovate: github_repository=helm/helm versioning=semver extract_version=^v(?<version>.*)$
+      helm_version: 3.17.3
       # renovate: github_repository=halkeye/helm-repo-html versioning=semver
       helm_repo_html_version: v0.2.1
     timeout-minutes: 1
@@ -68,6 +70,8 @@ jobs:
 
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
+        with:
+          version: "${{ needs.vars.outputs.helm_version }}"
 
       - name: Set up python
         uses: actions/setup-python@v5
@@ -112,6 +116,8 @@ jobs:
 
       - name: Set up Helm
         uses: azure/setup-helm@v4.3.0
+        with:
+          version: "${{ needs.vars.outputs.helm_version }}"
 
       - name: Set up python
         uses: actions/setup-python@v5
@@ -255,6 +261,8 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v4.3.0
+        with:
+          version: "${{ needs.vars.outputs.helm_version }}"
 
       - name: Install helm repo html plugin
         if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
