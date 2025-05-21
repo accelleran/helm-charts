@@ -242,7 +242,7 @@ jobs:
 
   release-charts:
     name: Release Charts
-    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' }}
+    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' && !cancelled() && !failure() }}
     needs:
       - vars
       - lint-charts
@@ -271,6 +271,15 @@ jobs:
       - name: Add helm repositories
         run: ./bin/add-repos
 
+      - name: Login to Docker Hub
+        run: helm registry login --username ${{ secrets.DOCKER_LOGIN }} --password ${{ secrets.DOCKER_ACCESS_TOKEN }} docker.io
+
+      - name: Login to GHCR
+        run: helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
+
+      - name: Pull external helm charts
+        run: ./bin/pull-external-charts
+
       - name: Generate release notes
         run: ./bin/generate-release-notes
 
@@ -296,7 +305,7 @@ jobs:
 
   release-please:
     name: Release
-    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' }}
+    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' && !cancelled() && !failure() }}
     # Run after release-charts so that the tag exists in case of release commits.
     # Otherwise release please will create a new PR
     # as it doesn't yet have the release to compare changes with.

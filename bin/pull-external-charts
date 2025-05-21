@@ -1,0 +1,61 @@
+#!/bin/bash
+
+set -eu -o pipefail
+shopt -s nullglob
+
+GIT_ROOT="$(realpath "$(dirname "$0")/..")"
+CHARTS_ROOT="${GIT_ROOT}/charts"
+
+function fatal() {
+    error "${@}"
+    exit 1
+}
+
+function error() {
+    echo "${1}" 1>&2
+}
+
+if [[ ! "$(yq --version)" =~ .*mikefarah/yq.* ]]; then
+    fatal "Make sure to install mikefarah/yq"
+fi
+
+TMP_DIR="$(mktemp -d)"
+trap "rm -rf '$TMP_DIR'" EXIT
+
+exit_status=0
+
+for ext in "$CHARTS_ROOT"/**/External.yaml ; do
+    chart_dir="$(dirname "$ext")"
+    chart_name="$(yq '.name' "$ext")"
+    chart_alias="$(yq '.alias // ""' "$ext")"
+    chart_repository="$(yq '.repository' "$ext")"
+    chart_version="$(yq '.version' "$ext")"
+
+    if [[ "$chart_repository" != oci://* ]] ; then
+        error "Only OCI repositories are supported for external charts"
+        exit_status=1
+        continue
+    fi
+
+    TMP_UNTAR_DIR="$(mktemp -d --tmpdir="$TMP_DIR")"
+
+    echo "Pulling $chart_name version $chart_version"
+    if ! helm pull "$chart_repository/$chart_name" --version "$chart_version" --destination "$TMP_DIR" --untar --untardir "$TMP_UNTAR_DIR" ; then
+        error "Failed to pull $chart_repository/$chart_name:$chart_version"
+        exit_status=1
+        continue
+    fi
+
+    echo "Moving $chart_name to $chart_dir"
+    if ! mv  "$TMP_UNTAR_DIR"/*/* "$chart_dir/" ; then
+        error "Failed to move $chart_repository/$chart_name:$chart_version to $chart_dir"
+        exit_status=1
+    fi
+
+    if [ -n "$chart_alias" ] ; then
+        echo "Setting alias $chart_alias for $chart_name"
+        yq -i ".name = \"$chart_alias\"" "$chart_dir/Chart.yaml"
+    fi
+done
+
+exit "$exit_status"

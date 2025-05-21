@@ -36,6 +36,17 @@
       "customType": "regex",
       "datasourceTemplate": "docker",
       "fileMatch": [
+        "(^|/)External\\.yaml$"
+      ],
+      "matchStrings": [
+        "name:\\s+\"?(?<chartName>.*?)\"?\\s+(.*\\s)?repository:\\s+\"?oci://(?<registryRef>.*?)\"?\\s+(.*\\s)?version:\\s+\"?(?<currentValue>[\\w\\.\\-]*)\"?"
+      ],
+      "packageNameTemplate": "{{registryRef}}/{{chartName}}"
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "docker",
+      "fileMatch": [
         "(^|/)values\\.y[a]?ml$"
       ],
       "matchStrings": [
@@ -63,6 +74,15 @@
         "#\\s?renovate: github_repository=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s*[\\w\\-]*_version:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Automerge external chart updates",
+      "automerge": true,
+      "matchFileNames": [
+        "/External\\.yaml/"
+      ]
     }
   ]
 }
