@@ -1159,6 +1159,15 @@ grafana:
     drax/role: ric
     drax/component-name: grafana
 
+  initChownData:
+    securityContext:
+      capabilities:
+        add:
+          - CHOWN
+          - DAC_READ_SEARCH
+        drop:
+          - ALL
+
   persistence:
     type: pvc
     enabled: true
