@@ -100,7 +100,7 @@ readinessProbe:
   initialDelaySeconds: 15
   periodSeconds: 30
 
-securityContext:
+podSecurityContext:
   fsGroup: 1000
 
 persistence:
