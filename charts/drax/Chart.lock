@@ -19,7 +19,7 @@ dependencies:
   version: 3.0.0
 - name: cell-wrapper
   repository: https://accelleran.github.io/helm-charts/
-  version: 7.0.6
+  version: 7.0.7
 - name: du-metrics-server
   repository: https://accelleran.github.io/helm-charts/
   version: 0.5.1
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 21.1.6
-digest: sha256:8f6cdb161ea89c23b2617b1430d44c9c36111969365d18b0b18374ef8b48bedd
-generated: "2025-05-22T11:29:22.842984434Z"
+digest: sha256:b17bdc37e2d6111d1061967f19079f8667e56099e2a98f5bbf589bb953ea6c34
+generated: "2025-05-22T13:02:56.037343548Z"
