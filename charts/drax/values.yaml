@@ -1460,6 +1460,9 @@ grafana:
     kafka-cluster-monitoring: "{{ .Release.Name }}-grafana-kafka-cluster-monitoring"
     nats-dashboard: "{{ .Release.Name }}-grafana-nats-dashboard"
 
+  testFramework:
+    enabled: false
+
 
 loki-gateway:
   # enabled: true
