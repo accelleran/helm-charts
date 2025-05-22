@@ -1,5 +1,13 @@
 # Changelog
 
+## [12.0.3](https://github.com/accelleran/helm-charts/compare/cu-up-12.0.2...cu-up-12.0.3) (2025-05-22)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cu-up docker tag to v8.0.3 ([#1285](https://github.com/accelleran/helm-charts/issues/1285)) ([87fbff0](https://github.com/accelleran/helm-charts/commit/87fbff012a957cb91b70d512cdf6c68bb503e27b))
+* Fix fs group warnings on installation ([#1283](https://github.com/accelleran/helm-charts/issues/1283)) ([a2924ba](https://github.com/accelleran/helm-charts/commit/a2924ba8d59bef75404dff0cfa64e985db46e342))
+
 ## [12.0.2](https://github.com/accelleran/helm-charts/compare/cu-up-12.0.1...cu-up-12.0.2) (2025-05-15)
 
 
