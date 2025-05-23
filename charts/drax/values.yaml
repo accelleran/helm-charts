@@ -2161,12 +2161,12 @@ influxdb2:
       - -c
       - |
         apt-get update && apt-get install -y curl
-        
+
         sleep 30
         echo "Creating downsampling tasks in InfluxDB2..."
 
         set -euo pipefail
-        
+
         JOBS=(
           "rrc_measurements RrcMeasurementReport min"
           "rrc_connection_metrics RRCConnEstabAtt sum"
@@ -2216,7 +2216,7 @@ influxdb2:
           "throughput_metrics AccGTPThpDlQfiSnssaiPlmn mean"
           "throughput_metrics AccGTPThpUl mean"
           "throughput_metrics AccGTPThpUlQfiSnssaiPlmn mean")
-        
+
         declare -A JOB_GROUPS
 
         for entry in "${JOBS[@]}"; do
@@ -2227,7 +2227,7 @@ influxdb2:
 
         for AGG in min sum mean max; do
           echo "Processing aggregation: $AGG"
-  
+
           for key in "${!JOB_GROUPS[@]}"; do
           if [[ $key == ${AGG}__* ]]; then
             BUCKET="${key#${AGG}__}"
@@ -2240,10 +2240,10 @@ influxdb2:
             {"org": "${ORG}","name": "downsample_${BUCKET}_${AGG}_to_1m","flux": "option task = {name: \"downsample_${BUCKET}_${AGG}_to_1m\", every: 1h}from(bucket: \"${BUCKET}\")|> range(start: -1h)|> filter(fn: (r) => r._measurement =~ /^(${MEAS_REGEX})$/)|> aggregateWindow(every: 1m, fn: ${AGG}, createEmpty: false)|> to(bucket: \"${BUCKET}_1m\", org: \"${ORG}\")"}
         EOF
           )      
-      
+
             echo "Creating task for bucket: $BUCKET, aggregation: $AGG, granularity 1m"
             echo "Measurements: $MEAS_REGEX"     
-           
+
             curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
             --header "Authorization: Token ${INFLUXDB_TOKEN}" \
             --header "Content-Type: application/json" \
@@ -2254,10 +2254,10 @@ influxdb2:
             {"org": "${ORG}","name": "downsample_${BUCKET}_${AGG}_to_5m","flux": "option task = {name: \"downsample_${BUCKET}_${AGG}_to_5m\", every: 1h}from(bucket: \"${BUCKET}\")|> range(start: -1h)|> filter(fn: (r) => r._measurement =~ /^(${MEAS_REGEX})$/)|> aggregateWindow(every: 5m, fn: ${AGG}, createEmpty: false)|> to(bucket: \"${BUCKET}_5m\", org: \"${ORG}\")"}
         EOF
           )      
-      
+
             echo "Creating task for bucket: $BUCKET, aggregation: $AGG, granularity 5m"
             echo "Measurements: $MEAS_REGEX"     
-           
+
             curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
             --header "Authorization: Token ${INFLUXDB_TOKEN}" \
             --header "Content-Type: application/json" \
@@ -2268,15 +2268,15 @@ influxdb2:
             {"org": "${ORG}","name": "downsample_${BUCKET}_${AGG}_to_15m","flux": "option task = {name: \"downsample_${BUCKET}_${AGG}_to_15m\", every: 1h}from(bucket: \"${BUCKET}\")|> range(start: -1h)|> filter(fn: (r) => r._measurement =~ /^(${MEAS_REGEX})$/)|> aggregateWindow(every: 15m, fn: ${AGG}, createEmpty: false)|> to(bucket: \"${BUCKET}_15m\", org: \"${ORG}\")"}
         EOF
           )      
-      
+
             echo "Creating task for bucket: $BUCKET, aggregation: $AGG, granularity 15m"
             echo "Measurements: $MEAS_REGEX"     
-           
+
             curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
             --header "Authorization: Token ${INFLUXDB_TOKEN}" \
             --header "Content-Type: application/json" \
             --data "$PAYLOAD"
-            
+
           fi
         done                
         done
