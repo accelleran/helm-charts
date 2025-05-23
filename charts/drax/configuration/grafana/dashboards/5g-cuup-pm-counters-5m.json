@@ -1,0 +1,608 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 6,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "Measure of DL GTP data received during the  reporting period in the observed cell. Data for all UEs (all PDU sessions) in a cell is aggregated",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 80,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "$tag_cuupId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpDlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      Snssai: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.Snssai, set: ${SNSSAI:json})  )\n  |> group(columns: [\"Snssai\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 1s, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      Snssai: r.Snssai, \n      \"_value\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"NetworkFunctionId\" ,\"Snssai\", \"_value\" ])\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.dlGtpThroughput"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              },
+              {
+                "params": [
+                  "*8"
+                ],
+                "type": "math"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "title": "DL GTP Throughput per SNSSAI",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "Measure of UL GTP data received during the  reporting period in the observed cell. Data for all UEs (all PDU sessions) in a cell is aggregated",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 82,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "$tag_cuupId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "import \"strings\" \n\nfrom(bucket: \"throughput_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpUlQfiSnssaiPlmn\" and\n    r._field == \"Value\"\n    and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      Snssai: strings.split(v: r.QFISNSSAIPLMNID, t: \",\")[1]\n  }))\n  |> filter(fn: (r) => \n    contains(value: r.Snssai, set: ${SNSSAI:json})  )\n  |> group(columns: [\"Snssai\", \"NetworkFunctionId\"])\n  |> aggregateWindow(every: 5m, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId,\n      Snssai: r.Snssai, \n      \"_value\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"NetworkFunctionId\" ,\"Snssai\", \"_value\" ])\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ulGtpThroughput"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "sum"
+              },
+              {
+                "params": [
+                  "*8"
+                ],
+                "type": "math"
+              }
+            ]
+          ],
+          "tags": []
+        }
+      ],
+      "title": "UL GTP Throughput per SNSSAI",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the fraction of PDCP SDU packets which are not successfully received at gNB-CU-UP. It is a measure of the UL packet loss on the F1-U interface. The measurement is optionally split into subcounters per QoS level (mapped 5QI or QCI in NR option 3) and subcounters per supported S-NSSAI.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 60,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "timestart = uint(v: v.timeRangeStart)\ntimestop = uint(v: v.timeRangeStop)\nduration = duration(v:timestop - timestart)\n\nconditionalAggregate = (tables=<-) => \n  if int(v:duration) > int(v:15m) then\n    tables\n      |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: true)\n      |> fill(usePrevious: true) \n  else\n    tables\n    \nfrom(bucket: \"radio_resource_utilization_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccDRBF1UPacketLossRateUlSnssai\" and\n    r._field == \"Value\" and\n    (\n      \"${SNSSAI}\" == \"All\" or r.Snssai == \"${SNSSAI}\" or contains(value: r.Snssai, set: ${SNSSAI:json})\n    ) and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"Snssai\", \"NetworkFunctionId\"])\n  |> conditionalAggregate()\n  |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId: r.NetworkFunctionId, \n      Snssai: r.Snssai, \n      \"_value\": float(v: r._value) / 1000000.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"NetworkFunctionId\" ,\"Snssai\", \"_value\" ])\n",
+          "refId": "A"
+        }
+      ],
+      "title": "DRB PACKET LOSS RATE UL per SNSSAI",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "The average (arithmetic mean) PDCP SDU delay on the downlink within the gNB-CU-UP for all PDCP packets in ms",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 10,
+        "x": 0,
+        "y": 15
+      },
+      "id": 64,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"radio_resource_utilization_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"DRBPdcpSduDelayDlSnssai\"  \n    and\n    (\n      \"${SNSSAI}\" == \"All\" or r.Snssai == \"${SNSSAI}\" or contains(value: r.Snssai, set: ${SNSSAI:json})\n    ) and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> map(fn: (r) => ({ r with \"Snssai:\": float(v: r._value) * 0.1 }))\n  |> group(columns: [\"Snssai\"])\n  |> mean(column: \"Snssai:\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "AVERAGE DELAY DL PER SNSSAI",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "The distribution of PDCP SDU delay on the downlink within the gNB-CU-UP, for all PDCP packets (time when sending a PDCP SDU to the gNB-DU at the egress PDCP layer on F1-U/Xn-U, minus time of arrival of the same packet at NG-U ingress IP termination) distributed in following bins\n\n| bin  | value |\n| - | - | \n|bin0 | <= 5ms |\n|bin1 | 6ms to 10ms |\n|bin2 | 11ms to 20ms |\n|bin3 | 21ms to 30ms |\n|... | ... |\n|bin10 | 91ms to 100ms |\n|bin11 | 101ms to 200ms |\n|bin12 | 201ms to 300ms |\n|... |\t... |\n|bin19 | 901ms to 1000ms |\n|bin20 | >1s to <=2s |\n|bin21 | >2s to <=3s |\n|bin22 | >3s to <=4s |\n|bin23 | >4s to <=5s |\n|bin24 | > 5s |",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
+      "id": 84,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "namePlacement": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"radio_resource_utilization_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"DRBPdcpSduDelayDlDistSnssai\" and\n    (\n      \"${SNSSAI}\" == \"All\" or r.Snssai == \"${SNSSAI}\" or contains(value: r.Snssai, set: ${SNSSAI:json})\n    ) and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n    )\n  |> group(columns: [\"BinX\"]) \n  |> sum(column: \"_value\") \n    |> map(fn: (r) => ({\n      \"Bin:\": r._value,\n      BinX: r.BinX \n  }))\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Distribution of delay DL in CU-UP",
+      "transparent": true,
+      "type": "bargauge"
+    }
+  ],
+  "preload": false,
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ddswjfzs92bk0b"
+        },
+        "definition": "from(bucket: \"radio_resource_utilization_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccDRBPdcpPacketDropRateDlSnssai\") \n  |> keep(columns: [\"Snssai\"]) \n  |> distinct(column: \"Snssai\")\n  |> sort(columns: [\"Snssai\"], desc: false)\n",
+        "description": "The S-NSSAI is represented as an uint32 in format sD2…sD1…sD0…sST (MSB…LSB), 0xFFFFFFxx indicates null sD value",
+        "includeAll": true,
+        "multi": true,
+        "name": "SNSSAI",
+        "options": [],
+        "query": {
+          "query": "from(bucket: \"radio_resource_utilization_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccDRBPdcpPacketDropRateDlSnssai\") \n  |> keep(columns: [\"Snssai\"]) \n  |> distinct(column: \"Snssai\")\n  |> sort(columns: [\"Snssai\"], desc: false)\n"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ddswjfzs92bk0b"
+        },
+        "definition": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccGTPThpDl\") \n  |> keep(columns: [\"NetworkFunctionId\"]) \n  |> distinct(column: \"NetworkFunctionId\")\n  |> sort(columns: [\"NetworkFunctionId\"], desc: false)\n",
+        "includeAll": true,
+        "multi": true,
+        "name": "NetworkFunctionId",
+        "options": [],
+        "query": {
+          "query": "from(bucket: \"throughput_metrics\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"AccGTPThpDl\") \n  |> keep(columns: [\"NetworkFunctionId\"]) \n  |> distinct(column: \"NetworkFunctionId\")\n  |> sort(columns: [\"NetworkFunctionId\"], desc: false)\n"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "5G CUUP PM Counters - 5m Aggregation",
+  "uid": "sH2tHMJM3",
+  "version": 1
+}

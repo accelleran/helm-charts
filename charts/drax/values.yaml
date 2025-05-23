@@ -1407,6 +1407,14 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/5g-monitoring-dashboard
+        - name: "5g-monitoring-dashboard-5m"
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/5g-monitoring-dashboard-5m
         - name: "5g-cucp-pm-counters"
           orgId: 1
           folder: ""
@@ -1415,6 +1423,14 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/5g-cucp-pm-counters
+        - name: "5g-cucp-pm-counters-5m"
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/5g-cucp-pm-counters-5m
         - name: "5g-cuup-pm-counters"
           orgId: 1
           folder: ""
@@ -1423,6 +1439,14 @@ grafana:
           editable: true
           options:
             path: /var/lib/grafana/dashboards/5g-cuup-pm-counters
+        - name: "5g-cuup-pm-counters-5m"
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/5g-cuup-pm-counters-5m
         - name: "5g-du-metrics"
           orgId: 1
           folder: ""
@@ -1454,8 +1478,11 @@ grafana:
     loki-log-dashboard: "{{ .Release.Name }}-grafana-loki-log-dashboard"
     # 5g-health-dashboard: "{{ .Release.Name }}-grafana-5g-health-dashboard"
     5g-monitoring-dashboard: "{{ .Release.Name }}-grafana-5g-monitoring-dashboard"
+    5g-monitoring-dashboard-5m: "{{ .Release.Name }}-grafana-5g-monitoring-dashboard-5m"
     5g-cucp-pm-counters: "{{ .Release.Name }}-grafana-5g-cucp-pm-counters"
     5g-cuup-pm-counters: "{{ .Release.Name }}-grafana-5g-cuup-pm-counters"
+    5g-cucp-pm-counters-5m: "{{ .Release.Name }}-grafana-5g-cucp-pm-counters-5m"
+    5g-cuup-pm-counters-5m: "{{ .Release.Name }}-grafana-5g-cuup-pm-counters-5m"
     5g-du-metrics: "{{ .Release.Name }}-grafana-5g-du-metrics"
     kafka-cluster-monitoring: "{{ .Release.Name }}-grafana-kafka-cluster-monitoring"
     nats-dashboard: "{{ .Release.Name }}-grafana-nats-dashboard"
@@ -2126,58 +2153,129 @@ influxdb2:
       enabled: false
     # renovate:
     image:
-      repository: curlimages/curl
-      tag: "8.13.0"
+      repository: accelleran/acc-generic-img
+      tag: "0.9.0"
       pullPolicy: IfNotPresent
     command:
-      - /bin/sh
+      - /bin/bash
       - -c
       - |
         sleep 30
         echo "Creating downsampling tasks in InfluxDB2..."
+        set -euo pipefail
 
-        for METRIC in \
-          "default_performance_metrics" \
-          "rrc_measurements" \
-          "rrc_connection_metrics" \
-          "handover_and_mobility_metrics" \
-          "pdu_session_management_metrics" \
-          "radio_resource_utilization_metrics" \
-          "throughput_metrics" \
-          "du_ue_measurements" \
-          "du_rlc_measurements"
-        do
-          echo "Creating tasks for $METRIC..."
+        JOBS=(
+          "rrc_measurements RrcMeasurementReport min"
+          "rrc_connection_metrics RRCConnEstabAtt sum"
+          "rrc_connection_metrics RRCConnEstabSucc sum"
+          "rrc_connection_metrics RRCConnReestabAtt sum"
+          "rrc_connection_metrics RRCConnReestabSucc sum"
+          "rrc_connection_metrics RRCConnMean mean"
+          "rrc_connection_metrics RRCConnMax max"
+          "handover_and_mobility_metrics MMHoExeIntraReq sum"
+          "handover_and_mobility_metrics MMHoExeIntraSucc sum"
+          "handover_and_mobility_metrics MMHoExeInterReq sum"
+          "handover_and_mobility_metrics MMHoExeInterReqTimeMean mean"
+          "handover_and_mobility_metrics MMHoExeInterReqTimeMax max"
+          "handover_and_mobility_metrics MMHoPrepInterReq sum"
+          "handover_and_mobility_metrics MMHoPrepInterSucc sum"
+          "handover_and_mobility_metrics MMHoPrepInterFail sum"
+          "handover_and_mobility_metrics MMHoResAlloInterReq sum"
+          "handover_and_mobility_metrics MMHoResAlloInterSucc sum"
+          "handover_and_mobility_metrics MMHoResAlloInterFail sum"
+          "pdu_session_management_metrics SMPDUSessionSetupReq sum"
+          "pdu_session_management_metrics SMPDUSessionSetupReqSnssai sum"
+          "pdu_session_management_metrics SMPDUSessionSetupFail sum"
+          "rrc_measurements L1MSSRSRP mean"
+          "radio_resource_utilization_metrics AccDRBEstabAtt5QiSnssai sum"
+          "radio_resource_utilization_metrics DRBEstabAttSnssai sum"
+          "radio_resource_utilization_metrics DRBEstabAtt5Qi sum"
+          "radio_resource_utilization_metrics DRBEstabSuccSnssai sum"
+          "radio_resource_utilization_metrics DRBEstabSucc5Qi sum"
+          "radio_resource_utilization_metrics DRBRelActNbrSnssai sum"
+          "radio_resource_utilization_metrics DRBRelActNbr5Qi sum"
+          "radio_resource_utilization_metrics DRBRelActNbr5QiSnssai sum"
+          "radio_resource_utilization_metrics AccDRBPdcpSduDelayDlQoS mean"
+          "radio_resource_utilization_metrics DRBPdcpSduDelayDlQoS mean"
+          "radio_resource_utilization_metrics AccDRBPdcpPacketDropRateDlQoS mean"
+          "radio_resource_utilization_metrics AccDRBPdcpPacketDropRateDlSnssai mean"
+          "radio_resource_utilization_metrics AccDRBPdcpPacketDropRateDlQfiSnssaiPlmn mean"
+          "radio_resource_utilization_metrics AccDRBF1UPacketLossRateUlQoS mean"
+          "radio_resource_utilization_metrics AccDRBF1UPacketLossRateUlSnssai mean"
+          "radio_resource_utilization_metrics AccDRBF1UPacketLossRateUlQfiSnssaiPlmn mean"
+          "radio_resource_utilization_metrics AccDRBPdcpSduDelayDlQfiSnssaiPlmn mean"
+          "radio_resource_utilization_metrics DRBPdcpSduDelayDlSnssai mean"
+          "radio_resource_utilization_metrics DRBPdcpSduDelayDlDist sum"
+          "radio_resource_utilization_metrics DRBPdcpSduDelayDlDistSnssai sum"
+          "radio_resource_utilization_metrics DRBPdcpSduDelayDlDistQos sum"
+          "radio_resource_utilization_metrics AccDRBPdcpSduDelayDlDistQfiSnssaiPlmn sum"
+          "throughput_metrics AccGTPThpDl mean"
+          "throughput_metrics AccGTPThpDlQfiSnssaiPlmn mean"
+          "throughput_metrics AccGTPThpUl mean"
+          "throughput_metrics AccGTPThpUlQfiSnssaiPlmn mean")
 
-        # Raw to 1m
-        curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
-             --header "Authorization: Token ${INFLUXDB_TOKEN}" \
-             --header "Content-Type: application/json" \
-             --data '{
-               "org": "'${ORG}'",
-               "name": "downsample_'$METRIC'_to_1m",
-               "flux": "option task = {name: \"downsample_'$METRIC'_to_1m\", every: 1h}\nfrom(bucket: \"'$METRIC'\")\n  |> range(start: -1h)\n  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)\n  |> to(bucket: \"'$METRIC'_1m\", org: \"'${ORG}'\")"
-             }'
+        declare -A JOB_GROUPS
 
-        # Raw to 5m
-        curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
-              --header "Authorization: Token ${INFLUXDB_TOKEN}" \
-              --header "Content-Type: application/json" \
-              --data '{
-                "org": "'${ORG}'",
-                "name": "downsample_'$METRIC'_to_5m",
-                "flux": "option task = {name: \"downsample_'$METRIC'_to_5m\", every: 1h}\nfrom(bucket: \"'$METRIC'\")\n  |> range(start: -6h)\n  |> aggregateWindow(every: 5m, fn: mean, createEmpty: false)\n  |> to(bucket: \"'$METRIC'_5m\", org: \"'${ORG}'\")"
-              }'
+        for entry in "${JOBS[@]}"; do
+          read -r BUCKET MEAS AGG <<<"$entry"
+          KEY="${AGG}__${BUCKET}"
+          JOB_GROUPS["$KEY"]+="$MEAS "
+        done
 
-        # Raw to 15m
-        curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
-              --header "Authorization: Token ${INFLUXDB_TOKEN}" \
-              --header "Content-Type: application/json" \
-              --data '{
-                "org": "'${ORG}'",
-                "name": "downsample_'$METRIC'_to_15m",
-                "flux": "option task = {name: \"downsample_'$METRIC'_to_15m\", every: 1h}\nfrom(bucket: \"'$METRIC'\")\n  |> range(start: -24h)\n  |> aggregateWindow(every: 15m, fn: mean, createEmpty: false)\n  |> to(bucket: \"'$METRIC'_15m\", org: \"'${ORG}'\")"
-              }'
+        for AGG in min sum mean max; do
+          echo "Processing aggregation: $AGG"
+
+          for key in "${!JOB_GROUPS[@]}"; do
+          if [[ $key == ${AGG}__* ]]; then
+            BUCKET="${key#${AGG}__}"
+            MEAS_LIST=${JOB_GROUPS[$key]}
+            # Build regex from measurements
+            MEAS_REGEX=$(echo "$MEAS_LIST" | xargs -n1 | sort -u | paste -sd '|' -)
+
+            # Raw to 1m
+            PAYLOAD=$(cat <<EOF
+            {"org": "${ORG}","name": "downsample_${BUCKET}_${AGG}_to_1m","flux": "option task = {name: \"downsample_${BUCKET}_${AGG}_to_1m\", every: 1h}from(bucket: \"${BUCKET}\")|> range(start: -1h)|> filter(fn: (r) => r._measurement =~ /^(${MEAS_REGEX})$/)|> aggregateWindow(every: 1m, fn: ${AGG}, createEmpty: false)|> to(bucket: \"${BUCKET}_1m\", org: \"${ORG}\")"}
+        EOF
+          )
+
+            echo "Creating task for bucket: $BUCKET, aggregation: $AGG, granularity 1m"
+            echo "Measurements: $MEAS_REGEX"
+
+            curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
+            --header "Authorization: Token ${INFLUXDB_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data "$PAYLOAD"
+
+            # Raw to 5m
+            PAYLOAD=$(cat <<EOF
+            {"org": "${ORG}","name": "downsample_${BUCKET}_${AGG}_to_5m","flux": "option task = {name: \"downsample_${BUCKET}_${AGG}_to_5m\", every: 1h}from(bucket: \"${BUCKET}\")|> range(start: -1h)|> filter(fn: (r) => r._measurement =~ /^(${MEAS_REGEX})$/)|> aggregateWindow(every: 5m, fn: ${AGG}, createEmpty: false)|> to(bucket: \"${BUCKET}_5m\", org: \"${ORG}\")"}
+        EOF
+          )
+
+            echo "Creating task for bucket: $BUCKET, aggregation: $AGG, granularity 5m"
+            echo "Measurements: $MEAS_REGEX"
+
+            curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
+            --header "Authorization: Token ${INFLUXDB_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data "$PAYLOAD"
+
+            # Raw to 15m
+            PAYLOAD=$(cat <<EOF
+            {"org": "${ORG}","name": "downsample_${BUCKET}_${AGG}_to_15m","flux": "option task = {name: \"downsample_${BUCKET}_${AGG}_to_15m\", every: 1h}from(bucket: \"${BUCKET}\")|> range(start: -1h)|> filter(fn: (r) => r._measurement =~ /^(${MEAS_REGEX})$/)|> aggregateWindow(every: 15m, fn: ${AGG}, createEmpty: false)|> to(bucket: \"${BUCKET}_15m\", org: \"${ORG}\")"}
+        EOF
+          )
+
+            echo "Creating task for bucket: $BUCKET, aggregation: $AGG, granularity 15m"
+            echo "Measurements: $MEAS_REGEX"
+
+            curl --request POST "${INFLUXDB_URL}/api/v2/tasks" \
+            --header "Authorization: Token ${INFLUXDB_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data "$PAYLOAD"
+
+          fi
+        done
         done
 
         echo "All tasks created successfully!"
@@ -2187,39 +2285,39 @@ influxdb2:
     scripts:
       init.sh: |+
         #!/bin/bash
-        influx bucket create -n default_performance_metrics -o accelleran -r 3h
+        influx bucket create -n default_performance_metrics -o accelleran -r 24h
         influx bucket create -n default_performance_metrics_1m -o accelleran -r 18h
         influx bucket create -n default_performance_metrics_5m -o accelleran -r 7d
         influx bucket create -n default_performance_metrics_15m -o accelleran -r 28d
-        influx bucket create -n rrc_measurements -o accelleran -r 3h
+        influx bucket create -n rrc_measurements -o accelleran -r 24h
         influx bucket create -n rrc_measurements_1m -o accelleran -r 18h
         influx bucket create -n rrc_measurements_5m -o accelleran -r 7d
         influx bucket create -n rrc_measurements_15m -o accelleran -r 28d
-        influx bucket create -n rrc_connection_metrics -o accelleran -r 3h
+        influx bucket create -n rrc_connection_metrics -o accelleran -r 24h
         influx bucket create -n rrc_connection_metrics_1m -o accelleran -r 18h
         influx bucket create -n rrc_connection_metrics_5m -o accelleran -r 7d
         influx bucket create -n rrc_connection_metrics_15m -o accelleran -r 28d
-        influx bucket create -n handover_and_mobility_metrics -o accelleran -r 3h
+        influx bucket create -n handover_and_mobility_metrics -o accelleran -r 24h
         influx bucket create -n handover_and_mobility_metrics_1m -o accelleran -r 18h
         influx bucket create -n handover_and_mobility_metrics_5m -o accelleran -r 7d
         influx bucket create -n handover_and_mobility_metrics_15m -o accelleran -r 28d
-        influx bucket create -n pdu_session_management_metrics -o accelleran -r 3h
+        influx bucket create -n pdu_session_management_metrics -o accelleran -r 24h
         influx bucket create -n pdu_session_management_metrics_1m -o accelleran -r 18h
         influx bucket create -n pdu_session_management_metrics_5m -o accelleran -r 7d
         influx bucket create -n pdu_session_management_metrics_15m -o accelleran -r 28d
-        influx bucket create -n radio_resource_utilization_metrics -o accelleran -r 3h
+        influx bucket create -n radio_resource_utilization_metrics -o accelleran -r 24h
         influx bucket create -n radio_resource_utilization_metrics_1m -o accelleran -r 18h
         influx bucket create -n radio_resource_utilization_metrics_5m -o accelleran -r 7d
         influx bucket create -n radio_resource_utilization_metrics_15m -o accelleran -r 28d
-        influx bucket create -n throughput_metrics -o accelleran -r 3h
+        influx bucket create -n throughput_metrics -o accelleran -r 24h
         influx bucket create -n throughput_metrics_1m -o accelleran -r 18h
         influx bucket create -n throughput_metrics_5m -o accelleran -r 7d
         influx bucket create -n throughput_metrics_15m -o accelleran -r 28d
-        influx bucket create -n du_ue_measurements -o accelleran -r 3h
+        influx bucket create -n du_ue_measurements -o accelleran -r 24h
         influx bucket create -n du_ue_measurements_1m -o accelleran -r 18h
         influx bucket create -n du_ue_measurements_5m -o accelleran -r 7d
         influx bucket create -n du_ue_measurements_15m -o accelleran -r 28d
-        influx bucket create -n du_rlc_measurements -o accelleran -r 3h
+        influx bucket create -n du_rlc_measurements -o accelleran -r 24h
         influx bucket create -n du_rlc_measurements_1m -o accelleran -r 18h
         influx bucket create -n du_rlc_measurements_5m -o accelleran -r 7d
         influx bucket create -n du_rlc_measurements_15m -o accelleran -r 28d

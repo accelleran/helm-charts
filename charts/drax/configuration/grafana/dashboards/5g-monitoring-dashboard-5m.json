@@ -1,0 +1,1723 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 10,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "mode": "gradient",
+              "type": "color-background"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "UE ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 95
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "NR Cell ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 98
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SSB RSRQ"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              },
+              {
+                "id": "unit",
+                "value": "dB"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": -50
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": -15
+                    },
+                    {
+                      "color": "green",
+                      "value": -10
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SSB RSRP"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dBm"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "red",
+                      "value": -160
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": -100
+                    },
+                    {
+                      "color": "green",
+                      "value": -85
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "SSB SINR"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "blue"
+                    },
+                    {
+                      "color": "red",
+                      "value": -30
+                    },
+                    {
+                      "color": "#EAB839",
+                      "value": 10
+                    },
+                    {
+                      "color": "green",
+                      "value": 15
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "unit",
+                "value": "dB"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Timestamp (last received measurement)"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 0,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "SSB RSRP"
+          }
+        ]
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "nrCellId: $tag_nrCellId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "ueId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "nrCellId"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"RrcMeasurementReport\" and r.IsServingCell == \"true\"\n  and\n    (\n      (\"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json}))\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      NrCellIdField: r.NrCellId,\n      UEIDField: r.UEID\n  }))\n  |> pivot(\n      rowKey: [\"_time\", \"NrCellIdField\", \"UEIDField\"],\n      columnKey: [\"_field\"],\n      valueColumn: \"_value\"\n  )\n  |> sort(columns: [\"_time\"], desc: true) \n  |> map(fn: (r) => ({ \n      r with\n      \"SSB RSRP\": float(v: r.SsbRsrp) - 157.0,\n      \"SSB RSRQ\": (float(v: r.SsbRsrq) / 2.0) - 43.0,\n      \"SSB SINR\": (float(v: r.SsbSinr) / 2.0) - 23.0\n  }))\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 1)\n  |> keep(columns: [\"_time\", \"NrCellIdField\", \"UEIDField\", \"SSB RSRP\", \"SSB RSRQ\", \"SSB SINR\"])\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "table",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ssbRsrp"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "last"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "nrCellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            }
+          ]
+        }
+      ],
+      "title": "UE Radio Overview",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "includeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "NrCellIdField": "NR Cell ID",
+              "SSB RSRP": "SSB RSRP",
+              "SSB RSRQ": "SSB RSRQ",
+              "SSB SINR": "SSB SINR",
+              "UEIDField": "UE ID",
+              "_time": "Timestamp (last received measurement)"
+            }
+          }
+        }
+      ],
+      "transparent": true,
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 6,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "max"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "default.ssbRsrp",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"RrcMeasurementReport\") \n  |> group(columns: [\"UEID\"])\n  |> distinct(column: \"UEID\")\n  |> group() \n  |> count(column: \"UEID\")\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "value"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "distinct"
+              },
+              {
+                "params": [],
+                "type": "count"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "cellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            }
+          ]
+        }
+      ],
+      "title": "Total Number of UEs",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "ueId: $tag_ueId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$MinStep"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "ueId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"throughput_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpDl\" and\n    r._field == \"Value\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> group(columns: [\"UEID\"])\n  |> map(fn: (r) => ({\n      _time: r._time,\n      UEID: r.UEID, \n      \"UE:\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"UEID\", \"UE:\"])\n",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.dlGtpThroughput"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              },
+              {
+                "params": [
+                  "*8"
+                ],
+                "type": "math"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "DL Throughput per UE (NG-U interface)",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "max": -20,
+          "min": -160,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dBm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 2,
+      "interval": "5s",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "nrCellId: $tag_nrCellId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "nrCellId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"RrcMeasurementReport\" and\n    r.IsServingCell == \"true\" and\n    r._field == \"SsbRsrp\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      UEID: r.UEID,\n      NrCellId: r.NrCellId,\n      \"_value\": float(v: r._value) - 157.0\n  }))\n  |> keep(columns: [\"_time\", \"UEID\", \"NrCellId\", \"_value\"])",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ssbRsrp"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "nrCellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            },
+            {
+              "condition": "AND",
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "SSB RSRP",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "ueId: $tag_ueId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "$MinStep"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "ueId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"throughput_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"AccGTPThpUl\" and\n    r._field == \"Value\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> group(columns: [\"UEID\"])\n  |> map(fn: (r) => ({\n      _time: r._time,\n      UEID: r.UEID, \n      \"UE:\": float(v: r._value) * 8.0\n  }))\n  |> sort(columns: [\"_time\"], desc: false) \n  |> keep(columns: [\"_time\", \"UEID\", \"UE:\"])\n",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ulGtpThroughput"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              },
+              {
+                "params": [
+                  "*8"
+                ],
+                "type": "math"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "UL Throughput per UE (NG-U interface)",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "fieldMinMax": false,
+          "links": [],
+          "mappings": [],
+          "max": 50,
+          "min": -30,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 3,
+      "interval": "5s",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "nrcellId: $tag_nrCellId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "nrCellId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"RrcMeasurementReport\" and\n    r.IsServingCell == \"true\" and\n    r._field == \"SsbSinr\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      UEID: r.UEID,\n      NrCellId: r.NrCellId,\n      \"_value\": (float(v: r._value)/2.0)-23.0 \n  }))\n  |> keep(columns: [\"_time\", \"UEID\", \"NrCellId\", \"_value\"])",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ssbSinr"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "nrCellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            },
+            {
+              "condition": "AND",
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "SSB SINR",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "links": [],
+          "mappings": [],
+          "max": 30,
+          "min": -50,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 36
+      },
+      "id": 4,
+      "interval": "5s",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "nrcellId: $tag_nrCellId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "nrCellId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"RrcMeasurementReport\" and\n    r._field == \"SsbRsrq\" and\n    r.IsServingCell == \"true\" and\n    (\n      \"${UE}\" == \"All\" or r.UEID == \"${UE}\" or contains(value: r.UEID, set: ${UE:json})\n    )\n  )\n  |> map(fn: (r) => ({\n      r with\n      UEID: r.UEID,\n      NrCellId: r.NrCellId,\n      \"_value\": (float(v: r._value)/2.0)-43.0 \n  }))\n  |> keep(columns: [\"_time\", \"UEID\", \"NrCellId\", \"_value\"])",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ssbRsrq"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "nrCellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            },
+            {
+              "condition": "AND",
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "SSB RSRQ",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Radio measurements per cell",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "Aggregated SSB RSRP for Connected UEs",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "max": -20,
+          "min": -160,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dBm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "id": 12,
+      "interval": "5s",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "nrCellId: $tag_nrCellId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "nrCellId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"RrcMeasurementReport\" and\n    r.IsServingCell == \"true\" and\n    r._field == \"SsbRsrp\"\n  )\n  |> group(columns: [\"NrCellId\"])  \n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      r with\n      NrCellId: r.NrCellId,\n      \"NrCellId:\": float(v: r._value) - 157.0\n  }))\n  |> keep(columns: [\"_time\", \"NrCellId\", \"NrCellId:\"])",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ssbRsrp"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "nrCellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            },
+            {
+              "condition": "AND",
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "SSB RSRP",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "Aggregated SSB SINR for Connected UEs",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "max": 50,
+          "min": -30,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "id": 13,
+      "interval": "5s",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "nrcellId: $tag_nrCellId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "nrCellId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"RrcMeasurementReport\" and\n    r.IsServingCell == \"true\" and\n    r._field == \"SsbSinr\"\n  )\n  |> group(columns: [\"NrCellId\"])  \n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      r with\n      NrCellId: r.NrCellId,\n      \"NrCellId:\":  (float(v: r._value) / 2.0) - 23.0\n  }))\n  |> keep(columns: [\"_time\", \"NrCellId\", \"NrCellId:\"])",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ssbSinr"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "nrCellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            },
+            {
+              "condition": "AND",
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "SSB SINR",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "Aggregated SSB RSRQ for Connected UEs",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 1,
+          "links": [],
+          "mappings": [],
+          "max": 30,
+          "min": -50,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "dB"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 64
+      },
+      "id": 14,
+      "interval": "5s",
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.0",
+      "targets": [
+        {
+          "alias": "nrcellId: $tag_nrCellId",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "groupBy": [
+            {
+              "params": [
+                "1s"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "nrCellId"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "uemeasurement.vector",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    r._measurement == \"RrcMeasurementReport\" and\n    r.IsServingCell == \"true\" and\n    r._field == \"SsbRsrq\"\n  )\n  |> group(columns: [\"NrCellId\"])  \n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: true)\n  |> map(fn: (r) => ({\n      r with\n      NrCellId: r.NrCellId,\n      \"NrCellId:\": (float(v: r._value)/2.0)-43.0 \n  }))\n  |> keep(columns: [\"_time\", \"NrCellId\", \"NrCellId:\"])",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "measurement.ssbRsrq"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "nrCellId",
+              "operator": "=~",
+              "value": "/^$Cell$/"
+            },
+            {
+              "condition": "AND",
+              "key": "ueId",
+              "operator": "=~",
+              "value": "/^$UE$/"
+            }
+          ]
+        }
+      ],
+      "title": "SSB RSRQ",
+      "transparent": true,
+      "type": "timeseries"
+    }
+  ],
+  "preload": false,
+  "refresh": "auto",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ddswjfzs92bk0b"
+        },
+        "definition": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"RrcMeasurementReport\") \n  |> keep(columns: [\"UEID\"]) \n  |> distinct(column: \"UEID\")\n  |> sort(columns: [\"UEID\"], desc: false)\n",
+        "includeAll": true,
+        "multi": true,
+        "name": "UE",
+        "options": [],
+        "query": {
+          "query": "from(bucket: \"rrc_measurements_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"RrcMeasurementReport\") \n  |> keep(columns: [\"UEID\"]) \n  |> distinct(column: \"UEID\")\n  |> sort(columns: [\"UEID\"], desc: false)\n",
+          "refId": "InfluxVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "5G UE Monitoring - 5m Aggregation",
+  "uid": "8hxFGS5Gj",
+  "version": 2
+}
