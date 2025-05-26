@@ -3,4 +3,4 @@
 
 venv/
 .idea
-.values.yaml.swp
+*.swp
