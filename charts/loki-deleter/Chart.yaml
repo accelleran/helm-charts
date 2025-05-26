@@ -4,7 +4,7 @@ description: Loki deleter
 type: application
 version: 0.1.8
 # renovate: image=accelleran/loki-deleter
-appVersion: 0.1.8
+appVersion: 0.1.9
 dependencies:
   - name: common
     version: 0.5.0
