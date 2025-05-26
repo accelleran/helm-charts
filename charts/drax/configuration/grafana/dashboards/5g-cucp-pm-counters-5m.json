@@ -1,0 +1,3067 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 5,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the number of RRC connection establishment attempts for each establishment cause.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 20,
+        "x": 0,
+        "y": 0
+      },
+      "id": 60,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    (r._measurement == \"RRCConnEstabAtt\") and\n    r._field == \"Value\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NetworkFunctionId\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n    |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId:r.NetworkFunctionId,\n      \"Id\": r.RRCConnEstabAtt\n  }))\n  |> keep(columns: [\"_time\", \"Id\", \"NetworkFunctionId\"])\n\n",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC Connection Attempts",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 0
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    (r._measurement == \"RRCConnEstabSucc\" or r._measurement == \"RRCConnEstabAtt\") and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NetworkFunctionId\", \"_measurement\"])\n  |> sum(column: \"_value\")\n  |> pivot(rowKey: [\"NetworkFunctionId\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({\n      NetworkFunctionId: r.NetworkFunctionId,\n      RRCConnSuccessRate: float(v: r.RRCConnEstabSucc ) / float(v: r.RRCConnEstabAtt) *100.0  }))\n  |> group() \n  |> mean(column: \"RRCConnSuccessRate\")\n  |> yield(name: \"RRC Connection Success Rate\")",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC Connection Success Rate ",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the number of DRBs attempted to setup to support all requested QoS flows in the PDU sessions to be setup by the INITIAL CONTEXT SETUP REQUESTs, PDU SESSION RESOURCE\nSETUP REQUESTs and PDU SESSION RESOURCE MODIFY REQUEST message received by the gNB from AMF. This measurement is split into subcounters per mapped 5QI and per S-NSSAI.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 20,
+        "x": 0,
+        "y": 6
+      },
+      "id": 97,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"radio_resource_utilization_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    (r._measurement == \"AccDRBEstabAtt5QiSnssai\") and\n    r._field == \"Value\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NetworkFunctionId\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n    |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId:r.NetworkFunctionId,\n      \"Id\": r.AccDRBEstabAtt5QiSnssai\n  }))\n  |> keep(columns: [\"_time\", \"Id\", \"NetworkFunctionId\"])\n\n",
+          "refId": "A"
+        }
+      ],
+      "title": "Number of DRBs attempted to setup ",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 6
+      },
+      "id": 98,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"radio_resource_utilization_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    (r._measurement == \"AccDRBEstabSucc5QiSnssai\" or r._measurement == \"AccDRBEstabAtt5QiSnssai\") and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NetworkFunctionId\", \"_measurement\"])\n  |> sum(column: \"_value\")\n  |> pivot(rowKey: [\"NetworkFunctionId\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({\n      NetworkFunctionId: r.NetworkFunctionId,\n      DRBSetupSuccessRate: float(v: r.AccDRBEstabSucc5QiSnssai ) / float(v: r.AccDRBEstabAtt5QiSnssai) *100.0  }))\n  |> group() \n  |> mean(column: \"DRBSetupSuccessRate\")\n  |> yield(name: \"DRB Setup Success Rate\")",
+          "refId": "A"
+        }
+      ],
+      "title": "DRB Setup Success Rate ",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "Intra gNB counter incremented at both intra and inter DU handover. Incremented by one at sending of RRC Reconfiguration message to initiate the handover in the UE",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 20,
+        "x": 0,
+        "y": 12
+      },
+      "id": 63,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"handover_and_mobility_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    (r._measurement == \"MMHoExeIntraReq\") and\n    r._field == \"Value\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NetworkFunctionId\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n    |> map(fn: (r) => ({\n      _time: r._time,\n      NetworkFunctionId:r.NetworkFunctionId,\n      \"Id:\": r.MMHoExeIntraReq\n  }))\n  |> keep(columns: [\"_time\", \"Id:\", \"NetworkFunctionId\"])\n\n",
+          "refId": "A"
+        }
+      ],
+      "title": "INTRA GNB Handover Executions",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 12
+      },
+      "id": 61,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"handover_and_mobility_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n    (r._measurement == \"MMHoExeIntraSucc\" or r._measurement == \"MMHoExeIntraReq\") and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NetworkFunctionId\", \"_measurement\"])\n  |> sum(column: \"_value\")\n  |> pivot(rowKey: [\"NetworkFunctionId\"], columnKey: [\"_measurement\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({\n      NetworkFunctionId: r.NetworkFunctionId,\n      MMHoExeIntraSuccessRate: float(v: r.MMHoExeIntraSucc ) / float(v: r.MMHoExeIntraReq) *100.0  }))\n  |> group() \n  |> mean(column: \"MMHoExeIntraSuccessRate\")\n  |> yield(name: \"HO Execution Success Rate\")",
+          "refId": "A"
+        }
+      ],
+      "title": "INTRA GNB Handover Execution Success Rate",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 78,
+      "panels": [],
+      "title": "RRC Connection Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the mean number of users in RRC connected mode during each granularity period. This measurement is obtained by sampling at a pre-defined interval, the number of users in RRC connected\nmode for each NR cell and then taking the arithmetic mean.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 11,
+        "x": 0,
+        "y": 19
+      },
+      "id": 64,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 121,
+        "minVizHeight": 23,
+        "minVizWidth": 8,
+        "namePlacement": "top",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnMean\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"]) \n  |> last(column: \"_value\") \n  |> map(fn: (r) => ({\n      \"NR Cell ID:\": r._value,\n      NrCellId: r.NrCellId \n  }))\n  |> keep(columns: [\"NR Cell ID:\", \"NrCellId\"]) \n",
+          "refId": "A"
+        }
+      ],
+      "title": "Mean Number of RRC Connections",
+      "transparent": true,
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the maximum number of users in RRC connected mode during each granularity period. This measurement is obtained by sampling at a pre-defined interval, the number of users in RRC connected mode for each NR cell and then taking the maximum.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 13,
+        "x": 11,
+        "y": 19
+      },
+      "id": 66,
+      "options": {
+        "displayMode": "gradient",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "top",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnMax\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"]) \n  |> last(column: \"_value\") \n  |> map(fn: (r) => ({\n      \"NR Cell ID:\": r._value,\n      NrCellId: r.NrCellId \n  }))\n  |> keep(columns: [\"NR Cell ID:\", \"NrCellId\"]) \n",
+          "refId": "A"
+        }
+      ],
+      "title": "Max Number of RRC Connections",
+      "transparent": true,
+      "type": "bargauge"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 89,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "",
+        "mode": "html"
+      },
+      "pluginVersion": "11.6.0",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 20,
+        "x": 0,
+        "y": 26
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n|> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n|> filter(fn: (r) => \n  r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and  \n  r._field == \"Value\"\n  )\n  |> group(columns: [\"NetworkFunctionId\"])\n|> map(fn: (r) => ({\n      r with\n      \"Id:\": r._value\n  }))\n|> keep(columns: [\"_time\", \"NetworkFunctionId\", \"Id:\"])\n",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC Connection Establishment Attempts",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the number of RRC connection establishment attempts for each establishment cause.",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 26
+      },
+      "id": 96,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC Connection Establishment Attempts ",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 20,
+        "x": 0,
+        "y": 31
+      },
+      "id": 40,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<h4 style=\"text-align:center\">RRC Connection Establishment Attempt <h4>\n<h4 style=\"text-align:center\"> cause sub-counters <h4>\n",
+        "mode": "html"
+      },
+      "pluginVersion": "11.6.0",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 34
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_EMERGENCY\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - Emergency Cause\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "EMERGENCY",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 3,
+        "y": 34
+      },
+      "id": 31,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MT_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MT Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MT_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 6,
+        "y": 34
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_DATA\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MO Data\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_DATA",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 9,
+        "y": 34
+      },
+      "id": 35,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_SMS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MO SMS\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_SMS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 12,
+        "y": 34
+      },
+      "id": 38,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MCS_PRIORITY_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MCS Priority Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MCS_PRIORITY_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 37
+      },
+      "id": 84,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "",
+        "mode": "html"
+      },
+      "pluginVersion": "11.6.0",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 39
+      },
+      "id": 30,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_HIGH_PRIORITY_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - High Priotity Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "HIGH_PRIORITY_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 3,
+        "y": 39
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_SIGNALLING\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MO Signalling\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_SIGNALLING",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 6,
+        "y": 39
+      },
+      "id": 33,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_VOICE_CALL\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MO Voice Call\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_VOICE_CALL",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 9,
+        "y": 39
+      },
+      "id": 36,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_VIDEO_CALL\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MO Video Call\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_VIDEO_CALL",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "orange"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 12,
+        "y": 39
+      },
+      "id": 37,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MPS_PRIORITY_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Attempts - MPS Priority Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MPS_PRIORITY_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the number of successful RRC establishments for each establishment cause",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 20,
+        "y": 39
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC Connection Successes",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 20,
+        "x": 0,
+        "y": 42
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n|> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n|> filter(fn: (r) => \n  r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n  r._field == \"Value\"\n  )\n  |> group(columns: [\"NetworkFunctionId\"])\n|> map(fn: (r) => ({\n      r with\n      \"Id:\": r._value\n  }))\n|> keep(columns: [\"_time\", \"NetworkFunctionId\", \"Id:\"])\n",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC CONNECTION SUCCESSES",
+      "transparent": true,
+      "type": "timeseries"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 20,
+        "x": 0,
+        "y": 47
+      },
+      "id": 42,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<h4 style=\"text-align:center\">RRC Connection Success <h4>\n<h4 style=\"text-align:center\"> cause sub-counters <h4>\n",
+        "mode": "html"
+      },
+      "pluginVersion": "11.6.0",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 50
+      },
+      "id": 44,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_EMERGENCY\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - Emergency Cause\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "EMERGENCY",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 3,
+        "y": 50
+      },
+      "id": 47,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_SIGNALLING\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MO Signalling\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_SIGNALLING",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 6,
+        "y": 50
+      },
+      "id": 49,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_VOICE_CALL\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MO Voice Call\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_VOICE_CALL",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 9,
+        "y": 50
+      },
+      "id": 51,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_SMS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MO SMS\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_SMS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 12,
+        "y": 50
+      },
+      "id": 52,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MPS_PRIORITY_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MPS Priority Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MPS_PRIORITY_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 53
+      },
+      "id": 45,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_HIGH_PRIORITY_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - High Priotity Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "HIGH_PRIORITY_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 3,
+        "y": 53
+      },
+      "id": 46,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MT_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MT Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MT_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 6,
+        "y": 53
+      },
+      "id": 48,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_DATA\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MO Data\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_DATA",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 9,
+        "y": 53
+      },
+      "id": 50,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MO_VIDEO_CALL\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MO Video Call\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MO_VIDEO_CALL",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 12,
+        "y": 53
+      },
+      "id": 53,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnEstabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    ) and\n    r.CauseType == \"CAUSE_TYPE_MCS_PRIORITY_ACCESS\"\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Establishment Successes - MCS Priority Access\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "MCS_PRIORITY_ACCESS",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 20,
+        "x": 0,
+        "y": 56
+      },
+      "id": 99,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<h4 style=\"text-align:center\">RRC Re-establishment Counters <h4>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.6.0",
+      "title": "",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the number of RRC connection re-establishment attempts",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 0,
+        "y": 59
+      },
+      "id": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnReestabAtt\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Connection Re-stablishment Attempts\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC Re-establishment Attempts",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "ddswjfzs92bk0b"
+      },
+      "description": "This measurement provides the successful number of RRC connection re-establishments",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 4,
+        "x": 4,
+        "y": 59
+      },
+      "id": 101,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"RRCConnReestabSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"RRC Re-establishment Successes\")\n",
+          "refId": "A"
+        }
+      ],
+      "title": "RRC Re-establishment Successes",
+      "transparent": true,
+      "type": "stat"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "id": 82,
+      "panels": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "description": "Intra gNB counter incremented at both intra and inter DU handover. Incremented by one at sending of RRC Reconfiguration message to initiate the handover in the UE",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 66
+          },
+          "id": 85,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.6.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "ddswjfzs92bk0b"
+              },
+              "query": "from(bucket: \"handover_and_mobility_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"MMHoExeIntraReq\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"Intra Handover Executions\")\n",
+              "refId": "A"
+            }
+          ],
+          "title": "INTRA gNB Handover Executions",
+          "transparent": true,
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "description": "Intra gNB counter incremented at both intra and inter DU handover. Incremented by one on reception of RRC Reconfiguration Complete",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 66
+          },
+          "id": 62,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.6.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "ddswjfzs92bk0b"
+              },
+              "query": "from(bucket: \"handover_and_mobility_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"MMHoExeIntraSucc\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"Intra Handover Successes\")\n",
+              "refId": "A"
+            }
+          ],
+          "title": "INTRA gNB Handover Successes",
+          "transparent": true,
+          "type": "stat"
+        },
+        {
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 12,
+            "x": 12,
+            "y": 66
+          },
+          "id": 71,
+          "options": {
+            "code": {
+              "language": "plaintext",
+              "showLineNumbers": false,
+              "showMiniMap": false
+            },
+            "content": "",
+            "mode": "html"
+          },
+          "pluginVersion": "11.6.0",
+          "title": "",
+          "transparent": true,
+          "type": "text"
+        }
+      ],
+      "title": "Handover Metrics",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      },
+      "id": 80,
+      "panels": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "description": "Number of PDU sessions requested to setup (28.522 section 5.1.1.5.1). CU-CP counter per NR cell. The measurement is split into subcounters per S-NSSAI\n\n",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 0,
+            "y": 67
+          },
+          "id": 68,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.6.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "ddswjfzs92bk0b"
+              },
+              "query": "from(bucket: \"pdu_session_management_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"SMPDUSessionSetupReq\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"Number of PDU sessions requested to setup\")\n",
+              "refId": "A"
+            }
+          ],
+          "title": "PDU Session Setup Requests",
+          "transparent": true,
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "ddswjfzs92bk0b"
+          },
+          "description": "This measurement provides the number of PDU Sessions failed to setup by the gNB. This measurement is split into subcounters per failure cause.",
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "options": {
+                    "match": "null",
+                    "result": {
+                      "text": "N/A"
+                    }
+                  },
+                  "type": "special"
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 6,
+            "x": 6,
+            "y": 67
+          },
+          "id": 73,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "none",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "percentChangeColorMode": "standard",
+            "reduceOptions": {
+              "calcs": [
+                "last"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "11.6.0",
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "ddswjfzs92bk0b"
+              },
+              "query": "from(bucket: \"pdu_session_management_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => \n    r._measurement == \"SMPDUSessionSetupFail\" and\n    (\n      \"${NetworkFunctionId}\" == \"All\" or r.NetworkFunctionId == \"${NetworkFunctionId}\" or contains(value: r.NetworkFunctionId, set: ${NetworkFunctionId:json})\n    )\n  )\n  |> group(columns: [\"NrCellId\", \"PlmnId\"])\n  |> sum(column: \"_value\")\n  |> group() \n  |> sum(column: \"_value\")\n  |> yield(name: \"Number of PDU sessions failed to setup\")\n",
+              "refId": "A"
+            }
+          ],
+          "title": "PDU Session Setup Failures",
+          "transparent": true,
+          "type": "stat"
+        }
+      ],
+      "title": "PDU Session Metrics",
+      "type": "row"
+    }
+  ],
+  "preload": false,
+  "refresh": "auto",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "ddswjfzs92bk0b"
+        },
+        "definition": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"RRCConnMean\") \n  |> keep(columns: [\"NetworkFunctionId\"]) \n  |> distinct(column: \"NetworkFunctionId\")\n  |> sort(columns: [\"NetworkFunctionId\"], desc: false)\n",
+        "includeAll": true,
+        "multi": true,
+        "name": "NetworkFunctionId",
+        "options": [],
+        "query": {
+          "query": "from(bucket: \"rrc_connection_metrics_5m\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop) \n  |> filter(fn: (r) => r._measurement == \"RRCConnMean\") \n  |> keep(columns: [\"NetworkFunctionId\"]) \n  |> distinct(column: \"NetworkFunctionId\")\n  |> sort(columns: [\"NetworkFunctionId\"], desc: false)\n"
+        },
+        "refresh": 2,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "5G CUCP PM Counters - 5m Aggregation",
+  "uid": "sH2tHMJMg",
+  "version": 1
+}
