@@ -1527,7 +1527,16 @@ loki-gateway:
       - username: "external-events"
         password: ""
         organization: "events"
+  
+  service:
+    type: NodePort
+    ports:
+      http:
+        port: 80
+        targetPort: 8080
+        nodePort: 31000
 
+  
   ingress:
     enabled: false
     className: ""
