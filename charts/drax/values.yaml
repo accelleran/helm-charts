@@ -1251,6 +1251,9 @@ grafana:
         name: "{{ $.Release.Name }}-slack-auth"
         key: slack-token
 
+  env:
+    GF_PANELS_DISABLE_SANITIZE_HTML: false
+
   datasources:
     datasources.yaml:
       apiVersion: 1
