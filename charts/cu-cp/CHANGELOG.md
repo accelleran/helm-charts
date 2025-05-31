@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.0.4](https://github.com/accelleran/helm-charts/compare/cu-cp-12.0.3...cu-cp-12.0.4) (2025-05-31)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release nats to v1.3.7 ([#1310](https://github.com/accelleran/helm-charts/issues/1310)) ([55e014f](https://github.com/accelleran/helm-charts/commit/55e014f8a9fba31d3f95654f8b93f2a51706d706))
+
 ## [12.0.3](https://github.com/accelleran/helm-charts/compare/cu-cp-12.0.2...cu-cp-12.0.3) (2025-05-22)
 
 
