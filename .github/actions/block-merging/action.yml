@@ -7,6 +7,11 @@ inputs:
   branch:
     description: Target branch to check
     default: main
+  filter:
+    description: |-
+      Regex filter for last commit message on the target branch.
+      Allows merging immediately when the commit message doesn't match.
+    default: .*
   bypass_prefix:
     description: Commit message prefix to bypass the check
     default: "fix(mergeability): "
@@ -22,6 +27,7 @@ runs:
       env:
         BRANCH: ${{ inputs.branch }}
         BYPASS_PREFIX: ${{ inputs.bypass_prefix }}
+        FILTER: ${{ inputs.filter }}
         MAX_WAIT_TIME: ${{ inputs.max_wait_time }}
         PR_TITLE: ${{ github.event.pull_request.title }}
       with:
@@ -29,12 +35,56 @@ runs:
         script: |-
           const {owner,repo} = context.repo;
           const branch = process.env.BRANCH;
-
+          const filter = process.env.FILTER;
           const prTitle = process.env.PR_TITLE;
           const bypassPrefix = process.env.BYPASS_PREFIX;
 
           if (prTitle.startsWith(bypassPrefix)) {
             console.log(`Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`);
+            process.exit(0);
+          }
+
+          const lastCommitMessage = await (async () => {
+            const refsResponse = await github.rest.git.listMatchingRefs({
+              owner: owner,
+              repo: repo,
+              ref: `heads/${branch}`,
+            });
+            if (refsResponse.status != 200) {
+              throw new Error(`Refs for heads/${branch} couldn't be retrieved`);
+            }
+
+            let commitSha = "";
+
+            const refs = refsResponse.data;
+            for (const ref of refs) {
+              if (ref.object.type === "commit") {
+                commitSha = ref.object.sha;
+                break;
+              }
+            }
+
+            if (commitSha === "") {
+              throw new Error(`No commit SHA could be found in matched refs (length ${refs.length})`);
+            }
+
+            const commitResponse = await github.rest.git.getCommit({
+              owner: owner,
+              repo: repo,
+              commit_sha: commitSha,
+            });
+            if (commitResponse.status != 200) {
+              throw new Error(`Commit for sha ${commitSha} couldn't be retrieved`);
+            }
+
+            let commit = commitResponse.data;
+
+            return commit.message;
+          })();
+
+          const filterRegex = new RegExp(filter);
+          if (!filterRegex.test(lastCommitMessage)) {
+            console.log(`Merging is allowed as the last commit message ("${lastCommitMessage}") doesn't match the filter ("${filter}")`);
             process.exit(0);
           }
 
