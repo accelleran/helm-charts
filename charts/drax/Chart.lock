@@ -22,7 +22,7 @@ dependencies:
   version: 7.0.8
 - name: du-metrics-server
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.5.1
+  version: 0.5.2
 - name: telemetry-collector
   repository: https://accelleran.github.io/helm-charts/
   version: 2.0.4
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 21.1.11
-digest: sha256:3eb33e183a0abb796f278d0e2e023dbeef79b799c335801be7128adcdbc0b377
-generated: "2025-06-01T20:20:03.560133483Z"
+digest: sha256:6b14b30c7c4271a782298768cdcbc7e97d49424c10416477b0dbec4e6d3e2a28
+generated: "2025-06-02T07:34:16.644800627Z"
