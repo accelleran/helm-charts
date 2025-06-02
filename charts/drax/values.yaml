@@ -183,12 +183,12 @@ drax:
     keycloakInitImage:
       repository: accelleran/acc-generic-img
       pullPolicy: IfNotPresent
-      tag: "0.9.0"
+      tag: "0.9.1"
 
     image:
       repository: accelleran/acc-generic-img
       pullPolicy: IfNotPresent
-      tag: "0.9.0"
+      tag: "0.9.1"
 
     imagePullSecrets:
       - name: accelleran-secret
@@ -2088,7 +2088,7 @@ promtail-events:
   initContainer:
     - name: check-kafka
       # renovate:
-      image: accelleran/acc-generic-img:0.9.0
+      image: accelleran/acc-generic-img:0.9.1
       imagePullPolicy: IfNotPresent
       command:
       - /bin/sh
@@ -2165,7 +2165,7 @@ influxdb2:
     # renovate:
     image:
       repository: accelleran/acc-generic-img
-      tag: "0.9.0"
+      tag: "0.9.1"
       pullPolicy: IfNotPresent
     command:
       - /bin/bash
