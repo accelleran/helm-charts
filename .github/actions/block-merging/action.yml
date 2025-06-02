@@ -39,15 +39,33 @@ runs:
           const prTitle = process.env.PR_TITLE;
           const bypassPrefix = process.env.BYPASS_PREFIX;
 
-          if (prTitle.startsWith(bypassPrefix)) {
-            console.log(
-              `Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`,
-            );
-            process.exit(0);
-          }
-
           const filterRegex = new RegExp(filter);
-          const lastCommitMessage = await (async () => {
+
+          const maxWaitTimeString = process.env.MAX_WAIT_TIME;
+          const { hours, minutes, seconds } =
+            /^(?<hours>[0-9]*)h?(?<minutes>[0-9]*)m?(?<seconds>[0-9]*)s?$/.exec(
+              maxWaitTimeString,
+            ).groups;
+          const maxWaitTimeMs = (hours || 0) * 3600000 +
+            (minutes || 0) * 60000 +
+            (seconds || 0) * 1000;
+          const attemptDelayMs = 5000;
+          const maxAttempts = (maxWaitTimeMs || Infinity) / attemptDelayMs;
+
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+          const retry = async (fn, maxAttempts) => {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              try {
+                return await fn();
+              } catch (err) {
+                console.error(`Error in attempt ${attempt}: ${err.message}`);
+                await sleep(attemptDelayMs);
+              }
+            }
+          };
+
+          const fetchLastCommitMessage = async () => {
             const refsResponse = await github.rest.git.listMatchingRefs({
               owner: owner,
               repo: repo,
@@ -85,37 +103,6 @@ runs:
             let commit = commitResponse.data;
 
             return commit.message;
-          })();
-
-          if (!filterRegex.test(lastCommitMessage)) {
-            console.log(
-              `Merging is allowed as the last commit message ("${lastCommitMessage}") doesn't match the filter ("${filter}")`,
-            );
-            process.exit(0);
-          }
-
-          const maxWaitTimeString = process.env.MAX_WAIT_TIME;
-          const { hours, minutes, seconds } =
-            /^(?<hours>[0-9]*)h?(?<minutes>[0-9]*)m?(?<seconds>[0-9]*)s?$/.exec(
-              maxWaitTimeString,
-            ).groups;
-          const maxWaitTimeMs = (hours || 0) * 3600000 +
-            (minutes || 0) * 60000 +
-            (seconds || 0) * 1000;
-          const attemptDelayMs = 5000;
-          const maxAttempts = (maxWaitTimeMs || Infinity) / attemptDelayMs;
-
-          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-          const retry = async (fn, maxAttempts) => {
-            for (let attempt = 0; attempt < maxAttempts; attempt++) {
-              try {
-                return await fn();
-              } catch (err) {
-                console.error(`Error in attempt ${attempt}: ${err.message}`);
-                await sleep(attemptDelayMs);
-              }
-            }
           };
 
           const fetchCompletedChecks = async () => {
@@ -140,6 +127,21 @@ runs:
 
             return checks;
           };
+
+          if (prTitle.startsWith(bypassPrefix)) {
+            console.log(
+              `Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`,
+            );
+            process.exit(0);
+          }
+
+          const lastCommitMessage = await fetchLastCommitMessage();
+          if (!filterRegex.test(lastCommitMessage)) {
+            console.log(
+              `Merging is allowed as the last commit message ("${lastCommitMessage}") doesn't match the filter ("${filter}")`,
+            );
+            process.exit(0);
+          }
 
           const completedChecks = await retry(fetchCompletedChecks, maxAttempts);
 
