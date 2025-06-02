@@ -33,17 +33,20 @@ runs:
       with:
         github-token: ${{ inputs.github_token }}
         script: |-
-          const {owner,repo} = context.repo;
+          const { owner, repo } = context.repo;
           const branch = process.env.BRANCH;
           const filter = process.env.FILTER;
           const prTitle = process.env.PR_TITLE;
           const bypassPrefix = process.env.BYPASS_PREFIX;
 
           if (prTitle.startsWith(bypassPrefix)) {
-            console.log(`Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`);
+            console.log(
+              `Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`,
+            );
             process.exit(0);
           }
 
+          const filterRegex = new RegExp(filter);
           const lastCommitMessage = await (async () => {
             const refsResponse = await github.rest.git.listMatchingRefs({
               owner: owner,
@@ -65,7 +68,9 @@ runs:
             }
 
             if (commitSha === "") {
-              throw new Error(`No commit SHA could be found in matched refs (length ${refs.length})`);
+              throw new Error(
+                `No commit SHA could be found in matched refs (length ${refs.length})`,
+              );
             }
 
             const commitResponse = await github.rest.git.getCommit({
@@ -82,21 +87,25 @@ runs:
             return commit.message;
           })();
 
-          const filterRegex = new RegExp(filter);
           if (!filterRegex.test(lastCommitMessage)) {
-            console.log(`Merging is allowed as the last commit message ("${lastCommitMessage}") doesn't match the filter ("${filter}")`);
+            console.log(
+              `Merging is allowed as the last commit message ("${lastCommitMessage}") doesn't match the filter ("${filter}")`,
+            );
             process.exit(0);
           }
 
           const maxWaitTimeString = process.env.MAX_WAIT_TIME;
-          const {hours,minutes,seconds} = /^(?<hours>[0-9]*)h?(?<minutes>[0-9]*)m?(?<seconds>[0-9]*)s?$/.exec(maxWaitTimeString).groups;
-          const maxWaitTimeMs = (hours || 0) * 3600000
-                              + (minutes || 0) * 60000
-                              + (seconds || 0) * 1000;
+          const { hours, minutes, seconds } =
+            /^(?<hours>[0-9]*)h?(?<minutes>[0-9]*)m?(?<seconds>[0-9]*)s?$/.exec(
+              maxWaitTimeString,
+            ).groups;
+          const maxWaitTimeMs = (hours || 0) * 3600000 +
+            (minutes || 0) * 60000 +
+            (seconds || 0) * 1000;
           const attemptDelayMs = 5000;
           const maxAttempts = (maxWaitTimeMs || Infinity) / attemptDelayMs;
 
-          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
           const retry = async (fn, maxAttempts) => {
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -123,22 +132,27 @@ runs:
 
             for (const check of checks) {
               if (check.status !== "completed") {
-                throw new Error(`Merging is blocked as the checks for ${branch} haven't completed yet`);
+                throw new Error(
+                  `Merging is blocked as the checks for ${branch} haven't completed yet`,
+                );
               }
             }
 
             return checks;
           };
 
-
           const completedChecks = await retry(fetchCompletedChecks, maxAttempts);
 
           for (const check of completedChecks) {
             if (check.conclusion === "failure") {
-              core.setFailed(`Merging is blocked as the checks for ${branch} include a failure`);
+              core.setFailed(
+                `Merging is blocked as the checks for ${branch} include a failure`,
+              );
               process.exit(1);
             }
           }
 
-          console.log(`Merging is allowed as all checks for ${branch} have completed without failures`);
+          console.log(
+            `Merging is allowed as all checks for ${branch} have completed without failures`,
+          );
           process.exit(0);
