@@ -10,6 +10,9 @@ inputs:
   bypass_prefix:
     description: Commit message prefix to bypass the check
     default: "fix(mergeability): "
+  max_wait_time:
+    description: Maximum time to wait for checks to complete
+    default: 4h
 runs:
   using: "composite"
   steps:
@@ -19,6 +22,7 @@ runs:
       env:
         BRANCH: ${{ inputs.branch }}
         BYPASS_PREFIX: ${{ inputs.bypass_prefix }}
+        MAX_WAIT_TIME: ${{ inputs.max_wait_time }}
         PR_TITLE: ${{ github.event.pull_request.title }}
       with:
         github-token: ${{ inputs.github_token }}
@@ -34,6 +38,14 @@ runs:
             process.exit(0);
           }
 
+          const maxWaitTimeString = process.env.MAX_WAIT_TIME;
+          const {hours,minutes,seconds} = /^(?<hours>[0-9]*)h?(?<minutes>[0-9]*)m?(?<seconds>[0-9]*)s?$/.exec(maxWaitTimeString).groups;
+          const maxWaitTimeMs = (hours || 0) * 3600000
+                              + (minutes || 0) * 60000
+                              + (seconds || 0) * 1000;
+          const attemptDelayMs = 5000;
+          const maxAttempts = (maxWaitTimeMs || Infinity) / attemptDelayMs;
+
           const sleep = ms => new Promise(r => setTimeout(r, ms));
 
           const retry = async (fn, maxAttempts) => {
@@ -42,7 +54,7 @@ runs:
                 return await fn();
               } catch (err) {
                 console.error(`Error in attempt ${attempt}: ${err.message}`);
-                await sleep(5000);
+                await sleep(attemptDelayMs);
               }
             }
           };
@@ -69,7 +81,7 @@ runs:
           };
 
 
-          const completedChecks = await retry(fetchCompletedChecks, Infinity);
+          const completedChecks = await retry(fetchCompletedChecks, maxAttempts);
 
           for (const check of completedChecks) {
             if (check.conclusion === "failure") {
