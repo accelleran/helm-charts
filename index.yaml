@@ -15128,6 +15128,152 @@ entries:
     version: 0.1.0-rc.3
   drax:
   - apiVersion: v2
+    created: "2025-06-03T08:17:49.634466848Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.5.0
+    - condition: dashboard.enabled
+      name: dashboard
+      repository: file://charts/dashboard
+      version: 6.0.0
+    - condition: network-state-monitor.enabled
+      name: network-state-monitor
+      repository: file://charts/network-state-monitor
+      version: 0.2.0
+    - condition: service-monitor.enabled
+      name: service-monitor
+      repository: file://charts/service-monitor
+      version: 2.0.0
+    - condition: service-orchestrator.enabled
+      name: service-orchestrator
+      repository: file://charts/service-orchestrator
+      version: 2.0.0
+    - condition: config-api.enabled
+      name: config-api
+      repository: file://charts/config-api
+      version: 3.0.0
+    - condition: cell-wrapper.enabled
+      name: cell-wrapper
+      repository: https://accelleran.github.io/helm-charts/
+      version: 7.0.8
+    - condition: du-metrics-server.enabled
+      name: du-metrics-server
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.5.2
+    - condition: telemetry-collector.enabled
+      name: telemetry-collector
+      repository: https://accelleran.github.io/helm-charts/
+      version: 2.0.4
+    - condition: e2-t.enabled
+      name: e2-t
+      repository: file://charts/e2-t
+      version: 2.0.0
+    - condition: pm-counters.enabled
+      name: pm-counters
+      repository: file://charts/pm-counters
+      version: 2.0.0
+    - alias: golang-nkafka-5g
+      condition: global.enable5G
+      name: golang-nkafka
+      repository: file://charts/golang-nkafka
+      version: 2.0.1
+    - condition: ingress-nginx.enabled
+      name: ingress-nginx
+      repository: https://kubernetes.github.io/ingress-nginx
+      tags:
+      - authentication
+      version: 4.12.2
+    - condition: oauth2-proxy.enabled
+      name: oauth2-proxy
+      repository: https://oauth2-proxy.github.io/manifests
+      tags:
+      - authentication
+      version: 7.12.17
+    - condition: keycloak.enabled
+      name: keycloak
+      repository: https://charts.bitnami.com/bitnami/
+      tags:
+      - authentication
+      version: 24.7.3
+    - condition: grafana.enabled
+      name: grafana
+      repository: https://grafana.github.io/helm-charts
+      version: 9.2.2
+    - condition: prometheus.enabled
+      name: prometheus
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 27.19.0
+    - condition: loki-gateway.enabled
+      name: loki-gateway
+      repository: https://accelleran.github.io/helm-charts/
+      tags:
+      - logs
+      - events
+      version: 0.1.12
+    - alias: loki
+      condition: loki.enabled
+      name: grafana-loki
+      repository: https://charts.bitnami.com/bitnami/
+      tags:
+      - logs
+      - events
+      version: 4.8.12
+    - condition: loki-deleter.enabled
+      name: loki-deleter
+      repository: https://accelleran.github.io/helm-charts/
+      tags:
+      - logs
+      version: 0.1.9
+    - condition: minio.enabled
+      name: minio
+      repository: https://charts.min.io/
+      tags:
+      - logs
+      - events
+      version: 5.4.0
+    - alias: promtail-logs
+      condition: promtail-logs.enabled
+      name: promtail
+      repository: https://grafana.github.io/helm-charts/
+      tags:
+      - logs
+      version: 6.17.0
+    - alias: promtail-events
+      condition: promtail-events.enabled
+      name: promtail
+      repository: https://grafana.github.io/helm-charts/
+      tags:
+      - events
+      version: 6.17.0
+    - condition: influxdb2.enabled
+      name: influxdb2
+      repository: https://helm.influxdata.com/
+      version: 2.1.2
+    - condition: kminion.enabled
+      name: kminion
+      repository: https://charts.redpanda.com
+      version: 0.14.1
+    - condition: kafka.enabled
+      name: kafka
+      repository: https://charts.bitnami.com/bitnami/
+      version: 31.5.0
+    - condition: nats.enabled
+      name: nats
+      repository: https://nats-io.github.io/k8s/helm/charts/
+      version: 1.3.7
+    - condition: redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami/
+      version: 21.1.11
+    description: Accelleran's dRAX helm chart
+    digest: c0502b2b0ae94b90f4721e4018415383092b75e47a45e35439eafe87becf48a8
+    name: drax
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/drax-14.0.2/drax-14.0.2.tgz
+    version: 14.0.2
+  - apiVersion: v2
     created: "2025-05-16T06:22:18.532422277Z"
     dependencies:
     - name: common
@@ -37784,4 +37930,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2025-06-02T07:31:28.518136903Z"
+generated: "2025-06-03T08:17:49.636399612Z"
