@@ -1,0 +1,22 @@
+===================================================================
+ IMPORTANT: CloudNativePG CRDs and Operator Must Be Installed First
+===================================================================
+
+Before using this chart, you must install the CloudNativePG operator and CRDs:
+
+  helm install cnpg cloudnative-pg/cloudnative-pg \
+    --namespace cnpg-system \
+    --create-namespace \
+    --version 0.24.0
+
+After that, you can run:
+
+  helm install <your-chart> . --values values.yaml
+
+  # Retrieve timescaledb password
+  kubectl get secret {{ .Values.cnpg.name }}-user-secret -o jsonpath="{.data.password}" | base64 -d
+
+  # Connect to timescaledb
+  kubectl exec -ti {{ .Values.cnpg.name }}-1 -- psql {{ .Values.cnpg.database }}
+
+===================================================================

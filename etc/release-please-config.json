@@ -61,6 +61,10 @@
     "charts/xapp-hello-world": {
       "component": "xapp-hello-world",
       "package-name": "xapp-hello-world"
+    },
+    "charts/cnpg": {
+      "component": "cnpg",
+      "package-name": "cnpg"
     }
   }
 }

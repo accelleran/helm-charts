@@ -1,0 +1,9 @@
+cnpg:
+  name: cnpg-timescaledb
+
+  auth:
+    superuserPassword: admin
+    username: accelleran
+    password: accelleran
+
+  database: accellerandb

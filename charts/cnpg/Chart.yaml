@@ -1,0 +1,12 @@
+annotations:
+  cnpg.io/prerequisites: "Install CNPG operator before using this chart"
+apiVersion: v2
+name: cnpg
+description: |
+  Deploys a CNPG Cluster. Requires CloudNativePG operator and CRDs to be installed first:
+    helm repo add cloudnative-pg https://cloudnative-pg.github.io/charts
+    helm install cnpg cloudnative-pg/cloudnative-pg \
+      --namespace cnpg-system --create-namespace --version 0.24.0
+type: application
+version: 0.1.0
+appVersion: "1.16.0"

@@ -1,0 +1,43 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.cnpg.name }}
+spec:
+  instances: 1
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: {{ .Values.cnpg.name }}-superuser-secret
+
+  storage:
+    size: 1Gi
+
+  postgresUID: 70
+  postgresGID: 70
+
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ImageCatalog
+    name: cloudnative-pg-timescaledb-pg16
+    major: 16
+
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database }}
+      owner: {{ .Values.cnpg.auth.username }}
+      secret:
+        name: {{ .Values.cnpg.name }}-user-secret
+      postInitTemplateSQL:
+        - CREATE EXTENSION IF NOT EXISTS timescaledb;
+        - CREATE TABLE IF NOT EXISTS ue_metrics (
+            time        TIMESTAMPTZ       NOT NULL,
+            device_id   TEXT              NOT NULL,
+            temperature DOUBLE PRECISION  NULL
+          );
+        - SELECT create_hypertable('ue_metrics', 'time', if_not_exists => TRUE);
+        - SELECT add_retention_policy('ue_metrics', INTERVAL '30 days');
+        - ALTER TABLE ue_metrics OWNER TO {{ .Values.cnpg.auth.username }};
+
+  postgresql:
+    shared_preload_libraries:
+      - timescaledb
