@@ -46,9 +46,8 @@ runs:
             /^(?<hours>[0-9]*)h?(?<minutes>[0-9]*)m?(?<seconds>[0-9]*)s?$/.exec(
               maxWaitTimeString,
             ).groups;
-          const maxWaitTimeMs = (hours || 0) * 3600000 +
-            (minutes || 0) * 60000 +
-            (seconds || 0) * 1000;
+          const maxWaitTimeMs =
+            (((hours || 0) * 60 + (minutes || 0)) * 60 + (seconds || 0)) * 1000;
           const attemptDelayMs = 5000;
           const maxAttempts = (maxWaitTimeMs || Infinity) / attemptDelayMs;
 
