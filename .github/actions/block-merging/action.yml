@@ -7,9 +7,17 @@ inputs:
   branch:
     description: Target branch to check
     default: main
+  filter:
+    description: |-
+      Regex filter for last commit message on the target branch.
+      Allows merging immediately when the commit message doesn't match.
+    default: .*
   bypass_prefix:
     description: Commit message prefix to bypass the check
     default: "fix(mergeability): "
+  max_wait_time:
+    description: Maximum time to wait for checks to complete
+    default: 4h
 runs:
   using: "composite"
   steps:
@@ -19,22 +27,31 @@ runs:
       env:
         BRANCH: ${{ inputs.branch }}
         BYPASS_PREFIX: ${{ inputs.bypass_prefix }}
+        FILTER: ${{ inputs.filter }}
+        MAX_WAIT_TIME: ${{ inputs.max_wait_time }}
         PR_TITLE: ${{ github.event.pull_request.title }}
       with:
         github-token: ${{ inputs.github_token }}
         script: |-
-          const {owner,repo} = context.repo;
+          const { owner, repo } = context.repo;
           const branch = process.env.BRANCH;
-
+          const filter = process.env.FILTER;
           const prTitle = process.env.PR_TITLE;
           const bypassPrefix = process.env.BYPASS_PREFIX;
 
-          if (prTitle.startsWith(bypassPrefix)) {
-            console.log(`Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`);
-            process.exit(0);
-          }
+          const filterRegex = new RegExp(filter);
 
-          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          const maxWaitTimeString = process.env.MAX_WAIT_TIME;
+          const { hours, minutes, seconds } =
+            /^(?<hours>[0-9]*)h?(?<minutes>[0-9]*)m?(?<seconds>[0-9]*)s?$/.exec(
+              maxWaitTimeString,
+            ).groups;
+          const maxWaitTimeMs =
+            (((hours || 0) * 60 + (minutes || 0)) * 60 + (seconds || 0)) * 1000;
+          const attemptDelayMs = 5000;
+          const maxAttempts = (maxWaitTimeMs || Infinity) / attemptDelayMs;
+
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
           const retry = async (fn, maxAttempts) => {
             for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -42,9 +59,49 @@ runs:
                 return await fn();
               } catch (err) {
                 console.error(`Error in attempt ${attempt}: ${err.message}`);
-                await sleep(5000);
+                await sleep(attemptDelayMs);
               }
             }
+          };
+
+          const fetchLastCommitMessage = async () => {
+            const refsResponse = await github.rest.git.listMatchingRefs({
+              owner: owner,
+              repo: repo,
+              ref: `heads/${branch}`,
+            });
+            if (refsResponse.status != 200) {
+              throw new Error(`Refs for heads/${branch} couldn't be retrieved`);
+            }
+
+            let commitSha = "";
+
+            const refs = refsResponse.data;
+            for (const ref of refs) {
+              if (ref.object.type === "commit") {
+                commitSha = ref.object.sha;
+                break;
+              }
+            }
+
+            if (commitSha === "") {
+              throw new Error(
+                `No commit SHA could be found in matched refs (length ${refs.length})`,
+              );
+            }
+
+            const commitResponse = await github.rest.git.getCommit({
+              owner: owner,
+              repo: repo,
+              commit_sha: commitSha,
+            });
+            if (commitResponse.status != 200) {
+              throw new Error(`Commit for sha ${commitSha} couldn't be retrieved`);
+            }
+
+            let commit = commitResponse.data;
+
+            return commit.message;
           };
 
           const fetchCompletedChecks = async () => {
@@ -61,22 +118,42 @@ runs:
 
             for (const check of checks) {
               if (check.status !== "completed") {
-                throw new Error(`Merging is blocked as the checks for ${branch} haven't completed yet`);
+                throw new Error(
+                  `Merging is blocked as the checks for ${branch} haven't completed yet`,
+                );
               }
             }
 
             return checks;
           };
 
+          if (prTitle.startsWith(bypassPrefix)) {
+            console.log(
+              `Merging is allowed as the PR title ("${prTitle}") matches the bypass prefix ("${bypassPrefix}")`,
+            );
+            process.exit(0);
+          }
 
-          const completedChecks = await retry(fetchCompletedChecks, Infinity);
+          const lastCommitMessage = await fetchLastCommitMessage();
+          if (!filterRegex.test(lastCommitMessage)) {
+            console.log(
+              `Merging is allowed as the last commit message ("${lastCommitMessage}") doesn't match the filter ("${filter}")`,
+            );
+            process.exit(0);
+          }
+
+          const completedChecks = await retry(fetchCompletedChecks, maxAttempts);
 
           for (const check of completedChecks) {
             if (check.conclusion === "failure") {
-              core.setFailed(`Merging is blocked as the checks for ${branch} include a failure`);
+              core.setFailed(
+                `Merging is blocked as the checks for ${branch} include a failure`,
+              );
               process.exit(1);
             }
           }
 
-          console.log(`Merging is allowed as all checks for ${branch} have completed without failures`);
+          console.log(
+            `Merging is allowed as all checks for ${branch} have completed without failures`,
+          );
           process.exit(0);
