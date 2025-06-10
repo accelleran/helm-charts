@@ -29,14 +29,23 @@ spec:
         name: {{ .Values.cnpg.name }}-user-secret
       postInitTemplateSQL:
         - CREATE EXTENSION IF NOT EXISTS timescaledb;
-        - CREATE TABLE IF NOT EXISTS ue_metrics (
-            time        TIMESTAMPTZ       NOT NULL,
-            device_id   TEXT              NOT NULL,
-            temperature DOUBLE PRECISION  NULL
+        - CREATE TABLE IF NOT EXISTS rrc_measurements (
+            id SERIAL PRIMARY KEY,
+            timestamp TIMESTAMP NOT NULL,
+            source VARCHAR(255) NOT NULL,
+            network_function_id VARCHAR(255) NOT NULL,
+            ue_id VARCHAR(255) NOT NULL,
+            nr_cell_id INTEGER NOT NULL,
+            plmn_id VARCHAR(255) NOT NULL,
+            pci INTEGER,
+            ssb_rsrp INTEGER NOT NULL,
+            ssb_rsrq INTEGER NOT NULL,
+            ssb_sinr INTEGER NOT NULL,
+            is_serving_cell BOOLEAN NOT NULL
           );
-        - SELECT create_hypertable('ue_metrics', 'time', if_not_exists => TRUE);
-        - SELECT add_retention_policy('ue_metrics', INTERVAL '30 days');
-        - ALTER TABLE ue_metrics OWNER TO {{ .Values.cnpg.auth.username }};
+        - SELECT create_hypertable('rrc_measurements', 'timestamp', if_not_exists => TRUE);
+        - SELECT add_retention_policy('rrc_measurements', INTERVAL '30 days');
+        - ALTER TABLE rrc_measurements OWNER TO {{ .Values.cnpg.auth.username }};
 
   postgresql:
     shared_preload_libraries:
