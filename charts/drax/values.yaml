@@ -1832,7 +1832,7 @@ loki:
     enabled: false
     resourcesPreset: "none"
 
-  promtail:
+  grafanaalloy:
     enabled: false
     resourcesPreset: "none"
 
