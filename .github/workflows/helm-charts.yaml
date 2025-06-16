@@ -27,7 +27,7 @@ jobs:
       # renovate: github_repository=metallb/metallb versioning=semver
       metallb_version: v0.15.2
       # renovate: github_repository=helm/helm versioning=semver extract_version=^v(?<version>.*)$
-      helm_version: 3.18.2
+      helm_version: 3.18.3
       # renovate: github_repository=halkeye/helm-repo-html versioning=semver
       helm_repo_html_version: v0.2.1
     timeout-minutes: 1
