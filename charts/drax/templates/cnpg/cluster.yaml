@@ -1,13 +1,13 @@
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
-  name: {{ .Values.cnpg.name }}
+  name: {{ .Release.Name }}-cnpg-timescaledb
 spec:
   instances: 1
 
   enableSuperuserAccess: true
   superuserSecret:
-    name: {{ .Values.cnpg.name }}-superuser-secret
+    name: {{ .Release.Name }}-cnpg-timescaledb-superuser-secret
 
   storage:
     size: 1Gi
@@ -26,11 +26,11 @@ spec:
       database: {{ .Values.cnpg.database }}
       owner: {{ .Values.cnpg.auth.username }}
       secret:
-        name: {{ .Values.cnpg.name }}-user-secret
+        name: {{ .Release.Name }}-cnpg-timescaledb-user-secret
       postInitTemplateSQL:
         - CREATE EXTENSION IF NOT EXISTS timescaledb;
         - CREATE TABLE IF NOT EXISTS rrc_measurements (
-            id SERIAL PRIMARY KEY,
+            id SERIAL,
             timestamp TIMESTAMP NOT NULL,
             source VARCHAR(255) NOT NULL,
             network_function_id VARCHAR(255) NOT NULL,
