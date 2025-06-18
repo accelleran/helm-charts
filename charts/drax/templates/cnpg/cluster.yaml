@@ -27,25 +27,10 @@ spec:
       owner: {{ .Values.cnpg.auth.username }}
       secret:
         name: {{ .Release.Name }}-cnpg-timescaledb-user-secret
-      postInitTemplateSQL:
-        - CREATE EXTENSION IF NOT EXISTS timescaledb;
-        - CREATE TABLE IF NOT EXISTS rrc_measurements (
-            id SERIAL,
-            timestamp TIMESTAMP NOT NULL,
-            source VARCHAR(255) NOT NULL,
-            network_function_id VARCHAR(255) NOT NULL,
-            ue_id VARCHAR(255) NOT NULL,
-            nr_cell_id INTEGER NOT NULL,
-            plmn_id VARCHAR(255) NOT NULL,
-            pci INTEGER,
-            ssb_rsrp INTEGER NOT NULL,
-            ssb_rsrq INTEGER NOT NULL,
-            ssb_sinr INTEGER NOT NULL,
-            is_serving_cell BOOLEAN NOT NULL
-          );
-        - SELECT create_hypertable('rrc_measurements', 'timestamp', if_not_exists => TRUE);
-        - SELECT add_retention_policy('rrc_measurements', INTERVAL '30 days');
-        - ALTER TABLE rrc_measurements OWNER TO {{ .Values.cnpg.auth.username }};
+      postInitApplicationSQLRefs:
+        configMapRefs:
+          - name: {{ $.Release.Name }}-timescaledb-init
+            key: timescaledb.sql
 
   postgresql:
     shared_preload_libraries:
