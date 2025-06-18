@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.1.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.1.0...cell-wrapper-7.1.1) (2025-06-18)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/instance-scaler docker tag to v0.2.9 ([#1363](https://github.com/accelleran/helm-charts/issues/1363)) ([b72a53c](https://github.com/accelleran/helm-charts/commit/b72a53cdc0f119dc578d646c68b3b8e21748b026))
+
 ## [7.1.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.0.8...cell-wrapper-7.1.0) (2025-06-12)
 
 
