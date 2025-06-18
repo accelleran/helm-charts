@@ -1258,6 +1258,24 @@ grafana:
     datasources.yaml:
       apiVersion: 1
       datasources:
+
+        - name: Timescaledb
+          type: grafana-postgresql-datasource
+          access: proxy
+          url: http://{{ .Release.Name }}-cnpg-timescaledb-r:5432
+          user: accelleran
+          basicAuth: false
+          isDefault: false
+          uid: fep8nloinol4we
+          jsonData:
+            database: accellerandb
+            timescaledb: true
+            maxOpenConns: 100
+            maxIdleConns: 100
+            maxIdleConnsAuto: true
+            connMaxLifetime: 14400
+          readOnly: false
+
         - access: proxy
           isDefault: true
           name: Prometheus
