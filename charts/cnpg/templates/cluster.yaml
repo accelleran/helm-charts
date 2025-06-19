@@ -1,0 +1,52 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Values.cnpg.name }}
+spec:
+  instances: 1
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: {{ .Values.cnpg.name }}-superuser-secret
+
+  storage:
+    size: 1Gi
+
+  postgresUID: 70
+  postgresGID: 70
+
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ImageCatalog
+    name: cloudnative-pg-timescaledb-pg16
+    major: 16
+
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database }}
+      owner: {{ .Values.cnpg.auth.username }}
+      secret:
+        name: {{ .Values.cnpg.name }}-user-secret
+      postInitTemplateSQL:
+        - CREATE EXTENSION IF NOT EXISTS timescaledb;
+        - CREATE TABLE IF NOT EXISTS rrc_measurements (
+            id SERIAL PRIMARY KEY,
+            timestamp TIMESTAMP NOT NULL,
+            source VARCHAR(255) NOT NULL,
+            network_function_id VARCHAR(255) NOT NULL,
+            ue_id VARCHAR(255) NOT NULL,
+            nr_cell_id INTEGER NOT NULL,
+            plmn_id VARCHAR(255) NOT NULL,
+            pci INTEGER,
+            ssb_rsrp INTEGER NOT NULL,
+            ssb_rsrq INTEGER NOT NULL,
+            ssb_sinr INTEGER NOT NULL,
+            is_serving_cell BOOLEAN NOT NULL
+          );
+        - SELECT create_hypertable('rrc_measurements', 'timestamp', if_not_exists => TRUE);
+        - SELECT add_retention_policy('rrc_measurements', INTERVAL '30 days');
+        - ALTER TABLE rrc_measurements OWNER TO {{ .Values.cnpg.auth.username }};
+
+  postgresql:
+    shared_preload_libraries:
+      - timescaledb
