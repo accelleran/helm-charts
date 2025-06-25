@@ -184,6 +184,21 @@ jobs:
             namespace: metallb-system
           EOF
 
+      - name: Install CloudNativePG operator and CRDs
+        run: |
+          helm repo add cloudnative-pg https://cloudnative-pg.github.io/charts
+          helm repo update
+          helm upgrade --install cnpg cloudnative-pg/cloudnative-pg \
+            --namespace cnpg-system \
+            --create-namespace \
+            --version 0.24.0 \
+            --wait \
+            --timeout 5m \
+            --atomic
+          kubectl wait --for=condition=established --timeout=60s \
+            crd/clusters.postgresql.cnpg.io
+          kubectl rollout status deployment/cnpg-cloudnative-pg -n cnpg-system
+
       - name: Create accelleran pull secret
         run: >-
           kubectl create secret docker-registry
