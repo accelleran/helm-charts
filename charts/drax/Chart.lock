@@ -79,9 +79,9 @@ dependencies:
   version: 31.5.0
 - name: nats
   repository: https://nats-io.github.io/k8s/helm/charts/
-  version: 1.3.7
+  version: 1.3.8
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 21.2.6
-digest: sha256:0705a58f955182f2f7ab95cb21138633e26d822dfbbdf15e5c3a363911c8c32c
-generated: "2025-06-27T12:40:37.694252532Z"
+digest: sha256:297c495dbacf6bf80bd0bd6acfd929995cb1992a142d1dd787857fe59438de1e
+generated: "2025-06-27T20:03:42.735343632Z"
