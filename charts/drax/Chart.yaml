@@ -105,7 +105,7 @@ dependencies:
     tags:
       - logs
       - events
-    version: 5.0.0
+    version: 5.0.2
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
     condition: loki-deleter.enabled
