@@ -49,7 +49,7 @@ dependencies:
   version: 9.2.9
 - name: prometheus
   repository: https://prometheus-community.github.io/helm-charts
-  version: 27.22.0
+  version: 27.22.1
 - name: loki-gateway
   repository: https://accelleran.github.io/helm-charts/
   version: 0.1.13
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 21.2.6
-digest: sha256:297c495dbacf6bf80bd0bd6acfd929995cb1992a142d1dd787857fe59438de1e
-generated: "2025-06-27T20:03:42.735343632Z"
+digest: sha256:7aa6168289f60e2168dc6bba6f836f9c16b22fb8fe54eb11b90066182a0a9ac7
+generated: "2025-06-28T06:18:49.391429331Z"
