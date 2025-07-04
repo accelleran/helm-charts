@@ -1,0 +1,26 @@
+apiVersion: db.atlasgo.io/v1alpha1
+kind: AtlasSchema
+metadata:
+  name: atlasschema-pg
+spec:
+  backoffLimit: 50
+  credentials:
+    scheme: postgres
+    host: {{ .Release.Name }}-cnpg-timescaledb-rw.default.svc.cluster.local
+    port: 5432
+    user: {{ .Values.cnpg.auth.username }}
+    passwordFrom:
+      secretKeyRef:
+        name: {{ .Release.Name }}-cnpg-timescaledb-user-secret
+        key: password
+    database: {{ .Values.cnpg.database }}
+    parameters:
+      sslmode: disable
+  devURLFrom:
+    secretKeyRef:
+      name: {{ .Release.Name }}-atlas-db-url
+      key: url
+  schema:
+    configMapKeyRef:
+      name: {{ .Release.Name }}-timescaledb-init
+      key: timescaledb.sql
