@@ -166,7 +166,7 @@ jobs:
         id: pre-install
         run: |
           pre_install_hook="${{ matrix.chart_path }}/pre-install.sh"
-          if [ -f "$pre_install_hook" ]; then
+          if [ -x "$pre_install_hook" ]; then
             "$pre_install_hook"
           fi
 

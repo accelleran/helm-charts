@@ -36,7 +36,7 @@ printf "ip_range=%s\n" "${ip_range}"
 ip_address=$net_ip_prefix.250
 printf "ip_address=%s\n" "${ip_address}"
 
-cat <<EOF | kubectl apply -f -
+kubectl apply -f - <<EOF
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
