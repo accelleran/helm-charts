@@ -307,11 +307,9 @@ dashboard:
     energySavingSchedulerRapp: 
       service: "rapp-energy-saving-scheduler-xapp-api"
       port: "8888"
-    
     influxHost: "{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}"
     influxPort: "80"
     
-
   extraEnvs:
   - name: "LOKI_EVENTS_BASIC_AUTH_USERNAME"
     value: "dashboard-events"
@@ -2346,7 +2344,7 @@ influxdb2:
         influx bucket create -n du_rlc_measurements_5m -o accelleran -r 7d
         influx bucket create -n du_rlc_measurements_15m -o accelleran -r 28d
         influx bucket create -n energy_saving_scheduler -o accelleran -r 7d
-
+        
 kminion:
   enabled: true
 
