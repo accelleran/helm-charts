@@ -303,10 +303,11 @@ dashboard:
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
-    # Used for the Energy Saving Scheduler RApp
+    # Used for connection to the Energy Saving Scheduler RApp API
     energySavingSchedulerRapp: 
       service: "rapp-energy-saving-scheduler-xapp-api"
       port: "8888"
+    
     influxHost: "{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}"
     influxPort: "80"
     
