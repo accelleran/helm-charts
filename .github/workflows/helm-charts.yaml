@@ -24,8 +24,6 @@ jobs:
       charts_to_lint: ${{ steps.list-charts.outputs.charts_to_lint }}
       charts_to_test: ${{ steps.list-charts.outputs.charts_to_test }}
       charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
-      # renovate: github_repository=metallb/metallb versioning=semver
-      metallb_version: v0.15.2
       # renovate: github_repository=helm/helm versioning=semver extract_version=^v(?<version>.*)$
       helm_version: 3.18.3
       # renovate: github_repository=halkeye/helm-repo-html versioning=semver
@@ -134,56 +132,6 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.12.0
 
-      - name: Install metallb for loadbalancer services
-        id: metallb
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/${{ needs.vars.outputs.metallb_version }}/config/manifests/metallb-native.yaml
-
-          kubectl wait --namespace metallb-system \
-            --for=condition=ready pod \
-            --selector=app=metallb \
-            --timeout=90s
-
-          subnets=$(docker network inspect -f '{{range .IPAM.Config}}{{printf "%s\n" .Subnet}}{{end}}' kind)
-          printf "subnets:\n%s\n" "${subnets}"
-          ipv4_subnets=$(echo "$subnets" | grep -E '(([0-9]{1,3})\.){3}([0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])')
-          printf "ipv4_subnets=\n%s\n" "${ipv4_subnets}"
-          subnet=$(echo "$ipv4_subnets" | head -n 1)
-          printf "subnet=%s\n" "${subnet}"
-
-          net_ip=$(echo "$subnet" | cut -d/ -f1)
-          printf "net_ip=%s\n" "${net_ip}"
-          cidr=$(echo "$subnet" | cut -d/ -f2)
-          printf "cidr=%s\n" "${cidr}"
-          if [ $cidr -gt 24 ]; then
-            echo "CIDR of $subnet needs to be 24 or smaller" 1>&2
-            exit 1
-          fi
-
-          net_ip_prefix=$(echo $net_ip | cut -d. -f 1-3)
-          ip_range=$net_ip_prefix.200-$net_ip_prefix.250
-          printf "ip_range=%s\n" "${ip_range}"
-
-          ip_address=$net_ip_prefix.250
-          printf "ip_address=%s\n" "${ip_address}" | tee -a $GITHUB_OUTPUT
-
-          cat <<EOF | kubectl apply -f -
-          apiVersion: metallb.io/v1beta1
-          kind: IPAddressPool
-          metadata:
-            name: example
-            namespace: metallb-system
-          spec:
-            addresses:
-            - $ip_range
-          ---
-          apiVersion: metallb.io/v1beta1
-          kind: L2Advertisement
-          metadata:
-            name: empty
-            namespace: metallb-system
-          EOF
-
       - name: Create accelleran pull secret
         run: >-
           kubectl create secret docker-registry
@@ -213,6 +161,18 @@ jobs:
           --namespace default \
           accelleran-cu-license \
           --from-file=license.crt
+      
+      - name: Pre-install chart hook
+        id: pre-install
+        run: |
+          pre_install_hook="${{ matrix.chart_path }}/pre-install.sh"
+          if [ -f "$pre_install_hook" ]; then
+            "$pre_install_hook"
+          fi
+
+          if ! grep -q "ct_install_args" "$GITHUB_OUTPUT" ; then
+            printf "ct_install_args=\n" | tee -a "$GITHUB_OUTPUT"
+          fi
 
       - name: Test charts
         run: >-
@@ -221,7 +181,7 @@ jobs:
           --namespace default
           --config etc/ct.yaml
           --charts ${{ matrix.chart_path }}
-          --helm-extra-set-args "--set=global.ipAddress=${{ steps.metallb.outputs.ip_address }}"
+          ${{ steps.pre-install.outputs.ct_install_args }}
 
   # This is a work-around for a required check with matrix in the branch protection rules
   status-charts:
