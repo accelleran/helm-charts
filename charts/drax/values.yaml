@@ -273,9 +273,12 @@ dashboard:
   - name: "LOKI_EVENTS_EXTERNAL_PASSWORD"
     secretName: "{{ $.Release.Name }}-loki-gateway-auth"
     secretKey: external-events
-  - name: INFLUXDB_TOKEN
-    secretName: "drax-influxdb2-auth"
+  - name: "INFLUXDB2_ADMIN_TOKEN"
+    secretName: "{{ $.Release.Name }}-influxdb2-auth"
     secretKey: admin-token
+  - name: "LOKI_LOGS_BASIC_AUTH_PASSWORD"
+    secretName: "{{ $.Release.Name }}-loki-gateway-auth"
+    secretKey: grafana-logs
 
   config:
     # Defined for server config.json
@@ -294,12 +297,18 @@ dashboard:
     nodeApiPort: "80"
     grafanaHost: "{{ $.Release.Name }}-grafana.{{ $.Release.Namespace }}"
     grafanaApiPort: "80"
-    # Defined for core-ui config.js
+    # Defined for core-ui config.js 
     grafanaNodePort: ""
     grafanaPathPrefix: "/grafana"
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
+    energySavingSchedulerRapp: 
+      service: "rapp-energy-saving-scheduler-xapp-api"
+      port: "8888"
+    influxHost: "{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}"
+    influxPort: "80"
+    
 
   extraEnvs:
   - name: "LOKI_EVENTS_BASIC_AUTH_USERNAME"
@@ -308,6 +317,8 @@ dashboard:
     value: "external-logs"
   - name: "LOKI_EVENTS_EXTERNAL_USERNAME"
     value: "external-events"
+  - name: "LOKI_LOGS_BASIC_AUTH_USERNAME"
+    value: "grafana-logs"
 
   service:
     type: ClusterIP
@@ -2332,6 +2343,7 @@ influxdb2:
         influx bucket create -n du_rlc_measurements_1m -o accelleran -r 18h
         influx bucket create -n du_rlc_measurements_5m -o accelleran -r 7d
         influx bucket create -n du_rlc_measurements_15m -o accelleran -r 28d
+        influx bucket create -n energy_saving_scheduler -o accelleran -r 7d
 
 kminion:
   enabled: true
