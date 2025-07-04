@@ -14,13 +14,11 @@ spec:
         name: {{ .Release.Name }}-cnpg-timescaledb-user-secret
         key: password
     database: {{ .Values.cnpg.database }}
-    parameters:
-      sslmode: disable
   devURLFrom:
     secretKeyRef:
       name: {{ .Release.Name }}-atlas-db-url
       key: url
   schema:
     configMapKeyRef:
-      name: {{ .Release.Name }}-timescaledb-init
+      name: {{ .Release.Name }}-timescaledb-provisioning
       key: timescaledb.sql

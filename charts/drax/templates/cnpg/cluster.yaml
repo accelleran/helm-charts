@@ -27,10 +27,6 @@ spec:
       owner: {{ .Values.cnpg.auth.username }}
       secret:
         name: {{ .Release.Name }}-cnpg-timescaledb-user-secret
-      postInitApplicationSQLRefs:
-        configMapRefs:
-          - name: {{ $.Release.Name }}-timescaledb-init
-            key: timescaledb.sql
 
   postgresql:
     shared_preload_libraries:
