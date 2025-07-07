@@ -27,6 +27,9 @@ spec:
       owner: {{ .Values.cnpg.auth.username }}
       secret:
         name: {{ .Release.Name }}-cnpg-timescaledb-user-secret
+      postInitTemplateSQL:
+        - CREATE EXTENSION IF NOT EXISTS timescaledb;
+        - CREATE DATABASE devdb OWNER {{ .Values.cnpg.auth.username }};
 
   postgresql:
     shared_preload_libraries:
