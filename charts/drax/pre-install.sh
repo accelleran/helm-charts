@@ -12,3 +12,7 @@ rm /tmp/metallb.log
 
 printf "ct_install_args=--helm-extra-set-args \"--set=global.ipAddress=%s\"\n" "$metallb_ip_address" \
     | tee -a "${GITHUB_OUTPUT:-/dev/null}"
+
+
+"$GIT_ROOT"/bin/install-cnpg
+"$GIT_ROOT"/bin/install-atlas

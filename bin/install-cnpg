@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+NAMESPACE="cnpg-system"
+RELEASE_NAME="cnpg"
+CHART_VERSION="0.24.0"
+
+helm repo add cloudnative-pg https://cloudnative-pg.github.io/charts
+helm repo update
+
+helm upgrade --install "$RELEASE_NAME" cloudnative-pg/cloudnative-pg \
+  --namespace "$NAMESPACE" \
+  --create-namespace \
+  --version "$CHART_VERSION" \
+  --wait \
+  --timeout 5m \
+  --atomic
+
+kubectl wait --for=condition=established --timeout=60s crd/clusters.postgresql.cnpg.io
+
+kubectl rollout status deployment/cnpg-cloudnative-pg -n "$NAMESPACE"
