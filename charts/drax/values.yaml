@@ -273,8 +273,8 @@ dashboard:
   - name: "LOKI_EVENTS_EXTERNAL_PASSWORD"
     secretName: "{{ $.Release.Name }}-loki-gateway-auth"
     secretKey: external-events
-  - name: "INFLUXDB2_ADMIN_TOKEN"
-    secretName: "{{ $.Release.Name }}-influxdb2-auth"
+  - name: "INFLUXDB_TOKEN"
+    secretName: "drax-influxdb2-auth"
     secretKey: admin-token
   - name: "LOKI_LOGS_BASIC_AUTH_PASSWORD"
     secretName: "{{ $.Release.Name }}-loki-gateway-auth"
@@ -303,7 +303,7 @@ dashboard:
     accelleranProduct: "{{ $.Values.global.accelleranProduct }}"
     # Defined for environment variable DRAX_VERSION
     draxVersionConfigmap: "{{ $.Release.Name }}-version"
-    # Used for connection to the Energy Saving Scheduler RApp API
+    # Used for connection to the Energy Saving Scheduler rApp API
     energySavingSchedulerRapp:
       service: "rapp-energy-saving-scheduler-xapp-api"
       port: "8888"
