@@ -1251,6 +1251,11 @@ grafana:
         name: "{{ $.Release.Name }}-slack-auth"
         key: slack-token
 
+    TIMESCALEDB_PASSWORD:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-cnpg-timescaledb-user-secret"
+        key: password
+
   env:
     GF_PANELS_DISABLE_SANITIZE_HTML: false
 
@@ -1260,10 +1265,12 @@ grafana:
       datasources:
 
         - name: Timescaledb
-          type: grafana-postgresql-datasource
+          type: postgres
           access: proxy
-          url: http://{{ .Release.Name }}-cnpg-timescaledb-r:5432
+          url: "{{ .Release.Name }}-cnpg-timescaledb-r:5432"
           user: accelleran
+          secureJsonData:
+            password: ${TIMESCALEDB_PASSWORD}
           basicAuth: false
           isDefault: false
           uid: fep8nloinol4we
