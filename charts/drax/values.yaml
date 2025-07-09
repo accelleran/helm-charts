@@ -940,6 +940,9 @@ ingress-nginx:
       # replaced with dRAX service to allow templating
       enabled: false
 
+    config:
+      proxy-busy-buffers-size: "256k"
+
   tcp: {}
     # "4222": "{{ $.Release.Namespace }}/{{ $.Release.Name }}-nats:4222"
     # "9092": "{{ $.Release.Namespace }}/{{ $.Release.Name }}-kafka:9095"

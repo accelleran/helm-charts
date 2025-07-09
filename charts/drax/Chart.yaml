@@ -68,7 +68,7 @@ dependencies:
     condition: ingress-nginx.enabled
     tags:
       - authentication
-    version: 4.12.3
+    version: 4.13.0
     repository: https://kubernetes.github.io/ingress-nginx
   - name: oauth2-proxy
     condition: oauth2-proxy.enabled
@@ -105,7 +105,7 @@ dependencies:
     tags:
       - logs
       - events
-    version: 5.0.3
+    version: 5.0.4
     repository: https://charts.bitnami.com/bitnami/
   - name: loki-deleter
     condition: loki-deleter.enabled
@@ -154,5 +154,5 @@ dependencies:
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 21.2.7
+    version: 21.2.9
     repository: https://charts.bitnami.com/bitnami/
