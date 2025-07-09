@@ -37,7 +37,7 @@ dependencies:
   version: 2.0.1
 - name: ingress-nginx
   repository: https://kubernetes.github.io/ingress-nginx
-  version: 4.12.3
+  version: 4.13.0
 - name: oauth2-proxy
   repository: https://oauth2-proxy.github.io/manifests
   version: 7.12.19
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 21.2.9
-digest: sha256:5b4e6fa86be24fa07a887190fb0a2d4d06df40f49eee48b54dd055ea034ca02a
-generated: "2025-07-09T07:25:15.961598381Z"
+digest: sha256:929d1bb0ea7b469a4824e39d8fe1404b660bd523211348598ea50af876ca474f
+generated: "2025-07-09T10:15:20.96258409+02:00"
