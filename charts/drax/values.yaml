@@ -1277,7 +1277,6 @@ grafana:
     datasources.yaml:
       apiVersion: 1
       datasources:
-
         - name: Timescaledb
           type: postgres
           access: proxy
@@ -1296,7 +1295,6 @@ grafana:
             maxIdleConnsAuto: true
             connMaxLifetime: 14400
           readOnly: false
-
         - access: proxy
           isDefault: true
           name: Prometheus
