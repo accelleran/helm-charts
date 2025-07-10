@@ -13,8 +13,8 @@ ALTER TABLE drb_pdcp_sdu_delay_dl_qos SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_qos', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_qos', INTERVAL '180 days');
+SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_qos', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_qos', INTERVAL '14 days');
 ALTER TABLE drb_pdcp_sdu_delay_dl_qos OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBPdcpSduDelayDlSnssai
@@ -32,8 +32,8 @@ ALTER TABLE drb_pdcp_sdu_delay_dl_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_snssai', INTERVAL '14 days');
 ALTER TABLE drb_pdcp_sdu_delay_dl_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBPdcpSduDelayDlQfiSnssaiPlmn
@@ -51,8 +51,8 @@ ALTER TABLE acc_drb_pdcp_sdu_delay_dl_qfi_snssai_plmn SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_drb_pdcp_sdu_delay_dl_qfi_snssai_plmn', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_drb_pdcp_sdu_delay_dl_qfi_snssai_plmn', INTERVAL '180 days');
+SELECT add_compression_policy('acc_drb_pdcp_sdu_delay_dl_qfi_snssai_plmn', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_drb_pdcp_sdu_delay_dl_qfi_snssai_plmn', INTERVAL '14 days');
 ALTER TABLE acc_drb_pdcp_sdu_delay_dl_qfi_snssai_plmn OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBPdcpSduDelayDlDist
@@ -70,8 +70,8 @@ ALTER TABLE drb_pdcp_sdu_delay_dl_dist SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_dist', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_dist', INTERVAL '180 days');
+SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_dist', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_dist', INTERVAL '14 days');
 ALTER TABLE drb_pdcp_sdu_delay_dl_dist OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBPdcpSduDelayDlDistQos
@@ -91,8 +91,8 @@ ALTER TABLE drb_pdcp_sdu_delay_dl_dist_qos SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_dist_qos', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_dist_qos', INTERVAL '180 days');
+SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_dist_qos', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_dist_qos', INTERVAL '14 days');
 ALTER TABLE drb_pdcp_sdu_delay_dl_dist_qos OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBPdcpSduDelayDlDistSnssai
@@ -112,8 +112,8 @@ ALTER TABLE drb_pdcp_sdu_delay_dl_dist_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_dist_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_dist_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('drb_pdcp_sdu_delay_dl_dist_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_pdcp_sdu_delay_dl_dist_snssai', INTERVAL '14 days');
 ALTER TABLE drb_pdcp_sdu_delay_dl_dist_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBPdcpSduDelayDlDistQfiSnssaiPlmn
@@ -131,8 +131,8 @@ ALTER TABLE acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn', INTERVAL '180 days');
+SELECT add_compression_policy('acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn', INTERVAL '14 days');
 ALTER TABLE acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBEstabAtt5QiSnssai
@@ -152,8 +152,8 @@ ALTER TABLE acc_drb_estab_att_5qi_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_drb_estab_att_5qi_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_drb_estab_att_5qi_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('acc_drb_estab_att_5qi_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_drb_estab_att_5qi_snssai', INTERVAL '14 days');
 ALTER TABLE acc_drb_estab_att_5qi_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBEstabAttSnssai
@@ -171,8 +171,8 @@ ALTER TABLE drb_estab_att_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_estab_att_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_estab_att_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('drb_estab_att_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_estab_att_snssai', INTERVAL '14 days');
 ALTER TABLE drb_estab_att_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBEstabAtt5Qi
@@ -190,8 +190,8 @@ ALTER TABLE drb_estab_att_5qi SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_estab_att_5qi', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_estab_att_5qi', INTERVAL '180 days');
+SELECT add_compression_policy('drb_estab_att_5qi', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_estab_att_5qi', INTERVAL '14 days');
 ALTER TABLE drb_estab_att_5qi OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBEstabSucc5QiSnssai
@@ -211,8 +211,8 @@ ALTER TABLE acc_drb_estab_succ_5qi_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_drb_estab_succ_5qi_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_drb_estab_succ_5qi_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('acc_drb_estab_succ_5qi_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_drb_estab_succ_5qi_snssai', INTERVAL '14 days');
 ALTER TABLE acc_drb_estab_succ_5qi_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBEstabSucc5Qi
@@ -230,8 +230,8 @@ ALTER TABLE drb_estab_succ_5qi SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_estab_succ_5qi', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_estab_succ_5qi', INTERVAL '180 days');
+SELECT add_compression_policy('drb_estab_succ_5qi', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_estab_succ_5qi', INTERVAL '14 days');
 ALTER TABLE drb_estab_succ_5qi OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBEstabSuccSnssai
@@ -249,8 +249,8 @@ ALTER TABLE drb_estab_succ_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_estab_succ_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_estab_succ_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('drb_estab_succ_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_estab_succ_snssai', INTERVAL '14 days');
 ALTER TABLE drb_estab_succ_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBRelActNbr5QiSnssai
@@ -270,8 +270,8 @@ ALTER TABLE drb_rel_act_nbr_5qi_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_rel_act_nbr_5qi_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_rel_act_nbr_5qi_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('drb_rel_act_nbr_5qi_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_rel_act_nbr_5qi_snssai', INTERVAL '14 days');
 ALTER TABLE drb_rel_act_nbr_5qi_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBRelActNbr5Qi
@@ -289,8 +289,8 @@ ALTER TABLE drb_rel_act_nbr_5qi SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_rel_act_nbr_5qi', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_rel_act_nbr_5qi', INTERVAL '180 days');
+SELECT add_compression_policy('drb_rel_act_nbr_5qi', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_rel_act_nbr_5qi', INTERVAL '14 days');
 ALTER TABLE drb_rel_act_nbr_5qi OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- DRBRelActNbrSnssai
@@ -308,8 +308,8 @@ ALTER TABLE drb_rel_act_nbr_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('drb_rel_act_nbr_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('drb_rel_act_nbr_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('drb_rel_act_nbr_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('drb_rel_act_nbr_snssai', INTERVAL '14 days');
 ALTER TABLE drb_rel_act_nbr_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBF1UPacketLossRateUlQoS
@@ -329,8 +329,8 @@ ALTER TABLE acc_drb_f1u_packet_loss_rate_ul_qos SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_drb_f1u_packet_loss_rate_ul_qos', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_drb_f1u_packet_loss_rate_ul_qos', INTERVAL '180 days');
+SELECT add_compression_policy('acc_drb_f1u_packet_loss_rate_ul_qos', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_drb_f1u_packet_loss_rate_ul_qos', INTERVAL '14 days');
 ALTER TABLE acc_drb_f1u_packet_loss_rate_ul_qos OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBF1UPacketLossRateUlSnssai
@@ -350,8 +350,8 @@ ALTER TABLE acc_drb_f1u_packet_loss_rate_ul_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_drb_f1u_packet_loss_rate_ul_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_drb_f1u_packet_loss_rate_ul_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('acc_drb_f1u_packet_loss_rate_ul_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_drb_f1u_packet_loss_rate_ul_snssai', INTERVAL '14 days');
 ALTER TABLE acc_drb_f1u_packet_loss_rate_ul_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBF1UPacketLossRateUlQfiSnssaiPlmn
@@ -371,7 +371,7 @@ ALTER TABLE acc_drb_f1u_packet_loss_rate_ul_qfi_snssai_plmn SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_retention_policy('acc_drb_f1u_packet_loss_rate_ul_qfi_snssai_plmn', INTERVAL '180 days');
+SELECT add_retention_policy('acc_drb_f1u_packet_loss_rate_ul_qfi_snssai_plmn', INTERVAL '14 days');
 ALTER TABLE acc_drb_f1u_packet_loss_rate_ul_qfi_snssai_plmn OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBPdcpPacketDropRateDlQoS
@@ -391,7 +391,7 @@ ALTER TABLE acc_drb_pdcp_packet_drop_rate_dl_qos SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_retention_policy('acc_drb_pdcp_packet_drop_rate_dl_qos', INTERVAL '180 days');
+SELECT add_retention_policy('acc_drb_pdcp_packet_drop_rate_dl_qos', INTERVAL '14 days');
 ALTER TABLE acc_drb_pdcp_packet_drop_rate_dl_qos OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBPdcpPacketDropRateDlSnssai
@@ -411,7 +411,7 @@ ALTER TABLE acc_drb_pdcp_packet_drop_rate_dl_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_retention_policy('acc_drb_pdcp_packet_drop_rate_dl_snssai', INTERVAL '180 days');
+SELECT add_retention_policy('acc_drb_pdcp_packet_drop_rate_dl_snssai', INTERVAL '14 days');
 ALTER TABLE acc_drb_pdcp_packet_drop_rate_dl_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccDRBPdcpPacketDropRateDlQfiSnssaiPlmn
@@ -431,5 +431,5 @@ ALTER TABLE acc_drb_pdcp_packet_drop_rate_dl_qfi_snssai_plmn SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_retention_policy('acc_drb_pdcp_packet_drop_rate_dl_qfi_snssai_plmn', INTERVAL '180 days');
+SELECT add_retention_policy('acc_drb_pdcp_packet_drop_rate_dl_qfi_snssai_plmn', INTERVAL '14 days');
 ALTER TABLE acc_drb_pdcp_packet_drop_rate_dl_qfi_snssai_plmn OWNER TO {{ .Values.cnpg.auth.username }};

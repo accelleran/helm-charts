@@ -13,8 +13,8 @@ ALTER TABLE acc_gtp_thp_ul SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_gtp_thp_ul', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_gtp_thp_ul', INTERVAL '180 days');
+SELECT add_compression_policy('acc_gtp_thp_ul', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_gtp_thp_ul', INTERVAL '14 days');
 ALTER TABLE acc_gtp_thp_ul OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccGTPThpUlQfiSnssaiPlmn
@@ -34,8 +34,8 @@ ALTER TABLE acc_gtp_thp_ul_qfi_snssai_plmn SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_gtp_thp_ul_qfi_snssai_plmn', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_gtp_thp_ul_qfi_snssai_plmn', INTERVAL '180 days');
+SELECT add_compression_policy('acc_gtp_thp_ul_qfi_snssai_plmn', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_gtp_thp_ul_qfi_snssai_plmn', INTERVAL '14 days');
 ALTER TABLE acc_gtp_thp_ul_qfi_snssai_plmn OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccGTPThpDl
@@ -53,8 +53,8 @@ ALTER TABLE acc_gtp_thp_dl SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_gtp_thp_dl', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_gtp_thp_dl', INTERVAL '180 days');
+SELECT add_compression_policy('acc_gtp_thp_dl', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_gtp_thp_dl', INTERVAL '14 days');
 ALTER TABLE acc_gtp_thp_dl OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- AccGTPThpDlQfiSnssaiPlmn
@@ -74,6 +74,6 @@ ALTER TABLE acc_gtp_thp_dl_qfi_snssai_plmn SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('acc_gtp_thp_dl_qfi_snssai_plmn', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('acc_gtp_thp_dl_qfi_snssai_plmn', INTERVAL '180 days');
+SELECT add_compression_policy('acc_gtp_thp_dl_qfi_snssai_plmn', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('acc_gtp_thp_dl_qfi_snssai_plmn', INTERVAL '14 days');
 ALTER TABLE acc_gtp_thp_dl_qfi_snssai_plmn OWNER TO {{ .Values.cnpg.auth.username }};

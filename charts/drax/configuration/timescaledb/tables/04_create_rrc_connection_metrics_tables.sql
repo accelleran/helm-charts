@@ -15,8 +15,8 @@ ALTER TABLE rrc_conn_mean SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('rrc_conn_mean', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('rrc_conn_mean', INTERVAL '180 days');
+SELECT add_compression_policy('rrc_conn_mean', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('rrc_conn_mean', INTERVAL '14 days');
 ALTER TABLE rrc_conn_mean OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- RRCConnMax
@@ -36,8 +36,8 @@ ALTER TABLE rrc_conn_max SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('rrc_conn_max', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('rrc_conn_max', INTERVAL '180 days');
+SELECT add_compression_policy('rrc_conn_max', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('rrc_conn_max', INTERVAL '14 days');
 ALTER TABLE rrc_conn_max OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- RRCConnEstabAtt
@@ -59,8 +59,8 @@ ALTER TABLE rrc_conn_estab_att SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('rrc_conn_estab_att', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('rrc_conn_estab_att', INTERVAL '180 days');
+SELECT add_compression_policy('rrc_conn_estab_att', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('rrc_conn_estab_att', INTERVAL '14 days');
 ALTER TABLE rrc_conn_estab_att OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- RRCConnEstabSucc
@@ -82,8 +82,8 @@ ALTER TABLE rrc_conn_estab_succ SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('rrc_conn_estab_succ', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('rrc_conn_estab_succ', INTERVAL '180 days');
+SELECT add_compression_policy('rrc_conn_estab_succ', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('rrc_conn_estab_succ', INTERVAL '14 days');
 ALTER TABLE rrc_conn_estab_succ OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- RRCConnReestabAtt
@@ -103,8 +103,8 @@ ALTER TABLE rrc_conn_reestab_att SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('rrc_conn_reestab_att', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('rrc_conn_reestab_att', INTERVAL '180 days');
+SELECT add_compression_policy('rrc_conn_reestab_att', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('rrc_conn_reestab_att', INTERVAL '14 days');
 ALTER TABLE rrc_conn_reestab_att OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- RRCConnReestabSucc
@@ -124,6 +124,6 @@ ALTER TABLE rrc_conn_reestab_succ SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('rrc_conn_reestab_succ', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('rrc_conn_reestab_succ', INTERVAL '180 days');
+SELECT add_compression_policy('rrc_conn_reestab_succ', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('rrc_conn_reestab_succ', INTERVAL '14 days');
 ALTER TABLE rrc_conn_reestab_succ OWNER TO {{ .Values.cnpg.auth.username }};

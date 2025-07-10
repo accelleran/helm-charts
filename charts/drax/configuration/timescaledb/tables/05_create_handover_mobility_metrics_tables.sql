@@ -15,8 +15,8 @@ ALTER TABLE mm_ho_exe_inter_req_time_mean SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_exe_inter_req_time_mean', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_exe_inter_req_time_mean', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_exe_inter_req_time_mean', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_exe_inter_req_time_mean', INTERVAL '14 days');
 ALTER TABLE mm_ho_exe_inter_req_time_mean OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoExeInterReqTimeMax
@@ -36,8 +36,8 @@ ALTER TABLE mm_ho_exe_inter_req_time_max SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_exe_inter_req_time_max', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_exe_inter_req_time_max', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_exe_inter_req_time_max', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_exe_inter_req_time_max', INTERVAL '14 days');
 ALTER TABLE mm_ho_exe_inter_req_time_max OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoPrepInterReq
@@ -57,8 +57,8 @@ ALTER TABLE mm_ho_prep_inter_req SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_prep_inter_req', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_prep_inter_req', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_prep_inter_req', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_prep_inter_req', INTERVAL '14 days');
 ALTER TABLE mm_ho_prep_inter_req OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoPrepInterSucc
@@ -78,8 +78,8 @@ ALTER TABLE mm_ho_prep_inter_succ SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_prep_inter_succ', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_prep_inter_succ', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_prep_inter_succ', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_prep_inter_succ', INTERVAL '14 days');
 ALTER TABLE mm_ho_prep_inter_succ OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoPrepInterFail
@@ -101,8 +101,8 @@ ALTER TABLE mm_ho_prep_inter_fail SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_prep_inter_fail', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_prep_inter_fail', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_prep_inter_fail', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_prep_inter_fail', INTERVAL '14 days');
 ALTER TABLE mm_ho_prep_inter_fail OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoResAlloInterReq
@@ -124,8 +124,8 @@ ALTER TABLE mm_ho_res_allo_inter_req SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_res_allo_inter_req', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_res_allo_inter_req', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_res_allo_inter_req', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_res_allo_inter_req', INTERVAL '14 days');
 ALTER TABLE mm_ho_res_allo_inter_req OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoResAlloInterSucc
@@ -145,8 +145,8 @@ ALTER TABLE mm_ho_res_allo_inter_succ SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_res_allo_inter_succ', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_res_allo_inter_succ', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_res_allo_inter_succ', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_res_allo_inter_succ', INTERVAL '14 days');
 ALTER TABLE mm_ho_res_allo_inter_succ OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoResAlloInterFail
@@ -168,8 +168,8 @@ ALTER TABLE mm_ho_res_allo_inter_fail SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_res_allo_inter_fail', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_res_allo_inter_fail', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_res_allo_inter_fail', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_res_allo_inter_fail', INTERVAL '14 days');
 ALTER TABLE mm_ho_res_allo_inter_fail OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoExeInterReq
@@ -189,8 +189,8 @@ ALTER TABLE mm_ho_exe_inter_req SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_exe_inter_req', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_exe_inter_req', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_exe_inter_req', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_exe_inter_req', INTERVAL '14 days');
 ALTER TABLE mm_ho_exe_inter_req OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoExeIntraReq
@@ -210,8 +210,8 @@ ALTER TABLE mm_ho_exe_intra_req SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_exe_intra_req', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_exe_intra_req', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_exe_intra_req', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_exe_intra_req', INTERVAL '14 days');
 ALTER TABLE mm_ho_exe_intra_req OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- MMHoExeIntraSucc
@@ -231,6 +231,6 @@ ALTER TABLE mm_ho_exe_intra_succ SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('mm_ho_exe_intra_succ', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('mm_ho_exe_intra_succ', INTERVAL '180 days');
+SELECT add_compression_policy('mm_ho_exe_intra_succ', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('mm_ho_exe_intra_succ', INTERVAL '14 days');
 ALTER TABLE mm_ho_exe_intra_succ OWNER TO {{ .Values.cnpg.auth.username }};

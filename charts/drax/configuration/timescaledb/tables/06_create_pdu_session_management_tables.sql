@@ -15,8 +15,8 @@ ALTER TABLE smp_du_session_setup_req SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('smp_du_session_setup_req', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('smp_du_session_setup_req', INTERVAL '180 days');
+SELECT add_compression_policy('smp_du_session_setup_req', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('smp_du_session_setup_req', INTERVAL '14 days');
 ALTER TABLE smp_du_session_setup_req OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- SMPDUSessionSetupReqSnssai
@@ -38,8 +38,8 @@ ALTER TABLE smp_du_session_setup_req_snssai SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('smp_du_session_setup_req_snssai', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('smp_du_session_setup_req_snssai', INTERVAL '180 days');
+SELECT add_compression_policy('smp_du_session_setup_req_snssai', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('smp_du_session_setup_req_snssai', INTERVAL '14 days');
 ALTER TABLE smp_du_session_setup_req_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 
 -- SMPDUSessionSetupFail
@@ -61,6 +61,6 @@ ALTER TABLE smp_du_session_setup_fail SET (
     timescaledb.compress_orderby = 'time DESC',
     timescaledb.compress_segmentby = 'network_function_id'
 );
-SELECT add_compression_policy('smp_du_session_setup_fail', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('smp_du_session_setup_fail', INTERVAL '180 days');
+SELECT add_compression_policy('smp_du_session_setup_fail', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('smp_du_session_setup_fail', INTERVAL '14 days');
 ALTER TABLE smp_du_session_setup_fail OWNER TO {{ .Values.cnpg.auth.username }};

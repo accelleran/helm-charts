@@ -37,6 +37,6 @@ ALTER TABLE du_ue_measurements SET (
   timescaledb.compress_segmentby = 'acc_sch_ue_rnti'
 );
 
-SELECT add_compression_policy('du_ue_measurements', compress_after => INTERVAL '14 days');
-SELECT add_retention_policy('du_ue_measurements', INTERVAL '24 hours');
+SELECT add_compression_policy('du_ue_measurements', compress_after => INTERVAL '7 days');
+SELECT add_retention_policy('du_ue_measurements', INTERVAL '14 days');
 ALTER TABLE du_ue_measurements OWNER TO {{ .Values.cnpg.auth.username }};
