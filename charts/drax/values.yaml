@@ -2374,9 +2374,9 @@ influxdb2:
 
 cnpg:
   auth:
-    superuserPassword: admin
+    superuserPassword: ""
     username: accelleran
-    password: accelleran
+    password: ""
 
   database: accellerandb
 
