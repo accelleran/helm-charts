@@ -1265,6 +1265,11 @@ grafana:
         name: "{{ $.Release.Name }}-slack-auth"
         key: slack-token
 
+    TIMESCALEDB_PASSWORD:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-cnpg-timescaledb-user-secret"
+        key: password
+
   env:
     GF_PANELS_DISABLE_SANITIZE_HTML: false
 
@@ -1272,6 +1277,24 @@ grafana:
     datasources.yaml:
       apiVersion: 1
       datasources:
+        - name: Timescaledb
+          type: postgres
+          access: proxy
+          url: "{{ .Release.Name }}-cnpg-timescaledb-r:5432"
+          user: accelleran
+          secureJsonData:
+            password: ${TIMESCALEDB_PASSWORD}
+          basicAuth: false
+          isDefault: false
+          uid: fep8nloinol4we
+          jsonData:
+            database: accellerandb
+            timescaledb: true
+            maxOpenConns: 100
+            maxIdleConns: 100
+            maxIdleConnsAuto: true
+            connMaxLifetime: 14400
+          readOnly: false
         - access: proxy
           isDefault: true
           name: Prometheus
@@ -2347,6 +2370,16 @@ influxdb2:
         influx bucket create -n du_rlc_measurements_5m -o accelleran -r 7d
         influx bucket create -n du_rlc_measurements_15m -o accelleran -r 28d
         influx bucket create -n energy_saving_scheduler -o accelleran -r 7d
+
+
+cnpg:
+  auth:
+    superuserPassword: ""
+    username: accelleran
+    password: ""
+
+  database: accellerandb
+
 
 kminion:
   enabled: true
