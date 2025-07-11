@@ -13,37 +13,29 @@ rm /tmp/metallb.log
 printf "ct_install_args=--helm-extra-set-args \"--set=global.ipAddress=%s\"\n" "$metallb_ip_address" \
     | tee -a "${GITHUB_OUTPUT:-/dev/null}"
 
-# Install cnpg
+# renovate: repository=https://cloudnative-pg.github.io/charts chart=cloudnative-pg
+export CNPG_VERSION="0.24.0"
+# renovate: image=ghcr.io/ariga/charts/atlas-operator
+export ATLAS_VERSION="0.7.10"
 
-NAMESPACE="cnpg-system"
-RELEASE_NAME="cnpg"
-CHART_VERSION="0.24.0"
+NAMESPACE="drax-system"
 
 helm repo add cloudnative-pg https://cloudnative-pg.github.io/charts
 helm repo update
-helm upgrade --install "$RELEASE_NAME" cloudnative-pg/cloudnative-pg \
+helm upgrade --install cnpg cloudnative-pg/cloudnative-pg \
   --namespace "$NAMESPACE" \
   --create-namespace \
-  --version "$CHART_VERSION" \
-  --wait \
+  --version "$CNPG_VERSION" \
   --timeout 5m \
   --atomic
 kubectl wait --for=condition=established --timeout=60s crd/clusters.postgresql.cnpg.io
 kubectl rollout status deployment/cnpg-cloudnative-pg -n "$NAMESPACE"
 
-# Install atlas
-
-NAMESPACE="atlas-system"
-RELEASE_NAME="atlas-operator"
-CHART_URI="oci://ghcr.io/ariga/charts/atlas-operator"
-
-helm upgrade --install "$RELEASE_NAME" "$CHART_URI" \
+helm upgrade --install atlas-operator oci://ghcr.io/ariga/charts/atlas-operator \
   --namespace "$NAMESPACE" \
   --create-namespace \
-  --wait \
+  --version "$ATLAS_VERSION" \
   --timeout 5m \
   --atomic
-
 kubectl wait --for=condition=established --timeout=60s crd/atlasschemas.db.atlasgo.io
-
 kubectl rollout status deployment/atlas-operator -n "$NAMESPACE"

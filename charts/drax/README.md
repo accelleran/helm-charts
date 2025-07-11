@@ -19,14 +19,16 @@ CloudNativePG is required to provision and manage the PostgreSQL cluster that dR
 
 Install the operator using the official manifest:
 
+# renovate: repository=https://cloudnative-pg.github.io/charts chart=cloudnative-pg
+export CNPG_VERSION="0.24.0"
+
 ```bash
 helm repo add cloudnative-pg https://cloudnative-pg.github.io/charts
 helm repo update
 helm upgrade --install cnpg cloudnative-pg/cloudnative-pg \
-  --namespace cnpg-system \
+  --namespace drax-system \
   --create-namespace \
-  --version 0.24.0 \
-  --wait \
+  --version "$CNPG_VERSION" \
   --timeout 5m \
   --atomic
 ```
@@ -37,11 +39,14 @@ The Atlas Operator is required by `dRAX` to manage database schema migrations fo
 
 Install the Atlas Operator using Helm:
 
+# renovate: image=ghcr.io/ariga/charts/atlas-operator
+export ATLAS_VERSION="0.7.10"
+
 ```bash
 helm upgrade --install atlas-operator oci://ghcr.io/ariga/charts/atlas-operator \
-    --namespace atlas-system \
-    --create-namespace \
-    --wait \
-    --timeout 5m \
-    --atomic
+  --namespace drax-system \
+  --create-namespace \
+  --version "$ATLAS_VERSION" \
+  --timeout 5m \
+  --atomic
 ```
