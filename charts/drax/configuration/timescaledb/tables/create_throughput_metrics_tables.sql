@@ -21,13 +21,13 @@ ALTER TABLE acc_gtp_thp_ul OWNER TO {{ .Values.cnpg.auth.username }};
 CREATE TABLE acc_gtp_thp_ul_qfi_snssai_plmn (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    qfisnssaiplmnid TEXT NOT NULL,
+    qfi_snssai_plmnid TEXT NOT NULL,
     ueid INTEGER NOT NULL,
     value BIGINT
 );
 SELECT create_hypertable('acc_gtp_thp_ul_qfi_snssai_plmn', 'time');
 CREATE INDEX ON acc_gtp_thp_ul_qfi_snssai_plmn (network_function_id, time DESC);
-CREATE INDEX ON acc_gtp_thp_ul_qfi_snssai_plmn (qfisnssaiplmnid, time DESC);
+CREATE INDEX ON acc_gtp_thp_ul_qfi_snssai_plmn (qfi_snssai_plmnid, time DESC);
 CREATE INDEX ON acc_gtp_thp_ul_qfi_snssai_plmn (ueid, time DESC);
 ALTER TABLE acc_gtp_thp_ul_qfi_snssai_plmn SET (
     timescaledb.compress,
@@ -61,13 +61,13 @@ ALTER TABLE acc_gtp_thp_dl OWNER TO {{ .Values.cnpg.auth.username }};
 CREATE TABLE acc_gtp_thp_dl_qfi_snssai_plmn (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    qfisnssaiplmnid TEXT NOT NULL,
+    qfi_snssai_plmnid TEXT NOT NULL,
     ueid INTEGER NOT NULL,
     value BIGINT
 );
 SELECT create_hypertable('acc_gtp_thp_dl_qfi_snssai_plmn', 'time');
 CREATE INDEX ON acc_gtp_thp_dl_qfi_snssai_plmn (network_function_id, time DESC);
-CREATE INDEX ON acc_gtp_thp_dl_qfi_snssai_plmn (qfisnssaiplmnid, time DESC);
+CREATE INDEX ON acc_gtp_thp_dl_qfi_snssai_plmn (qfi_snssai_plmnid, time DESC);
 CREATE INDEX ON acc_gtp_thp_dl_qfi_snssai_plmn (ueid, time DESC);
 ALTER TABLE acc_gtp_thp_dl_qfi_snssai_plmn SET (
     timescaledb.compress,

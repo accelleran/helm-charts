@@ -21,7 +21,7 @@ ALTER TABLE drb_pdcp_sdu_delay_dl_qos OWNER TO {{ .Values.cnpg.auth.username }};
 CREATE TABLE drb_pdcp_sdu_delay_dl_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     value INTEGER
 );
 SELECT create_hypertable('drb_pdcp_sdu_delay_dl_snssai', 'time');
@@ -99,7 +99,7 @@ ALTER TABLE drb_pdcp_sdu_delay_dl_dist_qos OWNER TO {{ .Values.cnpg.auth.usernam
 CREATE TABLE drb_pdcp_sdu_delay_dl_dist_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     bin_x INTEGER NOT NULL,
     value INTEGER
 );
@@ -139,7 +139,7 @@ ALTER TABLE acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn OWNER TO {{ .Values.c
 CREATE TABLE acc_drb_estab_att_5qi_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     fiveqi INTEGER NOT NULL,
     value INTEGER
 );
@@ -160,7 +160,7 @@ ALTER TABLE acc_drb_estab_att_5qi_snssai OWNER TO {{ .Values.cnpg.auth.username 
 CREATE TABLE drb_estab_att_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     value INTEGER
 );
 SELECT create_hypertable('drb_estab_att_snssai', 'time');
@@ -198,7 +198,7 @@ ALTER TABLE drb_estab_att_5qi OWNER TO {{ .Values.cnpg.auth.username }};
 CREATE TABLE acc_drb_estab_succ_5qi_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     fiveqi INTEGER NOT NULL,
     value INTEGER
 );
@@ -238,7 +238,7 @@ ALTER TABLE drb_estab_succ_5qi OWNER TO {{ .Values.cnpg.auth.username }};
 CREATE TABLE drb_estab_succ_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     value INTEGER
 );
 SELECT create_hypertable('drb_estab_succ_snssai', 'time');
@@ -257,7 +257,7 @@ ALTER TABLE drb_estab_succ_snssai OWNER TO {{ .Values.cnpg.auth.username }};
 CREATE TABLE drb_rel_act_nbr_5qi_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     fiveqi INTEGER NOT NULL,
     value INTEGER
 );
@@ -297,7 +297,7 @@ ALTER TABLE drb_rel_act_nbr_5qi OWNER TO {{ .Values.cnpg.auth.username }};
 CREATE TABLE drb_rel_act_nbr_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     value INTEGER
 );
 SELECT create_hypertable('drb_rel_act_nbr_snssai', 'time');
@@ -337,7 +337,7 @@ ALTER TABLE acc_drb_f1u_packet_loss_rate_ul_qos OWNER TO {{ .Values.cnpg.auth.us
 CREATE TABLE acc_drb_f1u_packet_loss_rate_ul_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     ueid INTEGER NOT NULL,
     value INTEGER
 );
@@ -398,7 +398,7 @@ ALTER TABLE acc_drb_pdcp_packet_drop_rate_dl_qos OWNER TO {{ .Values.cnpg.auth.u
 CREATE TABLE acc_drb_pdcp_packet_drop_rate_dl_snssai (
     time TIMESTAMPTZ NOT NULL,
     network_function_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     ueid INTEGER NOT NULL,
     value INTEGER
 );

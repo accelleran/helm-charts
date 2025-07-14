@@ -25,7 +25,7 @@ CREATE TABLE smp_du_session_setup_req_snssai (
     network_function_id TEXT NOT NULL,
     nr_cell_id INTEGER NOT NULL,
     plmn_id TEXT NOT NULL,
-    snssai INTEGER NOT NULL,
+    snssai BIGINT NOT NULL,
     value INTEGER
 );
 SELECT create_hypertable('smp_du_session_setup_req_snssai', 'time');
