@@ -55,7 +55,7 @@ dependencies:
   version: 0.1.13
 - name: grafana-loki
   repository: https://charts.bitnami.com/bitnami/
-  version: 5.0.6
+  version: 5.0.7
 - name: loki-deleter
   repository: https://accelleran.github.io/helm-charts/
   version: 0.1.9
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 21.2.12
-digest: sha256:af342d8f9965c6399be22d535560b80e05a3b2a1280a01e97edb96650d72891c
-generated: "2025-07-17T08:44:45.407516882Z"
+digest: sha256:b1018bc312fab6cfede95924ef3d53498829ea1520c834fc33ba6b2fee2eb073
+generated: "2025-07-17T14:11:58.365060364Z"
