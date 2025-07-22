@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: accelleran/du
   pullPolicy: IfNotPresent
-  tag:
+  tag: ""
 
 imagePullSecrets:
   - name: accelleran-secret
@@ -43,13 +43,6 @@ nodeSelector: {}
 tolerations: {}
 affinity: {}
 
-debugging:
-  enabled: true
-  preserveOldLogs: true
-  storageCapacity: "100Mi"
-  hostPath: "/mnt/debugging-logs"
-  containerPath: "/tmp"
-
 service:
   enabled: true
   name: ""
@@ -60,7 +53,6 @@ service:
       protocol: "UDP"
       port: 2152
       targetPort: 0
-      nodePort: 0
   loadBalancerIP: ""
   externalTrafficPolicy: "Local"
 

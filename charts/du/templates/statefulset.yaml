@@ -38,13 +38,8 @@ command:
   - "/etc/config/config.yml"
 
 initContainers:
-- {{ fromYaml (include "accelleran.common.init.container" (fromYaml (include "accelleran.du.init.config.args" .))) | toYaml | nindent 2 }}
+  - {{ fromYaml (include "accelleran.common.init.container" (fromYaml (include "accelleran.du.init.config.args" .))) | toYaml | indent 4 }}
 
-env:
-  - name: POD_IP
-    valueFrom:
-      fieldRef:
-        fieldPath: status.podIP
 {{- end -}}
 
 
@@ -56,7 +51,7 @@ top:
 values:
   {{
     (mergeOverwrite
-      (deepCopy $.Values)
+      (omit (deepCopy $.Values) "securityContext")
       (dict "image" $image)
     ) | toYaml | nindent 2
   }}
@@ -69,7 +64,7 @@ command:
     service_name={{ include "accelleran.common.service.name" (dict "top" .) | quote }}
     namespace={{ $.Release.Namespace | quote }}
 
-    external_address=
+    external_address=""
     while true; do
       external_address="$(kubectl get service -n "$namespace" "$service_name" -o jsonpath="{.status.loadBalancer.ingress[0].ip}")"
       if [ -n "$external_address" ]; then
@@ -79,6 +74,12 @@ command:
     done
 
     yq --yaml-output ".f1u.socket = {bind_addr: '$POD_IP', ext_addr: '$external_address'}" "/etc/input-config/config.yml" >"/etc/output-config/config.yml"
+
+env:
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
 
 volumeMounts:
 - name: input-config
