@@ -47,7 +47,7 @@ accelleranLicense:
 kafkaInitImage:
   repository: accelleran/acc-generic-img
   pullPolicy: IfNotPresent
-  tag: "0.9.1"
+  tag: "0.9.2"
 
 podSecurityContext:
   {}
