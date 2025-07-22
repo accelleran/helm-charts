@@ -1,0 +1,72 @@
+replicaCount: 1
+
+image:
+  repository: accelleran/du
+  pullPolicy: IfNotPresent
+  tag:
+
+imagePullSecrets:
+  - name: accelleran-secret
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext:
+  capabilities:
+    add:
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RAWIO
+      - NET_RAW
+      - SYS_NICE
+
+resources: {}
+  # limits:
+  #   cpu: 12
+  #   memory: 16Gi
+  #   hugepages-1Gi: 2Gi
+  # requests:
+  #   cpu: 12
+  #   memory: 16Gi
+  #   hugepages-1Gi: 2Gi
+
+nodeSelector: {}
+tolerations: {}
+affinity: {}
+
+debugging:
+  enabled: true
+  preserveOldLogs: true
+  storageCapacity: "100Mi"
+  hostPath: "/mnt/debugging-logs"
+  containerPath: "/tmp"
+
+service:
+  enabled: true
+  name: ""
+  type: "LoadBalancer"
+  ports:
+    gtp-u:
+      appProtocol: "gtp-user"
+      protocol: "UDP"
+      port: 2152
+      targetPort: 0
+      nodePort: 0
+  loadBalancerIP: ""
+  externalTrafficPolicy: "Local"
+
+initImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.2"
+  pullPolicy: IfNotPresent
+
+config: {}

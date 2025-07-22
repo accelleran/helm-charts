@@ -48,6 +48,7 @@ function update_local_deps() {
             "${CHARTS_ROOT}/drax/charts/pm-counters" \
             "${CHARTS_ROOT}/drax/charts/service-monitor" \
             "${CHARTS_ROOT}/drax/charts/service-orchestrator" \
+        "${CHARTS_ROOT}/du" \
         "${CHARTS_ROOT}/du-metrics-server" \
         "${CHARTS_ROOT}/loki-deleter" \
         "${CHARTS_ROOT}/loki-gateway" \

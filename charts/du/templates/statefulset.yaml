@@ -1,0 +1,88 @@
+{{- include
+  "accelleran.common.statefulset"
+  (fromYaml (include "accelleran.du.statefulset.args" .))
+-}}
+
+
+{{- define "accelleran.du.statefulset.args" -}}
+{{- $ := . -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{ mergeOverwrite
+       (omit (deepCopy $.Values) "service")
+       (dict "service" (dict "ports" (($.Values).service).ports))
+     | toYaml | nindent 2
+  }}
+
+volumes:
+  - name: input-config
+    configMap:
+      name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
+  - name: output-config
+    emptyDir: {}
+  - name: hugepages
+    emptyDir:
+      medium: HugePages-1Gi
+
+volumeMounts:
+  - name: output-config
+    mountPath: /etc/config
+  - name: hugepages
+    mountPath: /dev/hugepages
+
+command:
+  - "accdu"
+  - "-c"
+  - "/etc/config/config.yml"
+
+initContainers:
+- {{ fromYaml (include "accelleran.common.init.container" (fromYaml (include "accelleran.du.init.config.args" .))) | toYaml | nindent 2 }}
+
+env:
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+{{- end -}}
+
+
+{{- define "accelleran.du.init.config.args" -}}
+{{- $image := $.Values.initImage -}}
+
+top:
+  {{ $ | toYaml | nindent 2 }}
+values:
+  {{
+    (mergeOverwrite
+      (deepCopy $.Values)
+      (dict "image" $image)
+    ) | toYaml | nindent 2
+  }}
+
+name: config
+command:
+  - "/bin/sh"
+  - "-c"
+  - |
+    service_name={{ include "accelleran.common.service.name" (dict "top" .) | quote }}
+    namespace={{ $.Release.Namespace | quote }}
+
+    external_address=
+    while true; do
+      external_address="$(kubectl get service -n "$namespace" "$service_name" -o jsonpath="{.status.loadBalancer.ingress[0].ip}")"
+      if [ -n "$external_address" ]; then
+        break
+      fi
+      sleep 5
+    done
+
+    yq --yaml-output ".f1u.socket = {bind_addr: '$POD_IP', ext_addr: '$external_address'}" "/etc/input-config/config.yml" >"/etc/output-config/config.yml"
+
+volumeMounts:
+- name: input-config
+  mountPath: /etc/input-config
+- name: output-config
+  mountPath: /etc/output-config
+{{- end -}}
