@@ -74,7 +74,7 @@ component: "cu-up"
 
 natsInitImage:
   repository: accelleran/acc-generic-img
-  tag: "0.9.1"
+  tag: "0.9.2"
   pullPolicy: IfNotPresent
 
 image:
@@ -140,7 +140,7 @@ ups:
 
   loadBalancerIPInitImage:
     repository: accelleran/acc-generic-img
-    tag: "0.9.1"
+    tag: "0.9.2"
     pullPolicy: IfNotPresent
 
   image:
