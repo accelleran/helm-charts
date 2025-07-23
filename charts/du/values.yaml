@@ -1,3 +1,14 @@
+global:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  persistentLogLevel: ""
+
+  nodeSelector: {}
+
 config: {}
 
 nameOverride: ""
