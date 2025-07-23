@@ -9,6 +9,10 @@ global:
 
   nodeSelector: {}
 
+drax:
+  technology: "5g"
+  role: "5g"
+
 config: {}
 
 nameOverride: ""
