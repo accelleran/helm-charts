@@ -1,24 +1,22 @@
+config: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
 replicaCount: 1
+
+initImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.2"
+  pullPolicy: IfNotPresent
 
 image:
   repository: accelleran/du
   pullPolicy: IfNotPresent
   tag: ""
 
-imagePullSecrets:
-  - name: accelleran-secret
-
-nameOverride: ""
-fullnameOverride: ""
-
-serviceAccount:
-  create: true
-  annotations: {}
-  name: ""
-
-podAnnotations: {}
-
-podSecurityContext: {}
+accelleranLicense:
+  enabled: false
 
 securityContext:
   capabilities:
@@ -28,6 +26,8 @@ securityContext:
       - SYS_RAWIO
       - NET_RAW
       - SYS_NICE
+
+podSecurityContext: {}
 
 resources: {}
   # limits:
@@ -40,8 +40,15 @@ resources: {}
   #   hugepages-1Gi: 2Gi
 
 nodeSelector: {}
+
 tolerations: {}
+
 affinity: {}
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
 
 service:
   enabled: true
@@ -55,10 +62,3 @@ service:
       targetPort: 0
   loadBalancerIP: ""
   externalTrafficPolicy: "Local"
-
-initImage:
-  repository: accelleran/acc-generic-img
-  tag: "0.9.2"
-  pullPolicy: IfNotPresent
-
-config: {}
