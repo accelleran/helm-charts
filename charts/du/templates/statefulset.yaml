@@ -82,8 +82,8 @@ env:
         fieldPath: status.podIP
 
 volumeMounts:
-- name: input-config
-  mountPath: /etc/input-config
-- name: output-config
-  mountPath: /etc/output-config
+  - name: input-config
+    mountPath: /etc/input-config
+  - name: output-config
+    mountPath: /etc/output-config
 {{- end -}}
