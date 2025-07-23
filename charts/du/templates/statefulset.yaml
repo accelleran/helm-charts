@@ -38,13 +38,13 @@ command:
   - "/etc/config/config.yml"
 
 initContainers:
-  - {{ fromYaml (include "accelleran.common.init.container" (fromYaml (include "accelleran.du.init.config.args" .))) | toYaml | indent 4 }}
+  - {{ fromYaml (include "accelleran.common.init.container" (fromYaml (include "accelleran.du.init.config.args" .))) | toYaml | nindent 4 }}
 
 {{- end -}}
 
 
 {{- define "accelleran.du.init.config.args" -}}
-{{- $image := $.Values.initImage -}}
+{{- $image := ($.Values).initImage -}}
 
 top:
   {{ $ | toYaml | nindent 2 }}
