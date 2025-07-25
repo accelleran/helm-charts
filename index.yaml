@@ -34715,6 +34715,21 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/drax-0.1.0/drax-0.1.0.tgz
     version: 0.1.0
+  du:
+  - apiVersion: v2
+    appVersion: 4.2.1
+    created: "2025-07-25T14:06:57.382570206Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.5.0
+    description: Accelleran 5G DU Components
+    digest: 72c106c15de0e176d2d024170d29c9319809be22a8cb32c8b608b6f0f59ce57d
+    name: du
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/du-0.0.1/du-0.0.1.tgz
+    version: 0.0.1
   du-metrics-server:
   - apiVersion: v2
     appVersion: 4.2.1
@@ -38200,4 +38215,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2025-07-09T14:46:18.656263295Z"
+generated: "2025-07-25T14:06:57.639792583Z"
