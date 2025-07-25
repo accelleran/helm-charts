@@ -1,0 +1,10 @@
+apiVersion: v2
+name: du
+description: Accelleran 5G DU Components
+type: application
+version: 0.0.1
+appVersion: "4.2.1"
+dependencies:
+  - name: common
+    version: 0.5.0
+    repository: https://accelleran.github.io/helm-charts/

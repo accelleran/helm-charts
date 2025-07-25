@@ -1,0 +1,81 @@
+global:
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+  imagePullSecrets:
+    - name: accelleran-secret
+
+  persistentLogLevel: ""
+
+  nodeSelector: {}
+
+drax:
+  technology: "5g"
+  role: "5g"
+
+config: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+initImage:
+  repository: accelleran/acc-generic-img
+  tag: "0.9.2"
+  pullPolicy: IfNotPresent
+
+image:
+  repository: accelleran/du
+  pullPolicy: IfNotPresent
+  tag: ""
+
+accelleranLicense:
+  enabled: false
+
+securityContext:
+  capabilities:
+    add:
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RAWIO
+      - NET_RAW
+      - SYS_NICE
+
+podSecurityContext: {}
+
+resources: {}
+  # limits:
+  #   cpu: 12
+  #   memory: 16Gi
+  #   hugepages-1Gi: 2Gi
+  # requests:
+  #   cpu: 12
+  #   memory: 16Gi
+  #   hugepages-1Gi: 2Gi
+
+nodeSelector: {}
+
+tolerations: {}
+
+affinity: {}
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+service:
+  enabled: true
+  name: ""
+  type: "LoadBalancer"
+  ports:
+    gtp-u:
+      appProtocol: "gtp-user"
+      protocol: "UDP"
+      port: 2152
+      targetPort: 0
+  loadBalancerIP: ""
+  externalTrafficPolicy: "Local"
+
+extraResources: []
