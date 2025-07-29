@@ -103,7 +103,6 @@ global:
   persistentLogLevel: info
 
   nodeSelector: {}
-  
   security:
     allowInsecureImages: true
 
@@ -1983,7 +1982,7 @@ promtail-logs:
   # enabled: true
   image:
     registry: docker.io
-    repository: bitnamilegacy/promtail
+    repository: bitnami/promtail-archived
     tag: "3.5.1-debian-12-r0"
   nameOverride: "promtail-logs"
 
@@ -2079,7 +2078,7 @@ promtail-events:
   # enabled: true
   image:
     registry: docker.io
-    repository: bitnamilegacy/promtail
+    repository: bitnami/promtail-archived
     tag: "3.5.1-debian-12-r0"
   nameOverride: "promtail-events"
 
