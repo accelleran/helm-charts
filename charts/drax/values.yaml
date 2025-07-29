@@ -1591,12 +1591,12 @@ loki-gateway:
 
 loki:
   # enabled: true
-  image:
-    registry: docker.io
-    repository: bitnamilegacy/grafana-loki
-    tag: "3.5.1-debian-12-r4"
 
   loki:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: 3.5.1-debian-12-r4
     overrideConfiguration:
       table_manager:
         retention_deletes_enabled: true
@@ -1641,10 +1641,6 @@ loki:
             insecure: true
 
   compactor:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/grafana-loki
-      tag: "3.5.1-debian-12-r4"
     replicaCount: 1
     updateStrategy:
       type: Recreate
@@ -1698,10 +1694,6 @@ loki:
         mountPath: "/runtime-config"
 
   distributor:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/grafana-loki
-      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1727,10 +1719,6 @@ loki:
         mountPath: "/runtime-config"
 
   ingester:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/grafana-loki
-      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1756,10 +1744,6 @@ loki:
         mountPath: "/runtime-config"
 
   querier:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/grafana-loki
-      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1785,10 +1769,6 @@ loki:
         mountPath: "/runtime-config"
 
   queryFrontend:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/grafana-loki
-      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1814,10 +1794,6 @@ loki:
         mountPath: "/runtime-config"
 
   queryScheduler:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/grafana-loki
-      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1843,10 +1819,6 @@ loki:
         mountPath: "/runtime-config"
 
   ruler:
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/grafana-loki
-      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
