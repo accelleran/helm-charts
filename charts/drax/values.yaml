@@ -103,7 +103,9 @@ global:
   persistentLogLevel: info
 
   nodeSelector: {}
-
+  
+  security:
+    allowInsecureImages: true
 
 bootstrap:
   create: true
@@ -715,6 +717,10 @@ golang-nkafka-5g:
 
 kafka:
   enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/kafka
+    tag: 3.9.0-debian-12-r12
 
   global:
     storageClass: ""
@@ -849,6 +855,10 @@ kafka:
       nodeSelector: {}
 
     jmx:
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/jmx-exporter
+        tag: 1.1.0-debian-12-r7
       enabled: true
       service:
         ports:
@@ -906,6 +916,10 @@ nats:
 
 redis:
   enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/redis
+    tag: 8.0.3-debian-12-r1
 
   commonLabels:
     drax/technology: 5g
@@ -1017,6 +1031,9 @@ oauth2-proxy:
 
 keycloak:
   # enabled: true
+  image:
+    repository: bitnamilegacy/keycloak
+    tag: "26.3.0-debian-12-r0"
 
   auth:
     adminUser: "tmp"
@@ -1026,6 +1043,11 @@ keycloak:
     passwordSecretKey: "tmp-password"
 
   postgresql:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
+      tag: "17.4.0-debian-12-r17"
+
     nameOverride: "keycloak-postgresql"
 
     auth:
@@ -1569,6 +1591,10 @@ loki-gateway:
 
 loki:
   # enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/grafana-loki
+    tag: "3.5.1-debian-12-r4"
 
   loki:
     overrideConfiguration:
@@ -1615,6 +1641,10 @@ loki:
             insecure: true
 
   compactor:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: "3.5.1-debian-12-r4"
     replicaCount: 1
     updateStrategy:
       type: Recreate
@@ -1668,6 +1698,10 @@ loki:
         mountPath: "/runtime-config"
 
   distributor:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1693,6 +1727,10 @@ loki:
         mountPath: "/runtime-config"
 
   ingester:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1718,6 +1756,10 @@ loki:
         mountPath: "/runtime-config"
 
   querier:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1743,6 +1785,10 @@ loki:
         mountPath: "/runtime-config"
 
   queryFrontend:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1768,6 +1814,10 @@ loki:
         mountPath: "/runtime-config"
 
   queryScheduler:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1793,6 +1843,10 @@ loki:
         mountPath: "/runtime-config"
 
   ruler:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: "3.5.1-debian-12-r4"
     resourcesPreset: "none"
     extraArgs:
     - -config.expand-env=true
@@ -1854,12 +1908,28 @@ loki:
     resourcesPreset: "none"
 
   memcachedchunks:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
   memcachedfrontend:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
   memcachedindexqueries:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
   memcachedindexwrites:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
 
 
@@ -1939,7 +2009,10 @@ minioPostJob:
 
 promtail-logs:
   # enabled: true
-
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/promtail
+    tag: "3.5.1-debian-12-r0"
   nameOverride: "promtail-logs"
 
   config:
@@ -2032,7 +2105,10 @@ promtail-logs:
 
 promtail-events:
   # enabled: true
-
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/promtail
+    tag: "3.5.1-debian-12-r0"
   nameOverride: "promtail-events"
 
   daemonset:
