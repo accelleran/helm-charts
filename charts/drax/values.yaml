@@ -103,8 +103,6 @@ global:
   persistentLogLevel: info
 
   nodeSelector: {}
-
-
 bootstrap:
   create: true
   name: "{{ $.Release.Name }}-bootstrap"
@@ -715,9 +713,15 @@ golang-nkafka-5g:
 
 kafka:
   enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/kafka
+    tag: 3.9.0-debian-12-r12
 
   global:
     storageClass: ""
+    security:
+      allowInsecureImages: true
 
   nameOverride: ""
   fullnameOverride: ""
@@ -833,6 +837,10 @@ kafka:
         useHostIPs: true
     autoDiscovery:
       enabled: true
+      image:
+        repository: bitnamilegacy/kubectl
+        tag: 1.32.2-debian-12-r3
+
 
   serviceAccount:
     create: true
@@ -849,6 +857,10 @@ kafka:
       nodeSelector: {}
 
     jmx:
+      image:
+        registry: docker.io
+        repository: bitnamilegacy/jmx-exporter
+        tag: 1.1.0-debian-12-r7
       enabled: true
       service:
         ports:
@@ -906,6 +918,13 @@ nats:
 
 redis:
   enabled: true
+  global:
+    security:
+      allowInsecureImages: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/redis
+    tag: 8.0.3-debian-12-r1
 
   commonLabels:
     drax/technology: 5g
@@ -1017,6 +1036,12 @@ oauth2-proxy:
 
 keycloak:
   # enabled: true
+  global:
+    security:
+      allowInsecureImages: true
+  image:
+    repository: bitnamilegacy/keycloak
+    tag: "26.3.0-debian-12-r0"
 
   auth:
     adminUser: "tmp"
@@ -1026,6 +1051,11 @@ keycloak:
     passwordSecretKey: "tmp-password"
 
   postgresql:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
+      tag: "17.4.0-debian-12-r17"
+
     nameOverride: "keycloak-postgresql"
 
     auth:
@@ -1569,8 +1599,14 @@ loki-gateway:
 
 loki:
   # enabled: true
-
+  global:
+    security:
+      allowInsecureImages: true
   loki:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/grafana-loki
+      tag: 3.5.1-debian-12-r4
     overrideConfiguration:
       table_manager:
         retention_deletes_enabled: true
@@ -1854,12 +1890,28 @@ loki:
     resourcesPreset: "none"
 
   memcachedchunks:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
   memcachedfrontend:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
   memcachedindexqueries:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
   memcachedindexwrites:
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/memcached
+      tag: "1.6.38-debian-12-r7"
     resourcesPreset: "none"
 
 
@@ -1939,7 +1991,6 @@ minioPostJob:
 
 promtail-logs:
   # enabled: true
-
   nameOverride: "promtail-logs"
 
   config:
@@ -2032,7 +2083,6 @@ promtail-logs:
 
 promtail-events:
   # enabled: true
-
   nameOverride: "promtail-events"
 
   daemonset:
