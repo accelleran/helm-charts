@@ -103,9 +103,6 @@ global:
   persistentLogLevel: info
 
   nodeSelector: {}
-  security:
-    allowInsecureImages: true
-
 bootstrap:
   create: true
   name: "{{ $.Release.Name }}-bootstrap"
@@ -723,6 +720,8 @@ kafka:
 
   global:
     storageClass: ""
+    security:
+      allowInsecureImages: true
 
   nameOverride: ""
   fullnameOverride: ""
@@ -919,6 +918,9 @@ nats:
 
 redis:
   enabled: true
+  global:
+    security:
+      allowInsecureImages: true
   image:
     registry: docker.io
     repository: bitnamilegacy/redis
@@ -1034,6 +1036,9 @@ oauth2-proxy:
 
 keycloak:
   # enabled: true
+  global:
+    security:
+      allowInsecureImages: true
   image:
     repository: bitnamilegacy/keycloak
     tag: "26.3.0-debian-12-r0"
@@ -1594,7 +1599,9 @@ loki-gateway:
 
 loki:
   # enabled: true
-
+  global:
+    security:
+      allowInsecureImages: true
   loki:
     image:
       registry: docker.io
@@ -1984,10 +1991,6 @@ minioPostJob:
 
 promtail-logs:
   # enabled: true
-  image:
-    registry: docker.io
-    repository: bitnami/promtail-archived
-    tag: "3.5.1-debian-12-r0"
   nameOverride: "promtail-logs"
 
   config:
@@ -2080,10 +2083,6 @@ promtail-logs:
 
 promtail-events:
   # enabled: true
-  image:
-    registry: docker.io
-    repository: bitnami/promtail-archived
-    tag: "3.5.1-debian-12-r0"
   nameOverride: "promtail-events"
 
   daemonset:
