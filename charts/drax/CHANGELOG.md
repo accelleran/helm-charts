@@ -1,5 +1,13 @@
 # Changelog
 
+## [14.1.2](https://github.com/accelleran/helm-charts/compare/drax-14.1.1...drax-14.1.2) (2025-08-01)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release grafana-loki to v6.0.2 ([#1453](https://github.com/accelleran/helm-charts/issues/1453)) ([76b4284](https://github.com/accelleran/helm-charts/commit/76b4284c6f27d740189ac7411e2bba71d1785b1d))
+* **deps:** Update helm release oauth2-proxy to v7.16.0 ([#1455](https://github.com/accelleran/helm-charts/issues/1455)) ([44ffd3a](https://github.com/accelleran/helm-charts/commit/44ffd3a82f13318452781ca5aa58203de1750e13))
+
 ## [14.1.1](https://github.com/accelleran/helm-charts/compare/drax-14.1.0...drax-14.1.1) (2025-07-31)
 
 
