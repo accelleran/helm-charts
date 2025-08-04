@@ -43,7 +43,7 @@ dependencies:
   version: 7.16.0
 - name: keycloak
   repository: https://charts.bitnami.com/bitnami/
-  version: 24.8.1
+  version: 24.9.0
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 9.3.0
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 21.2.13
-digest: sha256:2fed9bcb75422173c2f42cac91bf8b8e6e81e4af3caa7b3bf87aeb768468e6cc
-generated: "2025-08-01T10:05:39.570943096Z"
+digest: sha256:a25c675b00128b7fbd8162f39b9789aa3949a47845623b20f8aa1e94ff4c6987
+generated: "2025-08-04T14:23:13.923765249Z"
