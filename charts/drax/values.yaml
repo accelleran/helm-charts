@@ -1039,9 +1039,10 @@ keycloak:
   global:
     security:
       allowInsecureImages: true
+
   image:
     repository: bitnamilegacy/keycloak
-    tag: "26.3.2-debian-12-r0"
+    tag: "26.3.2-debian-12-r2"
 
   auth:
     adminUser: "tmp"
