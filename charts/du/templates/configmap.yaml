@@ -3,6 +3,7 @@
   (fromYaml (include "accelleran.du.configMap.args" .))
 -}}
 
+
 {{- define "accelleran.du.configMap.args" -}}
 {{- $ := . -}}
 
@@ -13,5 +14,5 @@ name: {{ include "accelleran.common.fullname" (dict "top" $) }}-config
 
 data:
   config.yml: |-
-    {{ .Values.config | toYaml | indent 4 }}
+    {{ .Values.config | toYaml | nindent 4 }}
 {{- end -}}
