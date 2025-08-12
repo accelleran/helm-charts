@@ -2,3 +2,8 @@
   "accelleran.common.serviceAccount"
   (dict "top" $)
 }}
+---
+{{ include
+  "accelleran.common.rbac"
+  (dict "top" $)
+}}

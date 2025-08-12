@@ -34,6 +34,7 @@ accelleranLicense:
   enabled: false
 
 securityContext:
+  privileged: true
   capabilities:
     add:
       - IPC_LOCK
@@ -64,6 +65,13 @@ serviceAccount:
   create: true
   annotations: {}
   name: ""
+
+rbac:
+  enabled: true
+  rules:
+    - apiGroups: [""]
+      resources: ["services"]
+      verbs: ["get", "list"]
 
 service:
   enabled: true
