@@ -69,9 +69,12 @@ serviceAccount:
 rbac:
   enabled: true
   rules:
-    - apiGroups: [""]
-      resources: ["services"]
-      verbs: ["get", "list"]
+    - apiGroups:
+        - ""
+      resources:
+        - services
+      verbs:
+        - get
 
 service:
   enabled: true
