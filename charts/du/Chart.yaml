@@ -2,7 +2,7 @@ apiVersion: v2
 name: du
 description: Accelleran 5G DU Components
 type: application
-version: 0.0.1
+version: 0.0.2
 # renovate: image=accelleran/du
 appVersion: "4.2.1"
 dependencies:

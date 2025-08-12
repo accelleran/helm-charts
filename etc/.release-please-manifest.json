@@ -5,7 +5,7 @@
   "charts/cu-cp": "12.0.6",
   "charts/cu-up": "12.0.6",
   "charts/drax": "14.1.1",
-  "charts/du": "0.0.1",
+  "charts/du": "0.0.2",
   "charts/du-metrics-server": "0.5.5",
   "charts/loki-deleter": "0.1.9",
   "charts/loki-gateway": "0.1.13",
