@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.0](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.14...loki-gateway-0.2.0) (2025-08-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** update helm release common to v0.4.1 in dRAX ([#994](https://github.com/accelleran/helm-charts/issues/994))
+
+### Features
+
+* **deps:** Update helm release common to v0.4.1 in dRAX ([#994](https://github.com/accelleran/helm-charts/issues/994)) ([1061caf](https://github.com/accelleran/helm-charts/commit/1061caff716b4988667b3f2d11937b89b1ab2b1c))
+
+
+### Bug Fixes
+
+* **deps:** Update helm release common to v0.5.0 ([#1064](https://github.com/accelleran/helm-charts/issues/1064)) ([4c5a645](https://github.com/accelleran/helm-charts/commit/4c5a645145d14bc528d3d20798091be42d4d6009))
+* **deps:** Update nginx docker tag to v1.27.5 ([#1135](https://github.com/accelleran/helm-charts/issues/1135)) ([b5493a7](https://github.com/accelleran/helm-charts/commit/b5493a775ccabcb7e4e3e996d9b03f1c84f1ef1b))
+* **deps:** Update nginx docker tag to v1.28.0 ([#1157](https://github.com/accelleran/helm-charts/issues/1157)) ([31aada8](https://github.com/accelleran/helm-charts/commit/31aada807e7bdc2ae2aa310d165e410a25adf681))
+* **deps:** Update nginx docker tag to v1.29.0 ([#1379](https://github.com/accelleran/helm-charts/issues/1379)) ([820364b](https://github.com/accelleran/helm-charts/commit/820364b45fb3f20f932e34304e0ee82632889f82))
+* **deps:** Update nginx docker tag to v1.29.1 ([#1487](https://github.com/accelleran/helm-charts/issues/1487)) ([3c8275a](https://github.com/accelleran/helm-charts/commit/3c8275a77fc7821c11e311b89881cfd37e26718e))
+
 ## [0.1.14](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.13...loki-gateway-0.1.14) (2025-08-15)
 
 
