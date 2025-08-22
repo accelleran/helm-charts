@@ -839,7 +839,7 @@ kafka:
       enabled: true
       image:
         repository: bitnamilegacy/kubectl
-        tag: 1.33.2-debian-12-r3
+        tag: 1.33.3-debian-12-r3
 
 
   serviceAccount:
