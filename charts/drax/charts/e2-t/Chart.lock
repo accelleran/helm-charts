@@ -7,6 +7,6 @@ dependencies:
   version: 1.3.13
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
-  version: 22.0.5
-digest: sha256:5fa77c86d205d91eb00a650ebecaf0f2f14a12ded193b9349362a37da11602ec
-generated: "2025-08-23T09:48:49.568806828Z"
+  version: 22.0.6
+digest: sha256:32e1f783ac77e2cd910b750d1c293c3d7fce725735d1e8b2f029de526deb803c
+generated: "2025-08-26T09:16:42.7120798Z"
