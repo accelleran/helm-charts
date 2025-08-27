@@ -73,7 +73,7 @@ dependencies:
   version: 2.1.2
 - name: kminion
   repository: https://charts.redpanda.com
-  version: 0.14.1
+  version: 0.14.2
 - name: kafka
   repository: https://charts.bitnami.com/bitnami/
   version: 31.5.0
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 22.0.6
-digest: sha256:763ceea3a64e4791e32b63221485ca5cfdff42e88d7f4592f2ee861c1d2b130c
-generated: "2025-08-26T17:09:44.735339121Z"
+digest: sha256:fc85c2695dd433e6136f1e21432602bfbde838fdf54aa740af7ca98a2a78737e
+generated: "2025-08-27T08:07:46.41657672Z"

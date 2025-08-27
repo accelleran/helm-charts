@@ -140,7 +140,7 @@ dependencies:
     repository: https://helm.influxdata.com/
   - name: kminion
     condition: kminion.enabled
-    version: 0.14.1
+    version: 0.14.2
     repository: https://charts.redpanda.com
 
   # infrastructure
