@@ -1,5 +1,14 @@
 # Changelog
 
+## [12.0.7](https://github.com/accelleran/helm-charts/compare/cu-up-12.0.6...cu-up-12.0.7) (2025-08-29)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release nats to v1.3.11 ([#1499](https://github.com/accelleran/helm-charts/issues/1499)) ([ffa6890](https://github.com/accelleran/helm-charts/commit/ffa6890e2cc5be3d3ff7fde7818ccc20f8898dac))
+* **deps:** Update helm release nats to v1.3.12 ([#1503](https://github.com/accelleran/helm-charts/issues/1503)) ([a12bba4](https://github.com/accelleran/helm-charts/commit/a12bba4ebd0c895abbe7776189eec430fe638b7f))
+* **deps:** Update helm release nats to v1.3.13 ([#1505](https://github.com/accelleran/helm-charts/issues/1505)) ([0c65661](https://github.com/accelleran/helm-charts/commit/0c6566141797fca3cf435e4cb44bf308f0c8efbc))
+
 ## [12.0.6](https://github.com/accelleran/helm-charts/compare/cu-up-12.0.5...cu-up-12.0.6) (2025-08-07)
 
 
