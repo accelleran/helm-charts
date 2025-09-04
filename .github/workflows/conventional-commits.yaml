@@ -39,7 +39,7 @@ jobs:
 
       - name: Add summary
         if: ${{ !cancelled() }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const isPr = ${{ github.event_name == 'pull_request' }};
