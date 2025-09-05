@@ -17,10 +17,9 @@ values:
   }}
 
 selectorLabels:
-  {{ include "accelleran.common.selectorLabels" (dict "top" $) | nindent 2 }}
-  app.kubernetes.io/component: {{ $.Values.component }}
+  {{ include "accelleran.cu-cp.selectorLabels" (dict "top" $) | nindent 2 }}
 labels:
-  {{ include "accelleran.common.labels" (dict "top" $) | nindent 2 }}
+  {{ include "accelleran.cu-cp.labels" (dict "top" $) | nindent 2 }}
 
 initContainers:
 - {{ fromYaml (include "accelleran.common.init.nats" (fromYaml (include "accelleran.cu-cp.init.args" .))) | toYaml | nindent 2 }}

@@ -3,6 +3,10 @@
       (dict
         "top" $
         "values" $.Values.ups
+        "selectorLabels"
+          (include "accelleran.cu-up.selectorLabels" (dict "top" $ "values" $.Values.ups) | fromYaml)
+        "labels" 
+          (include "accelleran.cu-up.labels" (dict "top" $ "values" $.Values.ups) | fromYaml)
       )
 }}
 ---
@@ -11,5 +15,9 @@
       (dict
         "top" $
         "values" $.Values.ups
+        "selectorLabels"
+          (include "accelleran.cu-up.selectorLabels" (dict "top" $ "values" $.Values.ups) | fromYaml)
+        "labels" 
+          (include "accelleran.cu-up.labels" (dict "top" $ "values" $.Values.ups) | fromYaml)
       )
 }}
