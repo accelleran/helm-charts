@@ -22,5 +22,6 @@ serviceName: {{ (include "accelleran.cu-up.gtp-u.service.name" (list $ $ordinal)
 
 selectorLabels:
   {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
+  app.kubernetes.io/component: {{ $values.component }}
   up-stack-id: {{ $ordinal | quote }}
 {{- end -}}
