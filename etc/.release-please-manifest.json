@@ -7,7 +7,7 @@
   "charts/drax": "14.1.1",
   "charts/du": "0.0.2",
   "charts/du-metrics-server": "0.5.5",
-  "charts/loki-deleter": "0.1.9",
+  "charts/loki-deleter": "0.1.10",
   "charts/loki-gateway": "0.1.14",
   "charts/telemetry-collector": "2.0.4",
   "charts/xapp-anr": "0.2.0",

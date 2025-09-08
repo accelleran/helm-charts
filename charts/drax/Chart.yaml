@@ -90,7 +90,7 @@ dependencies:
     repository: https://grafana.github.io/helm-charts
   - name: prometheus
     condition: prometheus.enabled
-    version: 27.35.0
+    version: 27.37.0
     repository: https://prometheus-community.github.io/helm-charts
   - name: loki-gateway
     condition: loki-gateway.enabled
@@ -111,7 +111,7 @@ dependencies:
     condition: loki-deleter.enabled
     tags:
       - logs
-    version: 0.1.9
+    version: 0.1.10
     repository: https://accelleran.github.io/helm-charts/
   - name: minio
     condition: minio.enabled
