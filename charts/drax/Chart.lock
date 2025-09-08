@@ -58,7 +58,7 @@ dependencies:
   version: 6.0.6
 - name: loki-deleter
   repository: https://accelleran.github.io/helm-charts/
-  version: 0.1.9
+  version: 0.1.10
 - name: minio
   repository: https://charts.min.io/
   version: 5.4.0
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 22.0.7
-digest: sha256:ed98a346ff94ca60d1108d7d92b8ff8560aae17a99fff894f85de73ce6cab583
-generated: "2025-09-06T20:01:40.538661329Z"
+digest: sha256:c189936ac78f6ba8e74497c0f0d71529abadecd7d2f414b7d4b76184f1e0f642
+generated: "2025-09-08T07:57:04.967563113Z"
