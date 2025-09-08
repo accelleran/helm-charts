@@ -35473,6 +35473,20 @@ entries:
     version: 0.1.0
   loki-deleter:
   - apiVersion: v2
+    appVersion: 0.1.10
+    created: "2025-09-08T07:53:32.774890814Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.5.0
+    description: Loki deleter
+    digest: 18c33faa1f033c7eaa4dec075706986014b0f474eef14458a889144ba6dab795
+    name: loki-deleter
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/loki-deleter-0.1.10/loki-deleter-0.1.10.tgz
+    version: 0.1.10
+  - apiVersion: v2
     appVersion: 0.1.9
     created: "2025-05-26T11:50:17.958878356Z"
     dependencies:
@@ -38494,4 +38508,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2025-08-18T06:25:23.764424063Z"
+generated: "2025-09-08T07:53:32.776556766Z"
