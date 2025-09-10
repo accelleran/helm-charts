@@ -1,5 +1,20 @@
 # Changelog
 
+## [7.2.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.2.0...cell-wrapper-7.2.1) (2025-09-10)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.9.2 ([#1432](https://github.com/accelleran/helm-charts/issues/1432)) ([2ab654d](https://github.com/accelleran/helm-charts/commit/2ab654de537994780b16b0f6cc5ed15a2a0d17ad))
+* **deps:** Update accelleran/cw-netconf docker tag to v7.2.1 ([#1548](https://github.com/accelleran/helm-charts/issues/1548)) ([43ae4bb](https://github.com/accelleran/helm-charts/commit/43ae4bb924781aa32982d1a67e202329c2acf34e))
+* **deps:** Update helm release nats to v1.3.10 ([#1461](https://github.com/accelleran/helm-charts/issues/1461)) ([0555d4a](https://github.com/accelleran/helm-charts/commit/0555d4aa4ecbfbf9b58dab6dd2d66c9c87589acd))
+* **deps:** Update helm release nats to v1.3.11 ([#1499](https://github.com/accelleran/helm-charts/issues/1499)) ([ffa6890](https://github.com/accelleran/helm-charts/commit/ffa6890e2cc5be3d3ff7fde7818ccc20f8898dac))
+* **deps:** Update helm release nats to v1.3.12 ([#1503](https://github.com/accelleran/helm-charts/issues/1503)) ([a12bba4](https://github.com/accelleran/helm-charts/commit/a12bba4ebd0c895abbe7776189eec430fe638b7f))
+* **deps:** Update helm release nats to v1.3.13 ([#1505](https://github.com/accelleran/helm-charts/issues/1505)) ([0c65661](https://github.com/accelleran/helm-charts/commit/0c6566141797fca3cf435e4cb44bf308f0c8efbc))
+* **deps:** Update helm release nats to v1.3.14 ([#1542](https://github.com/accelleran/helm-charts/issues/1542)) ([35a3c0e](https://github.com/accelleran/helm-charts/commit/35a3c0efd61edc76b91260d217d88b128c135657))
+* **deps:** Update helm release nats to v1.3.8 ([#1390](https://github.com/accelleran/helm-charts/issues/1390)) ([6e33f38](https://github.com/accelleran/helm-charts/commit/6e33f38c28f847c2b08ce55fc4cfaf2754d947b9))
+* **deps:** Update helm release nats to v1.3.9 ([#1397](https://github.com/accelleran/helm-charts/issues/1397)) ([e0e087d](https://github.com/accelleran/helm-charts/commit/e0e087d3b9cae6442aa14f1beaba5001e0b86180))
+
 ## [7.2.0](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.1.0...cell-wrapper-7.2.0) (2025-06-23)
 
 
