@@ -4,7 +4,7 @@ description: Accelleran 5G DU Components
 type: application
 version: 0.0.2
 # renovate: image=accelleran/du
-appVersion: "4.2.1"
+appVersion: "4.2.2"
 dependencies:
   - name: common
     version: 0.5.0
