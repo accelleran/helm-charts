@@ -2,7 +2,7 @@ apiVersion: v2
 name: drax
 description: Accelleran's dRAX helm chart
 type: application
-version: 14.1.1
+version: 14.1.2
 dependencies:
   - name: common
     version: 0.5.0
