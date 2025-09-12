@@ -32,8 +32,24 @@ values:
 name: {{ printf "%s-%d" (include "accelleran.common.fullname" (dict "top" $ "values" $values)) $ordinal }}
 
 selectorLabels:
-  {{ include "accelleran.common.selectorLabels" (dict "top" $ "values" $values) | nindent 2 }}
-  app.kubernetes.io/component: {{ $values.component }}
+  {{
+    include "accelleran.cu-up.selectorLabels"
+      (dict
+        "top" $
+        "values" $values
+      )
+    | nindent 2
+  }}
+  up-stack-id: {{ $ordinal | quote }}
+labels:
+  {{
+    include "accelleran.cu-up.labels"
+      (dict
+        "top" $
+        "values" $values
+      )
+    | nindent 2
+  }}
   up-stack-id: {{ $ordinal | quote }}
 
 initContainers:

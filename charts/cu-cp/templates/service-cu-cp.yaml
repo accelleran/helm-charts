@@ -2,10 +2,9 @@
       "accelleran.common.service"
       (dict
         "top" $
-        "selectorLabels" (merge
-          (include "accelleran.common.selectorLabels" (dict "top" $) | fromYaml)
-          (dict "app.kubernetes.io/component" $.Values.component)
-        )
-        "labels" (include "accelleran.common.labels" (dict "top" $) | fromYaml)
+        "selectorLabels" 
+          (include "accelleran.cu-cp.selectorLabels" (dict "top" $) | fromYaml)
+        "labels" 
+          (include "accelleran.cu-cp.labels" (dict "top" $) | fromYaml)
       )
 -}}
