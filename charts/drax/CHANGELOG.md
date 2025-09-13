@@ -1,5 +1,12 @@
 # Changelog
 
+## [14.1.3](https://github.com/accelleran/helm-charts/compare/drax-14.1.2...drax-14.1.3) (2025-09-13)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release grafana to v9.4.5 ([#1550](https://github.com/accelleran/helm-charts/issues/1550)) ([6672847](https://github.com/accelleran/helm-charts/commit/667284780ae994097b573bedeea26e9dc22d98be))
+
 ## [14.1.2](https://github.com/accelleran/helm-charts/compare/drax-14.1.1...drax-14.1.2) (2025-09-10)
 
 
