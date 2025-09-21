@@ -1,5 +1,16 @@
 # Changelog
 
+## [14.1.3](https://github.com/accelleran/helm-charts/compare/drax-14.1.2...drax-14.1.3) (2025-09-21)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release grafana to v10 ([#1556](https://github.com/accelleran/helm-charts/issues/1556)) ([e5d0a53](https://github.com/accelleran/helm-charts/commit/e5d0a536b10646fb56674a877ac1a44b2c18ca72))
+* **deps:** Update helm release grafana to v9.4.5 ([#1550](https://github.com/accelleran/helm-charts/issues/1550)) ([6672847](https://github.com/accelleran/helm-charts/commit/667284780ae994097b573bedeea26e9dc22d98be))
+* **deps:** Update helm release oauth2-proxy to v8.2.1 ([#1555](https://github.com/accelleran/helm-charts/issues/1555)) ([97a7943](https://github.com/accelleran/helm-charts/commit/97a794314e06081c9dc985c3d4567547b1c86fef))
+* **deps:** Update helm release prometheus to v27.38.0 ([#1557](https://github.com/accelleran/helm-charts/issues/1557)) ([e48f857](https://github.com/accelleran/helm-charts/commit/e48f8570c7ad609f929ff7db027a73f2e1270da4))
+* **deps:** Update helm release prometheus to v27.39.0 ([#1558](https://github.com/accelleran/helm-charts/issues/1558)) ([37f22fb](https://github.com/accelleran/helm-charts/commit/37f22fb378f3b536928f9894873ba450045197c4))
+
 ## [14.1.2](https://github.com/accelleran/helm-charts/compare/drax-14.1.1...drax-14.1.2) (2025-09-10)
 
 
