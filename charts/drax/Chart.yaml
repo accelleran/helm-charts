@@ -111,7 +111,7 @@ dependencies:
     condition: loki-deleter.enabled
     tags:
       - logs
-    version: 0.1.10
+    version: 0.1.11
     repository: https://accelleran.github.io/helm-charts/
   - name: minio
     condition: minio.enabled
