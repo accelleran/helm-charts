@@ -94,6 +94,12 @@
       "matchFileNames": [
         "/External\\.yaml/"
       ]
+    },
+    {
+      "description": "Use loose versioning for acc-generic-img to allow k8s suffix changes",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["accelleran/acc-generic-img"],
+      "versioning": "loose"
     }
   ]
 }
