@@ -36,12 +36,9 @@ initContainers:
 - {{ fromYaml (include "accelleran.drax.keycloakInit.job.init" $) | toYaml | nindent 2 }}
 
 command:
-  - /bin/sh
+  - python3
 args:
-  - -c
-  - |-
-    apk add py3-requests py3-kubernetes
-    python3 /setup_drax_realm.py
+  - /setup_drax_realm.py
 
 env:
   - name: HELM_RELEASE_NAME
