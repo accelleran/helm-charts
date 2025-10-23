@@ -180,7 +180,7 @@ netconf:
   netconfInitImage:
     repository: accelleran/acc-generic-img
     pullPolicy: IfNotPresent
-    tag: "0.9.2"
+    tag: "0.10.0-k8s-1.29"
 
   image:
     repository: accelleran/ncclient
