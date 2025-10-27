@@ -1080,10 +1080,12 @@ keycloak:
   httpRelativePath: "/keycloak/"
 
   extraEnvVars:
+    # Set canonical hostname to ensure consistent JWT issuer claim regardless of how
+    # Keycloak is accessed (external via ingress vs internal via service). This prevents
+    # issuer mismatch errors during OAuth2 token validation when the browser accesses
+    # Keycloak externally but oauth2-proxy validates tokens using the internal hostname.
     - name: KC_HOSTNAME
       value: "{{ $.Release.Name }}-keycloak.{{ $.Release.Namespace }}"
-    - name: KC_HTTP_RELATIVE_PATH
-      value: "/keycloak"
 
   ingress:
     # use ingress in extraDeploy as it allows to leave out the host
