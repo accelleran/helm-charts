@@ -1,5 +1,15 @@
 # Changelog
 
+## [7.2.2](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.2.1...cell-wrapper-7.2.2) (2025-10-31)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.10.0-k8s-1.29 ([#1586](https://github.com/accelleran/helm-charts/issues/1586)) ([e000e65](https://github.com/accelleran/helm-charts/commit/e000e6589f6599101c04747c04f9a4d8cce0fd19))
+* **deps:** Update accelleran/instance-scaler docker tag to v0.2.11 ([#1566](https://github.com/accelleran/helm-charts/issues/1566)) ([5ce9815](https://github.com/accelleran/helm-charts/commit/5ce9815c7c8160771fcc505d056b9827f6af0065))
+* **deps:** Update helm release nats to v1.3.15 ([#1580](https://github.com/accelleran/helm-charts/issues/1580)) ([5155747](https://github.com/accelleran/helm-charts/commit/51557479b42bc8a62579ef5cf60a16bc8ea88348))
+* **deps:** Update helm release nats to v1.3.16 ([#1590](https://github.com/accelleran/helm-charts/issues/1590)) ([e658fbe](https://github.com/accelleran/helm-charts/commit/e658fbe6f81158bfbb9d2422a1991f56a37b57d4))
+
 ## [7.2.1](https://github.com/accelleran/helm-charts/compare/cell-wrapper-7.2.0...cell-wrapper-7.2.1) (2025-09-10)
 
 
