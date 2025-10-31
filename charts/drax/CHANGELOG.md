@@ -1,5 +1,43 @@
 # Changelog
 
+## [14.1.3](https://github.com/accelleran/helm-charts/compare/drax-14.1.2...drax-14.1.3) (2025-10-31)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/acc-generic-img docker tag to v0.10.0-k8s-1.29 ([#1586](https://github.com/accelleran/helm-charts/issues/1586)) ([e000e65](https://github.com/accelleran/helm-charts/commit/e000e6589f6599101c04747c04f9a4d8cce0fd19))
+* **deps:** Update helm release grafana to v10 ([#1556](https://github.com/accelleran/helm-charts/issues/1556)) ([e5d0a53](https://github.com/accelleran/helm-charts/commit/e5d0a536b10646fb56674a877ac1a44b2c18ca72))
+* **deps:** Update helm release grafana to v10.1.0 ([#1575](https://github.com/accelleran/helm-charts/issues/1575)) ([5cefffa](https://github.com/accelleran/helm-charts/commit/5cefffa8e1c066cff4c78f4f768ee5547cd1411f))
+* **deps:** Update helm release grafana to v10.1.1 ([#1579](https://github.com/accelleran/helm-charts/issues/1579)) ([1900c8e](https://github.com/accelleran/helm-charts/commit/1900c8e59abd0589cce990c132c07dfbbdbdca68))
+* **deps:** Update helm release grafana to v10.1.2 ([#1582](https://github.com/accelleran/helm-charts/issues/1582)) ([0c02502](https://github.com/accelleran/helm-charts/commit/0c025021fb2f3203c7986a6ecad8add82b7e5dd1))
+* **deps:** Update helm release grafana to v10.1.4 ([#1596](https://github.com/accelleran/helm-charts/issues/1596)) ([272c858](https://github.com/accelleran/helm-charts/commit/272c858b0d8aec5a82b4866102bff41a38295d79))
+* **deps:** Update helm release grafana to v9.4.5 ([#1550](https://github.com/accelleran/helm-charts/issues/1550)) ([6672847](https://github.com/accelleran/helm-charts/commit/667284780ae994097b573bedeea26e9dc22d98be))
+* **deps:** Update helm release ingress-nginx to v4.13.3 ([#1559](https://github.com/accelleran/helm-charts/issues/1559)) ([68a8268](https://github.com/accelleran/helm-charts/commit/68a826892cc6fe1fee0855cdc5ba55eff72bbff9))
+* **deps:** Update helm release loki-deleter to v0.1.11 ([#1572](https://github.com/accelleran/helm-charts/issues/1572)) ([5b2a07e](https://github.com/accelleran/helm-charts/commit/5b2a07eee62e9d52143ec6049670ffe5e7ac2121))
+* **deps:** Update helm release nats to v1.3.15 ([#1580](https://github.com/accelleran/helm-charts/issues/1580)) ([5155747](https://github.com/accelleran/helm-charts/commit/51557479b42bc8a62579ef5cf60a16bc8ea88348))
+* **deps:** Update helm release nats to v1.3.16 ([#1590](https://github.com/accelleran/helm-charts/issues/1590)) ([e658fbe](https://github.com/accelleran/helm-charts/commit/e658fbe6f81158bfbb9d2422a1991f56a37b57d4))
+* **deps:** Update helm release oauth2-proxy to v8.2.1 ([#1555](https://github.com/accelleran/helm-charts/issues/1555)) ([97a7943](https://github.com/accelleran/helm-charts/commit/97a794314e06081c9dc985c3d4567547b1c86fef))
+* **deps:** Update helm release oauth2-proxy to v8.2.2 ([#1560](https://github.com/accelleran/helm-charts/issues/1560)) ([a2d2c4a](https://github.com/accelleran/helm-charts/commit/a2d2c4ac1724c2b7a5f5ea7482f6d1bbf999abce))
+* **deps:** Update helm release oauth2-proxy to v8.3.0 ([#1561](https://github.com/accelleran/helm-charts/issues/1561)) ([75c7b7b](https://github.com/accelleran/helm-charts/commit/75c7b7b88717ea04e6f11261516c34f8a361a516))
+* **deps:** Update helm release oauth2-proxy to v8.3.1 ([#1573](https://github.com/accelleran/helm-charts/issues/1573)) ([59974f3](https://github.com/accelleran/helm-charts/commit/59974f31ff3eac8fbda9f63d5b31bac4bd67d16c))
+* **deps:** Update helm release oauth2-proxy to v8.3.2 ([#1598](https://github.com/accelleran/helm-charts/issues/1598)) ([480ecf8](https://github.com/accelleran/helm-charts/commit/480ecf8dc4565ca15bb9607e084e958a78d2d626))
+* **deps:** Update helm release prometheus to v27.38.0 ([#1557](https://github.com/accelleran/helm-charts/issues/1557)) ([e48f857](https://github.com/accelleran/helm-charts/commit/e48f8570c7ad609f929ff7db027a73f2e1270da4))
+* **deps:** Update helm release prometheus to v27.39.0 ([#1558](https://github.com/accelleran/helm-charts/issues/1558)) ([37f22fb](https://github.com/accelleran/helm-charts/commit/37f22fb378f3b536928f9894873ba450045197c4))
+* **deps:** Update helm release prometheus to v27.40.0 ([#1574](https://github.com/accelleran/helm-charts/issues/1574)) ([42ee6bf](https://github.com/accelleran/helm-charts/commit/42ee6bf43581dc8a7a35ec38955c9514439c623e))
+* **deps:** Update helm release prometheus to v27.40.1 ([#1577](https://github.com/accelleran/helm-charts/issues/1577)) ([bc4cfde](https://github.com/accelleran/helm-charts/commit/bc4cfde8be5032eeddcb7935e31107d32b276371))
+* **deps:** Update helm release prometheus to v27.41.0 ([#1578](https://github.com/accelleran/helm-charts/issues/1578)) ([13fbd59](https://github.com/accelleran/helm-charts/commit/13fbd592234a6673bb33200bae8becb8ca0bf48a))
+* **deps:** Update helm release prometheus to v27.41.1 ([#1581](https://github.com/accelleran/helm-charts/issues/1581)) ([2e73e77](https://github.com/accelleran/helm-charts/commit/2e73e77dab57269b0566460d25849a2a8e063cec))
+* **deps:** Update helm release prometheus to v27.41.2 ([#1585](https://github.com/accelleran/helm-charts/issues/1585)) ([562586e](https://github.com/accelleran/helm-charts/commit/562586e71a2778fe3ef8267675dd4a9dbc740229))
+* **deps:** Update helm release prometheus to v27.42.0 ([#1592](https://github.com/accelleran/helm-charts/issues/1592)) ([06e371c](https://github.com/accelleran/helm-charts/commit/06e371c618293196ae2242b6b7895e6698819766))
+* **deps:** Update helm release prometheus to v27.42.1 ([#1597](https://github.com/accelleran/helm-charts/issues/1597)) ([5c08dc8](https://github.com/accelleran/helm-charts/commit/5c08dc84306cf3ae847ee29b10d3c0ca282d69be))
+* **deps:** Update helm release promtail to v6.17.1 ([#1601](https://github.com/accelleran/helm-charts/issues/1601)) ([77aa747](https://github.com/accelleran/helm-charts/commit/77aa74717170151f627079f76a0b0b74cb3db7b5))
+* **deps:** Update helm release redis to v23 ([#1562](https://github.com/accelleran/helm-charts/issues/1562)) ([17c47e6](https://github.com/accelleran/helm-charts/commit/17c47e6b75235efb38330c5a45d09e12ea132249))
+* **deps:** Update helm release redis to v23.1.3 ([#1576](https://github.com/accelleran/helm-charts/issues/1576)) ([f60a50a](https://github.com/accelleran/helm-charts/commit/f60a50a881fb3152e0ed757a3f7fd6fbb0238fcf))
+* **deps:** Update helm release redis to v23.1.7 ([#1583](https://github.com/accelleran/helm-charts/issues/1583)) ([483df32](https://github.com/accelleran/helm-charts/commit/483df32aad09c01d0c0a8c796ba85358b817f7bc))
+* **deps:** Update helm release redis to v23.2.1 ([#1584](https://github.com/accelleran/helm-charts/issues/1584)) ([7ab147f](https://github.com/accelleran/helm-charts/commit/7ab147fc384e6374ccca37a822ed306803d0d0ab))
+* **deps:** Update helm release redis to v23.2.2 ([#1593](https://github.com/accelleran/helm-charts/issues/1593)) ([5d248eb](https://github.com/accelleran/helm-charts/commit/5d248eb2b1dd1d21180959e9ca13f15b84bfa861))
+* **drax:** Stop downloading packages in keycloak init ([c535bdd](https://github.com/accelleran/helm-charts/commit/c535bdda0c5c2381e92cc869875937f6718eecbb))
+
 ## [14.1.2](https://github.com/accelleran/helm-charts/compare/drax-14.1.1...drax-14.1.2) (2025-09-10)
 
 
