@@ -64,10 +64,10 @@ dependencies:
   version: 5.4.0
 - name: promtail
   repository: https://grafana.github.io/helm-charts/
-  version: 6.17.0
+  version: 6.17.1
 - name: promtail
   repository: https://grafana.github.io/helm-charts/
-  version: 6.17.0
+  version: 6.17.1
 - name: influxdb2
   repository: https://helm.influxdata.com/
   version: 2.1.2
@@ -83,5 +83,5 @@ dependencies:
 - name: redis
   repository: https://charts.bitnami.com/bitnami/
   version: 23.2.2
-digest: sha256:31949ffabd55dd29df02622af184e2391bfa16927cdfa09e454e0c80878a1022
-generated: "2025-10-30T21:16:09.481970163Z"
+digest: sha256:37f24a41d43f1393002b53b8bd77718f40a566c37d86b48f1527b74c0fb75c1b
+generated: "2025-10-31T19:47:03.551139818Z"
