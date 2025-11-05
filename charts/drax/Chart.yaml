@@ -90,7 +90,7 @@ dependencies:
     repository: https://grafana.github.io/helm-charts
   - name: prometheus
     condition: prometheus.enabled
-    version: 27.42.2
+    version: 27.44.0
     repository: https://prometheus-community.github.io/helm-charts
   - name: loki-gateway
     condition: loki-gateway.enabled
@@ -154,5 +154,5 @@ dependencies:
     repository: https://nats-io.github.io/k8s/helm/charts/
   - name: redis
     condition: redis.enabled
-    version: 23.2.3
+    version: 23.2.5
     repository: https://charts.bitnami.com/bitnami/
