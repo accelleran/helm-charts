@@ -46,7 +46,7 @@ jobs:
 
       - name: Set up chart-testing
         if: ${{ github.event_name == 'pull_request' }}
-        uses: helm/chart-testing-action@v2.7.0
+        uses: helm/chart-testing-action@v2.8.0
 
       - name: List charts
         id: list-charts
@@ -78,7 +78,7 @@ jobs:
           check-latest: true
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.7.0
+        uses: helm/chart-testing-action@v2.8.0
 
       - name: Add helm repositories
         run: ./bin/add-repos
@@ -124,7 +124,7 @@ jobs:
           check-latest: true
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.7.0
+        uses: helm/chart-testing-action@v2.8.0
 
       - name: Add helm repositories
         run: ./bin/add-repos
