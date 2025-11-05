@@ -73,7 +73,7 @@ command:
       sleep 5
     done
 
-    yq --yaml-output ".f1u.socket = {bind_addr: '$POD_IP', ext_addr: '$external_address'}" "/etc/input-config/config.yml" >"/etc/output-config/config.yml"
+    yq eval -o yaml ".f1u.socket = [{\"bind_addr\": \"$POD_IP\", \"ext_addr\": \"$external_address\"}]" "/etc/input-config/config.yml" >"/etc/output-config/config.yml"
 
 env:
   - name: POD_IP
