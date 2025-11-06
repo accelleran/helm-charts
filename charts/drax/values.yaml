@@ -328,7 +328,7 @@ dashboard:
     enabled: true
     className: drax
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
@@ -360,7 +360,7 @@ network-state-monitor:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -386,7 +386,7 @@ service-monitor:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -412,7 +412,7 @@ service-orchestrator:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -443,7 +443,7 @@ config-api:
     enabled: true
     className: drax
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -673,7 +673,7 @@ pm-counters:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -1253,7 +1253,7 @@ grafana:
     enabled: true
     ingressClassName: "drax"
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
