@@ -4,7 +4,7 @@ description: The E2 Termination
 type: application
 version: 2.0.0
 # renovate: image=accelleran/e2smrcappl versioning=semver
-appVersion: "7.0.0"
+appVersion: "7.0.1"
 dependencies:
   - name: common
     version: 0.5.0
