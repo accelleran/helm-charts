@@ -97,7 +97,7 @@ dependencies:
     tags:
       - logs
       - events
-    version: 0.1.14
+    version: 0.1.15
     repository: https://accelleran.github.io/helm-charts/
   - name: grafana-loki
     alias: loki
