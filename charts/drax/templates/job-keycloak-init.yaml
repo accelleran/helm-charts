@@ -46,8 +46,10 @@ env:
   - name: HELM_RELEASE_NAMESPACE
     value: {{ $.Release.Namespace }}
 
-  - name: DRAX_ENDPOINT
-    value: {{ $.Values.global.domain | default $.Values.global.ipAddress }}
+  - name: DRAX_DOMAIN
+    value: "{{ $.Values.global.domain }}"
+  - name: DRAX_IP
+    value: "{{ $.Values.global.ipAddress }}"
 
   - name: KUBERNETES_NAMESPACE
     value: {{ $.Release.Namespace }}

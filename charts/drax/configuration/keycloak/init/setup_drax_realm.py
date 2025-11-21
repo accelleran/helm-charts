@@ -137,8 +137,8 @@ class Oauth2ProxyClient:
     id: str
     name: str
     scopes: list[ClientScope] = list()
-    redirect: str
-    logout: str
+    redirect_uris: list[str] = list()
+    logout: Optional[str] = None
     secret: str
     kube_secret_name: NamespacedName
     cookie_secret: str
@@ -167,8 +167,8 @@ class Oauth2ProxyClient:
             "optionalClientScopes": [scope.name for scope in self.scopes if not scope.is_default],
         }
 
-        if self.redirect:
-            json["redirectUris"] = [self.redirect]
+        if self.redirect_uris:
+            json["redirectUris"] = self.redirect_uris
         if self.logout:
             json["frontchannelLogout"] = True
             json["attributes"] = {
@@ -293,8 +293,6 @@ class KeycloakConfig:
 
 
 def main() -> None:
-    drax_endpoint = os.environ.get("DRAX_ENDPOINT")
-
     kubernetes_namespace = os.environ.get("KUBERNETES_NAMESPACE", "default")
 
     config: KeycloakConfig = KeycloakConfig()
@@ -367,8 +365,15 @@ def main() -> None:
         "OAUTH2_PROXY_CLIENT_ID", default="oauth2-proxy"
     )
     oauth2_proxy_client.name = "OAuth2 Proxy"
-    oauth2_proxy_client.redirect = "/oauth2/callback"
-    oauth2_proxy_client.logout = f"https://{drax_endpoint}/oauth2/sign_out"
+
+    # Set redirect URIs for both domain and IP if configured
+    drax_domain = os.environ.get("DRAX_DOMAIN")
+    drax_ip = os.environ.get("DRAX_IP")
+    if drax_domain:
+        oauth2_proxy_client.redirect_uris.append(f"https://{drax_domain}/*")
+    if drax_ip:
+        oauth2_proxy_client.redirect_uris.append(f"https://{drax_ip}/*")
+
     oauth2_proxy_client.kube_secret_name = NamespacedName(
         os.environ.get("OAUTH2_PROXY_SECRET_NAME", default=""),
         kubernetes_namespace,
@@ -842,7 +847,7 @@ def create_or_update_client_scope(
 
     for role in client_scope.roles:
         add_client_scope_role(config, client_scope, role)
-    
+
     for mapper in client_scope.mappers:
         add_client_scope_mapper(config, client_scope, mapper)
 
