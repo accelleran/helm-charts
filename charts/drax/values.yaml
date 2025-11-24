@@ -328,7 +328,7 @@ dashboard:
     enabled: true
     className: drax
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
@@ -360,7 +360,7 @@ network-state-monitor:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -386,7 +386,7 @@ service-monitor:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -412,7 +412,7 @@ service-orchestrator:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -443,7 +443,7 @@ config-api:
     enabled: true
     className: drax
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -673,7 +673,7 @@ pm-counters:
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       nginx.ingress.kubernetes.io/rewrite-target: /$2
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
       nginx.ingress.kubernetes.io/proxy-buffering: 'on'
@@ -986,14 +986,29 @@ oauth2-proxy:
 
       provider = "oidc"
       provider_display_name = "Accelleran dRAX"
-      oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/keycloak/realms/drax"
-      redirect_url = "/oauth2/callback"
+
       email_domains = [ "*" ]
       insecure_oidc_allow_unverified_email = true
       scope = "openid email profile"
 
+      # Manually configure OIDC endpoints - global.domain may not be resolvable inside cluster
+      # use internal service DNS where possible (faster, no ingress overhead)
+      skip_oidc_discovery = true
+      oidc_issuer_url = "https://{{ $.Values.global.domain | default $.Values.global.ipAddress }}/keycloak/realms/drax"
+      login_url = "/keycloak/realms/drax/protocol/openid-connect/auth" # redirect browser with relative path
+      redirect_url = "/oauth2/callback"
+      redeem_url = "http://{{ $.Release.Name }}-keycloak.{{ $.Release.Namespace }}/keycloak/realms/drax/protocol/openid-connect/token"
+      oidc_jwks_url = "http://{{ $.Release.Name }}-keycloak.{{ $.Release.Namespace }}/keycloak/realms/drax/protocol/openid-connect/certs"
+
+      # Skip issuer verification when both domain and IP are configured, as issuer will be dynamic.
+      # This is safe because:
+      #   1) Token signature validation still occurs via oidc_jwks_url, and
+      #   2) Both domain and IP are trusted origins.
+      {{- if and $.Values.global.domain $.Values.global.ipAddress }}
+      insecure_oidc_skip_issuer_verification = true
+      {{- end }}
+
       whitelist_domains = [ {{ with $.Values.global.domain }}"{{ . }}",".{{ . }}",{{ end }}"{{ $.Values.global.ipAddress }}" ]
-      cookie_domains = [ {{ with $.Values.global.domain }}"{{ . }}",".{{ . }}",{{ end }}"{{ $.Values.global.ipAddress }}" ]
 
       cookie_csrf_per_request = true
       cookie_csrf_expire = "5m"
@@ -1072,6 +1087,11 @@ keycloak:
 
   proxyHeaders: "xforwarded"
   httpRelativePath: "/keycloak/"
+
+  # Configure Keycloak hostname: disable strict hostname checking to allow access via both domain and IP
+  extraEnvVars:
+    - name: KC_HOSTNAME_STRICT
+      value: "false"
 
   ingress:
     # use ingress in extraDeploy as it allows to leave out the host
@@ -1233,7 +1253,7 @@ grafana:
     enabled: true
     ingressClassName: "drax"
     annotations:
-      nginx.ingress.kubernetes.io/auth-url: "https://$host/oauth2/auth"
+      nginx.ingress.kubernetes.io/auth-url: "http://{{ $.Release.Name }}-oauth2-proxy.{{ $.Release.Namespace }}.svc.cluster.local/oauth2/auth"
       nginx.ingress.kubernetes.io/auth-signin: "https://$host/oauth2/start?rd=$escaped_request_uri"
       nginx.ingress.kubernetes.io/proxy-body-size: 30m
       nginx.ingress.kubernetes.io/proxy-buffer-size: 256k
