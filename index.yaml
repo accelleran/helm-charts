@@ -35149,6 +35149,20 @@ entries:
     version: 0.1.0
   du:
   - apiVersion: v2
+    appVersion: 4.3.1
+    created: "2025-11-24T11:53:06.550355571Z"
+    dependencies:
+    - name: common
+      repository: https://accelleran.github.io/helm-charts/
+      version: 0.5.0
+    description: Accelleran 5G DU Components
+    digest: 0dea2f1068bf413ad9e65b46ca9ca47c87e234920997a1311e28adffcfab86bd
+    name: du
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/du-0.0.4/du-0.0.4.tgz
+    version: 0.0.4
+  - apiVersion: v2
     appVersion: 4.3.0
     created: "2025-11-05T16:12:16.400197313Z"
     dependencies:
@@ -38803,4 +38817,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2025-11-24T11:32:42.046888751Z"
+generated: "2025-11-24T11:53:06.55188541Z"
