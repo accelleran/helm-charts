@@ -4,7 +4,7 @@ description: A Helm chart for the Telemetry Collector
 type: application
 version: 2.0.4
 # renovate: image=accelleran/telemetry-collector
-appVersion: "1.4.6"
+appVersion: "1.4.7"
 dependencies:
   - name: common
     version: 0.5.0
