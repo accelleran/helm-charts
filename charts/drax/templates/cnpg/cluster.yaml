@@ -1,0 +1,36 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ .Release.Name }}-cnpg-timescaledb
+spec:
+  instances: 1
+
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: {{ .Release.Name }}-cnpg-timescaledb-superuser-secret
+
+  storage:
+    size: 2Gi
+
+  postgresUID: 70
+  postgresGID: 70
+
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ImageCatalog
+    name: cloudnative-pg-timescaledb-pg16
+    major: 16
+
+  bootstrap:
+    initdb:
+      database: {{ .Values.cnpg.database }}
+      owner: {{ .Values.cnpg.auth.username }}
+      secret:
+        name: {{ .Release.Name }}-cnpg-timescaledb-user-secret
+      postInitTemplateSQL:
+        - CREATE EXTENSION IF NOT EXISTS timescaledb;
+        - CREATE DATABASE devdb OWNER {{ .Values.cnpg.auth.username }};
+
+  postgresql:
+    shared_preload_libraries:
+      - timescaledb
