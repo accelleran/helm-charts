@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.0.2](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-6.0.1...xapp-hello-world-6.0.2) (2025-11-26)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/xapp-framework-package docker tag to v6.0.2 ([#1647](https://github.com/accelleran/helm-charts/issues/1647)) ([a01b562](https://github.com/accelleran/helm-charts/commit/a01b562b59b9a8b8657e33f3d0be37b262aa8e74))
+
 ## [6.0.1](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-6.0.0...xapp-hello-world-6.0.1) (2025-11-12)
 
 
