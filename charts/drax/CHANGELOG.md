@@ -1,5 +1,12 @@
 # Changelog
 
+## [14.2.1](https://github.com/accelleran/helm-charts/compare/drax-14.2.0...drax-14.2.1) (2025-11-28)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release prometheus to v27.47.0 ([#1651](https://github.com/accelleran/helm-charts/issues/1651)) ([3ec4383](https://github.com/accelleran/helm-charts/commit/3ec43833b75f660d2d0e8f10d7c225345f9b7553))
+
 ## [14.2.0](https://github.com/accelleran/helm-charts/compare/drax-14.1.2...drax-14.2.0) (2025-11-26)
 
 
