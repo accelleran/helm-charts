@@ -1,6 +1,6 @@
 # Changelog
 
-## [6.0.3](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-6.0.2...xapp-hello-world-6.0.3) (2025-12-01)
+## [6.1.0](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-6.0.2...xapp-hello-world-6.1.0) (2025-12-01)
 
 
 ### Bug Fixes
