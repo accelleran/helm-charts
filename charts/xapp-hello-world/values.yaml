@@ -98,6 +98,12 @@ sshService:
   port: 22
   # nodePort: 30953
 
+codeServerService:
+  name: "xapp-dev-code-server"
+  type: NodePort
+  port: 8080
+  # nodePort: 30954
+
 udpService:
   enabled: false
   name: "xapp-udp"

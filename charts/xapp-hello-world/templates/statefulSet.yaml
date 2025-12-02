@@ -96,6 +96,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{ if .Values.developerMode.enabled }}
+          env:
+            - name: PASSWORD
+              value: {{ .Values.developerMode.devPassword | quote }}
           command:
             - "/bin/bash"
             - "-c"
@@ -104,6 +107,7 @@ spec:
               echo 'xapp:{{ .Values.developerMode.devPassword }}' | sudo chpasswd
               git init /home/xapp/xapp/
               jq '.name = "{{ .Release.Name }}"' /home/xapp/xapp/core/xapp_metadata.json > temp.json && mv temp.json /home/xapp/xapp/core/xapp_metadata.json
+              code-server --bind-addr 0.0.0.0:{{ .Values.codeServerService.port }} --auth password --disable-telemetry /home/xapp/xapp &
               tail -f /dev/null
           {{ else }}
           command:
@@ -125,6 +129,7 @@ spec:
             - containerPort: {{ .Values.restService.port }}
             {{ if .Values.developerMode.enabled }}
             - containerPort: {{ .Values.sshService.port }}
+            - containerPort: {{ .Values.codeServerService.port }}
             {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

@@ -1,0 +1,20 @@
+{{- if .Values.developerMode.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "xapp_core.fullname" . }}-xapp-code-server
+  labels:
+    {{- include "xapp_core.labels" . | nindent 4 }}
+    drax/xapp-component-name: xapp-dev-code-server
+spec:
+  type: {{ .Values.codeServerService.type }}
+  ports:
+    - port: {{ .Values.codeServerService.port }}
+      name: {{ .Values.codeServerService.name }}
+      {{ if .Values.codeServerService.nodePort }}
+      nodePort: {{ .Values.codeServerService.nodePort }}
+      {{ end }}
+  selector:
+    {{- include "xapp_core.selectorLabels" . | nindent 4 }}
+{{- end }}
+
