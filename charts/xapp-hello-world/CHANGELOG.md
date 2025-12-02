@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.1](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-6.1.0...xapp-hello-world-6.1.1) (2025-12-02)
+
+
+### Bug Fixes
+
+* Adding missing code server service ([#1656](https://github.com/accelleran/helm-charts/issues/1656)) ([730559c](https://github.com/accelleran/helm-charts/commit/730559cb32164a3361926a1ec2c3b03e3e0acf0f))
+
 ## [6.1.0](https://github.com/accelleran/helm-charts/compare/xapp-hello-world-6.0.2...xapp-hello-world-6.1.0) (2025-12-01)
 
 
