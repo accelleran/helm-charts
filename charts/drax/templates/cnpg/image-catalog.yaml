@@ -1,0 +1,8 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: ImageCatalog
+metadata:
+  name: cloudnative-pg-timescaledb-pg16
+spec:
+  images:
+    - major: 16
+      image: timescale/timescaledb:latest-pg16
