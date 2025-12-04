@@ -5,7 +5,7 @@ set -euo pipefail
 GIT_ROOT="$(realpath "$(dirname "$0")/../..")"
 
 # renovate: github_repository=metallb/metallb versioning=semver
-export METALLB_VERSION="v0.15.2"
+export METALLB_VERSION="v0.15.3"
 "$GIT_ROOT"/bin/install-metallb | tee /tmp/metallb.log
 metallb_ip_address="$(cat /tmp/metallb.log | grep "ip_address=" | cut -d= -f2)"
 rm /tmp/metallb.log
