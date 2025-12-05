@@ -1,5 +1,18 @@
 # Changelog
 
+## [14.2.1](https://github.com/accelleran/helm-charts/compare/drax-14.2.0...drax-14.2.1) (2025-12-05)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency metallb/metallb to v0.15.3 ([#1660](https://github.com/accelleran/helm-charts/issues/1660)) ([267e3f7](https://github.com/accelleran/helm-charts/commit/267e3f7844ad81150c3aa5595e1d4b8e476367d9))
+* **deps:** Update helm release grafana to v10.3.0 ([#1654](https://github.com/accelleran/helm-charts/issues/1654)) ([35e8757](https://github.com/accelleran/helm-charts/commit/35e875738fab2eb1521368afcc0212421db5e8e2))
+* **deps:** Update helm release ingress-nginx to v4.14.1 ([#1663](https://github.com/accelleran/helm-charts/issues/1663)) ([6ec9b72](https://github.com/accelleran/helm-charts/commit/6ec9b72fa7978447151d00de4e1e06f3a9d9a301))
+* **deps:** Update helm release prometheus to v27.47.0 ([#1651](https://github.com/accelleran/helm-charts/issues/1651)) ([3ec4383](https://github.com/accelleran/helm-charts/commit/3ec43833b75f660d2d0e8f10d7c225345f9b7553))
+* **deps:** Update helm release prometheus to v27.48.0 ([#1653](https://github.com/accelleran/helm-charts/issues/1653)) ([409401f](https://github.com/accelleran/helm-charts/commit/409401f960e96b538c24490b66120a438bf3b304))
+* **deps:** Update helm release prometheus to v27.49.0 ([#1655](https://github.com/accelleran/helm-charts/issues/1655)) ([92d4af1](https://github.com/accelleran/helm-charts/commit/92d4af101293b0e8c98b5460f1f9a822ccb3b421))
+* **deps:** Update helm release prometheus to v27.50.0 ([#1664](https://github.com/accelleran/helm-charts/issues/1664)) ([476dde5](https://github.com/accelleran/helm-charts/commit/476dde5cf78aac17344674f035547b530ba6680c))
+
 ## [14.2.0](https://github.com/accelleran/helm-charts/compare/drax-14.1.2...drax-14.2.0) (2025-11-26)
 
 
