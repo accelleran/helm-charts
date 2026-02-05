@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.16](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.15...loki-gateway-0.1.16) (2026-02-05)
+
+
+### Bug Fixes
+
+* **deps:** Update nginx docker tag to v1.29.4 ([#1666](https://github.com/accelleran/helm-charts/issues/1666)) ([3c2e3c3](https://github.com/accelleran/helm-charts/commit/3c2e3c3f6e5d2f5c1679c7fd20aa82bf4e63581f))
+* **deps:** Update nginx docker tag to v1.29.5 ([#1699](https://github.com/accelleran/helm-charts/issues/1699)) ([b205f8f](https://github.com/accelleran/helm-charts/commit/b205f8f92e6058e074918387591a45fd3fca5516))
+
 ## [0.1.15](https://github.com/accelleran/helm-charts/compare/loki-gateway-0.1.14...loki-gateway-0.1.15) (2025-11-11)
 
 
