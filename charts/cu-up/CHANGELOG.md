@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.0.8](https://github.com/accelleran/helm-charts/compare/cu-up-12.0.7...cu-up-12.0.8) (2026-02-05)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency metallb/metallb to v0.15.3 ([#1660](https://github.com/accelleran/helm-charts/issues/1660)) ([267e3f7](https://github.com/accelleran/helm-charts/commit/267e3f7844ad81150c3aa5595e1d4b8e476367d9))
+
 ## [12.0.7](https://github.com/accelleran/helm-charts/compare/cu-up-12.0.6...cu-up-12.0.7) (2025-11-24)
 
 
