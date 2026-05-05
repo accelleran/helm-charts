@@ -10,7 +10,7 @@
 {{- $textFiles := list
   "login/theme.properties"
   "login/resources/css/accelleran-drax-login.css"
-  "login/resources/img/firecell-logo.png"
+  "login/resources/img/firecell-logo.svg"
 -}}
 {{- $binaryFiles := list
   "common/resources/img/favicon.ico"
