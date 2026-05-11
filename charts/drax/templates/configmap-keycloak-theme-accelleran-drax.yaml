@@ -23,10 +23,10 @@ name: {{ $.Release.Name }}-keycloak-theme-accelleran-drax
 
 data:
 {{- range $file := $textFiles }}
-  {{ $file | replace "/" "-" }}: {{ $.Files.Get (printf "configuration/keycloak/theme/accelleran-drax/%s" $file) | quote }}
+  {{ $file | replace "/" "-" }}: {{ $.Files.Get (printf "configuration/keycloak/theme/firecell-drax/%s" $file) | quote }}
 {{- end }}
 binaryData:
 {{- range $file := $binaryFiles }}
-  {{ $file | replace "/" "-" }}: {{ $.Files.Get (printf "configuration/keycloak/theme/accelleran-drax/%s" $file) | b64enc | quote }}
+  {{ $file | replace "/" "-" }}: {{ $.Files.Get (printf "configuration/keycloak/theme/firecell-drax/%s" $file) | b64enc | quote }}
 {{- end }}
 {{- end -}}
