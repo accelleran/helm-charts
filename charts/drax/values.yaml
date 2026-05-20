@@ -1108,8 +1108,8 @@ keycloak:
             path: login/theme.properties
           - key: login-resources-css-accelleran-drax-login.css
             path: login/resources/css/accelleran-drax-login.css
-          - key: login-resources-img-accelleran-logo-white.svg
-            path: login/resources/img/accelleran-logo-white.svg
+          - key: login-resources-img-firecell-logo.svg
+            path: login/resources/img/firecell-logo.svg
           - key: login-resources-img-accelleran-drax-bg.jpg
             path: login/resources/img/accelleran-drax-bg.jpg
 
