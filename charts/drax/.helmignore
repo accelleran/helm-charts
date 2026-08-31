@@ -21,3 +21,6 @@
 .idea/
 *.tmproj
 .vscode/
+# Large docs that inflate the chart package
+CHANGELOG.md
+RELEASE_NOTES.md
