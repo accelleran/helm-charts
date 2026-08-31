@@ -56,12 +56,26 @@
     },
     {
       "customType": "regex",
-      "datasourceTemplate": "helm",
+      "datasourceTemplate": "docker",
       "fileMatch": [
-        "(^|/)values\\.y[a]?ml$"
+        "(^|/).+\\.sh$",
+        "(^|/).+\\.md$"
       ],
       "matchStrings": [
-        "#\\s?renovate: repository=(?<registryUrl>.*?) chart=(?<depName>.*?)\\s?[\\w\\-]*[vV]ersion:\\s?\"?(?<currentValue>[\\w\\.\\-]*)\"?"
+        "#\\s?renovate: image=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s+(export )?[\\w\\-]*[vV][eE][rR][sS][iI][oO][nN]=\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "helm",
+      "fileMatch": [
+        "(^|/)values\\.y[a]?ml$",
+        "(^|/).+\\.sh$",
+        "(^|/).+\\.md$"
+      ],
+      "matchStrings": [
+        "#\\s?renovate: repository=(?<registryUrl>.*?) chart=(?<depName>.*?)\\s+(export )?[\\w\\-]*[vV][eE][rR][sS][iI][oO][nN]:\\s?\"?(?<currentValue>[\\w\\.\\-]*)\"?"
       ]
     },
     {

@@ -10,3 +10,4 @@ helm repo add influxdata https://helm.influxdata.com
 helm repo add redpanda https://charts.redpanda.com
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo add oauth2-proxy https://oauth2-proxy.github.io/manifests
+helm repo add cloudnative-pg https://cloudnative-pg.github.io/charts
