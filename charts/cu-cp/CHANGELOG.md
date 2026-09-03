@@ -1,5 +1,15 @@
 # Changelog
 
+## [12.0.8](https://github.com/accelleran/helm-charts/compare/cu-cp-12.0.7...cu-cp-12.0.8) (2026-09-03)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cu-cp docker tag to v8.0.7 ([#1721](https://github.com/accelleran/helm-charts/issues/1721)) ([33e3641](https://github.com/accelleran/helm-charts/commit/33e3641c028c3874449187fb5f517dbe5d42b32d))
+* **deps:** Update accelleran/cu-cp docker tag to v8.0.8 ([#1745](https://github.com/accelleran/helm-charts/issues/1745)) ([20f0d0e](https://github.com/accelleran/helm-charts/commit/20f0d0ec66b8b62122505c2ffc9e6c8f61de8cfb))
+* **deps:** Update dependency metallb/metallb to v0.15.3 ([#1660](https://github.com/accelleran/helm-charts/issues/1660)) ([267e3f7](https://github.com/accelleran/helm-charts/commit/267e3f7844ad81150c3aa5595e1d4b8e476367d9))
+* **deps:** Update dependency metallb/metallb to v0.16.0 ([#1731](https://github.com/accelleran/helm-charts/issues/1731)) ([25be9ff](https://github.com/accelleran/helm-charts/commit/25be9ffa977adff88a32d3c4155604a3de9f276e))
+
 ## [12.0.7](https://github.com/accelleran/helm-charts/compare/cu-cp-12.0.6...cu-cp-12.0.7) (2025-11-24)
 
 
