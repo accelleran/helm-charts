@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.5](https://github.com/accelleran/helm-charts/compare/du-0.0.4...du-0.0.5) (2026-09-03)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/du docker tag to v4.4.0 ([#1725](https://github.com/accelleran/helm-charts/issues/1725)) ([995ac73](https://github.com/accelleran/helm-charts/commit/995ac73c4178fd6ecea587fa4303591d179395c1))
+* **deps:** Update accelleran/du docker tag to v4.4.1 ([#1765](https://github.com/accelleran/helm-charts/issues/1765)) ([8569703](https://github.com/accelleran/helm-charts/commit/85697037aa0fa86a3d11932030db7f26c6cd9f14))
+
 ## [0.0.4](https://github.com/accelleran/helm-charts/compare/du-0.0.3...du-0.0.4) (2025-11-24)
 
 
