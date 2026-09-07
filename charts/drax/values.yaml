@@ -531,6 +531,7 @@ telemetry-collector:
   grafanaWebhookUrl: "http://{{ $.Release.Name }}-telemetry-collector.{{ $.Release.Namespace }}:9020/alert"
 
   influxdbAuthSecret: "drax-influxdb2-auth"
+  timescaledbAuthSecret: "{{ $.Release.Name }}-cnpg-timescaledb-user-secret"
 
   config:
     internal:
@@ -539,6 +540,10 @@ telemetry-collector:
       influxDB:
         url: "http://{{ $.Release.Name }}-influxdb2.{{ $.Release.Namespace }}:80"
         org: "accelleran"
+      timescaleDB:
+        url: "{{ $.Release.Name }}-cnpg-timescaledb-rw.{{ $.Release.Namespace }}:5432"
+        user: "accelleran"
+        dbName: "accellerandb"
     pipelines:
       - name: "cu_measurements"
         component: "cu"
@@ -616,6 +621,54 @@ telemetry-collector:
               AccDRBEstabSucc5QiSnssai: "radio_resource_utilization_metrics"
               DRBEstabAttSnssai: "radio_resource_utilization_metrics"
               DRBEstabAtt5Qi: "radio_resource_utilization_metrics"
+          timescalePublisher:
+            tables:
+              RRCConnEstabAtt: "rrc_conn_estab_att"
+              RRCConnEstabSucc: "rrc_conn_estab_succ"
+              RRCConnReestabAtt: "rrc_conn_reestab_att"
+              RRCConnReestabSucc: "rrc_conn_reestab_succ"
+              MMHoExeIntraReq: "mm_ho_exe_intra_req"
+              MMHoExeIntraSucc: "mm_ho_exe_intra_succ"
+              RRCConnMean: "rrc_conn_mean"
+              RRCConnMax: "rrc_conn_max"
+              SMPDUSessionSetupReq: "smp_du_session_setup_req"
+              SMPDUSessionSetupReqSnssai: "smp_du_session_setup_req_snssai"
+              SMPDUSessionSetupFail: "smp_du_session_setup_fail"
+              MMHoPrepInterReq: "mm_ho_prep_inter_req"
+              MMHoPrepInterSucc: "mm_ho_prep_inter_succ"
+              MMHoPrepInterFail: "mm_ho_prep_inter_fail"
+              MMHoResAlloInterReq: "mm_ho_res_allo_inter_req"
+              MMHoResAlloInterSucc: "mm_ho_res_allo_inter_succ"
+              MMHoResAlloInterFail: "mm_ho_res_allo_inter_fail"
+              MMHoExeInterReq: "mm_ho_exe_inter_req"
+              AccDRBEstabAtt5QiSnssai: "acc_drb_estab_att_5qi_snssai"
+              DRBEstabSuccSnssai: "drb_estab_succ_snssai"
+              DRBEstabSucc5Qi: "drb_estab_succ_5qi"
+              DRBRelActNbr5QiSnssai: "drb_rel_act_nbr_5qi_snssai"
+              DRBRelActNbrSnssai: "drb_rel_act_nbr_snssai"
+              DRBRelActNbr5Qi: "drb_rel_act_nbr_5qi"
+              MMHoExeInterReqTimeMean: "mm_ho_exe_inter_req_time_mean"
+              MMHoExeInterReqTimeMax: "mm_ho_exe_inter_req_time_max"
+              AccGTPThpDl: "acc_gtp_thp_dl"
+              AccGTPThpDlQfiSnssaiPlmn: "acc_gtp_thp_dl_qfi_snssai_plmn"
+              AccGTPThpUl: "acc_gtp_thp_ul"
+              AccGTPThpUlQfiSnssaiPlmn: "acc_gtp_thp_ul_qfi_snssai_plmn"
+              AccDRBPdcpSduDelayDlQfiSnssaiPlmn: "acc_drb_pdcp_sdu_delay_dl_qfi_snssai_plmn"
+              AccDRBF1UPacketLossRateUlQoS: "acc_drb_f1u_packet_loss_rate_ul_qos"
+              AccDRBF1UPacketLossRateUlQfiSnssaiPlmn: "acc_drb_f1u_packet_loss_rate_ul_qfi_snssai_plmn"
+              AccDRBF1UPacketLossRateUlSnssai: "acc_drb_f1u_packet_loss_rate_ul_snssai"
+              AccDRBPdcpPacketDropRateDlQoS: "acc_drb_pdcp_packet_drop_rate_dl_qos"
+              AccDRBPdcpPacketDropRateDlSnssai: "acc_drb_pdcp_packet_drop_rate_dl_snssai"
+              AccDRBPdcpPacketDropRateDlQfiSnssaiPlmn: "acc_drb_pdcp_packet_drop_rate_dl_qfi_snssai_plmn"
+              DRBPdcpSduDelayDlQoS: "drb_pdcp_sdu_delay_dl_qos"
+              DRBPdcpSduDelayDlSnssai: "drb_pdcp_sdu_delay_dl_snssai"
+              DRBPdcpSduDelayDlDistQos: "drb_pdcp_sdu_delay_dl_dist_qos"
+              DRBPdcpSduDelayDlDist: "drb_pdcp_sdu_delay_dl_dist"
+              DRBPdcpSduDelayDlDistSnssai: "drb_pdcp_sdu_delay_dl_dist_snssai"
+              AccDRBPdcpSduDelayDlDistQfiSnssaiPlmn: "acc_drb_pdcp_sdu_delay_dl_dist_qfi_snssai_plmn"
+              AccDRBEstabSucc5QiSnssai: "acc_drb_estab_succ_5qi_snssai"
+              DRBEstabAttSnssai: "drb_estab_att_snssai"
+              DRBEstabAtt5Qi: "drb_estab_att_5qi"
       - name: "acc_du_v3"
         component: "du"
         vendor: "accelleran"
@@ -1320,6 +1373,11 @@ grafana:
         name: "{{ $.Release.Name }}-slack-auth"
         key: slack-token
 
+    TIMESCALEDB_PASSWORD:
+      secretKeyRef:
+        name: "{{ $.Release.Name }}-cnpg-timescaledb-user-secret"
+        key: password
+
   env:
     GF_PANELS_DISABLE_SANITIZE_HTML: false
 
@@ -1327,6 +1385,24 @@ grafana:
     datasources.yaml:
       apiVersion: 1
       datasources:
+        - name: Timescaledb
+          type: postgres
+          access: proxy
+          url: "{{ .Release.Name }}-cnpg-timescaledb-r:5432"
+          user: accelleran
+          secureJsonData:
+            password: ${TIMESCALEDB_PASSWORD}
+          basicAuth: false
+          isDefault: false
+          uid: fep8nloinol4we
+          jsonData:
+            database: accellerandb
+            timescaledb: true
+            maxOpenConns: 100
+            maxIdleConns: 100
+            maxIdleConnsAuto: true
+            connMaxLifetime: 14400
+          readOnly: false
         - access: proxy
           isDefault: true
           name: Prometheus
@@ -2422,6 +2498,16 @@ influxdb2:
         influx bucket create -n du_rlc_measurements_5m -o accelleran -r 7d
         influx bucket create -n du_rlc_measurements_15m -o accelleran -r 28d
         influx bucket create -n energy_saving_scheduler -o accelleran -r 7d
+
+
+cnpg:
+  auth:
+    superuserPassword: ""
+    username: accelleran
+    password: ""
+
+  database: accellerandb
+
 
 kminion:
   enabled: true
