@@ -39350,4 +39350,15 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
+  firecell-nms:
+  - apiVersion: v2
+    appVersion: 4.2.0
+    created: "2026-09-16T09:26:05.230209434+02:00"
+    description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
+    digest: 78b2cb69450f73a44c872ce40e04f66ad2faea654047f8583580520524789e32
+    name: firecell-nms
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-nms-0.1.0/firecell-nms-0.1.0.tgz
+    version: 0.1.0
 generated: "2026-08-31T19:09:20.508114215Z"
