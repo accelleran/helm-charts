@@ -39353,9 +39353,9 @@ entries:
   firecell-nms:
   - apiVersion: v2
     appVersion: 4.2.0
-    created: "2026-09-16T09:26:05.230209434+02:00"
+    created: "2026-09-16T11:24:00.697648+02:00"
     description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
-    digest: 78b2cb69450f73a44c872ce40e04f66ad2faea654047f8583580520524789e32
+    digest: 7310fa5274658cf749d6c02c792310783c5721af6c6f891c5499f25ceccfc865
     name: firecell-nms
     type: application
     urls:
