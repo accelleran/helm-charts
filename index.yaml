@@ -39364,6 +39364,16 @@ entries:
   firecell-5gc:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-09-23T14:54:55.066926+02:00"
+    description: Firecell 5G Core Network - Simplified (non-HA) deployment for MicroK8s
+    digest: 3cf3f2a5dc956ba1ae0ae5fb30f42eae548e02d3ceb034941165045304557fe5
+    name: firecell-5gc
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-5gc-0.1.1/firecell-5gc-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-09-21T13:27:40.184971+02:00"
     description: Firecell 5G Core Network - Simplified (non-HA) deployment for MicroK8s
     digest: 5f2ef670e0137a012a85edcfbbb002a6ebfdce6d3a810c56f3678563bb80d044
