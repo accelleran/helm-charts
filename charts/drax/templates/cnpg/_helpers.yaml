@@ -1,0 +1,21 @@
+{{- define "cnpg.userPassword" -}}
+  {{- if and (hasKey .Values.cnpg.auth "password") (ne .Values.cnpg.auth.password "") -}}
+    {{- .Values.cnpg.auth.password -}}
+  {{- else -}}
+    {{- if not (hasKey . "userPassword") -}}
+      {{- $_ := set . "userPassword" (randAlphaNum 48) -}}
+    {{- end -}}
+    {{- .userPassword -}}
+  {{- end -}}
+{{- end }}
+
+{{- define "cnpg.superuserPassword" -}}
+  {{- if and (hasKey .Values.cnpg.auth "superuserPassword") (ne .Values.cnpg.auth.superuserPassword "") -}}
+    {{- .Values.cnpg.auth.superuserPassword -}}
+  {{- else -}}
+    {{- if not (hasKey . "superuserPassword") -}}
+      {{- $_ := set . "superuserPassword" (randAlphaNum 48) -}}
+    {{- end -}}
+    {{- .superuserPassword -}}
+  {{- end -}}
+{{- end }}
