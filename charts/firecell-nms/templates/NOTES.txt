@@ -1,0 +1,32 @@
+################################################################################
+
+Firecell NMS {{ .Chart.Version }} (app {{ .Chart.AppVersion }})
+
+Release {{ .Release.Name }} in namespace {{ .Values.global.namespace }}.
+
+Before install, create Secret nms-secrets in that namespace with keys:
+  db-root-password, db-password, mail-username, mail-password
+{{- if .Values.grafana.enabled }}
+  grafana-admin-password
+{{- end }}
+
+{{- if .Values.global.createNamespace }}
+
+The chart creates Namespace {{ .Values.global.namespace }}. Set
+global.createNamespace=false when something else already owns it.
+{{- else }}
+
+The chart does not create the namespace. Create it first, or pass
+--create-namespace.
+{{- end }}
+
+{{- if .Values.grafana.enabled }}
+
+Chart Grafana is enabled (grafana.enabled). Set grafana.enabled=false when
+another Grafana owns the dashboards.
+{{- else }}
+
+Chart Grafana is off (grafana.enabled=false).
+{{- end }}
+
+################################################################################

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nms-api
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-api
+spec:
+  selector:
+    app: nms-api
+  ports:
+    - name: http
+      port: 5001
+      targetPort: 5001
+      protocol: TCP

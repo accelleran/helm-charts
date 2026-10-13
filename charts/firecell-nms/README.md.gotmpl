@@ -1,0 +1,27 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.description" . }}
+
+## 1. Architectural Role
+The Network Management System (NMS) provides the central dashboard and REST API for provisioning the 5G Core.
+
+### 1.1 Stack Components
+- **Frontend:** React-based UI served via Nginx.
+- **Backend:** Flask REST API (`nms-api`).
+- **Persistence:** MySQL (`nms-db`) and Redis (`redis-cache`).
+- **Monitoring:** VictoriaMetrics and Grafana.
+
+## 2. Configuration Parameters
+The following table lists the configurable parameters of the Firecell-nms chart and their default values.
+
+{{ template "chart.valuesTable" . }}
+
+## 3. Maintenance & Troubleshooting
+- Ensure Secret `nms-secrets` is pre-created before installation. Set `global.createNamespace=false` when the namespace is managed outside the chart.
+- Ingress requires an Nginx Ingress Controller.
+- Set `grafana.enabled=false` when Grafana is provided by an operator or another release.
+
+{{ template "helm-docs.versionFooter" . }}

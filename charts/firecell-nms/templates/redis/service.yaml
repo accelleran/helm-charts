@@ -1,0 +1,18 @@
+# Service name "redis-cache" on port 6799 → targetPort 6379
+# Flask uses REDIS_CACHE_HOST=redis-cache, REDIS_CACHE_PORT=6799 — zero code change.
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cache
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-redis
+spec:
+  selector:
+    app: nms-redis
+  ports:
+    - name: redis
+      port: 6799
+      targetPort: 6379
+      protocol: TCP

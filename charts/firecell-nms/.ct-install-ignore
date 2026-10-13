@@ -1,0 +1,2 @@
+# chart-testing install is skipped: the chart needs a pre-created nms-secrets
+# Secret and images that kind cannot pull in this repository's CI.

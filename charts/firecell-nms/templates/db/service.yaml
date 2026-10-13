@@ -1,0 +1,37 @@
+# ClusterIP service "db" on port 3310 → targetPort 3306
+# Flask app uses FIRECELL_NMS_API_DATABASE_PORT=3310 and connects to host "db" — zero code change.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-db
+spec:
+  selector:
+    app: nms-db
+  ports:
+    - name: mysql
+      port: 3310
+      targetPort: 3306
+      protocol: TCP
+---
+# Headless service for StatefulSet pod DNS
+apiVersion: v1
+kind: Service
+metadata:
+  name: nms-db-headless
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-db
+spec:
+  clusterIP: None
+  selector:
+    app: nms-db
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+      protocol: TCP

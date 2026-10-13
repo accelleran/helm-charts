@@ -1,0 +1,25 @@
+.DS_Store
+# Common VCS dirs
+.git/
+.gitignore
+.bzr/
+.bzrignore
+.hg/
+.hgignore
+.svn/
+# Common backup files
+*.swp
+*.bak
+*.tmp
+*.orig
+*~
+# Various IDEs
+.project
+.idea/
+*.tmproj
+.vscode/
+# Large docs that inflate the chart package
+CHANGELOG.md
+RELEASE_NOTES.md
+README.md.gotmpl
+.ct-install-ignore

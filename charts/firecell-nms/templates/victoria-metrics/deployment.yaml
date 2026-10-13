@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nms-victoria-metrics
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-victoria-metrics
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nms-victoria-metrics
+  template:
+    metadata:
+      labels:
+        app: nms-victoria-metrics
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: victoria-metrics
+          image: {{ .Values.victoriaMetrics.imageOverride | default (printf "%s/%s" .Values.global.imageRegistry .Values.victoriaMetrics.image) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - --storageDataPath=/victoria-metrics-data
+            - --httpListenAddr=:8430
+            - --retentionPeriod={{ .Values.victoriaMetrics.retentionPeriod }}
+            - --maxLabelsPerTimeseries={{ .Values.victoriaMetrics.maxLabelsPerTimeseries }}
+            - --maxConcurrentInserts={{ .Values.victoriaMetrics.maxConcurrentInserts }}
+          ports:
+            - name: http
+              containerPort: 8430
+              protocol: TCP
+          volumeMounts:
+            - name: vm-data
+              mountPath: /victoria-metrics-data
+          resources:
+            {{- toYaml .Values.victoriaMetrics.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8430
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8430
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        - name: vm-data
+          persistentVolumeClaim:
+            claimName: nms-vm-data
