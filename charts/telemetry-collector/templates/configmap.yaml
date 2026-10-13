@@ -20,7 +20,10 @@ data:
       {{- if and $pipeline.publishers $pipeline.publishers.influxPublisher (not $pipeline.publishers.influxPublisher.buckets) -}}
         {{ fail (printf "When specifying an influx publisher also buckets need to be provided (config.pipelines[%d].publishers.influxPublisher.buckets" $index) }}
       {{- end -}}
+      {{- if and $pipeline.publishers $pipeline.publishers.timescalePublisher (not $pipeline.publishers.timescalePublisher.tables) -}}
+        {{ fail (printf "When specifying a timescale publisher also tables need to be provided (config.pipelines[%d].publishers.timescalePublisher.tables" $index) }}
+      {{- end -}}
     {{- end -}}
     {{ tpl ($.Values.config | toYaml) $ | nindent 4 }}
-        
+
 {{- end -}}
