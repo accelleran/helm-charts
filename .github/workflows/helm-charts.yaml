@@ -14,7 +14,7 @@ jobs:
     name: Variables
     # This is a work-around to be able to properly use variables.
     # This job should be made a dependency in order to be able to use its outputs.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       is_main_branch: ${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
       is_release_branch: ${{ github.ref_type == 'branch' && startsWith(github.ref_name, 'releases/') }}
@@ -60,7 +60,7 @@ jobs:
     name: Lint Charts
     needs:
       - vars
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: ${{ needs.vars.outputs.charts_to_lint != '' }}
     steps:
       - name: Checkout
@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.vars.outputs.charts_to_test_matrix) }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -191,7 +191,7 @@ jobs:
       - lint-charts
       - test-charts
     if: ${{ needs.vars.outputs.is_pull_request == 'true' && !cancelled() }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Successful checks
         if: ${{ !(contains(needs.*.result, 'failure')) }}
@@ -207,7 +207,7 @@ jobs:
       - vars
       - lint-charts
       - test-charts
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
