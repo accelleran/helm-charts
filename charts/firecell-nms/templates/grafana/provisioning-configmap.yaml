@@ -1,0 +1,39 @@
+{{- if .Values.grafana.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nms-grafana-datasources
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+data:
+  victoria.yml: |
+    apiVersion: 1
+    datasources:
+      - name: VictoriaMetrics
+        type: prometheus
+        access: proxy
+        url: http://nms-api-victoria-metrics-dev:8430
+        isDefault: true
+        editable: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nms-grafana-dashboards-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+data:
+  dashboard.yml: |
+    apiVersion: 1
+    providers:
+      - name: default
+        orgId: 1
+        folder: ""
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        options:
+          path: /etc/grafana/provisioning/dashboards
+{{- end }}

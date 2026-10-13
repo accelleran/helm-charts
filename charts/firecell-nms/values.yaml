@@ -1,0 +1,190 @@
+# Firecell NMS — Kubernetes-native deployment (Consul-free)
+# All Consul/Envoy sidecars removed; services communicate via k8s DNS.
+
+global:
+  namespace: firecell-nms
+  imageRegistry: registry.gitlab.com/firecell/r-d/firecellrd
+  # The busybox used by every initContainer in this chart. Composed from
+  # imageRegistry when unset; name it in full to pull it from anywhere else.
+  busyboxImage: ""
+  # Display version only: the app.kubernetes.io/version label, and the fallback
+  # image tag for components that set no imageTag of their own. It is NOT the
+  # database schema version -- see api.schemaVersion.
+  pkgVersion: "6.0.0"
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: gitlab-regcred
+  timezone: Europe/Paris
+  # Must be non-empty: omitting storageClassName on PVCs lets the API inject the
+  # default StorageClass, then Helm upgrades try to "unset" it → immutable spec errors.
+  # k3s default is usually local-path; override per environment (e.g. longhorn in lab).
+  storageClass: "local-path"
+  # 0.1.0 always rendered a Namespace. Set false when GitOps already owns
+  # it: a failed install's uninstall would otherwise delete the namespace
+  # and everything else in it.
+  createNamespace: true
+
+# --- MySQL database ---
+# Service name: "db", port 3310 → targetPort 3306
+# Flask app uses FIRECELL_NMS_API_DATABASE_PORT=3310 and connects to host "db"
+# so zero code change required.
+#
+# Pre-create before helm install:
+#   kubectl create secret generic nms-secrets \
+#     --from-literal=db-root-password=<pass> \
+#     --from-literal=db-password=<pass> \
+#     --from-literal=mail-username=<user> \
+#     --from-literal=mail-password=<pass> \
+#     --from-literal=grafana-admin-password=<pass> \
+#     -n firecell-nms
+db:
+  image: mysql:8.0.31
+  database: firecell_nms_api
+  user: firecell_nms_user
+  # Credentials come from nms-secrets Secret
+  storage: 10Gi
+  readinessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 10
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 300m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+# --- Redis cache ---
+# Service name: "redis-cache", port 6799 → targetPort 6379
+# App uses REDIS_CACHE_HOST=redis-cache, REDIS_CACHE_PORT=6799
+redis:
+  image: redis:stable
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  storage: 1Gi
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+
+# --- Victoria Metrics ---
+# Service name: "nms-api-victoria-metrics-dev", port 8430
+# Grafana datasource URL hardcoded to http://nms-api-victoria-metrics-dev:8430 — no ConfigMap change needed.
+victoriaMetrics:
+  image: ue-monitoring-victoria-metrics:stable
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  storage: 20Gi
+  retentionPeriod: 7d
+  maxLabelsPerTimeseries: 50
+  maxConcurrentInserts: 16
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+# --- Grafana ---
+grafana:
+  # 0.1.0 always deployed chart Grafana. Set false when an operator or
+  # another release owns dashboards.
+  enabled: true
+  image: ue-monitoring-graphana:stable
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  storage: 2Gi
+  # Admin password from nms-secrets Secret (key: grafana-admin-password)
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# --- Flask API backend ---
+api:
+  image: nms-backend
+  # Full image reference (registry/repository:tag), which wins over the
+  # imageRegistry + image + imageTag composition above. Same escape hatch the
+  # firecell-5gc chart gives every NF: the composition glues on the registry
+  # and a "v" prefix, so an image published anywhere else cannot be named
+  # without it.
+  imageOverride: ""
+  # The NMS database schema version, passed to the backend as backend_version
+  # and taken by initialize_nms() as the migration TARGET. It must name a
+  # version the image's migration registry actually knows: that registry runs
+  # 4.0.0 -> 5.0.1, so a higher value finds no chain, fails the migration, and
+  # blocks every API call. Keep it on the schema the nms-backend image carries
+  # (its own /app/mysql-script.sql stamps Version) and raise it only when the
+  # image ships migrations for the new version -- which is why it is separate
+  # from global.pkgVersion, the product version.
+  schemaVersion: "5.0.1"
+  # Image build tag (4-part), decoupled from the display version global.pkgVersion (5.0.1).
+  # Unset falls back to global.pkgVersion.
+  imageTag: "5.0.1.0"
+  coreNamespace: firecell-core   # Namespace where firecell-5gc pods run (for RBAC)
+  # Mail credentials from nms-secrets Secret
+  mailServer: smtp.gmail.com
+  mailPort: 465
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+
+# --- nginx frontend ---
+front:
+  image: nms-frontend
+  # Full image reference (registry/repository:tag), which wins over the
+  # imageRegistry + image + imageTag composition above. Same escape hatch the
+  # firecell-5gc chart gives every NF: the composition glues on the registry
+  # and a "v" prefix, so an image published anywhere else cannot be named
+  # without it.
+  imageOverride: ""
+  imageTag: "5.0.1.0"   # see api.imageTag
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 200m
+
+# --- Ingress ---
+ingress:
+  enabled: true
+  className: nginx
+  hostname: nms.example.com
+  tls:
+    enabled: true
+    secretName: nms-tls
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+
+# --- Configuration Management console ---
+# Publishes the separately deployed cm-nms Service under this chart's NMS host.
+# The Ingress objects are created in the CM namespace because Kubernetes only
+# permits same-namespace Service backends.
+cmConsole:
+  enabled: false
+  namespace: firecell-cm
+  path: /nms-cm
+  service:
+    name: cm-nms
+    port: 8000

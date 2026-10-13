@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nms-front
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-front
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nms-front
+  template:
+    metadata:
+      labels:
+        app: nms-front
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: nginx
+          image: {{ .Values.front.imageOverride | default (printf "%s/%s:v%s" .Values.global.imageRegistry .Values.front.image (.Values.front.imageTag | default .Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - nginx
+            - -g
+            - "daemon off;"
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          resources:
+            {{- toYaml .Values.front.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nms-front-nginx
