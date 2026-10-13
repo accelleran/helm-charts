@@ -36225,6 +36225,38 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/du-metrics-server-0.1.0/du-metrics-server-0.1.0.tgz
     version: 0.1.0
+  firecell-5gc:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-09-23T15:01:13.798807+02:00"
+    description: Firecell 5G Core Network - Simplified (non-HA) deployment for MicroK8s
+    digest: a7b197fac3fbd9a65accec21253c159eabfc8613c6b2a2ab7f934dd123685402
+    name: firecell-5gc
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-5gc-0.1.0/firecell-5gc-0.1.0.tgz
+    version: 0.1.0
+  firecell-nms:
+  - apiVersion: v2
+    appVersion: 5.0.1
+    created: "2026-10-13T10:08:42.842979354Z"
+    description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
+    digest: 6a80e0b1bb5b2f55a8ca59572038b44cd0e419da25ae707be07aa38a0197f2cf
+    name: firecell-nms
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-nms-0.1.1/firecell-nms-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 4.2.0
+    created: "2026-09-16T11:24:00.697648+02:00"
+    description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
+    digest: 7310fa5274658cf749d6c02c792310783c5721af6c6f891c5499f25ceccfc865
+    name: firecell-nms
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-nms-0.1.0/firecell-nms-0.1.0.tgz
+    version: 0.1.0
   loki-deleter:
   - apiVersion: v2
     appVersion: 0.1.11
@@ -39350,26 +39382,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-  firecell-nms:
-  - apiVersion: v2
-    appVersion: 4.2.0
-    created: "2026-09-16T11:24:00.697648+02:00"
-    description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
-    digest: 7310fa5274658cf749d6c02c792310783c5721af6c6f891c5499f25ceccfc865
-    name: firecell-nms
-    type: application
-    urls:
-    - https://github.com/accelleran/helm-charts/releases/download/firecell-nms-0.1.0/firecell-nms-0.1.0.tgz
-    version: 0.1.0
-  firecell-5gc:
-  - apiVersion: v2
-    appVersion: 1.0.0
-    created: "2026-09-23T15:01:13.798807+02:00"
-    description: Firecell 5G Core Network - Simplified (non-HA) deployment for MicroK8s
-    digest: a7b197fac3fbd9a65accec21253c159eabfc8613c6b2a2ab7f934dd123685402
-    name: firecell-5gc
-    type: application
-    urls:
-    - https://github.com/accelleran/helm-charts/releases/download/firecell-5gc-0.1.0/firecell-5gc-0.1.0.tgz
-    version: 0.1.0
-generated: "2026-08-31T19:09:20.508114215Z"
+generated: "2026-10-13T10:08:42.845462742Z"
