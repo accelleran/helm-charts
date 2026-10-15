@@ -67,8 +67,8 @@ spec:
                 - /bin/sh
                 - -c
                 - mysqladmin ping -h localhost -uroot -p"$MYSQL_ROOT_PASSWORD"
-            initialDelaySeconds: 120
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.db.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.db.readinessProbe.periodSeconds }}
             failureThreshold: 10
             timeoutSeconds: 5
           livenessProbe:

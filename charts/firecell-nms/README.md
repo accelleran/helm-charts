@@ -28,6 +28,8 @@ The following table lists the configurable parameters of the Firecell-nms chart 
 | api.resources.requests.memory | string | `"256Mi"` |  |
 | db.enabled | bool | `true` | Set false to skip chart MySQL (nms-ng cutover). |
 | db.database | string | `"firecell_nms_api"` |  |
+| db.readinessProbe.initialDelaySeconds | int | `120` |  |
+| db.readinessProbe.periodSeconds | int | `10` |  |
 | db.image | string | `"mysql:8.0.31"` |  |
 | db.resources.limits.cpu | string | `"1000m"` |  |
 | db.resources.limits.memory | string | `"1Gi"` |  |
