@@ -19,64 +19,68 @@ app.kubernetes.io/part-of: firecell-nms
 In-cluster URLs of the chart's own Services. Names are fixed, not derived
 from the release name, so other releases can rely on them.
 */}}
-{{- define "firecell-nms.nmsNg.url" -}}
-{{- printf "http://nms-ng.%s.svc.cluster.local:8080" .Release.Namespace }}
+{{- define "firecell-nms.backend.url" -}}
+{{- printf "http://nms-api.%s.svc.cluster.local:8080" .Release.Namespace }}
 {{- end }}
 
 {{- define "firecell-nms.victoriaMetrics.url" -}}
 {{- printf "http://nms-victoria-metrics.%s.svc.cluster.local:8430" .Release.Namespace }}
 {{- end }}
 
-{{- define "firecell-nms.nmsNg.dbHost" -}}
-{{- printf "nms-ng-db.%s.svc.cluster.local" .Release.Namespace }}
+{{- define "firecell-nms.backend.dbHost" -}}
+{{- printf "nms-db.%s.svc.cluster.local" .Release.Namespace }}
 {{- end }}
 
 {{/*
-A southbound 5GC URL: the value when set, else the NF's HTTP API in coreNamespace.
-Usage: include "firecell-nms.nmsNg.coreUrl" (list . "udr" "oai-udr")
+A southbound 5GC URL: the value when set, else the NF's HTTP API in rbac.coreNamespace.
+Usage: include "firecell-nms.backend.coreUrl" (list . "udr" "oai-udr")
 */}}
-{{- define "firecell-nms.nmsNg.coreUrl" -}}
+{{- define "firecell-nms.backend.coreUrl" -}}
 {{- $root := index . 0 }}
 {{- $key := index . 1 }}
 {{- $service := index . 2 }}
-{{- index $root.Values.nmsNg.endpoints $key | default (printf "http://%s.%s.svc.cluster.local:8080" $service $root.Values.nmsNg.coreNamespace) }}
+{{- index $root.Values.backend.endpoints $key | default (printf "http://%s.%s.svc.cluster.local:8080" $service $root.Values.rbac.coreNamespace) }}
 {{- end }}
 
-{{- define "firecell-nms.nmsNg.secretName" -}}
-{{- required "nmsNg.existingSecret is required: name the Secret holding the nms-ng credentials (see README)" .Values.nmsNg.existingSecret }}
+{{- define "firecell-nms.backend.secretName" -}}
+{{- required "backend.existingSecret is required: name the Secret holding the backend credentials (see README)" .Values.backend.existingSecret }}
 {{- end }}
 
-{{- define "firecell-nms.nmsNg.secretEnv" -}}
+{{/*
+Secret-backed environment. The FIRECELL_NMS_NG_ prefix is the backend's own.
+Usage: include "firecell-nms.backend.secretEnv" (list . (dict "DATABASE_URL" "database-url"))
+*/}}
+{{- define "firecell-nms.backend.secretEnv" -}}
 {{- $root := index . 0 }}
 {{- range $name, $key := index . 1 }}
 - name: FIRECELL_NMS_NG_{{ $name }}
   valueFrom:
     secretKeyRef:
-      name: {{ include "firecell-nms.nmsNg.secretName" $root }}
+      name: {{ include "firecell-nms.backend.secretName" $root }}
       key: {{ $key }}
 {{- end }}
 {{- end }}
 
 {{/*
-Environment of every long-running nms-ng process. The rest comes from the
-nms-ng-config ConfigMap.
+Environment of every long-running backend process. The rest comes from the
+nms-config ConfigMap.
 */}}
-{{- define "firecell-nms.nmsNg.env" -}}
-{{- include "firecell-nms.nmsNg.secretEnv" (list . (dict "DATABASE_URL" "database-url" "API_TOKENS_JSON" "api-tokens-json")) }}
-{{- with .Values.nmsNg.extraEnv }}
+{{- define "firecell-nms.backend.env" -}}
+{{- include "firecell-nms.backend.secretEnv" (list . (dict "DATABASE_URL" "database-url" "API_TOKENS_JSON" "api-tokens-json")) }}
+{{- with .Values.backend.extraEnv }}
 {{ toYaml . }}
 {{- end }}
 {{- end }}
 
 {{/*
-Rolls the nms-ng pods when the rendered configuration changes: config and
+Rolls the backend pods when the rendered configuration changes: config and
 endpoints both land in these ConfigMaps.
 */}}
-{{- define "firecell-nms.nmsNg.checksum" -}}
-checksum/config: {{ include (print .Template.BasePath "/nms-ng/configmap.yaml") . | sha256sum }}
+{{- define "firecell-nms.backend.checksum" -}}
+checksum/config: {{ include (print .Template.BasePath "/backend/configmap.yaml") . | sha256sum }}
 {{- end }}
 
-{{- define "firecell-nms.nmsNg.podSecurityContext" -}}
+{{- define "firecell-nms.backend.podSecurityContext" -}}
 runAsNonRoot: true
 runAsUser: 10001
 runAsGroup: 10001
@@ -85,7 +89,7 @@ seccompProfile:
   type: RuntimeDefault
 {{- end }}
 
-{{- define "firecell-nms.nmsNg.containerSecurityContext" -}}
+{{- define "firecell-nms.backend.containerSecurityContext" -}}
 allowPrivilegeEscalation: false
 readOnlyRootFilesystem: true
 capabilities:
@@ -97,9 +101,9 @@ Init container that holds a pod until the control plane has migrated the
 schema to the revision this image expects. The backend refuses to start
 against any other revision.
 */}}
-{{- define "firecell-nms.nmsNg.waitForSchema" -}}
+{{- define "firecell-nms.backend.waitForSchema" -}}
 - name: wait-for-schema
-  image: {{ .Values.nmsNg.image | quote }}
+  image: {{ .Values.backend.image | quote }}
   imagePullPolicy: {{ .Values.global.imagePullPolicy }}
   command:
     - python
@@ -119,11 +123,11 @@ against any other revision.
           print("schema at %s, waiting for %s" % (current, head), flush=True)
           time.sleep(5)
   securityContext:
-    {{- include "firecell-nms.nmsNg.containerSecurityContext" . | nindent 4 }}
+    {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 4 }}
   env:
-    {{- include "firecell-nms.nmsNg.secretEnv" (list . (dict "DATABASE_URL" "database-url")) | nindent 4 }}
+    {{- include "firecell-nms.backend.secretEnv" (list . (dict "DATABASE_URL" "database-url")) | nindent 4 }}
   volumeMounts:
     - {name: tmp, mountPath: /tmp}
   resources:
-    {{- toYaml .Values.nmsNg.initResources | nindent 4 }}
+    {{- toYaml .Values.backend.initResources | nindent 4 }}
 {{- end }}

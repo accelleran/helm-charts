@@ -1,12 +1,12 @@
-{{- $ng := .Values.nmsNg }}
+{{- $rbac := .Values.rbac }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: nms-ng
+  name: nms
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: nms-ng
+    app.kubernetes.io/component: backend
 automountServiceAccountToken: true
 ---
 # In coreNamespace, which must exist before install. Binds the ServiceAccount
@@ -14,11 +14,11 @@ automountServiceAccountToken: true
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: nms-ng-runtime
-  namespace: {{ $ng.coreNamespace }}
+  name: nms-runtime
+  namespace: {{ $rbac.coreNamespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: nms-ng
+    app.kubernetes.io/component: backend
 rules:
   # The CM runtime reads pods. Pod names are dynamic, so resourceNames
   # cannot narrow list/watch.
@@ -29,7 +29,7 @@ rules:
   - apiGroups: [""]
     resources: ["pods/log"]
     verbs: ["get"]
-  {{- with $ng.rbac.deploymentNames }}
+  {{- with $rbac.deploymentNames }}
   # Lifecycle operations (restart, stop, start) on these Deployments only.
   - apiGroups: ["apps"]
     resources: ["deployments", "deployments/scale"]
@@ -46,31 +46,31 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: nms-ng-runtime
-  namespace: {{ $ng.coreNamespace }}
+  name: nms-runtime
+  namespace: {{ $rbac.coreNamespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: nms-ng
+    app.kubernetes.io/component: backend
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: nms-ng-runtime
+  name: nms-runtime
 subjects:
   - kind: ServiceAccount
-    name: nms-ng
+    name: nms
     namespace: {{ .Release.Namespace }}
-{{- if and $ng.ranNamespace $ng.rbac.ranDeploymentNames }}
+{{- if and $rbac.ranNamespace $rbac.ranDeploymentNames }}
 ---
 # RAN Deployments (the ocudu DU) outside coreNamespace. Pods are read so the
 # lifecycle can follow the rollout.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: nms-ng-ran
-  namespace: {{ $ng.ranNamespace }}
+  name: nms-ran
+  namespace: {{ $rbac.ranNamespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: nms-ng
+    app.kubernetes.io/component: backend
 rules:
   - apiGroups: [""]
     resources: ["pods", "pods/status"]
@@ -78,23 +78,23 @@ rules:
   - apiGroups: ["apps"]
     resources: ["deployments", "deployments/scale"]
     resourceNames:
-      {{- toYaml $ng.rbac.ranDeploymentNames | nindent 6 }}
+      {{- toYaml $rbac.ranDeploymentNames | nindent 6 }}
     verbs: ["get", "patch", "update"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: nms-ng-ran
-  namespace: {{ $ng.ranNamespace }}
+  name: nms-ran
+  namespace: {{ $rbac.ranNamespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: nms-ng
+    app.kubernetes.io/component: backend
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: nms-ng-ran
+  name: nms-ran
 subjects:
   - kind: ServiceAccount
-    name: nms-ng
+    name: nms
     namespace: {{ .Release.Namespace }}
 {{- end }}

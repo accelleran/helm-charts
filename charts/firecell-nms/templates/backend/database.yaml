@@ -1,13 +1,13 @@
-{{- $db := .Values.nmsNg.database }}
+{{- $db := .Values.backend.database }}
 # Kept on uninstall: it holds the inventory, the catalogue and the OP.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nms-ng-db-data
+  name: nms-db-data
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: nms-ng-db
+    app.kubernetes.io/component: nms-db
   annotations:
     helm.sh/resource-policy: keep
 spec:
@@ -20,23 +20,23 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: nms-ng-db
+  name: nms-db
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app: nms-ng-db
-    app.kubernetes.io/component: nms-ng-db
+    app: nms-db
+    app.kubernetes.io/component: nms-db
 spec:
-  serviceName: nms-ng-db
+  serviceName: nms-db
   replicas: 1
   selector:
     matchLabels:
-      app: nms-ng-db
+      app: nms-db
   template:
     metadata:
       labels:
-        app: nms-ng-db
-        app.kubernetes.io/component: nms-ng-db
+        app: nms-db
+        app.kubernetes.io/component: nms-db
         app.kubernetes.io/part-of: firecell-nms
     spec:
       securityContext:
@@ -62,7 +62,7 @@ spec:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "firecell-nms.nmsNg.secretName" . }}
+                  name: {{ include "firecell-nms.backend.secretName" . }}
                   key: database-root-password
             - name: MYSQL_DATABASE
               value: {{ $db.name | quote }}
@@ -91,21 +91,21 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: nms-ng-db-data
+            claimName: nms-db-data
         - {name: run, emptyDir: {}}
         - {name: tmp, emptyDir: {}}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nms-ng-db
+  name: nms-db
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app: nms-ng-db
-    app.kubernetes.io/component: nms-ng-db
+    app: nms-db
+    app.kubernetes.io/component: nms-db
 spec:
   selector:
-    app: nms-ng-db
+    app: nms-db
   ports:
     - {name: mysql, port: 3306, targetPort: mysql}

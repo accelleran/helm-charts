@@ -1,7 +1,7 @@
-{{- $ng := .Values.nmsNg }}
+{{- $be := .Values.backend }}
 {{/*
 The schema migration and the catalogue bootstrap run here, as init
-containers of the one control-plane pod, not as Helm hooks. Every nms-ng
+containers of the one control-plane pod, not as Helm hooks. Every backend
 process refuses to start on an unmigrated schema, so with post-install hooks
 an install that waits for readiness (helm --wait, Flux helm-controller) never
 reaches the hook that would make the pods ready. pre-install cannot work
@@ -15,91 +15,91 @@ catalogue), so a restarted pod repeats them harmlessly.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nms-ng-control-plane
+  name: nms-control-plane
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app: nms-ng-control-plane
-    app.kubernetes.io/component: nms-ng-control-plane
+    app: nms-control-plane
+    app.kubernetes.io/component: nms-control-plane
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: nms-ng-control-plane
+      app: nms-control-plane
   template:
     metadata:
       labels:
-        app: nms-ng-control-plane
-        app.kubernetes.io/component: nms-ng-control-plane
+        app: nms-control-plane
+        app.kubernetes.io/component: nms-control-plane
         app.kubernetes.io/part-of: firecell-nms
       annotations:
-        {{- include "firecell-nms.nmsNg.checksum" . | nindent 8 }}
+        {{- include "firecell-nms.backend.checksum" . | nindent 8 }}
     spec:
-      serviceAccountName: nms-ng
+      serviceAccountName: nms
       securityContext:
-        {{- include "firecell-nms.nmsNg.podSecurityContext" . | nindent 8 }}
-      terminationGracePeriodSeconds: {{ $ng.terminationGracePeriodSeconds }}
+        {{- include "firecell-nms.backend.podSecurityContext" . | nindent 8 }}
+      terminationGracePeriodSeconds: {{ $be.terminationGracePeriodSeconds }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       initContainers:
         - name: wait-for-db
-          image: {{ $ng.database.image | quote }}
+          image: {{ $be.database.image | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - sh
             - -c
             - |
-              until mysqladmin ping -h {{ include "firecell-nms.nmsNg.dbHost" . }} --silent; do
-                echo "waiting for nms-ng-db"
+              until mysqladmin ping -h {{ include "firecell-nms.backend.dbHost" . }} --silent; do
+                echo "waiting for nms-db"
                 sleep 2
               done
           securityContext:
-            {{- include "firecell-nms.nmsNg.containerSecurityContext" . | nindent 12 }}
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
           resources:
             requests: {cpu: 10m, memory: 32Mi}
             limits: {cpu: 200m, memory: 128Mi}
         - name: migrate
-          image: {{ $ng.image | quote }}
+          image: {{ $be.image | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-migrate"]
           securityContext:
-            {{- include "firecell-nms.nmsNg.containerSecurityContext" . | nindent 12 }}
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
           env:
-            {{- include "firecell-nms.nmsNg.secretEnv" (list . (dict "DATABASE_URL" "database-url")) | nindent 12 }}
+            {{- include "firecell-nms.backend.secretEnv" (list . (dict "DATABASE_URL" "database-url")) | nindent 12 }}
           volumeMounts:
             - {name: tmp, mountPath: /tmp}
           resources:
-            {{- toYaml $ng.initResources | nindent 12 }}
+            {{- toYaml $be.initResources | nindent 12 }}
         - name: bootstrap
-          image: {{ $ng.image | quote }}
+          image: {{ $be.image | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-bootstrap"]
           securityContext:
-            {{- include "firecell-nms.nmsNg.containerSecurityContext" . | nindent 12 }}
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
           envFrom:
-            - configMapRef: {name: nms-ng-config}
+            - configMapRef: {name: nms-config}
           env:
             {{- /* The backend falls back to admin/admin without the two admin keys, so they are not optional. */}}
-            {{- include "firecell-nms.nmsNg.secretEnv" (list . (dict "DATABASE_URL" "database-url" "NETWORK_NAME" "network-name" "OP" "op" "DEFAULT_ADMIN_USER" "default-admin-user" "DEFAULT_ADMIN_PASSWORD" "default-admin-password")) | nindent 12 }}
+            {{- include "firecell-nms.backend.secretEnv" (list . (dict "DATABASE_URL" "database-url" "NETWORK_NAME" "network-name" "OP" "op" "DEFAULT_ADMIN_USER" "default-admin-user" "DEFAULT_ADMIN_PASSWORD" "default-admin-password")) | nindent 12 }}
           volumeMounts:
             - {name: tmp, mountPath: /tmp}
           resources:
-            {{- toYaml $ng.initResources | nindent 12 }}
+            {{- toYaml $be.initResources | nindent 12 }}
       containers:
         - name: control-plane
-          image: {{ $ng.image | quote }}
+          image: {{ $be.image | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-control-plane"]
           securityContext:
-            {{- include "firecell-nms.nmsNg.containerSecurityContext" . | nindent 12 }}
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
           envFrom:
-            - configMapRef: {name: nms-ng-config}
+            - configMapRef: {name: nms-config}
           env:
-            {{- include "firecell-nms.nmsNg.env" . | nindent 12 }}
+            {{- include "firecell-nms.backend.env" . | nindent 12 }}
           readinessProbe:
             exec:
               command: ["python", "-c", "import os; os.kill(1, 0)"]
@@ -110,13 +110,13 @@ spec:
             periodSeconds: 20
             failureThreshold: 3
           resources:
-            {{- toYaml $ng.controlPlane.resources | nindent 12 }}
+            {{- toYaml $be.controlPlane.resources | nindent 12 }}
           volumeMounts:
-            - {name: kubeconfig, mountPath: /etc/firecell-nms-ng/kubeconfig, readOnly: true}
+            - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
       volumes:
         - name: kubeconfig
           configMap:
-            name: nms-ng-kubeconfig
+            name: nms-kubeconfig
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}

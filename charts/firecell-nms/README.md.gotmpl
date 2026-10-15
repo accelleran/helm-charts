@@ -11,12 +11,14 @@ The Network Management System (NMS) provides the dashboard and the REST API for 
 
 ### 1.1 Stack Components
 
-- **Frontend:** React UI served by nginx (`nms-front`). nginx sends `/api/` to nms-ng, `/nms-cm/` to the nms-ng built-in CM console (`/ui/`), `/metrics-api/` to VictoriaMetrics, and redirects `/grafana/` to `front.grafanaUrl`.
-- **Backend:** nms-ng: the API (two or more replicas), the job workers, and exactly one control plane (supervision, reconciliation, subscriptions, audits).
-- **Persistence:** the nms-ng MySQL (`nms-ng-db`).
-- **Metrics:** VictoriaMetrics, where nms-ng writes PM reports and alarm gauges.
+- **Frontend:** React UI served by nginx (`nms-front`). nginx sends `/api/` to the API, `/nms-cm/` to the backend's built-in CM console (`/ui/`), `/metrics-api/` to VictoriaMetrics, and redirects `/grafana/` to `front.grafanaUrl`.
+- **Backend:** the API (`nms-api`, two or more replicas), the job workers (`nms-worker`), and exactly one control plane (`nms-control-plane`: supervision, reconciliation, subscriptions, audits).
+- **Persistence:** the backend's MySQL (`nms-db`).
+- **Metrics:** VictoriaMetrics, where the backend writes PM reports and alarm gauges.
 
 Not included: Grafana (use grafana-operator or any Grafana with a datasource on `nms-victoria-metrics`), an Ingress (route to `nms-front` with your gateway), the namespace, the platform monitor and anything from the 5G Core.
+
+The image name `firecell-nms-backend-ng`, the `firecell-nms-ng-*` commands and the `FIRECELL_NMS_NG_*` environment variables come from the backend itself, so they keep its `ng` naming.
 
 ### 1.2 Services
 
@@ -24,20 +26,20 @@ Names are fixed, not derived from the release name, so other releases can rely o
 
 | Service | Port | Serves |
 |---------|------|--------|
-| `nms-front` | 80 | UI; `/api/health_check` for probes |
-| `nms-ng` | 8080 | API, FCAPS notification receiver, Grafana alert webhook `/api/alarms/webhook` |
-| `nms-ng-db` | 3306 | nms-ng MySQL |
+| `nms-front` | 80 | UI, `/nginx-health` |
+| `nms-api` | 8080 | API, `/healthz`, FCAPS notification receiver, Grafana alert webhook `/api/alarms/webhook` |
+| `nms-db` | 3306 | Backend MySQL |
 | `nms-victoria-metrics` | 8430 | VictoriaMetrics (Prometheus API) |
 
 ## 2. Before Installation
 
-- Create the release namespace and `nmsNg.coreNamespace` (default `firecell-core`), plus `nmsNg.ranNamespace` when set. The chart renders Roles there and creates no namespace.
-- Create the Secret named by `nmsNg.existingSecret` (default `nms-ng-secrets`) in the release namespace. The chart never creates it and has no default credentials.
+- Create the release namespace and `rbac.coreNamespace` (default `firecell-core`), plus `rbac.ranNamespace` when set. The chart renders Roles there and creates no namespace.
+- Create the Secret named by `backend.existingSecret` (default `nms-secrets`) in the release namespace. The chart never creates it and has no default credentials.
 
 | Key | Content |
 |-----|---------|
 | `database-root-password` | MySQL root password, applied on the database's first start only. Use URL-safe characters (letters, digits, `. _ ~ -`): it is also part of `database-url`. |
-| `database-url` | `mysql+pymysql://root:<database-root-password>@nms-ng-db.<namespace>.svc.cluster.local:3306/<nmsNg.database.name>` |
+| `database-url` | `mysql+pymysql://root:<database-root-password>@nms-db.<namespace>.svc.cluster.local:3306/<backend.database.name>` |
 | `network-name` | Name of the managed network, e.g. `firecell`. |
 | `op` | Operator variant key: exactly 32 hexadecimal characters. |
 | `api-tokens-json` | Non-empty JSON object of machine API tokens, e.g. `{"<token>":{"user":"automation","roles":["operator"]}}`. |
@@ -46,9 +48,9 @@ Names are fixed, not derived from the release name, so other releases can rely o
 
 ```sh
 pw="$(openssl rand -hex 16)"
-kubectl -n firecell-nms create secret generic nms-ng-secrets \
+kubectl -n firecell-nms create secret generic nms-secrets \
   --from-literal=database-root-password="$pw" \
-  --from-literal=database-url="mysql+pymysql://root:${pw}@nms-ng-db.firecell-nms.svc.cluster.local:3306/firecell_nms_ng" \
+  --from-literal=database-url="mysql+pymysql://root:${pw}@nms-db.firecell-nms.svc.cluster.local:3306/firecell_nms" \
   --from-literal=network-name=firecell \
   --from-literal=op="$(openssl rand -hex 16)" \
   --from-literal=api-tokens-json="{\"$(openssl rand -hex 24)\":{\"user\":\"automation\",\"roles\":[\"operator\"]}}" \
@@ -66,19 +68,19 @@ helm install firecell-nms accelleran/firecell-nms --namespace firecell-nms
 
 The install completes in one pass, with or without `--wait`, which also makes it safe under Flux helm-controller. There are no Helm hooks:
 
-- The `nms-ng-control-plane` pod (one replica, `Recreate`) waits for MySQL, runs the schema migration, then the catalogue bootstrap, as init containers. Both are idempotent and run again on every control-plane start.
-- The API and worker pods wait in a `wait-for-schema` init container until the schema is at the revision their image expects. nms-ng refuses to start on any other revision, so post-install hooks would leave `--wait` (and Flux) waiting for pods that can only become ready after the hook.
+- The `nms-control-plane` pod (one replica, `Recreate`) waits for MySQL, runs the schema migration, then the catalogue bootstrap, as init containers. Both are idempotent and run again on every control-plane start.
+- The API and worker pods wait in a `wait-for-schema` init container until the schema is at the revision their image expects. The backend refuses to start on any other revision, so post-install hooks would leave `--wait` (and Flux) waiting for pods that can only become ready after the hook.
 
-On an upgrade that changes the backend image, the old control plane stops first (up to `nmsNg.terminationGracePeriodSeconds`, 660s by default, while it finishes in-flight work), then the new one migrates while the old API pods keep serving. Give the upgrade a timeout above that grace period.
+On an upgrade that changes the backend image, the old control plane stops first (up to `backend.terminationGracePeriodSeconds`, 660s by default, while it finishes in-flight work), then the new one migrates while the old API pods keep serving. Give the upgrade a timeout above that grace period.
 
-Bootstrap seeds the catalogue only when it is empty: `nmsNg.config.seedDnnsJson` and `seedSliceJson` matter on the first install only.
+Bootstrap seeds the catalogue only when it is empty: `backend.config.seedDnnsJson` and `seedSliceJson` matter on the first install only.
 
 ## 4. Gateway Identity
 
-Behind oauth2-proxy, set `nmsNg.config.trustGatewayHeaders=true` and `nmsNg.networkPolicy.enabled=true` (the first without the second fails the render). nms-ng then believes `X-Forwarded-User` / `-Groups` without checking a token, so the NetworkPolicies decide who can send them:
+Behind oauth2-proxy, set `backend.config.trustGatewayHeaders=true` and `networkPolicy.enabled=true` (the first without the second fails the render). The backend then believes `X-Forwarded-User` / `-Groups` without checking a token, so the NetworkPolicies decide who can send them:
 
-- `nms-ng-api`: port 8080 from `nms-front`, oauth2-proxy (`app.kubernetes.io/name: <nmsNg.networkPolicy.oauth2ProxyLabel>`), every pod in `nmsNg.coreNamespace` (NFs post FCAPS notifications without a token) and `nmsNg.networkPolicy.extraFrom`. Add the Grafana that posts alerts and the platform monitor there.
-- `nms-front`: port 80 from oauth2-proxy and `nmsNg.networkPolicy.frontExtraFrom` (e.g. a landing page probing `/api/health_check`). nginx forwards the identity headers, so it is closed too.
+- `nms-api`: port 8080 from `nms-front`, oauth2-proxy (`app.kubernetes.io/name: <networkPolicy.oauth2ProxyLabel>`), every pod in `rbac.coreNamespace` (NFs post FCAPS notifications without a token) and `networkPolicy.extraFrom`. Add the Grafana that posts alerts and the platform monitor there.
+- `nms-front`: port 80 from oauth2-proxy and `networkPolicy.frontExtraFrom`. nginx forwards the identity headers, so it is closed too.
 
 ## 5. Configuration Parameters
 
@@ -88,11 +90,6 @@ The following table lists the configurable parameters of the firecell-nms chart 
 
 ## 6. Upgrading from 0.1.x
 
-0.2.0 replaces the Flask API with nms-ng. Nothing is migrated from the Flask database.
-
-- Before upgrading a release installed with `global.createNamespace=true` (the 0.1.x default), run `kubectl annotate namespace <namespace> helm.sh/resource-policy=keep`. Otherwise Helm deletes the namespace, and everything in it, when it drops the Namespace from the release.
-- Removed: `api.*`, `db.*`, `redis.*`, `grafana.*`, `ingress.*`, `cmConsole.*`, `global.namespace`, `global.createNamespace`, `global.imageRegistry`, `global.pkgVersion`, `global.busyboxImage`, `global.timezone`, every `imageOverride` and `imageTag`. `front.image` and `victoriaMetrics.image` now take a full image reference.
-- Service `nms-api-victoria-metrics-dev` is now `nms-victoria-metrics`; Services `nms-api`, `db`, `nms-db-headless`, `redis-cache` and `nms-grafana` are gone. Secret `nms-secrets` is no longer read.
-- The Flask MySQL PVC (`nms-db-data-nms-db-0`) is left behind; delete it once nothing needs it.
+There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 
 {{ template "helm-docs.versionFooter" . }}

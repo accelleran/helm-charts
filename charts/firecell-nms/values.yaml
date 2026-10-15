@@ -1,6 +1,6 @@
-# Firecell NMS: the nginx frontend, the nms-ng backend (API, worker, control
-# plane and its MySQL) and VictoriaMetrics. Install one release per
-# namespace: Service names are fixed so other releases can rely on them.
+# Firecell NMS: the nginx frontend, the backend (API, worker, control plane
+# and its MySQL) and VictoriaMetrics. Install one release per namespace:
+# Service names are fixed so other releases can rely on them.
 
 # Every image is one full reference (registry/repository:tag[@digest]) with
 # an exact tag, so a mirror or a digest pin is a single value per image.
@@ -15,23 +15,16 @@ global:
   # to unset it (immutable field).
   storageClass: "local-path"
 
-# --- nms-ng backend ---
-nmsNg:
-  # -- nms-ng backend image (API, worker, control plane, migration and
-  # bootstrap), as a full reference.
+# --- Backend ---
+backend:
+  # -- Backend image (API, worker, control plane, migration and bootstrap),
+  # as a full reference.
   image: ghcr.io/accelleran/firecell-nms-backend-ng:master-de7132d
-  # -- Secret with the nms-ng credentials, created before install; the chart
-  # never creates it. Required keys: `database-root-password`,
+  # -- Secret with the backend credentials, created before install; the
+  # chart never creates it. Required keys: `database-root-password`,
   # `database-url`, `network-name`, `op`, `api-tokens-json`,
   # `default-admin-user`, `default-admin-password` (see README).
-  existingSecret: nms-ng-secrets
-  # -- Namespace of the 5GC NFs. The chart renders a Role there, so it must
-  # exist before install.
-  coreNamespace: firecell-core
-  # -- Namespace of the RAN Deployments (the ocudu DU) when they do not run in
-  # coreNamespace. When set, RAN-domain elements are rolled there and a
-  # second Role over rbac.ranDeploymentNames is rendered.
-  ranNamespace: ""
+  existingSecret: nms-secrets
   # -- Longer than the backend's slowest lifecycle operation (600s), so
   # workers and the control plane can finish in-flight work after SIGTERM.
   terminationGracePeriodSeconds: 660
@@ -65,22 +58,22 @@ nmsNg:
     limits: {cpu: 500m, memory: 512Mi}
 
   database:
-    # -- nms-ng MySQL image, as a full reference.
+    # -- Backend MySQL image, as a full reference.
     image: docker.io/library/mysql:8.4.10
     # -- Database the backend uses; `database-url` must name it.
-    name: firecell_nms_ng
-    # -- Size of PVC nms-ng-db-data (kept on uninstall).
+    name: firecell_nms
+    # -- Size of PVC nms-db-data (kept on uninstall).
     storage: 10Gi
     resources:
       requests: {cpu: 200m, memory: 512Mi}
       limits: {cpu: "2", memory: 2Gi}
 
   endpoints:
-    # -- UDR provisioning API. Empty: `http://oai-udr.<coreNamespace>.svc.cluster.local:8080`.
+    # -- UDR provisioning API. Empty: `http://oai-udr.<rbac.coreNamespace>.svc.cluster.local:8080`.
     udr: ""
-    # -- PCF API. Empty: `http://oai-pcf.<coreNamespace>.svc.cluster.local:8080`.
+    # -- PCF API. Empty: `http://oai-pcf.<rbac.coreNamespace>.svc.cluster.local:8080`.
     pcf: ""
-    # -- IMS API. Empty: `http://ims.<coreNamespace>.svc.cluster.local:8080`.
+    # -- IMS API. Empty: `http://ims.<rbac.coreNamespace>.svc.cluster.local:8080`.
     ims: ""
     # -- Where PM reports and alarm gauges are written. Empty: the in-chart
     # VictoriaMetrics. Grafana alert rules read core_alarm_active from here
@@ -119,42 +112,51 @@ nmsNg:
     # -- N3 capture interface on the UPF.
     n3InterfaceName: any
     # -- Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires
-    # networkPolicy.enabled: nms-ng does not check tokens on this path.
+    # networkPolicy.enabled: the backend does not check tokens on this path.
     trustGatewayHeaders: false
 
   # -- Extra environment (EnvVar list) for the API, worker and control plane,
   # e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL.
   extraEnv: []
 
-  networkPolicy:
-    # -- Restrict who reaches the nms-ng API (port 8080) and nms-front
-    # (port 80). Needed for config.trustGatewayHeaders.
-    enabled: false
-    # -- app.kubernetes.io/name label of the oauth2-proxy pods in this namespace.
-    oauth2ProxyLabel: oauth2-proxy
-    # -- More NetworkPolicyPeers allowed to the API besides nms-front,
-    # oauth2-proxy and coreNamespace: the Grafana that posts alerts to
-    # /api/alarms/webhook, the platform monitor that pushes FCAPS.
-    extraFrom: []
-    # -- More NetworkPolicyPeers allowed to nms-front besides oauth2-proxy,
-    # e.g. a landing page that probes /api/health_check.
-    frontExtraFrom: []
+# --- Backend RBAC in the 5GC and RAN namespaces ---
+rbac:
+  # -- Namespace of the 5GC NFs. The chart renders a Role there, so it must
+  # exist before install.
+  coreNamespace: firecell-core
+  # -- Namespace of the RAN Deployments (the ocudu DU) when they do not run in
+  # coreNamespace. When set, RAN-domain elements are rolled there and a
+  # second Role over rbac.ranDeploymentNames is rendered.
+  ranNamespace: ""
+  # -- Deployments in coreNamespace the lifecycle may restart, stop and
+  # start. Empty grants no Deployment access.
+  deploymentNames:
+    - oai-amf
+    - oai-smf
+    - oai-upf
+    - oai-udr
+    - oai-udm
+    - oai-pcf
+    - oai-nrf
+    - oai-ausf
+  # -- Deployments in ranNamespace the lifecycle may roll (only when
+  # ranNamespace is set), e.g. the ocudu DU `du-1`.
+  ranDeploymentNames: []
 
-  rbac:
-    # -- Deployments in coreNamespace the lifecycle may restart, stop and
-    # start. Empty grants no Deployment access.
-    deploymentNames:
-      - oai-amf
-      - oai-smf
-      - oai-upf
-      - oai-udr
-      - oai-udm
-      - oai-pcf
-      - oai-nrf
-      - oai-ausf
-    # -- Deployments in ranNamespace the lifecycle may roll (only when
-    # ranNamespace is set), e.g. the ocudu DU `du-1`.
-    ranDeploymentNames: []
+# --- NetworkPolicies for the gateway identity headers ---
+networkPolicy:
+  # -- Restrict who reaches the API (nms-api, port 8080) and nms-front
+  # (port 80). Needed for backend.config.trustGatewayHeaders.
+  enabled: false
+  # -- app.kubernetes.io/name label of the oauth2-proxy pods in this namespace.
+  oauth2ProxyLabel: oauth2-proxy
+  # -- More NetworkPolicyPeers allowed to the API besides nms-front,
+  # oauth2-proxy and rbac.coreNamespace: the Grafana that posts alerts to
+  # /api/alarms/webhook, the platform monitor that pushes FCAPS.
+  extraFrom: []
+  # -- More NetworkPolicyPeers allowed to nms-front besides oauth2-proxy,
+  # e.g. a landing page.
+  frontExtraFrom: []
 
 # --- Victoria Metrics ---
 # Service nms-victoria-metrics, port 8430: point the Grafana datasource here.
@@ -177,12 +179,12 @@ victoriaMetrics:
 # --- nginx frontend ---
 front:
   # -- NMS frontend (nginx) image, as a full reference. Needs a CM-enabled
-  # build that talks to nms-ng.
+  # build that talks to the new backend.
   image: ghcr.io/accelleran/nms-frontend:ping-299e22c
-  # -- Where nginx sends /api/. Empty: the in-chart nms-ng Service.
+  # -- Where nginx sends /api/. Empty: the in-chart nms-api Service.
   backendUrl: ""
-  # -- Where nginx sends /nms-cm/ (the CM console). Empty: the nms-ng
-  # built-in console, `<nms-ng>/ui`.
+  # -- Where nginx sends /nms-cm/ (the CM console). Empty: the backend's
+  # built-in console, `<nms-api>/ui`.
   cmUrl: ""
   # -- VictoriaMetrics base URL for the Device Performance charts
   # (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics.

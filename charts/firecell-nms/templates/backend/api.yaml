@@ -1,32 +1,32 @@
-{{- $ng := .Values.nmsNg }}
-{{- if lt (int $ng.api.replicas) 2 }}{{ fail "nmsNg.api.replicas must be at least 2" }}{{- end }}
+{{- $be := .Values.backend }}
+{{- if lt (int $be.api.replicas) 2 }}{{ fail "backend.api.replicas must be at least 2" }}{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nms-ng-api
+  name: nms-api
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app: nms-ng-api
-    app.kubernetes.io/component: nms-ng-api
+    app: nms-api
+    app.kubernetes.io/component: nms-api
 spec:
-  replicas: {{ $ng.api.replicas }}
+  replicas: {{ $be.api.replicas }}
   selector:
     matchLabels:
-      app: nms-ng-api
+      app: nms-api
   template:
     metadata:
       labels:
-        app: nms-ng-api
-        app.kubernetes.io/component: nms-ng-api
+        app: nms-api
+        app.kubernetes.io/component: nms-api
         app.kubernetes.io/part-of: firecell-nms
       annotations:
-        {{- include "firecell-nms.nmsNg.checksum" . | nindent 8 }}
+        {{- include "firecell-nms.backend.checksum" . | nindent 8 }}
     spec:
-      serviceAccountName: nms-ng
+      serviceAccountName: nms
       securityContext:
-        {{- include "firecell-nms.nmsNg.podSecurityContext" . | nindent 8 }}
-      terminationGracePeriodSeconds: {{ $ng.terminationGracePeriodSeconds }}
+        {{- include "firecell-nms.backend.podSecurityContext" . | nindent 8 }}
+      terminationGracePeriodSeconds: {{ $be.terminationGracePeriodSeconds }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -37,7 +37,7 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: nms-ng-api
+              app: nms-api
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -46,20 +46,20 @@ spec:
                 topologyKey: kubernetes.io/hostname
                 labelSelector:
                   matchLabels:
-                    app: nms-ng-api
+                    app: nms-api
       initContainers:
-        {{- include "firecell-nms.nmsNg.waitForSchema" . | nindent 8 }}
+        {{- include "firecell-nms.backend.waitForSchema" . | nindent 8 }}
       containers:
         - name: api
-          image: {{ $ng.image | quote }}
+          image: {{ $be.image | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-api"]
           securityContext:
-            {{- include "firecell-nms.nmsNg.containerSecurityContext" . | nindent 12 }}
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
           envFrom:
-            - configMapRef: {name: nms-ng-config}
+            - configMapRef: {name: nms-config}
           env:
-            {{- include "firecell-nms.nmsNg.env" . | nindent 12 }}
+            {{- include "firecell-nms.backend.env" . | nindent 12 }}
           ports:
             - {name: http, containerPort: 8080}
           startupProbe:
@@ -75,14 +75,14 @@ spec:
             periodSeconds: 10
             failureThreshold: 6
           resources:
-            {{- toYaml $ng.api.resources | nindent 12 }}
+            {{- toYaml $be.api.resources | nindent 12 }}
           volumeMounts:
-            - {name: kubeconfig, mountPath: /etc/firecell-nms-ng/kubeconfig, readOnly: true}
+            - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
       volumes:
         - name: kubeconfig
           configMap:
-            name: nms-ng-kubeconfig
+            name: nms-kubeconfig
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}
 ---
@@ -91,15 +91,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nms-ng
+  name: nms-api
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app: nms-ng-api
-    app.kubernetes.io/component: nms-ng-api
+    app: nms-api
+    app.kubernetes.io/component: nms-api
 spec:
   type: ClusterIP
   selector:
-    app: nms-ng-api
+    app: nms-api
   ports:
     - {name: http, port: 8080, targetPort: http}
