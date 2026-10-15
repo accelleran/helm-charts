@@ -1,0 +1,68 @@
+{{- $ng := .Values.nmsNg }}
+{{- if lt (int $ng.worker.replicas) 1 }}{{ fail "nmsNg.worker.replicas must be at least 1" }}{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nms-ng-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-ng-worker
+    app.kubernetes.io/component: nms-ng-worker
+spec:
+  replicas: {{ $ng.worker.replicas }}
+  selector:
+    matchLabels:
+      app: nms-ng-worker
+  template:
+    metadata:
+      labels:
+        app: nms-ng-worker
+        app.kubernetes.io/component: nms-ng-worker
+        app.kubernetes.io/part-of: firecell-nms
+      annotations:
+        {{- include "firecell-nms.nmsNg.checksum" . | nindent 8 }}
+    spec:
+      serviceAccountName: nms-ng
+      securityContext:
+        {{- include "firecell-nms.nmsNg.podSecurityContext" . | nindent 8 }}
+      # Longer than the slowest lifecycle operation (600s), so a worker can
+      # finish its in-flight job after SIGTERM.
+      terminationGracePeriodSeconds: {{ $ng.terminationGracePeriodSeconds }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        {{- include "firecell-nms.nmsNg.waitForSchema" . | nindent 8 }}
+      containers:
+        - name: worker
+          image: {{ $ng.image | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["firecell-nms-ng-worker"]
+          securityContext:
+            {{- include "firecell-nms.nmsNg.containerSecurityContext" . | nindent 12 }}
+          envFrom:
+            - configMapRef: {name: nms-ng-config}
+          env:
+            {{- include "firecell-nms.nmsNg.env" . | nindent 12 }}
+          readinessProbe:
+            exec:
+              command: ["python", "-c", "import os; os.kill(1, 0)"]
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import os; os.kill(1, 0)"]
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            {{- toYaml $ng.worker.resources | nindent 12 }}
+          volumeMounts:
+            - {name: kubeconfig, mountPath: /etc/firecell-nms-ng/kubeconfig, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: kubeconfig
+          configMap:
+            name: nms-ng-kubeconfig
+            defaultMode: 0444
+        - {name: tmp, emptyDir: {}}

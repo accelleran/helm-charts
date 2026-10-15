@@ -1,0 +1,75 @@
+{{- $ng := .Values.nmsNg }}
+{{- if and $ng.config.trustGatewayHeaders (not $ng.networkPolicy.enabled) }}
+{{- fail "nmsNg.config.trustGatewayHeaders needs nmsNg.networkPolicy.enabled: without it any pod that reaches the API can name its own user" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nms-ng-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-ng
+data:
+  FIRECELL_NMS_NG_UDR_URL: {{ include "firecell-nms.nmsNg.coreUrl" (list . "udr" "oai-udr") | quote }}
+  FIRECELL_NMS_NG_PCF_URL: {{ include "firecell-nms.nmsNg.coreUrl" (list . "pcf" "oai-pcf") | quote }}
+  FIRECELL_NMS_NG_IMS_URL: {{ include "firecell-nms.nmsNg.coreUrl" (list . "ims" "ims") | quote }}
+  FIRECELL_NMS_NG_RECEIVER_BASE_URL: {{ include "firecell-nms.nmsNg.url" . | quote }}
+  FIRECELL_NMS_NG_VICTORIA_URL: {{ $ng.endpoints.victoria | default (include "firecell-nms.victoriaMetrics.url" .) | quote }}
+  {{- with $ng.endpoints.extdnProbe }}
+  FIRECELL_NMS_NG_EXTDN_PROBE_URL: {{ . | quote }}
+  {{- end }}
+  FIRECELL_NMS_NG_ALLOWED_WS_ORIGINS_JSON: {{ $ng.config.allowedWsOriginsJson | quote }}
+  FIRECELL_NMS_NG_DEFAULT_SNSSAIS_JSON: {{ $ng.config.defaultSnssaisJson | quote }}
+  FIRECELL_NMS_NG_DEFAULT_PLMN: {{ $ng.config.defaultPlmn | quote }}
+  {{- with $ng.config.seedDnnsJson }}
+  FIRECELL_NMS_NG_SEED_DNNS_JSON: {{ . | quote }}
+  {{- end }}
+  {{- with $ng.config.seedSliceJson }}
+  FIRECELL_NMS_NG_SEED_SLICE_JSON: {{ . | quote }}
+  {{- end }}
+  FIRECELL_NMS_NG_CM_NAMESPACE: {{ required "nmsNg.coreNamespace is required" $ng.coreNamespace | quote }}
+  FIRECELL_NMS_NG_CM_CONFIGMAP_KEY: {{ $ng.config.cmConfigMapKey | quote }}
+  {{- with $ng.ranNamespace }}
+  FIRECELL_NMS_NG_RAN_NAMESPACE: {{ . | quote }}
+  {{- end }}
+  FIRECELL_NMS_NG_WORKER_THREADS: {{ $ng.worker.threads | quote }}
+  FIRECELL_NMS_NG_SOUTHBOUND_TIMEOUT: {{ $ng.config.southboundTimeoutSeconds | quote }}
+  FIRECELL_NMS_NG_RECONCILE_TIMEOUT: {{ $ng.config.reconcileTimeoutSeconds | quote }}
+  FIRECELL_NMS_NG_JOB_RETENTION_SECONDS: {{ $ng.config.jobRetentionSeconds | quote }}
+  FIRECELL_NMS_NG_OBSERVATION_RETENTION_SECONDS: {{ $ng.config.observationRetentionSeconds | quote }}
+  FIRECELL_NMS_NG_RETENTION_INTERVAL: {{ $ng.config.retentionIntervalSeconds | quote }}
+  FIRECELL_NMS_NG_QOS_RECONCILE_INTERVAL: {{ $ng.config.qosReconcileIntervalSeconds | quote }}
+  FIRECELL_NMS_NG_QOS_MAX_RULES: {{ $ng.config.qosMaxRules | quote }}
+  FIRECELL_NMS_NG_N3_INTERFACE_NAME: {{ $ng.config.n3InterfaceName | quote }}
+  FIRECELL_NMS_NG_TRUST_GATEWAY_HEADERS: {{ $ng.config.trustGatewayHeaders | quote }}
+  KUBECONFIG: /etc/firecell-nms-ng/kubeconfig/config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nms-ng-kubeconfig
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-ng
+data:
+  config: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: in-cluster
+        cluster:
+          server: https://kubernetes.default.svc
+          certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    users:
+      - name: runtime
+        user:
+          tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    contexts:
+      - name: core
+        context:
+          cluster: in-cluster
+          user: runtime
+          namespace: {{ $ng.coreNamespace }}
+    current-context: core
