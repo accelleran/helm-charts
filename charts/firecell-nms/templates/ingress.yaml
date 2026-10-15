@@ -29,6 +29,7 @@ spec:
                 name: nms-api
                 port:
                   number: 5001
+          {{- if or (not (hasKey .Values.grafana "enabled")) .Values.grafana.enabled }}
           - path: /grafana
             pathType: Prefix
             backend:
@@ -36,6 +37,7 @@ spec:
                 name: nms-grafana
                 port:
                   number: 3000
+          {{- end }}
           - path: /
             pathType: Prefix
             backend:
