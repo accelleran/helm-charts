@@ -1,5 +1,6 @@
 {{- $be := .Values.backend }}
 {{- if lt (int $be.api.replicas) 2 }}{{ fail "backend.api.replicas must be at least 2" }}{{- end }}
+{{- if le (int $be.progressDeadlineSeconds) (int $be.terminationGracePeriodSeconds) }}{{ fail "backend.progressDeadlineSeconds must exceed backend.terminationGracePeriodSeconds: new pods wait for the old control plane to stop and the migration to finish" }}{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,6 +12,7 @@ metadata:
     app.kubernetes.io/component: nms-api
 spec:
   replicas: {{ $be.api.replicas }}
+  progressDeadlineSeconds: {{ $be.progressDeadlineSeconds }}
   selector:
     matchLabels:
       app: nms-api
@@ -48,7 +50,7 @@ spec:
                   matchLabels:
                     app: nms-api
       initContainers:
-        {{- include "firecell-nms.backend.waitForSchema" . | nindent 8 }}
+        {{- include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-for-schema" "untilHead" true) | nindent 8 }}
       containers:
         - name: api
           image: {{ $be.image | quote }}

@@ -66,24 +66,37 @@ spec:
                   key: database-root-password
             - name: MYSQL_DATABASE
               value: {{ $db.name | quote }}
+            # The backend's own user, with every privilege on MYSQL_DATABASE
+            # and nothing else. Like the root password, created on the
+            # first start only.
+            - name: MYSQL_USER
+              value: {{ $db.user | quote }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "firecell-nms.backend.secretName" . }}
+                  key: database-password
           ports:
             - {name: mysql, containerPort: 3306}
           volumeMounts:
             - {name: data, mountPath: /var/lib/mysql}
             - {name: run, mountPath: /var/run/mysqld}
             - {name: tmp, mountPath: /tmp}
+          # No credentials: mysqladmin ping succeeds once the server answers
+          # on TCP, even with access denied. TCP stays closed while the
+          # entrypoint initialises the datadir.
           startupProbe:
             exec:
-              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
             periodSeconds: 5
             failureThreshold: 60
           readinessProbe:
             exec:
-              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
             periodSeconds: 5
           livenessProbe:
             exec:
-              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
             periodSeconds: 10
             failureThreshold: 6
           resources:
