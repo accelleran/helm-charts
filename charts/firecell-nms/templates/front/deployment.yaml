@@ -24,7 +24,7 @@ spec:
       {{- end }}
       containers:
         - name: nginx
-          image: {{ .Values.front.imageOverride | default (printf "%s/%s:v%s" .Values.global.imageRegistry .Values.front.image (.Values.front.imageTag | default .Values.global.pkgVersion)) }}
+          image: {{ .Values.front.image | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - nginx
