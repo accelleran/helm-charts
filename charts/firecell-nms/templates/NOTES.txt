@@ -2,25 +2,14 @@
 
 Firecell NMS {{ .Chart.Version }} (app {{ .Chart.AppVersion }})
 
-Release {{ .Release.Name }} in namespace {{ .Values.global.namespace }}.
-{{- $grafanaEnabled := or (not (hasKey .Values.grafana "enabled")) .Values.grafana.enabled }}
+Release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
 
 Before install, create Secret nms-secrets in that namespace with keys:
   db-root-password, db-password, mail-username, mail-password
-{{- if and $grafanaEnabled (gt (int .Values.grafana.replicas) 0) }}
-  grafana-admin-password
-{{- end }}
 
-{{- if or (not (hasKey .Values.global "createNamespace")) .Values.global.createNamespace }}
-
-The chart creates Namespace {{ .Values.global.namespace }}. Set
-global.createNamespace=false when something else already owns it.
-{{- else }}
-
-The chart does not create the namespace. Create it first, or pass
---create-namespace.
-{{- end }}
-
+The chart does not create the namespace, an Ingress or Grafana. Route
+traffic to Service nms-front (port 80), and point an external Grafana at
+Service nms-api-victoria-metrics-dev (port 8430).
 {{- if not .Values.api.enabled }}
 
 Flask API is off (api.enabled=false).
@@ -28,13 +17,6 @@ Flask API is off (api.enabled=false).
 {{- if not .Values.db.enabled }}
 
 Chart MySQL is off (db.enabled=false).
-{{- end }}
-{{- if not $grafanaEnabled }}
-
-Chart Grafana is off (grafana.enabled=false).
-{{- else if eq (int .Values.grafana.replicas) 0 }}
-
-Chart Grafana replicas are 0. Set grafana.replicas=1 to run in-chart Grafana.
 {{- end }}
 
 ################################################################################
