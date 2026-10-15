@@ -22,12 +22,20 @@ backend:
   image: ghcr.io/accelleran/firecell-nms-backend-ng:master-de7132d
   # -- Secret with the backend credentials, created before install; the
   # chart never creates it. Required keys: `database-root-password`,
-  # `database-url`, `network-name`, `op`, `api-tokens-json`,
-  # `default-admin-user`, `default-admin-password` (see README).
+  # `database-password`, `database-url`, `network-name`, `op`,
+  # `api-tokens-json`, `default-admin-user`, `default-admin-password`
+  # (see README).
   existingSecret: nms-secrets
   # -- Longer than the backend's slowest lifecycle operation (600s), so
   # workers and the control plane can finish in-flight work after SIGTERM.
+  # On an image change the new control plane, and so the migration, starts
+  # only after the old one has stopped: up to this long.
   terminationGracePeriodSeconds: 660
+  # -- Rollout deadline of the API and worker Deployments. New pods wait for
+  # the old control plane to stop and the migration to finish, so it must
+  # exceed terminationGracePeriodSeconds plus the migration time. Keep the
+  # Helm / HelmRelease timeout above it.
+  progressDeadlineSeconds: 1200
 
   api:
     # -- API replicas (at least 2).
@@ -41,18 +49,26 @@ backend:
     replicas: 1
     # -- Job threads per worker.
     threads: 4
+    # -- Seconds a new worker must stay up before it counts as available
+    # (its probes only check that the process lives).
+    minReadySeconds: 20
     resources:
       requests: {cpu: 100m, memory: 256Mi}
       limits: {cpu: "1", memory: 1Gi}
 
-  # The control plane is always exactly one pod (Recreate). Its init
-  # containers migrate the schema and bootstrap the catalogue.
+  # The control plane is always exactly one pod, a StatefulSet of one: a
+  # replacement starts only once the old pod is gone. Its init containers
+  # check and migrate the schema and bootstrap the catalogue.
   controlPlane:
+    # -- Seconds the control plane must stay up before it counts as
+    # available (its probes only check that the process lives).
+    minReadySeconds: 20
     resources:
       requests: {cpu: 100m, memory: 256Mi}
       limits: {cpu: "1", memory: 1Gi}
 
-  # -- Resources of the migrate, bootstrap and wait-for-schema init containers.
+  # -- Resources of the check-schema, migrate, bootstrap and wait-for-schema
+  # init containers.
   initResources:
     requests: {cpu: 50m, memory: 128Mi}
     limits: {cpu: 500m, memory: 512Mi}
@@ -62,6 +78,9 @@ backend:
     image: docker.io/library/mysql:8.0.46
     # -- Database the backend uses; `database-url` must name it.
     name: firecell_nms
+    # -- MySQL user the backend connects as, with privileges on `name` only;
+    # `database-url` must name it. Created on the database's first start.
+    user: nms
     # -- Size of PVC nms-db-data (kept on uninstall).
     storage: 10Gi
     resources:

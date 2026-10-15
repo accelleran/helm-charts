@@ -37,8 +37,9 @@ Names are fixed, not derived from the release name, so other releases can rely o
 
 | Key | Content |
 |-----|---------|
-| `database-root-password` | MySQL root password, applied on the database's first start only. Use URL-safe characters (letters, digits, `. _ ~ -`): it is also part of `database-url`. |
-| `database-url` | `mysql+pymysql://root:<database-root-password>@nms-db.<namespace>.svc.cluster.local:3306/<backend.database.name>` |
+| `database-root-password` | MySQL root password. Only MySQL uses it; the backend never connects as root. |
+| `database-password` | Password of the backend's MySQL user (`backend.database.user`, default `nms`), which has privileges on `backend.database.name` only. Use URL-safe characters (letters, digits, `. _ ~ -`): it is also part of `database-url`. |
+| `database-url` | `mysql+pymysql://<backend.database.user>:<database-password>@nms-db.<namespace>.svc.cluster.local:3306/<backend.database.name>` |
 | `network-name` | Name of the managed network, e.g. `firecell`. |
 | `op` | Operator variant key: exactly 32 hexadecimal characters. |
 | `api-tokens-json` | Non-empty JSON object of machine API tokens, e.g. `{"<token>":{"user":"automation","roles":["operator"]}}`. |
@@ -48,8 +49,9 @@ Names are fixed, not derived from the release name, so other releases can rely o
 ```sh
 pw="$(openssl rand -hex 16)"
 kubectl -n firecell-nms create secret generic nms-secrets \
-  --from-literal=database-root-password="$pw" \
-  --from-literal=database-url="mysql+pymysql://root:${pw}@nms-db.firecell-nms.svc.cluster.local:3306/firecell_nms" \
+  --from-literal=database-root-password="$(openssl rand -hex 16)" \
+  --from-literal=database-password="$pw" \
+  --from-literal=database-url="mysql+pymysql://nms:${pw}@nms-db.firecell-nms.svc.cluster.local:3306/firecell_nms" \
   --from-literal=network-name=firecell \
   --from-literal=op="$(openssl rand -hex 16)" \
   --from-literal=api-tokens-json="{\"$(openssl rand -hex 24)\":{\"user\":\"automation\",\"roles\":[\"operator\"]}}" \
@@ -57,31 +59,50 @@ kubectl -n firecell-nms create secret generic nms-secrets \
   --from-literal=default-admin-password="$(openssl rand -base64 24)"
 ```
 
-A changed Secret does not roll the pods; restart them after rotating a value.
+What the Secret changes after the first install:
+
+- A changed Secret rolls no pod. Restart them yourself (`kubectl rollout restart deployment/nms-api deployment/nms-worker statefulset/nms-control-plane`).
+- MySQL applies `database-root-password`, the user and `database-password` on its first start only, on an empty `nms-db-data`. To change a password later, change it in MySQL first, then in the Secret.
+- Bootstrap never rotates anything: it creates the OP only when the network has none, and the admin only when no user has that login. A new `op` is ignored; a new `default-admin-user` adds a second admin.
 
 ## 3. Installation
 
 ```sh
-helm install firecell-nms accelleran/firecell-nms --namespace firecell-nms
+helm install firecell-nms accelleran/firecell-nms --namespace firecell-nms --wait --timeout 20m
 ```
 
 The install completes in one pass, with or without `--wait`, which also makes it safe under Flux helm-controller. There are no Helm hooks:
 
-- The `nms-control-plane` pod (one replica, `Recreate`) waits for MySQL, runs the schema migration, then the catalogue bootstrap, as init containers. Both are idempotent and run again on every control-plane start.
+- The `nms-control-plane` pod runs three init containers. `check-schema` waits until MySQL accepts the backend's credentials. `migrate` then upgrades the schema, and `bootstrap` seeds the catalogue. Both steps are idempotent and run again on every control-plane start.
 - The API and worker pods wait in a `wait-for-schema` init container until the schema is at the revision their image expects. The backend refuses to start on any other revision, so post-install hooks would leave `--wait` (and Flux) waiting for pods that can only become ready after the hook.
-
-On an upgrade that changes the backend image, the old control plane stops first (up to `backend.terminationGracePeriodSeconds`, 660s by default, while it finishes in-flight work), then the new one migrates while the old API pods keep serving. Give the upgrade a timeout above that grace period.
+- The control plane is a StatefulSet of exactly one pod. When the pod is deleted, evicted or drained, its replacement starts only once the old pod is gone, so two control planes, or two migrations, never run at once. A Deployment would start the replacement during the old pod's grace period.
+- The API and worker can start between `migrate` and `bootstrap`, before the catalogue is seeded. On a first install they briefly serve an empty network.
+- While the database is unreachable, the init containers log the error class and the MySQL error number: 1045 is a wrong user or password, 2003 or 2005 a server that cannot be reached yet. They never log the URL or the password.
 
 Bootstrap seeds the catalogue only when it is empty: `backend.config.seedDnnsJson` and `seedSliceJson` matter on the first install only.
 
-## 4. Gateway Identity
+## 4. Upgrades and Rollbacks
+
+- **Migrations run once, before new pods serve.** On an upgrade that changes the backend image, the old control plane stops first. That takes up to `backend.terminationGracePeriodSeconds` (660s by default), while it finishes in-flight work. The new control plane then migrates. New API and worker pods wait for the migrated schema; until then the old pods keep serving.
+- **Timeouts.** New API and worker pods can wait for the grace period plus the migration, so their rollout deadline (`backend.progressDeadlineSeconds`, 1200s) must exceed the grace period; the chart refuses to render otherwise. Give `helm upgrade --timeout`, or the HelmRelease `spec.timeout`, at least 20m with the defaults, and more if you raise either value.
+- **Rolling the image back across a migration needs a manual schema downgrade.** The backend starts only on exactly its own head revision. An older image on a newer schema stops in `check-schema` / `wait-for-schema`, with `database is at migration <rev>, ahead of this image (head <old head>)`, and stays down. The API pods of the newer image keep serving: with two replicas, the rollout cannot take one away. Downgrade the schema with the newer image, from one of those pods; the older pods then start on their next retry:
+
+  ```sh
+  kubectl -n firecell-nms exec deploy/nms-api -c api -- python -c \
+    'import os; from nms_backend.platform.migrations import downgrade; downgrade(os.environ["FIRECELL_NMS_NG_DATABASE_URL"], "<old head>")'
+  ```
+
+  A downgrade can drop data that the newer schema added. Back up `nms-db-data` first.
+- **Keep Flux upgrade remediation off** (`spec.upgrade.remediation`, off by default). An automatic rollback after a failed upgrade that migrated would hit exactly this case. This holds until the backend adopts expand/contract migrations and a compatibility check, instead of exact-head equality.
+
+## 5. Gateway Identity
 
 Behind oauth2-proxy, set `backend.config.trustGatewayHeaders=true` and `networkPolicy.enabled=true` (the first without the second fails the render). The backend then believes `X-Forwarded-User` / `-Groups` without checking a token, so the NetworkPolicies decide who can send them:
 
 - `nms-api`: port 8080 from `nms-front`, oauth2-proxy (`app.kubernetes.io/name: <networkPolicy.oauth2ProxyLabel>`), every pod in `rbac.coreNamespace` (NFs post FCAPS notifications without a token) and `networkPolicy.extraFrom`. Add the Grafana that posts alerts and the platform monitor there.
 - `nms-front`: port 80 from oauth2-proxy and `networkPolicy.frontExtraFrom`. nginx forwards the identity headers, so it is closed too.
 
-## 5. Configuration Parameters
+## 6. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
 
@@ -107,6 +128,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.config.seedSliceJson | string | `""` | The first slice the bootstrap seeds, e.g. `{"sst":1,"sd":"000001"}`. |
 | backend.config.southboundTimeoutSeconds | int | `6` |  |
 | backend.config.trustGatewayHeaders | bool | `false` | Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires networkPolicy.enabled: the backend does not check tokens on this path. |
+| backend.controlPlane.minReadySeconds | int | `20` | Seconds the control plane must stay up before it counts as available (its probes only check that the process lives). |
 | backend.controlPlane.resources.limits.cpu | string | `"1"` |  |
 | backend.controlPlane.resources.limits.memory | string | `"1Gi"` |  |
 | backend.controlPlane.resources.requests.cpu | string | `"100m"` |  |
@@ -118,16 +140,19 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.database.resources.requests.cpu | string | `"200m"` |  |
 | backend.database.resources.requests.memory | string | `"512Mi"` |  |
 | backend.database.storage | string | `"10Gi"` | Size of PVC nms-db-data (kept on uninstall). |
+| backend.database.user | string | `"nms"` | MySQL user the backend connects as, with privileges on `name` only; `database-url` must name it. Created on the database's first start. |
 | backend.endpoints.extdnProbe | string | `""` | ext-dn probe sidecar for device ping (enable extDn.sidecar in firecell-5gc first), e.g. `http://oai-ext-dn.firecell-core.svc.cluster.local:8080`. Empty: the ping routes answer 503. |
 | backend.endpoints.ims | string | `""` | IMS API. Empty: `http://ims.<rbac.coreNamespace>.svc.cluster.local:8080`. |
 | backend.endpoints.pcf | string | `""` | PCF API. Empty: `http://oai-pcf.<rbac.coreNamespace>.svc.cluster.local:8080`. |
 | backend.endpoints.udr | string | `""` | UDR provisioning API. Empty: `http://oai-udr.<rbac.coreNamespace>.svc.cluster.local:8080`. |
 | backend.endpoints.victoria | string | `""` | Where PM reports and alarm gauges are written. Empty: the in-chart VictoriaMetrics. Grafana alert rules read core_alarm_active from here and post to /api/alarms/webhook, so without it no alarm arrives. |
-| backend.existingSecret | string | `"nms-secrets"` | Secret with the backend credentials, created before install; the chart never creates it. Required keys: `database-root-password`, `database-url`, `network-name`, `op`, `api-tokens-json`, `default-admin-user`, `default-admin-password` (see README). |
+| backend.existingSecret | string | `"nms-secrets"` | Secret with the backend credentials, created before install; the chart never creates it. Required keys: `database-root-password`, `database-password`, `database-url`, `network-name`, `op`, `api-tokens-json`, `default-admin-user`, `default-admin-password` (see README). |
 | backend.extraEnv | list | `[]` | Extra environment (EnvVar list) for the API, worker and control plane, e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL. |
 | backend.image | string | `"ghcr.io/accelleran/firecell-nms-backend-ng:master-de7132d"` | Backend image (API, worker, control plane, migration and bootstrap), as a full reference. |
-| backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the migrate, bootstrap and wait-for-schema init containers. |
-| backend.terminationGracePeriodSeconds | int | `660` | Longer than the backend's slowest lifecycle operation (600s), so workers and the control plane can finish in-flight work after SIGTERM. |
+| backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the check-schema, migrate, bootstrap and wait-for-schema init containers. |
+| backend.progressDeadlineSeconds | int | `1200` | Rollout deadline of the API and worker Deployments. New pods wait for the old control plane to stop and the migration to finish, so it must exceed terminationGracePeriodSeconds plus the migration time. Keep the Helm / HelmRelease timeout above it. |
+| backend.terminationGracePeriodSeconds | int | `660` | Longer than the backend's slowest lifecycle operation (600s), so workers and the control plane can finish in-flight work after SIGTERM. On an image change the new control plane, and so the migration, starts only after the old one has stopped: up to this long. |
+| backend.worker.minReadySeconds | int | `20` | Seconds a new worker must stay up before it counts as available (its probes only check that the process lives). |
 | backend.worker.replicas | int | `1` | Worker replicas (at least 1). |
 | backend.worker.resources.limits.cpu | string | `"1"` |  |
 | backend.worker.resources.limits.memory | string | `"1Gi"` |  |
@@ -164,7 +189,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | victoriaMetrics.retentionPeriod | string | `"7d"` |  |
 | victoriaMetrics.storage | string | `"20Gi"` | Size of PVC nms-vm-data. |
 
-## 6. Upgrading from 0.1.x
+## 7. Upgrading from 0.1.x
 
 There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 

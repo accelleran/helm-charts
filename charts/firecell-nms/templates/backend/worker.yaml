@@ -11,6 +11,9 @@ metadata:
     app.kubernetes.io/component: nms-worker
 spec:
   replicas: {{ $be.worker.replicas }}
+  progressDeadlineSeconds: {{ $be.progressDeadlineSeconds }}
+  # The probes only see a live process, so give it time to fail at startup.
+  minReadySeconds: {{ $be.worker.minReadySeconds }}
   selector:
     matchLabels:
       app: nms-worker
@@ -34,7 +37,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       initContainers:
-        {{- include "firecell-nms.backend.waitForSchema" . | nindent 8 }}
+        {{- include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-for-schema" "untilHead" true) | nindent 8 }}
       containers:
         - name: worker
           image: {{ $be.image | quote }}
