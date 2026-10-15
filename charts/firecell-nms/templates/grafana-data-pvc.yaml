@@ -1,7 +1,7 @@
 # Standalone PVC; path sorts before templates/grafana/deployment.yaml (lex order: grafana- before grafana/).
 # local-path only binds a claim when a pod mounts it, and Helm --wait waits
 # for that bind. With Grafana scaled to 0 there is no pod, so skip the claim.
-{{- if gt (int .Values.grafana.replicas) 0 }}
+{{- if and (or (not (hasKey .Values.grafana "enabled")) .Values.grafana.enabled) (gt (int .Values.grafana.replicas) 0) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
