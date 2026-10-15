@@ -4,25 +4,25 @@ Firecell NMS {{ .Chart.Version }} (app {{ .Chart.AppVersion }})
 
 Release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
 
-Secret {{ .Values.nmsNg.existingSecret }} must exist in that namespace with keys:
+Secret {{ .Values.backend.existingSecret }} must exist in that namespace with keys:
   database-root-password, database-url, network-name, op, api-tokens-json,
   default-admin-user, default-admin-password
-Namespace {{ .Values.nmsNg.coreNamespace }}{{ with .Values.nmsNg.ranNamespace }} and {{ . }}{{ end }} must exist (the chart renders Roles there).
+Namespace {{ .Values.rbac.coreNamespace }}{{ with .Values.rbac.ranNamespace }} and {{ . }}{{ end }} must exist (the chart renders Roles there).
 
-The nms-ng-control-plane pod migrates the schema and bootstraps the
+The nms-control-plane pod migrates the schema and bootstraps the
 catalogue in its init containers; the API and worker pods wait for it.
 
 Services (fixed names):
-  nms-front              :80    UI, /api/ -> nms-ng, /nms-cm/ -> nms-ng /ui/
-  nms-ng                 :8080  API, FCAPS receiver, /api/alarms/webhook
-  nms-ng-db              :3306  nms-ng MySQL
+  nms-front              :80    UI, /api/ -> nms-api, /nms-cm/ -> nms-api /ui/
+  nms-api                :8080  API, FCAPS receiver, /api/alarms/webhook
+  nms-db                 :3306  backend MySQL
   nms-victoria-metrics   :8430  VictoriaMetrics (Grafana datasource)
 
 The chart does not create the namespace, an Ingress or Grafana. Route
 traffic to nms-front (through oauth2-proxy when trusting gateway headers).
-{{- if .Values.nmsNg.config.trustGatewayHeaders }}
+{{- if .Values.backend.config.trustGatewayHeaders }}
 
-nms-ng trusts X-Forwarded-User / -Groups; NetworkPolicies nms-ng-api and
+The backend trusts X-Forwarded-User / -Groups; NetworkPolicies nms-api and
 nms-front restrict who can send them.
 {{- end }}
 

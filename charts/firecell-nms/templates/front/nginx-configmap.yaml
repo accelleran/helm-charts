@@ -1,5 +1,5 @@
-{{- $backendUrl := .Values.front.backendUrl | default (include "firecell-nms.nmsNg.url" .) }}
-{{- $cmUrl := .Values.front.cmUrl | default (printf "%s/ui" (include "firecell-nms.nmsNg.url" .)) }}
+{{- $backendUrl := .Values.front.backendUrl | default (include "firecell-nms.backend.url" .) }}
+{{- $cmUrl := .Values.front.cmUrl | default (printf "%s/ui" (include "firecell-nms.backend.url" .)) }}
 {{- $metricsUrl := .Values.front.metricsUrl | default (include "firecell-nms.victoriaMetrics.url" .) }}
 apiVersion: v1
 kind: ConfigMap
@@ -11,7 +11,7 @@ metadata:
 data:
   default.conf: |
     # nginx config for NMS frontend in Kubernetes
-    # /api/* routed to front.backendUrl (the in-chart nms-ng by default).
+    # /api/* routed to front.backendUrl (the in-chart nms-api by default).
     server {
         listen 80;
         server_name _;
@@ -42,7 +42,7 @@ data:
             add_header Access-Control-Allow-Headers "Authorization, Content-Type";
         }
 
-        # CM console: the nms-ng built-in /ui/.
+        # CM console: the backend's built-in /ui/.
         location = /nms-cm {
             return 302 /nms-cm/;
         }

@@ -1,0 +1,75 @@
+{{- $be := .Values.backend }}
+{{- if and $be.config.trustGatewayHeaders (not .Values.networkPolicy.enabled) }}
+{{- fail "backend.config.trustGatewayHeaders needs networkPolicy.enabled: without it any pod that reaches the API can name its own user" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nms-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+data:
+  FIRECELL_NMS_NG_UDR_URL: {{ include "firecell-nms.backend.coreUrl" (list . "udr" "oai-udr") | quote }}
+  FIRECELL_NMS_NG_PCF_URL: {{ include "firecell-nms.backend.coreUrl" (list . "pcf" "oai-pcf") | quote }}
+  FIRECELL_NMS_NG_IMS_URL: {{ include "firecell-nms.backend.coreUrl" (list . "ims" "ims") | quote }}
+  FIRECELL_NMS_NG_RECEIVER_BASE_URL: {{ include "firecell-nms.backend.url" . | quote }}
+  FIRECELL_NMS_NG_VICTORIA_URL: {{ $be.endpoints.victoria | default (include "firecell-nms.victoriaMetrics.url" .) | quote }}
+  {{- with $be.endpoints.extdnProbe }}
+  FIRECELL_NMS_NG_EXTDN_PROBE_URL: {{ . | quote }}
+  {{- end }}
+  FIRECELL_NMS_NG_ALLOWED_WS_ORIGINS_JSON: {{ $be.config.allowedWsOriginsJson | quote }}
+  FIRECELL_NMS_NG_DEFAULT_SNSSAIS_JSON: {{ $be.config.defaultSnssaisJson | quote }}
+  FIRECELL_NMS_NG_DEFAULT_PLMN: {{ $be.config.defaultPlmn | quote }}
+  {{- with $be.config.seedDnnsJson }}
+  FIRECELL_NMS_NG_SEED_DNNS_JSON: {{ . | quote }}
+  {{- end }}
+  {{- with $be.config.seedSliceJson }}
+  FIRECELL_NMS_NG_SEED_SLICE_JSON: {{ . | quote }}
+  {{- end }}
+  FIRECELL_NMS_NG_CM_NAMESPACE: {{ required "rbac.coreNamespace is required" .Values.rbac.coreNamespace | quote }}
+  FIRECELL_NMS_NG_CM_CONFIGMAP_KEY: {{ $be.config.cmConfigMapKey | quote }}
+  {{- with .Values.rbac.ranNamespace }}
+  FIRECELL_NMS_NG_RAN_NAMESPACE: {{ . | quote }}
+  {{- end }}
+  FIRECELL_NMS_NG_WORKER_THREADS: {{ $be.worker.threads | quote }}
+  FIRECELL_NMS_NG_SOUTHBOUND_TIMEOUT: {{ $be.config.southboundTimeoutSeconds | quote }}
+  FIRECELL_NMS_NG_RECONCILE_TIMEOUT: {{ $be.config.reconcileTimeoutSeconds | quote }}
+  FIRECELL_NMS_NG_JOB_RETENTION_SECONDS: {{ $be.config.jobRetentionSeconds | quote }}
+  FIRECELL_NMS_NG_OBSERVATION_RETENTION_SECONDS: {{ $be.config.observationRetentionSeconds | quote }}
+  FIRECELL_NMS_NG_RETENTION_INTERVAL: {{ $be.config.retentionIntervalSeconds | quote }}
+  FIRECELL_NMS_NG_QOS_RECONCILE_INTERVAL: {{ $be.config.qosReconcileIntervalSeconds | quote }}
+  FIRECELL_NMS_NG_QOS_MAX_RULES: {{ $be.config.qosMaxRules | quote }}
+  FIRECELL_NMS_NG_N3_INTERFACE_NAME: {{ $be.config.n3InterfaceName | quote }}
+  FIRECELL_NMS_NG_TRUST_GATEWAY_HEADERS: {{ $be.config.trustGatewayHeaders | quote }}
+  KUBECONFIG: /etc/firecell-nms/kubeconfig/config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nms-kubeconfig
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+data:
+  config: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: in-cluster
+        cluster:
+          server: https://kubernetes.default.svc
+          certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    users:
+      - name: runtime
+        user:
+          tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    contexts:
+      - name: core
+        context:
+          cluster: in-cluster
+          user: runtime
+          namespace: {{ .Values.rbac.coreNamespace }}
+    current-context: core

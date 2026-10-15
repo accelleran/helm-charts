@@ -1,22 +1,22 @@
-{{- $np := .Values.nmsNg.networkPolicy }}
+{{- $np := .Values.networkPolicy }}
 {{- if $np.enabled }}
 # Who may open a connection to the API pods, which is what makes
-# nmsNg.config.trustGatewayHeaders safe: oauth2-proxy sets the identity
+# backend.config.trustGatewayHeaders safe: oauth2-proxy sets the identity
 # headers and nms-front forwards them unchanged. Core NFs POST
 # /api/fcaps without a token on the same port, so a pod in coreNamespace
 # could also send X-Forwarded-User. Kubelet probes are left to the CNI.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: nms-ng-api
+  name: nms-api
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: nms-ng-api
+    app.kubernetes.io/component: nms-api
 spec:
   podSelector:
     matchLabels:
-      app: nms-ng-api
+      app: nms-api
   policyTypes:
     - Ingress
   ingress:
@@ -29,7 +29,7 @@ spec:
               app.kubernetes.io/name: {{ $np.oauth2ProxyLabel | quote }}
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: {{ .Values.nmsNg.coreNamespace | quote }}
+              kubernetes.io/metadata.name: {{ .Values.rbac.coreNamespace | quote }}
         {{- range $np.extraFrom }}
         - {{ toYaml . | nindent 10 | trim }}
         {{- end }}
