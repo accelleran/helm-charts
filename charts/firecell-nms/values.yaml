@@ -41,6 +41,9 @@ db:
   user: firecell_nms_user
   # Credentials come from nms-secrets Secret
   storage: 10Gi
+  readinessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 10
   resources:
     requests:
       memory: 1Gi
