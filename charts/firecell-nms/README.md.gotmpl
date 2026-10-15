@@ -20,8 +20,9 @@ The following table lists the configurable parameters of the Firecell-nms chart 
 {{ template "chart.valuesTable" . }}
 
 ## 3. Maintenance & Troubleshooting
-- Ensure Secret `nms-secrets` is pre-created before installation. Set `global.createNamespace=false` when the namespace is managed outside the chart.
+- Ensure `nms-secrets` is pre-created before installation.
 - Ingress requires an Nginx Ingress Controller.
-- Set `grafana.enabled=false` when Grafana is provided by an operator or another release.
+- Set `grafana.replicas=0` when Grafana is provided by an operator (skips the Grafana PVC).
+- Set `api.enabled=false` and `db.enabled=false` for the nms-ng cutover.
 
 {{ template "helm-docs.versionFooter" . }}

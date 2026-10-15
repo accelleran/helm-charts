@@ -1,3 +1,4 @@
+{{- if or (not (hasKey .Values.db "enabled")) .Values.db.enabled }}
 # ClusterIP service "db" on port 3310 → targetPort 3306
 # Flask app uses FIRECELL_NMS_API_DATABASE_PORT=3310 and connects to host "db" — zero code change.
 apiVersion: v1
@@ -35,3 +36,4 @@ spec:
       port: 3306
       targetPort: 3306
       protocol: TCP
+{{- end }}

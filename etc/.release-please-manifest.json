@@ -12,5 +12,5 @@
   "charts/telemetry-collector": "2.0.4",
   "charts/xapp-anr": "0.2.0",
   "charts/xapp-hello-world": "6.1.1",
-  "charts/firecell-nms": "0.1.1"
+  "charts/firecell-nms": "0.1.2"
 }

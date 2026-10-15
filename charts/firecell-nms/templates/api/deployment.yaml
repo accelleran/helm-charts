@@ -1,3 +1,4 @@
+{{- if or (not (hasKey .Values.api "enabled")) .Values.api.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,7 +8,8 @@ metadata:
     {{- include "firecell-nms.labels" . | nindent 4 }}
     app: nms-api
 spec:
-  replicas: 1
+  {{- /* sprig default treats 0 as empty, which would start a retired API */}}
+  replicas: {{ hasKey .Values.api "replicas" | ternary .Values.api.replicas 1 }}
   selector:
     matchLabels:
       app: nms-api
@@ -98,3 +100,4 @@ spec:
             failureThreshold: 5
           resources:
             {{- toYaml .Values.api.resources | nindent 12 }}
+{{- end }}

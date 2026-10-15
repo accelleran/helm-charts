@@ -6,27 +6,23 @@ Release {{ .Release.Name }} in namespace {{ .Values.global.namespace }}.
 
 Before install, create Secret nms-secrets in that namespace with keys:
   db-root-password, db-password, mail-username, mail-password
-{{- if .Values.grafana.enabled }}
+{{- if gt (int .Values.grafana.replicas) 0 }}
   grafana-admin-password
 {{- end }}
 
-{{- if .Values.global.createNamespace }}
+The chart creates Namespace {{ .Values.global.namespace }}.
 
-The chart creates Namespace {{ .Values.global.namespace }}. Set
-global.createNamespace=false when something else already owns it.
-{{- else }}
+{{- if not .Values.api.enabled }}
 
-The chart does not create the namespace. Create it first, or pass
---create-namespace.
+Flask API is off (api.enabled=false).
 {{- end }}
+{{- if not .Values.db.enabled }}
 
-{{- if .Values.grafana.enabled }}
+Chart MySQL is off (db.enabled=false).
+{{- end }}
+{{- if eq (int .Values.grafana.replicas) 0 }}
 
-Chart Grafana is enabled (grafana.enabled). Set grafana.enabled=false when
-another Grafana owns the dashboards.
-{{- else }}
-
-Chart Grafana is off (grafana.enabled=false).
+Chart Grafana replicas are 0. Set grafana.replicas=1 to run in-chart Grafana.
 {{- end }}
 
 ################################################################################
