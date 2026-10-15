@@ -1,3 +1,4 @@
+{{- if or (not (hasKey .Values.grafana "enabled")) .Values.grafana.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -96,3 +97,4 @@ spec:
         - name: grafana-dashboards-config
           configMap:
             name: nms-grafana-dashboards-config
+{{- end }}

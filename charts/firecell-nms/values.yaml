@@ -19,6 +19,10 @@ global:
   # default StorageClass, then Helm upgrades try to "unset" it → immutable spec errors.
   # k3s default is usually local-path; override per environment (e.g. longhorn in lab).
   storageClass: "local-path"
+  # 0.1.0 always rendered a Namespace. Set false when GitOps already owns
+  # it: a failed install's uninstall would otherwise delete the namespace
+  # and everything else in it.
+  createNamespace: true
 
 # --- MySQL database ---
 # Service name: "db", port 3310 → targetPort 3306
@@ -93,6 +97,10 @@ victoriaMetrics:
 
 # --- Grafana ---
 grafana:
+  # 0.1.0 always deployed chart Grafana. Set false when an operator or
+  # another release owns dashboards. Orthogonal to replicas: this gates
+  # rendering; replicas is scale (0 skips the PVC while still enabled).
+  enabled: true
   image: ue-monitoring-graphana:stable
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,

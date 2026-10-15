@@ -46,6 +46,7 @@ The following table lists the configurable parameters of the Firecell-nms chart 
 | front.resources.limits.memory | string | `"128Mi"` |  |
 | front.resources.requests.cpu | string | `"50m"` |  |
 | front.resources.requests.memory | string | `"64Mi"` |  |
+| global.createNamespace | bool | `true` | Render a Namespace object. Set false when GitOps already owns the namespace. |
 | global.imagePullPolicy | string | `"IfNotPresent"` |  |
 | global.imagePullSecrets[0].name | string | `"gitlab-regcred"` |  |
 | global.imageRegistry | string | `"registry.gitlab.com/firecell/r-d/firecellrd"` |  |
@@ -53,8 +54,9 @@ The following table lists the configurable parameters of the Firecell-nms chart 
 | global.pkgVersion | string | `"6.0.0"` |  |
 | global.storageClass | string | `"local-path"` |  |
 | global.timezone | string | `"Europe/Paris"` |  |
+| grafana.enabled | bool | `true` | Render chart Grafana. Set false when another Grafana owns dashboards. |
 | grafana.image | string | `"ue-monitoring-graphana:stable"` |  |
-| grafana.replicas | int | `1` | Set 0 to skip in-chart Grafana (no PVC). |
+| grafana.replicas | int | `1` | Scale when enabled. Set 0 to skip the Grafana PVC. |
 | grafana.resources.limits.cpu | string | `"500m"` |  |
 | grafana.resources.limits.memory | string | `"512Mi"` |  |
 | grafana.resources.requests.cpu | string | `"100m"` |  |
@@ -85,9 +87,9 @@ The following table lists the configurable parameters of the Firecell-nms chart 
 | victoriaMetrics.storage | string | `"20Gi"` |  |
 
 ## 3. Maintenance & Troubleshooting
-- Ensure `nms-secrets` is pre-created before installation.
+- Ensure Secret `nms-secrets` is pre-created before installation. Set `global.createNamespace=false` when the namespace is managed outside the chart.
 - Ingress requires an Nginx Ingress Controller.
-- Set `grafana.replicas=0` when Grafana is provided by an operator (skips the Grafana PVC).
+- Set `grafana.enabled=false` when Grafana is provided by an operator. Set `grafana.replicas=0` to keep chart Grafana objects but skip the PVC.
 - Set `api.enabled=false` and `db.enabled=false` for the nms-ng cutover.
 
 ----------------------------------------------
