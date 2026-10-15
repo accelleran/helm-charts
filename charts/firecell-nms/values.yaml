@@ -2,16 +2,14 @@
 # plane and its MySQL) and VictoriaMetrics. Install one release per
 # namespace: Service names are fixed so other releases can rely on them.
 
+# Every image is one full reference (registry/repository:tag[@digest]) with
+# an exact tag, so a mirror or a digest pin is a single value per image.
+
 global:
-  imageRegistry: registry.gitlab.com/firecell/r-d/firecellrd
-  # Display version only: the app.kubernetes.io/version label, and the fallback
-  # image tag for components that set no imageTag of their own.
-  pkgVersion: "6.0.0"
   # -- Pull policy of every image in the chart.
   imagePullPolicy: IfNotPresent
-  # -- Pull secrets of every pod in the chart.
-  imagePullSecrets:
-    - name: gitlab-regcred
+  # -- Pull secrets of every pod in the chart, e.g. `[{name: ghcr-pull}]`.
+  imagePullSecrets: []
   # -- StorageClass of every PVC. Must be non-empty: omitting storageClassName
   # lets the API inject the default StorageClass, and Helm upgrades then try
   # to unset it (immutable field).
@@ -161,11 +159,8 @@ nmsNg:
 # --- Victoria Metrics ---
 # Service nms-victoria-metrics, port 8430: point the Grafana datasource here.
 victoriaMetrics:
-  image: ue-monitoring-victoria-metrics:stable
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  imageOverride: ""
+  # -- VictoriaMetrics image, as a full reference.
+  image: docker.io/victoriametrics/victoria-metrics:v1.93.4
   # -- Size of PVC nms-vm-data.
   storage: 20Gi
   retentionPeriod: 7d
@@ -181,14 +176,9 @@ victoriaMetrics:
 
 # --- nginx frontend ---
 front:
-  image: nms-frontend
-  # Full image reference (registry/repository:tag), which wins over the
-  # imageRegistry + image + imageTag composition above. Same escape hatch the
-  # firecell-5gc chart gives every NF: the composition glues on the registry
-  # and a "v" prefix, so an image published anywhere else cannot be named
-  # without it.
-  imageOverride: ""
-  imageTag: "5.0.1.0"
+  # -- NMS frontend (nginx) image, as a full reference. Needs a CM-enabled
+  # build that talks to nms-ng.
+  image: ghcr.io/accelleran/nms-frontend:ping-299e22c
   # -- Where nginx sends /api/. Empty: the in-chart nms-ng Service.
   backendUrl: ""
   # -- Where nginx sends /nms-cm/ (the CM console). Empty: the nms-ng

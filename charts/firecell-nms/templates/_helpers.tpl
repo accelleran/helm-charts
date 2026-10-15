@@ -11,7 +11,7 @@ Common labels
 {{- define "firecell-nms.labels" -}}
 helm.sh/chart: {{ include "firecell-nms.name" . }}-{{ .Chart.Version | replace "+" "_" }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/version: {{ .Values.global.pkgVersion | quote }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/part-of: firecell-nms
 {{- end }}
 
