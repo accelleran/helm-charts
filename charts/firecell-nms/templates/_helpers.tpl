@@ -24,7 +24,7 @@ from the release name, so other releases can rely on them.
 {{- end }}
 
 {{- define "firecell-nms.victoriaMetrics.url" -}}
-{{- printf "http://nms-api-victoria-metrics-dev.%s.svc.cluster.local:8430" .Release.Namespace }}
+{{- printf "http://nms-victoria-metrics.%s.svc.cluster.local:8430" .Release.Namespace }}
 {{- end }}
 
 {{- define "firecell-nms.nmsNg.dbHost" -}}

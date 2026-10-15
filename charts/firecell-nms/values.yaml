@@ -159,7 +159,7 @@ nmsNg:
     ranDeploymentNames: []
 
 # --- Victoria Metrics ---
-# Service name: "nms-api-victoria-metrics-dev", port 8430
+# Service nms-victoria-metrics, port 8430: point the Grafana datasource here.
 victoriaMetrics:
   image: ue-monitoring-victoria-metrics:stable
   # Full image reference, winning over the registry + image + tag composition.
