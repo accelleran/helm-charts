@@ -1,3 +1,4 @@
+{{- if or (not (hasKey .Values.db "enabled")) .Values.db.enabled }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -8,7 +9,8 @@ metadata:
     app: nms-db
 spec:
   serviceName: nms-db-headless
-  replicas: 1
+  {{- /* sprig default treats 0 as empty, which would start a retired database */}}
+  replicas: {{ hasKey .Values.db "replicas" | ternary .Values.db.replicas 1 }}
   selector:
     matchLabels:
       app: nms-db
@@ -65,8 +67,8 @@ spec:
                 - /bin/sh
                 - -c
                 - mysqladmin ping -h localhost -uroot -p"$MYSQL_ROOT_PASSWORD"
-            initialDelaySeconds: {{ .Values.db.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ .Values.db.readinessProbe.periodSeconds }}
+            initialDelaySeconds: 120
+            periodSeconds: 10
             failureThreshold: 10
             timeoutSeconds: 5
           livenessProbe:
@@ -94,3 +96,4 @@ spec:
         resources:
           requests:
             storage: {{ .Values.db.storage }}
+{{- end }}

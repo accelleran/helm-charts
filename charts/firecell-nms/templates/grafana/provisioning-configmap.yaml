@@ -1,4 +1,3 @@
-{{- if .Values.grafana.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -36,4 +35,3 @@ data:
         updateIntervalSeconds: 30
         options:
           path: /etc/grafana/provisioning/dashboards
-{{- end }}

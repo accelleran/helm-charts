@@ -19,10 +19,6 @@ global:
   # default StorageClass, then Helm upgrades try to "unset" it → immutable spec errors.
   # k3s default is usually local-path; override per environment (e.g. longhorn in lab).
   storageClass: "local-path"
-  # 0.1.0 always rendered a Namespace. Set false when GitOps already owns
-  # it: a failed install's uninstall would otherwise delete the namespace
-  # and everything else in it.
-  createNamespace: true
 
 # --- MySQL database ---
 # Service name: "db", port 3310 → targetPort 3306
@@ -38,14 +34,13 @@ global:
 #     --from-literal=grafana-admin-password=<pass> \
 #     -n firecell-nms
 db:
+  # The nms-ng cutover sets this false and does not render the StatefulSet.
+  enabled: true
   image: mysql:8.4.10
   database: firecell_nms_api
   user: firecell_nms_user
   # Credentials come from nms-secrets Secret
   storage: 10Gi
-  readinessProbe:
-    initialDelaySeconds: 120
-    periodSeconds: 10
   resources:
     requests:
       memory: 1Gi
@@ -95,15 +90,14 @@ victoriaMetrics:
 
 # --- Grafana ---
 grafana:
-  # 0.1.0 always deployed chart Grafana. Set false when an operator or
-  # another release owns dashboards.
-  enabled: true
   image: ue-monitoring-graphana:stable
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
   imageOverride: ""
   storage: 2Gi
+  # The Cilium installer runs Grafana via the operator and sets this to 0.
+  replicas: 1
   # Admin password from nms-secrets Secret (key: grafana-admin-password)
   resources:
     requests:
@@ -115,6 +109,8 @@ grafana:
 
 # --- Flask API backend ---
 api:
+  # The nms-ng cutover sets this false and does not render the Deployment.
+  enabled: true
   image: nms-backend
   # Full image reference (registry/repository:tag), which wins over the
   # imageRegistry + image + imageTag composition above. Same escape hatch the
@@ -156,6 +152,18 @@ front:
   # without it.
   imageOverride: ""
   imageTag: "5.0.1.0"   # see api.imageTag
+  # Where nginx sends /api/. The old Flask API is the default. The
+  # nms-ng cutover points this at the firecell-nms-ng Service (port 8080).
+  backendUrl: "http://nms-api:5001"
+  # Optional CM console. The nms-ng cutover maps /nms-cm/ to its built-in
+  # /ui/ console, which is the UI migrated from cm-poc.
+  cmUrl: ""
+  # Optional VictoriaMetrics base URL for the Device Performance charts
+  # (/metrics-api/ -> <metricsUrl>/api/v1/). Empty leaves the location out.
+  metricsUrl: ""
+  # Optional external Grafana base URL. The UI links to <origin>/grafana/...;
+  # when Grafana is served on another host, /grafana/ redirects there.
+  grafanaUrl: ""
   resources:
     requests:
       memory: 64Mi
