@@ -1,0 +1,67 @@
+{{- $np := .Values.nmsNg.networkPolicy }}
+{{- if $np.enabled }}
+# Who may open a connection to the API pods, which is what makes
+# nmsNg.config.trustGatewayHeaders safe: oauth2-proxy sets the identity
+# headers and nms-front forwards them unchanged. Core NFs POST
+# /api/fcaps without a token on the same port, so a pod in coreNamespace
+# could also send X-Forwarded-User. Kubelet probes are left to the CNI.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nms-ng-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-ng-api
+spec:
+  podSelector:
+    matchLabels:
+      app: nms-ng-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: nms-front
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $np.oauth2ProxyLabel | quote }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.nmsNg.coreNamespace | quote }}
+        {{- range $np.extraFrom }}
+        - {{ toYaml . | nindent 10 | trim }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# nms-front forwards the identity headers too, so it is closed the same way:
+# oauth2-proxy and the listed peers only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nms-front
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-front
+spec:
+  podSelector:
+    matchLabels:
+      app: nms-front
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $np.oauth2ProxyLabel | quote }}
+        {{- range $np.frontExtraFrom }}
+        - {{ toYaml . | nindent 10 | trim }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: 80
+{{- end }}

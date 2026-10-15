@@ -1,0 +1,111 @@
+{{- $db := .Values.nmsNg.database }}
+# Kept on uninstall: it holds the inventory, the catalogue and the OP.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nms-ng-db-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-ng-db
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ required "firecell-nms: set global.storageClass to your StorageClass name (see values.yaml)" .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ $db.storage }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nms-ng-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-ng-db
+    app.kubernetes.io/component: nms-ng-db
+spec:
+  serviceName: nms-ng-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nms-ng-db
+  template:
+    metadata:
+      labels:
+        app: nms-ng-db
+        app.kubernetes.io/component: nms-ng-db
+        app.kubernetes.io/part-of: firecell-nms
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile: {type: RuntimeDefault}
+      terminationGracePeriodSeconds: 120
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mysql
+          image: {{ $db.image | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "firecell-nms.nmsNg.secretName" . }}
+                  key: database-root-password
+            - name: MYSQL_DATABASE
+              value: {{ $db.name | quote }}
+          ports:
+            - {name: mysql, containerPort: 3306}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/mysql}
+            - {name: run, mountPath: /var/run/mysqld}
+            - {name: tmp, mountPath: /tmp}
+          startupProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$MYSQL_ROOT_PASSWORD\""]
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            {{- toYaml $db.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nms-ng-db-data
+        - {name: run, emptyDir: {}}
+        - {name: tmp, emptyDir: {}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nms-ng-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-ng-db
+    app.kubernetes.io/component: nms-ng-db
+spec:
+  selector:
+    app: nms-ng-db
+  ports:
+    - {name: mysql, port: 3306, targetPort: mysql}
