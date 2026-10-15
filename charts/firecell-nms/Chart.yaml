@@ -2,5 +2,5 @@ apiVersion: v2
 name: firecell-nms
 description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
 type: application
-version: 0.1.2
+version: 0.1.1
 appVersion: "5.0.1"
