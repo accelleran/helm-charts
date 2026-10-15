@@ -13,5 +13,5 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: nms-api
-    namespace: {{ .Values.global.namespace }}
+    namespace: {{ .Release.Namespace }}
 {{- end }}
