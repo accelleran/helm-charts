@@ -1,0 +1,64 @@
+{{- if (.Values.priorityClasses | default dict).create | default true }}
+# PriorityClasses for 5G Core components
+# Higher value = higher scheduling priority
+# preemptionPolicy: Never = No pod eviction, only affects scheduling order
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: firecell-prio-crit
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+value: 1000000
+globalDefault: false
+preemptionPolicy: Never
+description: "Critical 5G core control plane components (AMF, UDR, NRF)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: firecell-prio-high
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+value: 900000
+globalDefault: false
+preemptionPolicy: Never
+description: "High priority for data plane components (SMF, UPF)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: firecell-prio-normal
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+value: 800000
+globalDefault: false
+preemptionPolicy: Never
+description: "Standard 5G core components (PCF, UDM, AUSF, Agent)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: firecell-prio-support
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+value: 700000
+globalDefault: false
+preemptionPolicy: Never
+description: "Support components (IMS, EXT-DN)"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: firecell-prio-nms
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+value: 500000
+globalDefault: false
+preemptionPolicy: Never
+description: "NMS management plane (lower priority than core network)"
+{{- end }}

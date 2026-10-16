@@ -1,0 +1,140 @@
+{{- if .Values.ims.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: ims
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: ims
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      priorityClassName: {{ .Values.ims.priorityClassName }}
+      initContainers:
+        - name: copy-ims-config
+          image: {{ .Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              mkdir -p /workdir
+              cp /cm/sip.conf /workdir/sip.conf || true
+              cp /cm/users.conf /workdir/users.conf || true
+              chmod 0644 /workdir/* || true
+          volumeMounts:
+            - name: ims-config-cm
+              mountPath: /cm
+              readOnly: true
+            - name: ims-config
+              mountPath: /workdir
+      containers:
+        - name: ims
+          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /usr/sbin/asterisk
+            - -f
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+          ports:
+            - containerPort: 5060
+              protocol: TCP
+            - containerPort: 5060
+              protocol: UDP
+          volumeMounts:
+            - name: ims-config
+              mountPath: /etc/asterisk/sip.conf
+              subPath: sip.conf
+            - name: ims-config
+              mountPath: /etc/asterisk/users.conf
+              subPath: users.conf
+            {{- if and .Values.ims.sidecar .Values.ims.sidecar.enabled }}
+            # Shared with ims-sidecar so asterisk -rx can use the CLI socket
+            # without pods/exec.
+            - name: asterisk-run
+              mountPath: /var/run/asterisk
+            {{- end }}
+          resources:
+            {{- toYaml .Values.ims.resources | nindent 12 }}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -f asterisk > /dev/null
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 5
+            timeoutSeconds: 5
+        {{- if and .Values.ims.sidecar .Values.ims.sidecar.enabled }}
+        - name: ims-sidecar
+          image: {{ .Values.ims.sidecar.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.sidecar.image .Values.ims.sidecar.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: IMS_CONFIG_DIR
+              value: /ims-config
+            - name: IMS_ASTERISK_BIN
+              value: /usr/sbin/asterisk
+          volumeMounts:
+            - name: ims-config
+              mountPath: /ims-config
+            - name: asterisk-run
+              mountPath: /var/run/asterisk
+          resources:
+            {{- toYaml .Values.ims.sidecar.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+        {{- end }}
+      volumes:
+        - name: ims-config-cm
+          configMap:
+            name: ims-config
+            defaultMode: 0644
+        - name: ims-config
+          emptyDir: {}
+        {{- if and .Values.ims.sidecar .Values.ims.sidecar.enabled }}
+        - name: asterisk-run
+          emptyDir: {}
+        {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

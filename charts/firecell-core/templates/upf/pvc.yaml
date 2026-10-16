@@ -1,0 +1,27 @@
+{{- /*
+The writable-datastore variant of upf.fcaps. Only rendered for
+intentMode: "pvc" — under "configmap" the NMS owns the document and the NF
+mounts it read-only, so a claim here would be an unused volume that still
+consumes storage and still has to be reclaimed by hand.
+
+First slice is one NE (`oai-upf`). Extra hostNetwork instances would need
+their own claim; this template only covers the primary Deployment.
+*/ -}}
+{{- if and .Values.upf.enabled (eq (.Values.upf.type | default "o5gs") "oai") .Values.upf.fcaps.enabled (eq .Values.upf.fcaps.intentMode "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oai-upf-cm-state
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-upf
+    tier: core-network
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.upf.fcaps.datastore.size }}
+  storageClassName: {{ .Values.upf.fcaps.datastore.storageClassName }}
+{{- end }}

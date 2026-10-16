@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firecell-common-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    tier: common
+  annotations:
+    description: "Common configuration shared across all Firecell 5G Core services"
+data:
+  basic_nrf_config_ebpf_qos.yaml: &oai_config |
+{{ include "firecell-5gc.basicNrfConfigEbpfQos" (dict "ctx" . "hostNet" false "smfPodConfig" false) | nindent 4 }}
+{{- if and .Values.smf.enabled (.Values.smf.hostNetwork | default false) }}
+  basic_nrf_config_ebpf_smf_hostnet.yaml: |
+{{ include "firecell-5gc.basicNrfConfigEbpfQos" (dict "ctx" . "hostNet" false "smfPodConfig" true) | nindent 4 }}
+{{- end }}
+{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") .Values.upf.hostNetwork }}
+  basic_nrf_config_ebpf_oai_upf_hostnet.yaml: |
+{{ include "firecell-5gc.basicNrfConfigEbpfQos" (dict "ctx" . "hostNet" true "smfPodConfig" false) | nindent 4 }}
+{{- end }}
+  config.yaml: *oai_config

@@ -1,0 +1,73 @@
+{{- if .Values.amf.enabled }}
+{{- $amfSvcType := coalesce .Values.amf.serviceType .Values.network.amfServiceType "LoadBalancer" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-amf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-amf
+    tier: core-network
+  {{- if eq $amfSvcType "LoadBalancer" }}
+  annotations:
+    metallb.universe.tf/address-pool: firecell-cp-pool
+    metallb.universe.tf/loadBalancerIPs: {{ .Values.network.amfExternalIP }}
+  {{- end }}
+spec:
+  {{- /*
+    On a pod-networked RAN the gNB reaches the AMF through the headless
+    oai-amf-n2 Service and NGAP is pod-to-pod, so no VIP is needed. Set
+    network.amfServiceType: ClusterIP in that case. Leaving it LoadBalancer
+    there is not merely redundant: MetalLB keeps the address reserved, and a
+    later helm upgrade re-creates a NAT path in front of SCTP.
+  */}}
+  type: {{ $amfSvcType }}
+  {{- if eq $amfSvcType "LoadBalancer" }}
+  externalTrafficPolicy: {{ .Values.network.amfExternalTrafficPolicy | default "Local" }}
+  {{- end }}
+  ports:
+    - name: sbi
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: ngap
+      port: 38412
+      targetPort: 38412
+      protocol: SCTP
+    {{- if .Values.amf.fcaps.enabled }}
+    - name: mns
+      port: {{ .Values.amf.fcaps.mnsPort }}
+      targetPort: {{ .Values.amf.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
+  selector:
+    app: oai-amf
+{{- if dig "headlessN2" "enabled" false .Values.amf }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ dig "headlessN2" "serviceName" "oai-amf-n2" .Values.amf }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-amf
+    tier: core-network
+    firecell.io/purpose: n2-ngap
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: {{ if hasKey (.Values.amf.headlessN2 | default dict) "publishNotReadyAddresses" }}{{ .Values.amf.headlessN2.publishNotReadyAddresses }}{{ else }}true{{ end }}
+  selector:
+    app: oai-amf
+  ports:
+    - name: ngap
+      port: 38412
+      targetPort: 38412
+      protocol: SCTP
+{{- end }}
+{{- end }}

@@ -1,0 +1,20 @@
+{{- if .Values.udsf.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: udsf-redis
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: udsf-redis
+    tier: udsf
+spec:
+  type: ClusterIP
+  selector:
+    app: udsf-redis
+  ports:
+    - name: redis
+      port: {{ .Values.udsf.redis.port }}
+      targetPort: redis
+      protocol: TCP
+{{- end }}

@@ -1,0 +1,134 @@
+{{- if .Values.network.metallb.enabled }}
+# ── Control-Plane IP pool ────────────────────────────────────────────────────
+# Used by: AMF (NGAP 38412/SCTP), and any CP-facing LoadBalancer services.
+# Announced on the CP NIC — reachable by the gNB for N2 signalling.
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: firecell-cp-pool
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  addresses:
+    - {{ .Values.network.metallb.cp.poolRange }}
+  autoAssign: false   # Only assign when service requests this pool by annotation
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: firecell-cp-l2-adv
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  ipAddressPools:
+    - firecell-cp-pool
+  interfaces:
+    - {{ .Values.network.metallb.cp.l2Interface }}
+---
+# ── User-Plane IP pool ───────────────────────────────────────────────────────
+# Used by: UPF GTP-U (N3, 2152/UDP).
+# Announced on the UP NIC — reachable by the gNB for user-plane tunnels.
+# This IP is what the UPF advertises to the SMF as its N3 endpoint,
+# so the gNB receives it via N2 and sends GTP-U here.
+#
+# Skipped when network.metallb.upInstances is set (SR-IOV multi-UPF): each VIP
+# is then announced on its own VF below, so per-VIP ARP resolves to the right VF.
+{{- if not .Values.network.metallb.upInstances }}
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: firecell-up-pool
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  addresses:
+  {{- if .Values.network.metallb.up.poolRanges }}
+  {{- range .Values.network.metallb.up.poolRanges }}
+    - {{ . }}
+  {{- end }}
+  {{- else }}
+    - {{ .Values.network.metallb.up.poolRange }}
+  {{- end }}
+  autoAssign: false
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: firecell-up-l2-adv
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  ipAddressPools:
+    - firecell-up-pool
+  interfaces:
+  {{- if .Values.network.metallb.up.l2Interfaces }}
+  {{- range .Values.network.metallb.up.l2Interfaces }}
+    - {{ . }}
+  {{- end }}
+  {{- else }}
+    - {{ .Values.network.metallb.up.l2Interface }}
+  {{- end }}
+{{- end }}
+{{- range $i, $inst := .Values.network.metallb.upInstances }}
+---
+# ── User-Plane IP pool (instance {{ $i }}) ───────────────────────────────────
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: firecell-up-pool-{{ $i }}
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+spec:
+  addresses:
+    - {{ $inst.poolRange }}
+  autoAssign: false
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: firecell-up-l2-adv-{{ $i }}
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+spec:
+  ipAddressPools:
+    - firecell-up-pool-{{ $i }}
+  interfaces:
+    - {{ $inst.l2Interface }}
+{{- end }}
+---
+# ── Ingress IP pool ──────────────────────────────────────────────────────────
+# Used by: ingress-nginx-controller (HTTP/HTTPS).
+# Reachable by external clients for NMS web access.
+{{- if .Values.network.metallb.ingress }}
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: firecell-ingress-pool
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  addresses:
+    - {{ .Values.network.metallb.ingress.poolRange }}
+  autoAssign: false
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: firecell-ingress-l2-adv
+  namespace: metallb-system
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  ipAddressPools:
+    - firecell-ingress-pool
+  interfaces:
+    - {{ .Values.network.metallb.ingress.l2Interface }}
+{{- end }}
+{{- end }}

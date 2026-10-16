@@ -1,0 +1,332 @@
+{{- if and .Values.upf.enabled (eq .Values.upf.type "o5gs") }}
+{{- /*
+  Build effective instance list.
+  When upf.instances is non-empty, each entry describes one independent UPF pod.
+  When empty (default), synthesise a single synthetic instance from the flat
+  upf.* keys so the range loop below works uniformly in both cases.
+  Backward compatible: existing single-UPF environments need no change.
+*/}}
+{{- $instances := .Values.upf.instances }}
+{{- if not $instances }}
+{{- $instances = list (dict
+    "suffix"          ""
+    "n3IP"            .Values.upf.n3IP
+    "n3Interface"     .Values.upf.n3Interface
+    "n4Interface"     .Values.upf.n4Interface
+    "hostPfcpMacvlan" .Values.upf.hostPfcpMacvlan
+    "hostPfcpIP"      .Values.upf.hostPfcpIP
+    "pfcpHost"        .Values.upf.pfcpHost
+    "sessions"        ""
+) }}
+{{- end }}
+{{- $multiHostNet := and .Values.upf.hostNetwork (gt (len $instances) 1) }}
+{{- $pcapDefaults := .Values.upf.packetCapture | default dict }}
+{{- range $idx, $inst := $instances }}
+{{- $capturePort := add 8095 $idx }}
+{{- $n3if := coalesce $inst.n3Interface $.Values.upf.n3Interface "eth0" }}
+{{- $n6if := coalesce $inst.n6Interface $.Values.upf.n6Interface $n3if }}
+{{- $captureSidecar := $pcapDefaults.enabled | default true }}
+{{- if and (hasKey $inst "packetCapture") (hasKey $inst.packetCapture "enabled") }}
+{{- $captureSidecar = $inst.packetCapture.enabled }}
+{{- end }}
+{{- if and $multiHostNet ($pcapDefaults.disableOnMultiInstance | default true) }}
+{{- $captureSidecar = false }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: o5gs-upf{{ ($inst.suffix | default "" | toString) }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+    app: o5gs-upf{{ ($inst.suffix | default "" | toString) }}
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: o5gs-upf{{ ($inst.suffix | default "" | toString) }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 2
+  minReadySeconds: 20
+  template:
+    metadata:
+      labels:
+        app: o5gs-upf{{ ($inst.suffix | default "" | toString) }}
+        tier: core-network
+        firecell.io/role: core-nf
+        firecell.io/packet-capture: upf
+        role: active
+      annotations:
+        checksum/upf-config: {{ include (print $.Template.BasePath "/upf/configmap.yaml") $ | sha256sum }}
+    spec:
+      priorityClassName: firecell-prio-high
+      terminationGracePeriodSeconds: 30
+      {{- if $.Values.upf.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      dnsConfig:
+        nameservers:
+          {{- toYaml $.Values.upf.dnsServers | nindent 10 }}
+        searches:
+          {{- toYaml $.Values.upf.dnsSearchDomains | nindent 10 }}
+        options:
+          - name: ndots
+            value: "2"
+      {{- end }}
+      initContainers:
+        - name: config-generator
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          command:
+            - /bin/sh
+            - -c
+            - |
+              mkdir -p /config-output /log-init/open5gs
+              /config-template/init-config.sh
+          volumeMounts:
+            - name: upf-config-template
+              mountPath: /config-template
+            - name: upf-config-generated
+              mountPath: /config-output
+            - name: upf-log-volume
+              mountPath: /log-init
+        - name: init-log-dir
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - mkdir -p /log-init/open5gs && chmod 777 /log-init/open5gs
+          volumeMounts:
+            - name: upf-log-volume
+              mountPath: /log-init
+      containers:
+        - name: upf
+          image: {{ $.Values.upf.o5gsImageOverride | default (include "firecell-5gc.image" (dict "registry" $.Values.global.imageRegistry "image" $.Values.upf.o5gsImage "tag" $.Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - /config-template/start-upf.sh
+          env:
+            - name: TZ
+              value: {{ $.Values.global.timezone }}
+            - name: DISABLE_NAT
+              value: {{ $.Values.upf.disableNat | quote }}
+            - name: BLOCK_SSH_ACCESS
+              value: {{ $.Values.upf.blockSshAccess | quote }}
+            - name: PROTECTED_SSH_NETWORKS
+              value: {{ $.Values.upf.protectedSshNetworks | quote }}
+            - name: SSH_EXEMPTED_IPS
+              value: {{ $.Values.upf.sshExemptedIps | quote }}
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MAIN_PROCESS_NAME
+              value: "open5gs-upfd"
+            # CP/UP separation — per-instance values take precedence.
+            # In legacy single-UPF mode these come from the synthetic instance above.
+            {{- if $inst.n3IP }}
+            - name: UPF_N3_IP
+              value: {{ $inst.n3IP | quote }}
+            {{- end }}
+            {{- if $inst.n3Interface }}
+            - name: UPF_N3_INTERFACE
+              value: {{ $inst.n3Interface | quote }}
+            {{- end }}
+            {{- if $inst.n4Interface }}
+            - name: UPF_N4_INTERFACE
+              value: {{ $inst.n4Interface | quote }}
+            {{- end }}
+            {{- if $inst.hostPfcpMacvlan }}
+            - name: UPF_HOST_PFCP_MACVLAN
+              value: {{ $inst.hostPfcpMacvlan | quote }}
+            {{- end }}
+            {{- if $inst.hostPfcpIP }}
+            - name: UPF_HOST_PFCP_IP
+              value: {{ $inst.hostPfcpIP | quote }}
+            {{- end }}
+            {{- if $inst.sessions }}
+            # Per-instance UE subnet list (multi-UPF mode).
+            # start-upf.sh replaces SESSIONS_YAML_PLACEHOLDER at runtime with these.
+            - name: UPF_SESSIONS
+              value: {{ $inst.sessions | quote }}
+            {{- else }}
+            - name: UPF_SESSIONS
+              value: "{{ range $i, $s := $.Values.coreConfig.upfSessions }}{{ if $i }},{{ end }}{{ $s.subnet }}{{ end }}"
+            {{- end }}
+            {{- if $inst.tunDev }}
+            # Per-instance TUN device name — must be unique across UPF instances on
+            # the same host. start-upf.sh defaults to "ogstun" when not set.
+            - name: UPF_TUN_DEV
+              value: {{ $inst.tunDev | quote }}
+            {{- end }}
+            # ── Session capacity ──────────────────────────────────────────
+            - name: UPF_MAX_SESSIONS
+              value: {{ $.Values.upf.maxSessions | default 1024 | quote }}
+            # ── Performance tuning (all gated on UPF_PERFORMANCE_ENABLED) ─
+            - name: UPF_PERFORMANCE_ENABLED
+              value: {{ dig "performance" "enabled" false $.Values.upf | quote }}
+            {{- with $.Values.upf.performance }}
+            - name: UPF_TUN_MTU
+              value: {{ .mtu | default 1420 | quote }}
+            - name: UPF_SESSION_MTU
+              value: {{ .mtu | default 1420 | quote }}
+            - name: UPF_TCPMSS_CLAMP
+              value: {{ .tcpMssClamp | default true | quote }}
+            - name: UPF_SOCKET_RMEM_MAX
+              value: {{ .socketRmemMax | default 26214400 | quote }}
+            - name: UPF_SOCKET_WMEM_MAX
+              value: {{ .socketWmemMax | default 26214400 | quote }}
+            - name: UPF_CONNTRACK_MAX
+              value: {{ .conntrackMax | default 524288 | quote }}
+            - name: UPF_CONNTRACK_UDP_TIMEOUT
+              value: {{ .conntrackUdpTimeout | default 120 | quote }}
+            - name: UPF_CONNTRACK_UDP_STREAM_TIMEOUT
+              value: {{ .conntrackUdpStreamTimeout | default 3600 | quote }}
+            - name: UPF_ENABLE_BBR
+              value: {{ .enableBBR | default true | quote }}
+            - name: UPF_TX_QUEUE_LEN
+              value: {{ .txQueueLen | default 10000 | quote }}
+            - name: UPF_DISABLE_LRO
+              value: {{ .disableLRO | default true | quote }}
+            - name: UPF_TUN_QDISC
+              value: {{ .tunQdisc | default "pfifo_fast" | quote }}
+            - name: UPF_NETDEV_BUDGET
+              value: {{ .netdevBudget | default 600 | quote }}
+            - name: UPF_NETDEV_BUDGET_USECS
+              value: {{ .netdevBudgetUsecs | default 8000 | quote }}
+            {{- end }}
+            # Per-instance cpuAffinity takes precedence over global performance.cpuAffinity
+            - name: UPF_CPU_AFFINITY
+              value: {{ ($inst.cpuAffinity | default (dig "performance" "cpuAffinity" "" $.Values.upf)) | quote }}
+          volumeMounts:
+            - name: upf-config-template
+              mountPath: /config-template
+            - name: upf-config-generated
+              mountPath: /cn5g-o5gs/install/etc/open5gs/upf.yaml
+              subPath: upf.yaml
+            - name: upf-log-volume
+              mountPath: /cn5g-o5gs/install/var/log
+          securityContext:
+            privileged: {{ $.Values.upf.privileged }}
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+              drop:
+                - ALL
+          resources:
+            {{- toYaml $.Values.upf.resources | nindent 12 }}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -f open5gs-upfd > /dev/null
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -f open5gs-upfd > /dev/null
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 10
+            timeoutSeconds: 5
+        {{- if $captureSidecar }}
+        - name: fc-packet-capture
+          image: {{ ($.Values.upf.packetCapture | default dict).imageOverride | default (include "firecell-5gc.image" (dict "registry" $.Values.global.imageRegistry "image" "fc-packet-capture" "tag" (($.Values.upf.packetCapture | default dict).imageTag | default $.Values.global.pkgVersion))) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          workingDir: /agent
+          env:
+            - name: FC_REST_PORT
+              value: {{ $capturePort | quote }}
+            - name: FC_CAPTURE_N3_INTERFACE
+              value: {{ $n3if | quote }}
+            {{- if ne $n6if $n3if }}
+            - name: FC_CAPTURE_N6_INTERFACE
+              value: {{ $n6if | quote }}
+            {{- end }}
+          command:
+            - /agent/fc_packet_capture
+          {{- if not $multiHostNet }}
+          ports:
+            - containerPort: {{ $capturePort }}
+              protocol: TCP
+          {{- end }}
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          livenessProbe:
+            exec:
+              command:
+                - "true"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - "true"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 500m
+            limits:
+              memory: 1Gi
+              cpu: 2000m
+        {{- end }}
+        {{- if $.Values.upf.dnnDataplane.enabled | default false }}
+        {{- /*
+          Open5GS rebuilds ogstun and its NAT from its own config on every
+          start, so this helper has nothing to add here and reports
+          NOT_APPLICABLE. It is still deployed so support reads the same answer
+          shape from every UPF: no helper at all is indistinguishable from a
+          helper that is broken. No config mount — the mode is not inferred.
+        */}}
+        {{- include "firecell-5gc.dnnDataplaneSidecar" (dict
+            "Values" $.Values
+            "port" (add ($.Values.upf.dnnDataplane.basePort | default 8196 | int) $idx)
+            "mode" "o5gs"
+            "omitContainerPort" $multiHostNet
+        ) | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: upf-config-template
+          configMap:
+            name: o5gs-upf-config
+            defaultMode: 0755
+        - name: upf-config-generated
+          emptyDir: {}
+        - name: upf-log-volume
+          emptyDir: {}
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}

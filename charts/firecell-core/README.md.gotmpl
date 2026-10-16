@@ -1,0 +1,108 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.description" . }}
+
+## 1. Architectural Role
+The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network stack. It operates in fully standalone mode with zero mandatory external runtime dependencies on RAN or NMS.
+
+### 1.1 Stack Components
+- **Control Plane (CP):**
+  - **AMF** (`oai-amf`): Access and Mobility Management Function handling NGAP (SCTP 38412) and NAS signaling.
+  - **SMF** (`oai-smf`): Session Management Function managing PDU sessions, IP allocation, and UPF interaction.
+  - **NRF** (`oai-nrf`): Network Function Repository Function providing service registration and discovery.
+  - **UDR** (`oai-udr`): Unified Data Repository storing subscriber data and policies.
+  - **UDM** (`oai-udm`): Unified Data Management handling subscriber credentials and profile generation.
+  - **AUSF** (`oai-ausf`): Authentication Server Function executing 5G-AKA authentication.
+  - **PCF** (`oai-pcf`): Policy Control Function managing QoS rules and policy decisions.
+- **User Plane (UP):**
+  - **UPF** (`oai-upf` / `open5gs-upf`): User Plane Function handling GTP-U packet forwarding (UDP 2152) and DNN routing.
+  - **Ext-DN** (`ext-dn`): External Data Network simulation container providing uplink routing and Internet connectivity.
+- **Persistence & Storage:**
+  - **MySQL Database** (`mysql`): StatefulSet storing 3GPP subscriber credentials, PCF policies, and provisioning records. Initialized automatically via SQL scripts in `sql/`.
+- **Support & Agents:**
+  - **CN-Agent** (`cn-agent`): Core network local agent for metric collection and status reporting.
+  - **FC-ACS-Agent** (`fc-acs-agent`): Auto-Configuration Server agent for TR-069 management.
+  - **UDSF** (`udsf`): Unstructured Data Storage Function with Redis backend.
+
+## 2. Standalone Atomic Lifecycle
+The chart incorporates built-in Kubernetes job hooks to guarantee atomic lifecycle management (installation, upgrade, rollback, uninstallation):
+
+- **Pre-Flight Check (`pre-install`, `pre-upgrade`):**
+  - Verifies host kernel modules (specifically `sctp`).
+  - Verifies network interfaces, IP availability, and cluster storage classes.
+  - Aborts immediately if prerequisites are not satisfied, preventing partial or broken installs.
+- **Post-Flight Verification (`post-install`, `post-upgrade`):**
+  - Verifies MySQL connectivity, table schemas (`AuthenticationSubscription`), and database version seeding.
+  - Confirms all Core NFs reach `Ready` status within timeouts.
+  - Verifies SCTP NGAP listening state (port 38412) and GTP-U listening state (port 2152).
+  - Validates end-to-end control-plane and data-path viability.
+  - If any verification step fails, exits non-zero to trigger Helm's `--atomic` automatic rollback.
+- **Post-Delete Cleanup (`post-delete`):**
+  - Reaps dangling ephemeral resources while respecting PVC retention policies.
+
+## 3. Quick Start & Installation
+
+### 3.1 Prerequisites
+1. Ensure the `sctp` kernel module is loaded on Kubernetes nodes:
+   ```bash
+   sudo modprobe sctp
+   ```
+2. Pre-create the container registry secret in the target namespace (e.g. `firecell-core`):
+   ```bash
+   kubectl create namespace firecell-core
+   kubectl create secret docker-registry gitlab-regcred \
+     --docker-server=registry.gitlab.com \
+     --docker-username=<USERNAME> \
+     --docker-password=<TOKEN> \
+     --namespace firecell-core
+   ```
+
+### 3.2 Atomic Installation
+Deploy the chart with `--atomic` and an appropriate timeout:
+```bash
+helm install firecell-core ./charts/firecell-core \
+  --namespace firecell-core \
+  --atomic \
+  --timeout 15m
+```
+
+### 3.3 Atomic Upgrade
+Upgrades will automatically roll back to the previous release if post-flight verification detects any regression:
+```bash
+helm upgrade firecell-core ./charts/firecell-core \
+  --namespace firecell-core \
+  --atomic \
+  --timeout 15m
+```
+
+### 3.4 Uninstallation
+```bash
+helm uninstall firecell-core --namespace firecell-core
+```
+
+## 4. Configuration Parameters
+The following table lists the configurable parameters of the Firecell Core chart and their default values.
+
+{{ template "chart.valuesTable" . }}
+
+## 5. Maintenance & Troubleshooting
+- **Check Release Status:**
+  ```bash
+  helm status firecell-core -n firecell-core
+  ```
+- **Inspect Verification Hook Logs:**
+  ```bash
+  kubectl logs -n firecell-core job/firecell-core-postflight-verify -f
+  ```
+- **Inspect NF Health Endpoints:**
+  All OAI NFs expose HTTP health probes on `8080` (or `80`) via internal sidecars.
+- **Manual Rollback:**
+  If needed, roll back to a specific revision manually:
+  ```bash
+  helm rollback firecell-core <REVISION> -n firecell-core
+  ```
+
+{{ template "helm-docs.versionFooter" . }}

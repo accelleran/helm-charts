@@ -1,0 +1,55 @@
+{{- if .Values.udsf.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: udsf-redis
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: udsf-redis
+    tier: udsf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: udsf-redis
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: udsf-redis
+        tier: udsf
+        role: active
+    spec:
+      containers:
+        - name: redis
+          image: {{ .Values.udsf.redis.imageOverride | default .Values.udsf.redis.image }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - redis-server
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+          ports:
+            - name: redis
+              containerPort: {{ .Values.udsf.redis.port }}
+              protocol: TCP
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.udsf.redis.resources | nindent 12 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

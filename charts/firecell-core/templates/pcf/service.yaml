@@ -1,0 +1,34 @@
+{{- if .Values.pcf.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-pcf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-pcf
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    - name: sbi
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    {{- if .Values.pcf.fcaps.enabled }}
+    # The NMS reaches the MnS producer here. ClusterIP rather than a
+    # LoadBalancer because the NMS runs in the cluster; only the AMF has an
+    # external MnS address, and only because its Service was already external
+    # for N2.
+    - name: mns
+      port: {{ .Values.pcf.fcaps.mnsPort }}
+      targetPort: {{ .Values.pcf.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: oai-pcf
+{{- end }}

@@ -1,0 +1,37 @@
+{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") .Values.upf.hostNetwork }}
+{{- $instances := .Values.upf.instances }}
+{{- if not $instances }}
+{{- $instances = list (dict
+    "suffix"          ""
+    "n3IP"            .Values.upf.n3IP
+    "n3Interface"     .Values.upf.n3Interface
+    "n6Interface"     .Values.upf.n6Interface
+    "n4Interface"     .Values.upf.n4Interface
+    "hostPfcpMacvlan" .Values.upf.hostPfcpMacvlan
+    "hostPfcpIP"      .Values.upf.hostPfcpIP
+    "pfcpHost"        .Values.upf.pfcpHost
+) }}
+{{- end }}
+{{- range $inst := $instances }}
+{{- $suffix := ($inst.suffix | default "" | toString) }}
+{{- $appName := printf "oai-upf%s" $suffix }}
+{{- $cmName := printf "firecell-oai-upf%s-hostnet" $suffix }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $cmName }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+    app: {{ $appName }}
+    tier: core-network
+  annotations:
+    description: >-
+      OAI CN5G UPF hostNetwork config for {{ $appName }}.
+      enable_bpf_datapath from upf.enableBpfDatapath / Ansible fastpath (native XDP vs simpleswitch).
+data:
+  basic_nrf_config_ebpf_oai_upf_hostnet.yaml: |
+{{ include "firecell-5gc.oaiUpfHostnetConfig" (list $ $inst) | nindent 4 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,23 @@
+# CI values for ct lint to exercise non-default conditional branches
+network:
+  metallb:
+    enabled: false
+  amfServiceType: ClusterIP
+
+amf:
+  headlessN2:
+    enabled: true
+
+upf:
+  type: oai
+  enableBpfDatapath: true
+
+networkPolicies:
+  enabled: true
+  allowedNamespaces:
+    - default
+  allowedExternalCIDRs:
+    - 192.168.10.0/24
+
+hooks:
+  enabled: true

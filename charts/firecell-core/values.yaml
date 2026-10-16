@@ -1,0 +1,1129 @@
+# Firecell 5G Core - Simplified (non-HA) Deployment
+# This values file configures a single-replica deployment of all 5GC NFs.
+
+global:
+  # Namespace for all resources
+  namespace: firecell-core
+
+  # GitLab registry — pre-create gitlab-regcred secret before helm install
+  imageRegistry: registry.gitlab.com/firecell/r-d/firecellrd
+  # The busybox used by every initContainer in this chart. Composed from
+  # imageRegistry when unset; name it in full to pull it from anywhere else.
+  busyboxImage: ""
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: gitlab-regcred
+
+  # Package version — used as the image tag suffix (images tagged as v<pkgVersion>)
+  pkgVersion: "1.0.0"
+
+  # Timezone for all NF containers
+  timezone: Europe/Paris
+
+# --- Namespace Management ---
+# Set create: false when using `helm upgrade --install --create-namespace` or when
+# the namespace is pre-created externally (e.g., to hold registry pull secrets).
+namespace:
+  create: false
+  keepOnUninstall: true
+
+# --- Network / MetalLB ---
+# CP/UP separation model:
+#   cp.interface (e.g. eth0 / bond0) — control plane NIC: AMF NGAP, SBI
+#   up.interface (e.g. eth1 / bond1) — user plane NIC:  UPF GTP-U (N3)
+#
+# Both can point to the same interface for single-NIC lab setups,
+# but assign IPs from different ranges so MetalLB distinguishes pools.
+network:
+  metallb:
+    enabled: true
+    cp:
+      # Override via site/environment values (documentation ranges as placeholders).
+      poolRange: "192.0.2.101-192.0.2.110"
+      l2Interface: eth0          # NIC facing gNB/RAN control-plane network
+    up:
+      # When false, skip MetalLB UP pool (OAI hostNetwork N3 on a physical IP, no LB pool).
+      enabled: true
+      poolRange: "198.51.100.101-198.51.100.110"
+      l2Interface: eth1          # NIC facing gNB GTP-U / data network
+    ingress:
+      poolRange: "192.0.2.100/32"
+      l2Interface: eth0
+  # oai-amf Service type. Keep LoadBalancer when the gNB is off-cluster and
+  # reaches N2 through a VIP. Set ClusterIP for a pod-networked RAN, where the
+  # gNB resolves the headless oai-amf-n2 Service and NGAP is pod-to-pod;
+  # amfExternalIP is then unused and the address can be returned to the pool.
+  amfServiceType: LoadBalancer
+
+  # External IPs — always override from sites/*/site.yaml generated values
+  amfExternalIP: "192.0.2.101"
+  acsExternalIP: "192.0.2.102"
+  upfExternalIP: "198.51.100.101"
+
+# --- Database (MySQL 8.0 single-node) ---
+# For production, consider switching to Percona XtraDB Cluster operator.
+# Credentials: set via --set / site overlay. Lab-only insecure defaults:
+#   environments/values-lab-insecure-defaults.yaml
+mysql:
+  enabled: true
+  image: mysql:8.0
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  rootPassword: ""            # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
+  database: oai_db
+  user: ""                    # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
+  password: ""                # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
+  keepSecretOnUninstall: false
+  storage:
+    size: 6Gi
+    storageClass: ""          # Empty = use cluster default
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 600m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+# --- UDSF (Unstructured Data Storage Function) + Redis backing store ---
+# Disabled by default. Enable via environments/values-stateless.yaml (Phase 3 stateless overlay).
+udsf:
+  enabled: false
+  image: firecell-udsf
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  # e.g. imageOverride: registry.gitlab.com/firecell/r-d/firecellrd-core/firecell-udsf:v5.1.0.2
+  imageOverride: ""
+  serviceName: oai-udsf
+  host: oai-udsf
+  sbiPort: 8080
+  healthPath: /nudsf-data-mgmt/v1/healthz
+  redis:
+    image: redis:7-alpine
+    # Full image reference, winning over the verbatim image above.
+    # Same escape hatch every workload has: without it a registry mirror
+    # or retag cannot be named.
+    imageOverride: ""
+    port: 6379
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+        cpu: 500m
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 1000m
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Must equal nf_instance.instance_name for the UDSF NE in the NMS. A
+      # mismatch mounts EMPTY and the UDSF reverts to its seed with nothing
+      # logged: `optional: true` cannot tell a missing ConfigMap from a
+      # misnamed one.
+      name: oai-udsf-cm-intent
+      optional: true
+    # No seedConfigPath: the UDSF is configured by environment
+    # variables, not a YAML file, so there is no seed document to
+    # snapshot before the overlay.
+
+
+# --- NRF (NF Repository Function) ---
+nrf:
+  enabled: true
+  image: oai-nrf
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  priorityClassName: firecell-prio-crit
+  command:
+    - /openair-nrf/bin/oai_nrf
+    - -c
+    - /openair-nrf/etc/config.yaml
+    - -o
+  configMountPath: /openair-nrf/etc/config.yaml
+  ports:
+    - name: sbi
+      containerPort: 80
+      protocol: TCP
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Must equal nf_instance.instance_name for the NRF NE in the NMS. A
+      # mismatch mounts EMPTY and the NRF reverts to its seed with nothing
+      # logged: `optional: true` cannot tell a missing ConfigMap from a
+      # misnamed one.
+      name: oai-nrf-cm-intent
+      optional: true
+    seedConfigPath: /openair-nrf/etc/config.yaml
+
+# --- UDR (Unified Data Repository) ---
+udr:
+  enabled: true
+  image: oai-udr
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  priorityClassName: firecell-prio-crit
+  command:
+    - /openair-udr/bin/oai_udr
+    - -c
+    - /openair-udr/etc/config.yaml
+    - -o
+  configMountPath: /openair-udr/etc/config.yaml
+  waitForMysql: true
+  # Process binds SBI on 8080 only. Do not advertise containerPort 80 — nothing
+  # listens there (see templates/udr/service.yaml: Service port 80 maps to 8080).
+  ports:
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    # Same two modes as the AMF and SMF; see amf.fcaps.intentMode for the cost
+    # of each. The UDR was written against 1.0.7 from the start, so `pvc` is
+    # here for symmetry rather than as a supported deployment.
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Must equal nf_instance.instance_name for the UDR NE in the NMS. A
+      # mismatch mounts EMPTY and the UDR reverts to its seed with nothing
+      # logged: `optional: true` cannot tell a missing ConfigMap from a
+      # misnamed one.
+      name: oai-udr-cm-intent
+      optional: true
+    seedConfigPath: /openair-udr/etc/config.yaml
+
+# --- UDM (Unified Data Management) ---
+udm:
+  enabled: true
+  image: oai-udm
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  priorityClassName: firecell-prio-normal
+  command:
+    - /openair-udm/bin/oai_udm
+    - -c
+    - /openair-udm/etc/config.yaml
+    - -o
+  configMountPath: /openair-udm/etc/config.yaml
+  ports:
+    - name: sbi
+      containerPort: 80
+      protocol: TCP
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  # SUCI decryption private key — REQUIRED via overlay (see values-lab-insecure-defaults.yaml for lab demo key)
+  suciKey: ""
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Must equal nf_instance.instance_name for the UDM NE in the NMS. A
+      # mismatch mounts EMPTY and the UDM reverts to its seed with nothing
+      # logged: `optional: true` cannot tell a missing ConfigMap from a
+      # misnamed one.
+      name: oai-udm-cm-intent
+      optional: true
+    seedConfigPath: /openair-udm/etc/config.yaml
+
+
+# --- AUSF (Authentication Server Function) ---
+ausf:
+  enabled: true
+  image: oai-ausf
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  priorityClassName: firecell-prio-normal
+  command:
+    - /openair-ausf/bin/oai_ausf
+    - -c
+    - /openair-ausf/etc/config.yaml
+    - -o
+  configMountPath: /openair-ausf/etc/config.yaml
+  ports:
+    - name: sbi
+      containerPort: 80
+      protocol: TCP
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Must equal nf_instance.instance_name for the AUSF NE in the NMS. A
+      # mismatch mounts EMPTY and the AUSF reverts to its seed with nothing
+      # logged: `optional: true` cannot tell a missing ConfigMap from a
+      # misnamed one.
+      name: oai-ausf-cm-intent
+      optional: true
+    seedConfigPath: /openair-ausf/etc/config.yaml
+
+# --- AMF (Access and Mobility Management Function) ---
+amf:
+  enabled: true
+  image: oai-amf
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  # Kubernetes Service type for oai-amf (NGAP must be reachable off-cluster).
+  # Empty falls back to network.amfServiceType ("LoadBalancer" by default).
+  # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP
+  # annotation on a ClusterIP Service is dead config.
+  serviceType: ""
+  # Optional in-chart headless SCTP Service (oai-amf-n2) for pod-networked RANs
+  headlessN2:
+    enabled: false
+    serviceName: oai-amf-n2
+    publishNotReadyAddresses: true
+  priorityClassName: firecell-prio-crit
+  command:
+    - /openair-amf/bin/oai_amf
+    - -c
+    - /openair-amf/etc/config.yaml
+    - -o
+  configMountPath: /openair-amf/etc/config.yaml
+  ports:
+    - name: sbi
+      containerPort: 80
+      protocol: TCP
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+    - name: ngap
+      containerPort: 38412
+      protocol: SCTP
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 1000m
+    limits:
+      memory: 4Gi
+      cpu: 4000m
+  # --- FCAPS Configuration Management (CM PoC) ---
+  # Off by default: the stock image has no FCAPS and would expose a dead port.
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    # Where the NF's intent document comes from.
+    #
+    #   pvc        the NF owns a writable file (contract 1.0.6). Intent is
+    #              per-pod and dies with it: lost on restart if the volume
+    #              goes, and divergent the moment there is more than one
+    #              replica, since only the active pod is ever PATCHed.
+    #   configmap  the NMS owns the document and the NF mounts it read-only
+    #              (contract 1.0.7). Durable in etcd, identical for every
+    #              replica, and visible to GitOps.
+    intentMode: pvc
+    datastore:
+      mountPath: /openair-amf/state
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Written by the NMS on every apply. Named for the NE, not the
+      # deployment, because intent belongs to the network element.
+      name: oai-amf-cm-intent
+      # The pod must start before the NMS has ever applied anything, so a
+      # missing ConfigMap is an empty mount rather than ContainerCreating
+      # forever. The NF then boots on the seed alone, which is correct: no
+      # intent has been expressed yet.
+      optional: true
+    # Hashed raw for seedSha256 — the only signal covering parameters no
+    # capability manifest models yet. Empty disables the digest.
+    seedConfigPath: /openair-amf/etc/config.yaml
+
+# --- SMF (Session Management Function) ---
+smf:
+  enabled: true
+  image: oai-smf
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  priorityClassName: firecell-prio-high
+  command:
+    - /openair-smf/bin/oai_smf
+    - -c
+    - /openair-smf/etc/config.yaml
+    - -o
+  configMountPath: /openair-smf/etc/config.yaml
+  ports:
+    - name: sbi
+      containerPort: 80
+      protocol: TCP
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+    - name: n4
+      containerPort: 8805
+      protocol: UDP
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 1000m
+    limits:
+      memory: 4Gi
+      cpu: 4000m
+  # Multus secondary NIC for PFCP N4 — gives SMF a stable IP on the CP network
+  # so UPFs (in-cluster and external) always see a consistent PFCP peer identity.
+  # Requires Multus CNI (see bootstrap/ubuntu/install-multus.sh).
+  multus:
+    enabled: false
+    cniType: ipvlan        # ipvlan (recommended for single-NIC) or macvlan
+    mode: l3s              # L3S: host (hostNetwork UPF) can reach slave; ARP passthrough for external UPFs
+    masterInterface: eth0  # parent NIC on CP network
+    nadName: smf-n4-net    # NetworkAttachmentDefinition name
+    subnetPrefix: 24       # prefix length for the secondary NIC address
+  # PFCP N4 interface inside the SMF pod.
+  # Set to "net1" when Multus is enabled (Multus names secondary NICs net1, net2, ...).
+  n4Interface: eth0
+  # Time before Deployment marks ProgressDeadlineExceeded (image pull + Multus + NRF wait).
+  progressDeadlineSeconds: 1200
+  # Explicit PFCP bind IP — must match the Multus secondary NIC IP when Multus is enabled.
+  # When set: UPF connects to this IP directly (no ClusterIP SNAT = no PFCP split-peer).
+  # When empty: UPF uses ClusterIP DNS (subject to SNAT — known PFCP instability).
+  n4IP: ""
+  # Host PFCP (optional): same pattern as OAI UPF — hostNetwork pod, SBI on cni0, N4 on
+  # hostPfcpMacvlan @ hostPfcpIP/n4IP. Disables Multus. Use when UPF uses hostNetwork on
+  # the same CP parent (eno1); see environments/values-smf-pfcp-hostnet.yaml.
+  hostNetwork: false
+  sbiInterface: cni0
+  # MnS/FCAPS (:9091) bind interface. Empty => falls back to sbiInterface. Set per-instance
+  # (e.g. the PFCP macvlan) so N hostNetwork UPFs on one host don't collide on the shared SBI IP.
+  # Requires a FCAPS image that reads nfs.<nf>.mns.interface_name.
+  mnsInterface: ""
+  # k3s cni0 bridge IP where hostNetwork SMF listens for SBI (Service Endpoints when hostNetwork).
+  sbiClusterIP: "10.42.0.1"
+  hostPfcpMacvlan: smf-n4-mac
+  hostPfcpIP: ""
+  pfcpParentInterface: ""
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    # Where the NF's intent document comes from. Same two modes as the AMF —
+    # see amf.fcaps.intentMode for what each one costs.
+    #
+    # The SMF has no reason to run `pvc`: the AMF kept it for the 1.0.6 contract
+    # it shipped with, and the SMF's CM path was written against 1.0.7 from the
+    # start. `pvc` is here so the two NFs are configured the same way, not
+    # because it is a supported deployment.
+    intentMode: configmap
+    datastore:
+      # /var/lib/firecell/cm is the fcaps-common default, so the NF finds its
+      # intent with no FCAPS_CM_DATASTORE at all. The AMF's /openair-amf/state
+      # predates that default and is kept for its existing volumes.
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Written by the NMS on every apply, and named from
+      # nf_instance.instance_name. If this name and the NMS's disagree the mount
+      # is EMPTY and the NF silently reverts to its seed — `optional: true`
+      # cannot tell a missing ConfigMap from a misnamed one.
+      name: oai-smf-cm-intent
+      optional: true
+    # Hashed raw for seedSha256 — the only signal covering parameters no
+    # capability manifest models yet. Empty disables the digest.
+    seedConfigPath: /openair-smf/etc/config.yaml
+
+# --- PCF (Policy Control Function) ---
+pcf:
+  enabled: true
+  image: oai-pcf
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  priorityClassName: firecell-prio-normal
+  command:
+    - /openair-pcf/bin/oai_pcf
+    - -c
+    - /openair-pcf/etc/config.yaml
+    - -o
+  configMountPath: /openair-pcf/etc/config.yaml
+  waitForMysql: true
+  ports:
+    - name: sbi
+      containerPort: 80
+      protocol: TCP
+    - name: http
+      containerPort: 8080
+      protocol: TCP
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    # Same two modes as the AMF and SMF; see amf.fcaps.intentMode for the cost
+    # of each. The PCF was written against 1.0.7 from the start, so `pvc` is
+    # here for symmetry rather than as a supported deployment.
+    intentMode: configmap
+    datastore:
+      # The fcaps-common default, so the NF finds cm.json with no environment
+      # variable at all.
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Must equal nf_instance.instance_name for the PCF NE in the NMS. A
+      # mismatch mounts EMPTY and the PCF reverts to its seed with nothing
+      # logged: `optional: true` cannot tell a missing ConfigMap from a
+      # misnamed one.
+      name: oai-pcf-cm-intent
+      optional: true
+    # Hashed raw for seedSha256 — the only signal covering parameters no
+    # capability manifest models yet, which on the PCF is most of them.
+    seedConfigPath: /openair-pcf/etc/config.yaml
+
+# --- UPF (User Plane Function) ---
+upf:
+  enabled: true
+  # "o5gs" for Open5GS UPF (default), "oai" for OAI UPF
+  type: o5gs
+  o5gsImage: o5gs-upf
+  # Full reference for the o5gs UPF, like oaiImageOverride for the OAI one.
+  o5gsImageOverride: ""
+  oaiImage: oai-upf
+  # Full reference for the OAI UPF, like o5gsImageOverride for the o5gs one.
+  oaiImageOverride: ""
+  # Kubernetes Service type for the GTP-U Service(s).
+  # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP
+  # annotation on a ClusterIP Service is dead config.
+  serviceType: LoadBalancer
+  hostNetwork: true
+  privileged: true
+  # CP/UP interface separation
+  # n3IP: explicit GTP-U bind/advertise IP (set to network.upfExternalIP for MetalLB UP VIP)
+  n3IP: "198.51.100.101"        # Must match network.upfExternalIP
+  n3Interface: "eth1"            # UP NIC — used when n3IP is empty
+  n4Interface: "eth0"            # CP NIC — parent for pfcp-macvlan-init; PFCP toward SMF
+  # OAI hostNetwork only: SBI/NRF HTTP bind (e.g. k3s cni0 — must reach ClusterIP/pod CIDR)
+  sbiInterface: ""
+  # OAI hostNetwork: N6 data-plane NIC (do not set to cni0; use physical uplink/DN)
+  n6Interface: ""
+  # OAI hostNetwork: optional N6 IP/CIDR on n6Interface (required for datapath-init in single-instance mode).
+  n6Cidr: ""
+  # N6 default gateway toward DN (set in site overlay, e.g. values-dataplane-*.yaml / host_vars). Required when n6Cidr is set.
+  remoteN6Gw: ""
+  # datapath-init: block UPF start until remoteN6Gw ARP succeeds — avoids empty BPF m_arp_table.
+  datapathInit:
+    n6GatewayArpRetries: 60
+    n6GatewayArpIntervalSec: 5
+  # When true, n3-ip-init automatically creates n3Interface (e.g. upf-n3) as a
+  # bridge-mode macvlan on n4Interface and adds an on-link route to remoteN6Gw.
+  autoCreateN3Macvlan: false
+  # When true and cilium_host exists on the node, datapath-init injects the
+  # cilium_host pod-CIDR route into the UPF policy routing table so traffic from
+  # the N3/N6 VIP reaches in-cluster pods (gNB, ext-dn) without external Ansible tasks.
+  injectCiliumPodRoute: true
+  # OAI: optional N9; defaults to n3Interface in generated YAML
+  n9Interface: ""
+  # OAI UPF: yes = native XDP / eBPF datapath; no = simpleswitch (userspace) datapath.
+  enableBpfDatapath: true
+  # Hostnet config.yaml schema: mr97 (develop @ 486acc3+) or legacy (cn5g-upf v5.1.0.x).
+  configSchema: mr97
+  # Runtime XDP attach (cn5g-upf UPF_XDP_ATTACH_MODE): auto | native | generic
+  xdpAttachMode: auto
+  # OAI UPF only: Layer-2 Ethernet PDU sessions (cn5g-upf support_features.enable_eth_pdu).
+  # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
+  # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
+  oaiEnableEthPdu: false
+  # fc-packet-capture sidecar (REST on FC_REST_PORT). See docs/operations/upf-packet-capture.md.
+  packetCapture:
+    enabled: true
+    # Multiple hostNetwork UPF pods: one REST port per pod, cn-agent has a single n3_interface_name.
+    disableOnMultiInstance: true
+    # fc-packet-capture is a Firecell agent-family image on the NMS release line (like cnAgent/
+    # fcAcsAgent), NOT the OAI 5GC core line. It has no global.pkgVersion (e.g. v5.1.0) build, so
+    # pin it to the NMS tag. Empty => falls back to global.pkgVersion.
+    imageTag: "5.0.1.0"
+    imageOverride: ""
+  # fc-dnn-dataplane sidecar. The NMS calls it once, after an operator
+  # Start/Restart, to add the routes and SNAT rules a newly added DNN needs.
+  # It has no loop of its own and never deletes a rule it did not expect.
+  #
+  # Off by default: it is only useful with the CM DNN feature enabled on the
+  # NMS side (NMS_DNN_DATAPLANE_ENABLED), and it is only load-bearing for the
+  # userspace datapath. With enableBpfDatapath: true it reports NOT_APPLICABLE
+  # on every call, because XDP programs the pool in eBPF and there is no
+  # per-DNN Linux route to check.
+  #
+  # See cm-poc/docs/dnn-dataplane.md.
+  dnnDataplane:
+    enabled: false
+    image: fc-dnn-dataplane
+    # Firecell agent-family image on the NMS release line, like packetCapture:
+    # it has no global.pkgVersion build. Empty => falls back to pkgVersion.
+    imageTag: "5.0.1.0"
+    # Full image ref (skips registry + :vTAG), for a locally imported lab build
+    # that helm must still name, or the next upgrade silently reverts it.
+    # e.g. imageOverride: "fc-dnn-dataplane:route-fix"
+    imageOverride: ""
+    # One port per pod: N hostNetwork UPFs on one host would otherwise collide.
+    # Offset from 8095 (packetCapture) far enough that the two ranges cannot
+    # overlap however many instances are declared.
+    basePort: 8196
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+        cpu: 500m
+  # Optional overrides for hostnet ConfigMap (see docs/developer/oai-upf-ebpf-hostnet.md)
+  oaiHostNet:
+    stubInterface: ""            # Else sbiInterface, else eno8303
+    smfN4Interface: ""         # Else hostPfcpMacvlan, else n4Interface
+  hostPfcpMacvlan: ""            # If set, create a host macvlan bridge slave on n4Interface for PFCP
+  hostPfcpIP: ""                 # IP to assign to hostPfcpMacvlan (must be free on the CP subnet)
+  pfcpHost: ""                   # Override UPF PFCP host for SMF config (use macvlan IP when hostPfcpMacvlan is set)
+  dnsServers:
+    - 10.152.183.10
+  dnsSearchDomains:
+    - firecell-core.svc.cluster.local
+    - svc.cluster.local
+    - cluster.local
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 200m
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    # Same two modes as the AMF and SMF; see amf.fcaps.intentMode for the cost
+    # of each. The UPF was written against 1.0.7 from the start, so `pvc` is
+    # here for symmetry rather than as a supported deployment.
+    intentMode: configmap
+    datastore:
+      # The fcaps-common default, so the NF finds cm.json with no environment
+      # variable at all.
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      # Must equal nf_instance.instance_name for the UPF NE in the NMS. A
+      # mismatch mounts EMPTY and the UPF reverts to its seed with nothing
+      # logged: `optional: true` cannot tell a missing ConfigMap from a
+      # misnamed one. First slice is one NE (`upf-1` / `oai-upf`); extra
+      # hostNetwork instances need their own NE and ConfigMap.
+      name: oai-upf-cm-intent
+      optional: true
+    # Hashed raw for seedSha256 — the only signal covering parameters no
+    # capability manifest models yet.
+    seedConfigPath: /openair-upf/etc/config.yaml
+  # UPF-specific env vars (o5gs)
+  disableNat: "FALSE"
+  blockSshAccess: "FALSE"
+  protectedSshNetworks: "10.0.0.0/8,192.168.31.0/24,172.17.5.0/24"
+  sshExemptedIps: "192.168.31.254"
+
+  # open5gs-upfd global.max.ue — max concurrent PDU sessions (not UE count;
+  # each UE may have multiple sessions). Memory ≈ 1–2 KB per session.
+  maxSessions: 1024
+
+  # Userplane performance tuning — all gated on performance.enabled.
+  # Safe to leave disabled (default). Enable per environment in values-<env>.yaml.
+  performance:
+    enabled: false
+    mtu: 1420             # ogstun MTU; also used as session MTU in upf.yaml
+                          # 1420 = safe default (GTP-U overhead 36B + 44B headroom)
+                          # 1380 = conservative (use on known-good single-hop LAN)
+    tcpMssClamp: true     # iptables mangle TCPMSS --clamp-mss-to-pmtu on ogstun
+    socketRmemMax: 26214400   # net.core.rmem_max (25 MB) — absorbs ~17ms of 10Gbps burst
+    socketWmemMax: 26214400   # net.core.wmem_max
+    conntrackMax: 524288      # net.netfilter.nf_conntrack_max
+    conntrackUdpTimeout: 120        # seconds; default 30 causes flow stall when iperf report-back is lost
+    conntrackUdpStreamTimeout: 3600 # seconds after first bidirectional UDP exchange
+    enableBBR: true           # load tcp_bbr2 / tcp_bbr kernel module
+    txQueueLen: 10000         # ogstun txqueuelen (default 500 is too small for bursts)
+    disableLRO: true          # ethtool lro off on N3 NIC (LRO corrupts GTP inner checksums)
+    tunQdisc: "pfifo_fast"    # TUN qdisc; pfifo_fast has lower overhead than fq_codel for bulk forwarding
+    netdevBudget: 600         # packets processed per NAPI cycle (default 300 throttles high-PPS)
+    netdevBudgetUsecs: 8000   # CPU time budget per NAPI cycle in µs (default 2000)
+    cpuAffinity: ""           # taskset core list for open5gs-upfd (e.g. "8-15"); empty = no pinning
+
+  # Multi-UPF instance list. When non-empty, replaces legacy single-UPF config.
+  # Each entry produces one independent Deployment + Service (type: upf.serviceType).
+  # Leave empty for single-UPF operation (backward compatible).
+  instances: []
+  # instances:
+  #   - suffix: ""           # Deployment name suffix: "o5gs-upf" when empty
+  #     n3IP: "10.x.x.x"    # MetalLB VIP for GTP-U (must be in up.poolRange)
+  #     n3Interface: eno1
+  #     n6Interface: eno1
+  #     n4Interface: eno1
+  #     inSmfPool: true                   # include this UPF in SMF upf_pool/upfs
+  #     poolState: ACTIVE                 # ACTIVE|DRAINING (rendered to SMF config)
+  #     dnns: ["oai"]                     # per-UPF DNN steering (e.g. oai/oai2)
+  #     tunDev: "ogstun"                   # TUN device name — MUST be unique per instance on same host
+  #     hostPfcpMacvlan: "smf-pfcp-mac"   # unique per instance
+  #     hostPfcpIP: "10.x.x.y"            # PFCP source IP (not in any MetalLB pool)
+  #     pfcpHost: "10.x.x.y"
+  #     sessions: "12.1.1.0/24"           # comma-separated UE subnets for this instance
+
+# --- IMS (Asterisk) ---
+ims:
+  enabled: true
+  image: asterisk-ims
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  imageTag: latest
+  priorityClassName: firecell-prio-support
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 500m
+  sipConf: |
+    [general]
+    language=en
+    tcpenable=yes
+    tcpbindaddr=0.0.0.0
+    tcpbindport=5060
+    srvlookup=yes
+  # Leave empty. After the IMS sidecar is in the pod it is the only runtime
+  # writer of users.conf (emptyDir). A non-empty ConfigMap seed would still be
+  # wiped on restart; the sidecar's bootId is how the NMS re-asserts the list.
+  # Filling this in would reintroduce a second writer.
+  usersConf: ""
+  sidecar:
+    # OFF by default until the image is published to imageRegistry. The
+    # composed default below resolves to
+    # registry.gitlab.com/.../nms-ims-sidecar:latest, which does not exist: the
+    # image is built locally and imported into the node. A default-on sidecar
+    # whose image cannot be pulled leaves the whole pod NotReady, and the
+    # Service then drops the endpoint - turning a working Asterisk into an
+    # unreachable one. Enable it explicitly, with imageOverride:
+    #   --set ims.sidecar.enabled=true \
+    #   --set ims.sidecar.imageOverride=nms-ims-sidecar:<tag>
+    enabled: false
+    image: nms-ims-sidecar
+    imageOverride: ""
+    imageTag: latest
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 128Mi
+        cpu: 200m
+
+# --- External Data Network ---
+extDn:
+  enabled: true
+  image: trf-gen-cn5g
+  # Full image reference, winning over the registry + image + tag composition.
+  # Same escape hatch every NF has: the composition glues on imageRegistry,
+  # so an image published anywhere else cannot be named without it.
+  imageOverride: ""
+  imageTag: latest
+  priorityClassName: firecell-prio-support
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 200m
+  sidecar:
+    # OFF by default until the image is published to imageRegistry. The
+    # composed default below resolves to
+    # registry.gitlab.com/.../nms-extdn-probe-sidecar:latest, which does not exist: the
+    # image is built locally and imported into the node. A default-on sidecar
+    # whose image cannot be pulled leaves the whole pod NotReady, and the
+    # Service then drops the endpoint - turning a working ext-dn into an
+    # unreachable one. Enable it explicitly, with imageOverride:
+    #   --set extDn.sidecar.enabled=true \
+    #   --set extDn.sidecar.imageOverride=nms-extdn-probe-sidecar:<tag>
+    enabled: false
+    image: nms-extdn-probe-sidecar
+    imageOverride: ""
+    imageTag: latest
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 128Mi
+        cpu: 200m
+
+# --- CN Agent (Firecell Core Network Agent) ---
+# Kubernetes health uses cn-agent CoreServiceK8sHandler label selector app=<nf>,role=active.
+# All core NF pod templates set role: active so /cn_agent_health can pass without manual kubectl label.
+cnAgent:
+  enabled: true
+  image: cn-agent
+  # Full image reference, winning over the registry + image + tag composition.
+  # Every NF already has this; the agents did not, so an agent published
+  # anywhere but imageRegistry could not be named at all.
+  imageOverride: ""
+  # cn-agent/fc-acs-agent ship on the NMS release line (v5.0.1.0), independent of
+  # the 5GC global.pkgVersion. Unset imageTag falls back to global.pkgVersion.
+  imageTag: "5.0.1.0"
+  # DB migration target for cn_version env (must match cn-agent migration registry).
+  dbVersion: "5.0.1"
+  priorityClassName: firecell-prio-normal
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  # Agent-specific configuration
+  config:
+    logLevel: debug
+    qosEnabled: true
+    deployment: kubernetes    # docker-compose | kubernetes
+    n3InterfaceName: eno8303 #later make it bond0
+
+    # Platform-agnostic health check settings
+    healthCheck:
+      sbiCheck: true          # set false for infra-only health (no NF REST API probes)
+      sbiProbeTimeoutS: 3     # per-NF SBI HTTP probe timeout in seconds
+    # Packet capture client settings
+    packetCapture:
+      connectTimeoutS: 1.0
+      readTimeoutS: 2.0
+      retryCount: 1
+      retryBackoffS: 0.2
+      k8sServiceName: upf-packet-capture
+      servicePort: 8095
+
+    # Required when deployment: kubernetes
+    kubernetes:
+      namespace: ""           # leave empty to inherit global.namespace
+      coreNfLabelSelector: "firecell.io/role=core-nf"
+      podSelection: any       # any | active  (active requires role=active label on pods)
+      execContainer: null     # null = K8s default container (single-container pods, k3s)
+      # minHealthy: 1         # minimum ready pods per component
+      # kubeconfigPath: ""    # leave unset when running inside the cluster
+      components: {}          # per-component overrides, e.g:
+                              #   oai-upf:
+                              #     minHealthy: 2
+                              #   oai-ausf:
+                              #     podSelection: any
+  backendIp: "nms-api.firecell-nms.svc.cluster.local"
+  # Headless service used for packet-capture endpoint discovery across all UPF pods.
+  packetCaptureAddress: "upf-packet-capture:8095"
+  apiVictoriaMetricsUrl: "http://nms-api-victoria-metrics-dev.firecell-nms.svc.cluster.local:8430"
+  redisCacheHost: "redis-cache.firecell-nms.svc.cluster.local"
+  redisCachePort: 6799
+  redisCacheDb: 0
+
+# --- FC ACS Agent (TR-069 ACS endpoint) ---
+fcAcsAgent:
+  enabled: true
+  image: fc-acs-agent
+  # Full image reference, winning over the registry + image + tag composition.
+  # Every NF already has this; the agents did not, so an agent published
+  # anywhere but imageRegistry could not be named at all.
+  imageOverride: ""
+  imageTag: "5.0.1.0"   # NMS release line; see cnAgent.imageTag
+  # Kubernetes Service type for fc-acs-agent (TR-069 must be reachable off-cluster).
+  # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP
+  # annotation on a ClusterIP Service is dead config — and network.acsExternalIP
+  # is no longer required.
+  serviceType: LoadBalancer
+  priorityClassName: firecell-prio-normal
+  logLevel: info
+  pmUploadDir: /tmp/pm_uploads
+  database:
+    host: mysql
+    port: 3306
+    user: root
+    name: firecell_ran_tr069
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 200m
+    limits:
+      memory: 512Mi
+      cpu: 1000m
+  # Rendered into /app/config/config.yaml via tpl()
+  config: |
+    auth:
+      enabled: true
+      realm: "TR-069 ACS"
+      algorithm: MD5
+      qop: auth
+      nonce_timeout: 3600
+
+    credentials:
+      username: cpe
+      password: cpe
+
+    initial_attach:
+      vendors:
+        cloudran:
+          management:
+            Device.ManagementServer.PeriodicInformEnable: true
+            Device.ManagementServer.PeriodicInformInterval: 20
+          perf_mgmt:
+            Device.FAP.PerfMgmt.Config.1.Enable: true
+            Device.FAP.PerfMgmt.Config.1.URL: "http://{{ .Values.network.acsExternalIP }}:7547/smallcell/FileUploadService"
+            Device.FAP.PerfMgmt.Config.1.PeriodicUploadInterval: 300
+            Device.FAP.PerfMgmt.Config.1.PeriodicUploadTime: "2026-02-17T14:25:00Z"
+            Device.FAP.PerfMgmt.Config.1.Username: "cpe"
+            Device.FAP.PerfMgmt.Config.1.Password: "cpe"
+        askey:
+          management:
+            Device.ManagementServer.PeriodicInformEnable: true
+            Device.ManagementServer.PeriodicInformInterval: 20
+          perf_mgmt:
+            Device.FAP.PerfMgmt.Config.1.Enable: true
+            Device.FAP.PerfMgmt.Config.1.URL: "http://{{ .Values.network.acsExternalIP }}:7547/smallcell/FileUploadService"
+            Device.FAP.PerfMgmt.Config.1.PeriodicUploadInterval: 300
+            Device.FAP.PerfMgmt.Config.1.PeriodicUploadTime: "2026-02-17T14:25:00Z"
+            Device.FAP.PerfMgmt.Config.1.Username: "cpe"
+            Device.FAP.PerfMgmt.Config.1.Password: "cpe"
+
+    monitoring:
+      ue_count_poll_interval_s: 10
+
+    nms_address: "http://nms-api.firecell-nms.svc.cluster.local:5001"
+
+# --- 5G Core Configuration (injected into shared ConfigMap) ---
+coreConfig:
+  logLevel: debug
+  registerNf: "yes"
+  httpVersion: 1
+
+  # PLMN identity
+  mcc: "001"
+  mnc: "01"
+  tac: "0x0001"
+
+  # AMF configuration
+  amf:
+    name: "OAI-AMF"
+    relativeCapacity: 30
+    statisticsTimerInterval: 20
+    emergencySupport: false
+    enableSimpleScenario: "no"
+    enableNssf: "no"
+    enableSmfSelection: "no"
+    releaseAllPduSessions: "no"
+    enableIms: "yes"
+    enableUdsf: "no"
+    amfRegionId: "01"
+    amfSetId: "001"
+    amfPointer: "01"
+    supportedIntegrityAlgorithms:
+      - "NIA2"
+    supportedEncryptionAlgorithms:
+      - "NEA0"
+      - "NEA1"
+      - "NEA2"
+
+  # NSSAI / Slices
+  nssai:
+    - sst: 1
+      sd: "000001"
+
+  # DNN configuration
+  dnns:
+    - dnn: "oai"
+      pduSessionType: "IPV4"
+      ipv4Subnet: "12.1.1.0/25"
+    - dnn: "ims"
+      pduSessionType: "IPV4V6"
+      ipv4Subnet: "14.1.1.0/25"
+
+  # DNS servers for UE
+  dns:
+    primaryIpv4: "8.8.8.8"
+    secondaryIpv4: "8.8.8.8"
+
+  # IMS P-CSCF
+  ims:
+    pcscfIpv4: "192.168.31.205"
+    pcscfIpv6: "fe80::7915:f408:1787:db8b"
+
+  # SMF configuration
+  smf:
+    ueMtu: 1452   # 1500 (backhaul) - 36 (GTP-U/UDP/IP overhead) = 1464; further clamped to ogstun MTU (1452)
+                  # UE advertises this as its PDU session IP MTU → prevents uplink fragmentation at UPF
+    useLocalSubscriptionInfo: "no"
+    useLocalPccRules: "no"
+    enableQer: "yes"
+    enableUdsf: "no"
+    enableUsageReporting: "no"
+    # OAI key: enable_dl_pdr_in_pfcp_session_establishment (per-UPF under smf.upfs[].config)
+    enableDlPdrInPfcpSessionEstablishment: "yes"
+    # Per-UPF OAI key: enable_upf_wo_nf_discovery. "yes" => static upf_pool (skip NRF).
+    # "no" => SMF discovers UPFs via NRF (dynamic UPF selection). Requires UPFs to register
+    # to NRF successfully (SBI on cni0 for hostNetwork UPFs).
+    enableUpfWoNfDiscovery: "yes"
+
+  # SBI HTTP client timeout (ms) — default OAI is 3000; raise on busy labs to avoid NRF heartbeat false failures
+  httpRequestTimeoutMs: 10000
+
+  # NRF configuration
+  nrf:
+    heartbeat: 50
+    suspendedNfInterval: 120
+
+  # PCF configuration
+  pcf:
+    enablePolicyProvisioningApi: "yes"
+
+  # UDM configuration
+  udm:
+    suciProfileId: 1
+    suciKeyFile: /openair-udm/etc/a.key
+    suciScheme: 1
+
+  # Database
+  database:
+    host: mysql
+    user: root
+    password: ""              # REQUIRED — set via overlay (see values-lab-insecure-defaults.yaml)
+    type: mysql
+    name: oai_db
+    generateRandom: true
+    connectionTimeout: 10
+
+  # UPF session subnets (used in o5gs-upf config templates)
+  upfSessions:
+    - subnet: "12.1.1.0/24"
+      gateway: "12.1.1.1"
+    - subnet: "14.1.1.0/24"
+      gateway: "14.1.1.1"
+
+# --- Network Policies ---
+networkPolicies:
+  enabled: true
+  # Whether to allow ingress from firecell-nms namespace (defaults to true when cnAgent/fcAcsAgent enabled)
+  allowNmsNamespace: true
+  nmsNamespace: firecell-nms
+  allowedNamespaces: []
+  # CIDRs allowed to reach core NFs from outside the cluster (RAN, gNB, test hosts)
+  # Example: ["10.218.184.0/24"] to allow the Multipass lab subnet
+  allowedExternalCIDRs: []
+
+# --- Helm Lifecycle Hooks (Standalone Atomic Install / Upgrade / Uninstall) ---
+hooks:
+  enabled: true
+  preFlight:
+    enabled: true
+    image: ""
+    backoffLimit: 1
+    timeoutSeconds: 120
+    requireSctp: true
+    verifyGateway: true
+  postFlight:
+    enabled: true
+    image: ""
+    backoffLimit: 1
+    timeoutSeconds: 300
+    retries: 30
+    intervalSeconds: 4
+    verifyNrfRegistrations: true
+    verifyPfcpAssociation: true
+  postDelete:
+    enabled: true
+    image: ""
+    timeoutSeconds: 90
+
+# --- Image Pull Secret ---
+# Pre-create before helm install:
+#   kubectl create secret docker-registry gitlab-regcred \
+#     --docker-server=registry.gitlab.com \
+#     --docker-username=<user> --docker-password=<token> \
+#     -n firecell-core
