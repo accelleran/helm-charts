@@ -1,0 +1,39 @@
+{{- if .Values.udr.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-udr
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-udr
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    # The UDR process binds SBI on 8080 only (measured 2026-09-21 on
+    # firecell-core/oai-udr: nothing listens on :80). A Service port 80 that
+    # targeted 80 was connection-refused and was once misread as a missing
+    # API route. Keep cluster port 80 so `http://oai-udr/` reaches SBI, and
+    # send it to the real listener. 9091 is FCAPS MnS — do not reuse it here.
+    - name: sbi
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    {{- if .Values.udr.fcaps.enabled }}
+    # The NMS reaches the MnS producer here. ClusterIP rather than a
+    # LoadBalancer because the NMS runs in the cluster; only the AMF has an
+    # external MnS address, and only because its Service was already external
+    # for N2.
+    - name: mns
+      port: {{ .Values.udr.fcaps.mnsPort }}
+      targetPort: {{ .Values.udr.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
+  selector:
+    app: oai-udr
+{{- end }}

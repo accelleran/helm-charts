@@ -1,0 +1,24 @@
+{{- /*
+The writable-datastore variant of udm.fcaps. Only rendered for
+intentMode: "pvc" — under "configmap" the NMS owns the document and the NF
+mounts it read-only, so a claim here would be an unused volume that still
+consumes storage and still has to be reclaimed by hand.
+*/ -}}
+{{- if and .Values.udm.enabled .Values.udm.fcaps.enabled (eq .Values.udm.fcaps.intentMode "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oai-udm-cm-state
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-udm
+    tier: core-network
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.udm.fcaps.datastore.size }}
+  storageClassName: {{ .Values.udm.fcaps.datastore.storageClassName }}
+{{- end }}

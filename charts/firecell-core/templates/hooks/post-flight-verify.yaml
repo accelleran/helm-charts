@@ -1,0 +1,579 @@
+{{- $hooks := .Values.hooks | default dict }}
+{{- $post := $hooks.postFlight | default dict }}
+{{- if and ($hooks.enabled | default false) ($post.enabled | default true) }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-verifier
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postflight-verify
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-verifier
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postflight-verify
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-verifier
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postflight-verify
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "firecell-5gc.fullname" . }}-verifier
+    namespace: {{ .Values.global.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "firecell-5gc.fullname" . }}-verifier
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-postflight-verify
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postflight-verify
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $post.backoffLimit | default 1 }}
+  activeDeadlineSeconds: {{ $post.timeoutSeconds | default 300 }}
+  template:
+    metadata:
+      labels:
+        {{- include "firecell-5gc.labels" . | nindent 8 }}
+        app.kubernetes.io/component: postflight-verify
+    spec:
+      serviceAccountName: {{ include "firecell-5gc.fullname" . }}-verifier
+      restartPolicy: Never
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.mysql.enabled }}
+      initContainers:
+        - name: mysql-schema-verify
+          image: {{ .Values.mysql.imageOverride | default (printf "%s/%s" .Values.global.imageRegistry .Values.mysql.image) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: root-password
+            - name: MYSQL_DB
+              value: {{ .Values.mysql.database | default "oai_db" | quote }}
+            - name: DB_VERSION_SEED
+              value: {{ .Values.cnAgent.dbVersion | default "5.0.1" | quote }}
+          volumeMounts:
+            - name: init-scripts
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "[post-flight:mysql] Waiting for MySQL service (mysql:3306)..."
+              tries=0
+              until mysqladmin ping -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent 2>/dev/null; do
+                tries=$((tries + 1))
+                if [ "${tries}" -ge 30 ]; then
+                  echo "[post-flight:mysql] FATAL: MySQL did not respond to ping within timeout" >&2
+                  exit 1
+                fi
+                sleep 3
+              done
+              echo "[post-flight:mysql] MySQL is reachable. Checking ${MYSQL_DB} schema..."
+              AUTH_TBL_CNT=$(mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${MYSQL_DB}' AND table_name='AuthenticationSubscription';" 2>/dev/null || echo 0)
+              if [ "${AUTH_TBL_CNT}" = "0" ]; then
+                echo "[post-flight:mysql] AuthenticationSubscription missing; applying init SQL scripts..."
+                for f in /docker-entrypoint-initdb.d/*.sql; do
+                  [ -f "${f}" ] || continue
+                  mysql --force -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" < "${f}" 2>/dev/null || true
+                done
+              fi
+              AUTH_TBL_CNT=$(mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${MYSQL_DB}' AND table_name='AuthenticationSubscription';" 2>/dev/null || echo 0)
+              if [ "${AUTH_TBL_CNT}" = "0" ]; then
+                echo "[post-flight:mysql] FATAL: AuthenticationSubscription table still missing in ${MYSQL_DB}" >&2
+                exit 1
+              fi
+              USERS_CNT=$(mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${MYSQL_DB}' AND table_name='users';" 2>/dev/null || echo 0)
+              if [ "${USERS_CNT}" = "0" ] && [ -f /docker-entrypoint-initdb.d/02-oai-db-ims-supplement.sql ]; then
+                echo "[post-flight:mysql] Applying 02-oai-db-ims-supplement.sql..."
+                mysql --force -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" < /docker-entrypoint-initdb.d/02-oai-db-ims-supplement.sql
+              fi
+              echo "[post-flight:mysql] Ensuring Version table is seeded (${DB_VERSION_SEED})..."
+              mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -e "
+                CREATE TABLE IF NOT EXISTS Version (version VARCHAR(64) PRIMARY KEY);
+                INSERT INTO Version (version)
+                SELECT '${DB_VERSION_SEED}' FROM DUAL
+                WHERE NOT EXISTS (SELECT 1 FROM Version LIMIT 1);
+              "
+              echo "[post-flight:mysql] OK: ${MYSQL_DB} schema and Version table verified"
+      {{- end }}
+      containers:
+        - name: service-and-nrf-verify
+          image: {{ $post.image | default (.Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              NS="{{ .Values.global.namespace }}"
+              RETRIES="{{ $post.retries | default 30 }}"
+              INTERVAL="{{ $post.intervalSeconds | default 4 }}"
+
+              echo "=================================================================="
+              echo "[post-flight] Firecell 5GC Control-Plane & Service Verification"
+              echo "=================================================================="
+
+              fail() {
+                echo "[post-flight] FATAL: $*" >&2
+                exit 1
+              }
+
+              http_get() {
+                _url="$1"
+                if command -v curl >/dev/null 2>&1; then
+                  curl -fsSL --max-time 5 "${_url}" 2>/dev/null || true
+                elif command -v wget >/dev/null 2>&1; then
+                  wget -q -T 5 -O - "${_url}" 2>/dev/null || true
+                elif command -v python3 >/dev/null 2>&1; then
+                  python3 -c "import urllib.request,sys; print(urllib.request.urlopen(sys.argv[1], timeout=5).read().decode())" "${_url}" 2>/dev/null || true
+                fi
+              }
+
+              k8s_get() {
+                _path="$1"
+                _token="$2"
+                _api="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT:-443}${_path}"
+                if command -v curl >/dev/null 2>&1; then
+                  curl -sk --fail --max-time 5 -H "Authorization: Bearer ${_token}" "${_api}" 2>/dev/null
+                elif command -v wget >/dev/null 2>&1 && wget --no-check-certificate --header="Authorization: Bearer ${_token}" -q -T 5 -O - "${_api}" 2>/dev/null; then
+                  return 0
+                elif command -v python3 >/dev/null 2>&1; then
+                  python3 -c 'import ssl,sys,urllib.request; ctx=ssl._create_unverified_context(); req=urllib.request.Request(sys.argv[1],headers={"Authorization":"Bearer "+sys.argv[2]}); sys.stdout.write(urllib.request.urlopen(req,context=ctx,timeout=5).read().decode())' "${_api}" "${_token}" 2>/dev/null
+                else
+                  return 1
+                fi
+              }
+
+
+              tcp_probe() {
+                _host="$1"
+                _port="$2"
+                if command -v nc >/dev/null 2>&1; then
+                  nc -z -w 3 "${_host}" "${_port}" >/dev/null 2>&1
+                elif (exec 3<>"/dev/tcp/${_host}/${_port}") 2>/dev/null; then
+                  exec 3<&- 3>&-
+                  return 0
+                elif command -v curl >/dev/null 2>&1; then
+                  _rc=0
+                  curl -s --connect-timeout 3 "http://${_host}:${_port}" >/dev/null 2>&1 || _rc=$?
+                  [ "${_rc}" -eq 0 ] || [ "${_rc}" -eq 52 ] || [ "${_rc}" -eq 56 ]
+                else
+                  return 1
+                fi
+              }
+
+              wait_tcp_service() {
+                _svc="$1"
+                _port="$2"
+                _desc="$3"
+                _try=0
+                echo "[post-flight] Checking Service ${_svc}:${_port} (${_desc})..."
+                while [ "${_try}" -lt "${RETRIES}" ]; do
+                  if tcp_probe "${_svc}.${NS}.svc.cluster.local" "${_port}" || tcp_probe "${_svc}" "${_port}"; then
+                    echo "[post-flight]   OK: ${_svc}:${_port} is reachable"
+                    return 0
+                  fi
+                  _try=$((_try + 1))
+                  sleep "${INTERVAL}"
+                done
+                fail "Service ${_svc}:${_port} (${_desc}) is not reachable after ${RETRIES} attempts"
+              }
+
+              wait_dns_service() {
+                _svc="$1"
+                _desc="$2"
+                _try=0
+                echo "[post-flight] Checking DNS resolution for ${_svc}.${NS}.svc.cluster.local (${_desc})..."
+                while [ "${_try}" -lt "${RETRIES}" ]; do
+                  if (command -v getent >/dev/null 2>&1 && getent hosts "${_svc}.${NS}.svc.cluster.local" >/dev/null 2>&1) || \
+                     (command -v nslookup >/dev/null 2>&1 && nslookup "${_svc}.${NS}.svc.cluster.local" >/dev/null 2>&1) || \
+                     ping -c 1 -W 1 "${_svc}.${NS}.svc.cluster.local" >/dev/null 2>&1; then
+                    echo "[post-flight]   OK: ${_svc}.${NS}.svc.cluster.local resolves in DNS"
+                    return 0
+                  fi
+                  _try=$((_try + 1))
+                  sleep "${INTERVAL}"
+                done
+                fail "Service ${_svc}.${NS}.svc.cluster.local (${_desc}) failed DNS resolution"
+              }
+
+              # 1. Verify enabled TCP Services & Endpoints
+              {{- if .Values.mysql.enabled }}
+              wait_tcp_service "mysql" "3306" "MySQL database"
+              {{- end }}
+              {{- if .Values.nrf.enabled }}
+              wait_tcp_service "oai-nrf" "8080" "NRF SBI"
+              {{- end }}
+              {{- if .Values.udr.enabled }}
+              wait_tcp_service "oai-udr" "8080" "UDR SBI"
+              {{- end }}
+              {{- if .Values.udm.enabled }}
+              wait_tcp_service "oai-udm" "8080" "UDM SBI"
+              {{- end }}
+              {{- if .Values.ausf.enabled }}
+              wait_tcp_service "oai-ausf" "8080" "AUSF SBI"
+              {{- end }}
+              {{- if .Values.pcf.enabled }}
+              wait_tcp_service "oai-pcf" "8080" "PCF SBI"
+              {{- end }}
+              {{- if .Values.amf.enabled }}
+              wait_tcp_service "oai-amf" "8080" "AMF SBI"
+              {{- if (.Values.amf.headlessN2).enabled }}
+              wait_dns_service "{{ (.Values.amf.headlessN2).serviceName | default "oai-amf-n2" }}" "AMF Headless N2 SCTP"
+              {{- end }}
+              {{- end }}
+              {{- if .Values.smf.enabled }}
+              wait_tcp_service "oai-smf" "8080" "SMF SBI"
+              {{- end }}
+              {{- if .Values.udsf.enabled }}
+              wait_tcp_service "udsf-redis" "{{ .Values.udsf.redis.port | default 6379 }}" "UDSF Redis"
+              wait_tcp_service "{{ .Values.udsf.serviceName | default "oai-udsf" }}" "{{ .Values.udsf.sbiPort | default 8080 }}" "UDSF SBI"
+              {{- end }}
+              {{- if .Values.ims.enabled }}
+              wait_tcp_service "ims" "5060" "Asterisk IMS SIP"
+              {{- end }}
+              {{- if .Values.extDn.enabled }}
+              wait_dns_service "oai-ext-dn" "External Data Network"
+              {{- end }}
+              {{- if .Values.upf.enabled }}
+              {{- $instances := .Values.upf.instances }}
+              {{- if not $instances }}
+              {{- $instances = list (dict "suffix" "") }}
+              {{- end }}
+              {{- range $inst := $instances }}
+              {{- $upfAppName := printf "o5gs-upf%s" (($inst.suffix | default "" | toString)) }}
+              {{- if eq ($.Values.upf.type | default "o5gs") "oai" }}
+              {{- $upfAppName = printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
+              {{- end }}
+              wait_dns_service "{{ $upfAppName }}" "UPF Service"
+              {{- end }}
+              {{- end }}
+
+              # 2. Verify NRF NF-instance registrations (/nnrf-nfm/v1/nf-instances)
+              {{- if and .Values.nrf.enabled (eq (.Values.coreConfig.registerNf | default "yes") "yes") ($post.verifyNrfRegistrations | default true) }}
+              echo "[post-flight] Verifying NF registrations in NRF (http://oai-nrf:8080/nnrf-nfm/v1/nf-instances)..."
+              EXPECTED_NFS=""
+              {{- if .Values.udr.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} udr:UDR"
+              {{- end }}
+              {{- if .Values.udm.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} udm:UDM"
+              {{- end }}
+              {{- if .Values.ausf.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} ausf:AUSF"
+              {{- end }}
+              {{- if .Values.pcf.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} pcf:PCF"
+              {{- end }}
+              {{- if .Values.amf.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} amf:AMF"
+              {{- end }}
+              {{- if .Values.smf.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} smf:SMF"
+              {{- end }}
+
+              _try=0
+              NRF_OK=0
+              while [ "${_try}" -lt "${RETRIES}" ]; do
+                NRF_JSON=$(http_get "http://oai-nrf.${NS}.svc.cluster.local:8080/nnrf-nfm/v1/nf-instances")
+                if [ -n "${NRF_JSON}" ] && echo "${NRF_JSON}" | grep -qiE '(/nf-instances/[0-9a-fA-F-]+|"nfInstanceId"|"href"[[:space:]]*:[[:space:]]*"[^"]+/nf-instances/)'; then
+                  MISSING=""
+                  for entry in ${EXPECTED_NFS}; do
+                    nf="${entry%%:*}"
+                    nftype="${entry##*:}"
+                    if ! tcp_probe "oai-${nf}.${NS}.svc.cluster.local" 8080; then
+                      MISSING="${MISSING} oai-${nf}(sbi)"
+                      continue
+                    fi
+                    NF_TYPE_JSON=$(http_get "http://oai-nrf.${NS}.svc.cluster.local:8080/nnrf-nfm/v1/nf-instances?nf-type=${nftype}")
+                    if [ -z "${NF_TYPE_JSON}" ] || ! echo "${NF_TYPE_JSON}" | grep -qiE '(/nf-instances/[0-9a-fA-F-]+|"nfInstanceId"|"href"[[:space:]]*:[[:space:]]*"[^"]+/nf-instances/)'; then
+                      MISSING="${MISSING} ${nftype}"
+                    fi
+                  done
+                  if [ -z "${MISSING}" ]; then
+                    NRF_OK=1
+                    echo "[post-flight]   OK: NRF /nnrf-nfm/v1/nf-instances confirmed active registrations for:${EXPECTED_NFS}"
+                    break
+                  fi
+                fi
+                _try=$((_try + 1))
+                echo "[post-flight]   Waiting for NF registrations in NRF (${_try}/${RETRIES}, missing:${MISSING:-all})..."
+                sleep "${INTERVAL}"
+              done
+              [ "${NRF_OK}" -eq 1 ] || fail "NRF registration verification failed (missing:${MISSING:-all}, response: ${NRF_JSON:-empty})"
+              {{- end }}
+
+              # 3. Verify AMF NGAP SCTP 38412 Service/Endpoints and SMF -> UPF PFCP association via Kubernetes API
+              TOKEN_FILE="/var/run/secrets/kubernetes.io/serviceaccount/token"
+              [ -r "${TOKEN_FILE}" ] || fail "ServiceAccount token not found at ${TOKEN_FILE}"
+              [ -n "${KUBERNETES_SERVICE_HOST:-}" ] || fail "KUBERNETES_SERVICE_HOST is not set"
+              TOKEN=$(cat "${TOKEN_FILE}")
+
+              {{- if .Values.amf.enabled }}
+              echo "[post-flight] Verifying AMF NGAP SCTP port 38412 Endpoints..."
+              _try=0
+              AMF_EP_OK=0
+              while [ "${_try}" -lt "${RETRIES}" ]; do
+                AMF_EP_JSON=$(k8s_get "/api/v1/namespaces/${NS}/endpoints/oai-amf" "${TOKEN}" || true)
+                if echo "${AMF_EP_JSON}" | grep -q '"addresses"' && echo "${AMF_EP_JSON}" | grep -qE '"port":[[:space:]]*38412'; then
+                  AMF_EP_OK=1
+                  break
+                fi
+                _try=$((_try + 1))
+                sleep "${INTERVAL}"
+              done
+              [ "${AMF_EP_OK}" -eq 1 ] || fail "oai-amf Endpoints do not expose NGAP SCTP port 38412"
+              echo "[post-flight]   OK: oai-amf Endpoints expose NGAP SCTP port 38412"
+              {{- end }}
+
+              {{- if and .Values.smf.enabled .Values.upf.enabled ($post.verifyPfcpAssociation | default true) }}
+              echo "[post-flight] Checking SMF pod logs via Kubernetes API for PFCP N4 association..."
+              _try=0
+              PFCP_OK=0
+              while [ "${_try}" -lt "${RETRIES}" ]; do
+                PODS_JSON=$(k8s_get "/api/v1/namespaces/${NS}/pods?labelSelector=app%3Doai-smf" "${TOKEN}" || true)
+                [ -n "${PODS_JSON}" ] || fail "Failed to query Kubernetes API for oai-smf pods"
+                SMF_POD=$(echo "${PODS_JSON}" | tr '}' '\n' | grep -v '"deletionTimestamp"' | grep -v '"Terminating"' | sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\(oai-smf-[^"]*\)".*/\1/p' | head -n 1)
+                if [ -n "${SMF_POD}" ]; then
+                  SMF_LOGS=$(k8s_get "/api/v1/namespaces/${NS}/pods/${SMF_POD}/log?container=smf&tailLines=500" "${TOKEN}" || true)
+                  if echo "${SMF_LOGS}" | grep -qiE 'Received N4 ASSOCIATION SETUP RESPONSE|Successfully added UPF node|Dynamic UPF selection successful|ASSOCIATION_SETUP_RESPONSE'; then
+                    PFCP_OK=1
+                    echo "[post-flight]   OK: SMF (${SMF_POD}) confirmed N4 PFCP association with UPF"
+                    break
+                  fi
+                fi
+                _try=$((_try + 1))
+                echo "[post-flight]   Waiting for SMF-UPF PFCP association (${_try}/${RETRIES})..."
+                sleep "${INTERVAL}"
+              done
+              [ "${PFCP_OK}" -eq 1 ] || fail "SMF did not establish PFCP N4 association with UPF within timeout"
+              {{- end }}
+
+              echo "=================================================================="
+              echo "[post-flight] All control-plane & service checks PASSED."
+              echo "=================================================================="
+      {{- if .Values.mysql.enabled }}
+      volumes:
+        - name: init-scripts
+          configMap:
+            name: mysql-init-scripts
+      {{- end }}
+{{- if and .Values.upf.enabled .Values.upf.hostNetwork }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-postflight-datapath
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postflight-datapath
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $post.backoffLimit | default 1 }}
+  activeDeadlineSeconds: {{ $post.timeoutSeconds | default 180 }}
+  template:
+    metadata:
+      labels:
+        {{- include "firecell-5gc.labels" . | nindent 8 }}
+        app.kubernetes.io/component: postflight-datapath
+    spec:
+      restartPolicy: Never
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- with .Values.upf.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upf.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.upf.affinity }}
+      affinity:
+        {{- toYaml .Values.upf.affinity | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: ["oai-upf", "o5gs-upf"]
+                topologyKey: "kubernetes.io/hostname"
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: datapath-verify
+          image: {{ $post.datapathImage | default (.Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "=================================================================="
+              echo "[post-flight:datapath] Verifying Host UPF Dataplane & PFCP Sockets"
+              echo "=================================================================="
+
+              fail() {
+                echo "[post-flight:datapath] FATAL: $*" >&2
+                exit 1
+              }
+
+              {{- $instances := .Values.upf.instances }}
+              {{- if not $instances }}
+              {{- $instances = list (dict
+                  "suffix"          ""
+                  "n3IP"            .Values.upf.n3IP
+                  "n3Interface"     .Values.upf.n3Interface
+                  "n6Cidr"          .Values.upf.n6Cidr
+                  "remoteN6Gw"      .Values.upf.remoteN6Gw
+                  "hostPfcpMacvlan" .Values.upf.hostPfcpMacvlan
+                  "hostPfcpIP"      .Values.upf.hostPfcpIP
+              ) }}
+              {{- end }}
+              {{- range $idx, $inst := $instances }}
+              N3_IF="{{ coalesce $inst.n3Interface $.Values.upf.n3Interface }}"
+              N3_IP="{{ coalesce $inst.n3IP $.Values.upf.n3IP }}"
+              N6_CIDR="{{ coalesce $inst.n6Cidr $.Values.upf.n6Cidr }}"
+              N6_GW="{{ coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw }}"
+              PFCP_MAC="{{ coalesce $inst.hostPfcpMacvlan $.Values.upf.hostPfcpMacvlan }}"
+              PFCP_IP="{{ coalesce $inst.hostPfcpIP $.Values.upf.hostPfcpIP }}"
+
+              # 1. Verify N3 interface and IP
+              if [ -n "${N3_IF}" ] && [ -n "${N3_IP}" ]; then
+                ip link show dev "${N3_IF}" >/dev/null 2>&1 || fail "N3 interface '${N3_IF}' is missing"
+                if ! ip -4 -o addr show dev "${N3_IF}" | awk '{print $4}' | grep -q "^${N3_IP}/"; then
+                  fail "N3 IP ${N3_IP} is not assigned on '${N3_IF}'"
+                fi
+                echo "[post-flight:datapath]   OK: ${N3_IF} is UP with ${N3_IP}"
+              fi
+
+              # 2. Verify PFCP macvlan interface and IP
+              if [ -n "${PFCP_MAC}" ] && [ -n "${PFCP_IP}" ]; then
+                ip link show dev "${PFCP_MAC}" >/dev/null 2>&1 || fail "PFCP macvlan '${PFCP_MAC}' is missing"
+                if ! ip -4 -o addr show dev "${PFCP_MAC}" | awk '{print $4}' | grep -q "^${PFCP_IP}/"; then
+                  fail "PFCP IP ${PFCP_IP} is not assigned on '${PFCP_MAC}'"
+                fi
+                echo "[post-flight:datapath]   OK: ${PFCP_MAC} is UP with ${PFCP_IP}"
+              fi
+
+              # 3. Verify UPF policy routing table and Cilium pod route (when N6 CIDR is configured)
+              if [ -n "${N6_CIDR}" ] && [ -n "${N6_GW}" ]; then
+                N6_IP="${N6_CIDR%/*}"
+                N6_OCTET="${N6_IP##*.}"
+                if [ "${N6_OCTET}" -ge 250 ] || [ "${N6_OCTET}" -le 0 ]; then
+                  TABLE=$(( (N6_OCTET % 100) + 100 ))
+                else
+                  TABLE="${N6_OCTET}"
+                fi
+                if ! ip rule show | grep -q "from ${N6_IP} lookup ${TABLE}"; then
+                  fail "Policy rule 'from ${N6_IP} lookup ${TABLE}' is missing"
+                fi
+                if ! ip route show table "${TABLE}" | grep -q "default via ${N6_GW}"; then
+                  fail "Default route via ${N6_GW} in policy table ${TABLE} is missing"
+                fi
+                echo "[post-flight:datapath]   OK: Policy routing table ${TABLE} verified (from ${N6_IP} via ${N6_GW})"
+
+                if [ "{{ $.Values.upf.injectCiliumPodRoute | default true }}" = "true" ] && ip link show cilium_host >/dev/null 2>&1; then
+                  _podcidr=$(ip route show | awk '/dev cilium_host/ && $1 ~ /\// {print $1; exit}')
+                  if [ -n "${_podcidr}" ]; then
+                    if ! ip route show table "${TABLE}" | grep -q "dev cilium_host"; then
+                      _via=$(ip route show | awk '/dev cilium_host/ && /via/ {for(i=1;i<NF;i++) if($i=="via") print $(i+1); exit}')
+                      if [ -n "${_via}" ]; then
+                        ip route replace "${_podcidr}" via "${_via}" dev cilium_host table "${TABLE}"
+                      else
+                        ip route replace "${_podcidr}" dev cilium_host table "${TABLE}"
+                      fi
+                    fi
+                    echo "[post-flight:datapath]   OK: Cilium pod CIDR route (${_podcidr}) present in table ${TABLE}"
+                  fi
+                fi
+              fi
+              {{- end }}
+
+              # 4. Verify UPF PFCP UDP port 8805 (0x2265) and GTP-U UDP port 2152 (0x0868) are bound
+              UDP_FILES=""
+              for f in /proc/net/udp /proc/net/udp6; do
+                [ -r "${f}" ] && UDP_FILES="${UDP_FILES} ${f}"
+              done
+              # shellcheck disable=SC2086
+              grep -qiE ':2265 ' ${UDP_FILES} 2>/dev/null || fail "UPF PFCP port 8805 (0x2265) is not bound in host /proc/net/udp"
+              # shellcheck disable=SC2086
+              {{- if not (and (eq ($.Values.upf.type | default "o5gs") "oai") ($.Values.upf.enableBpfDatapath | default false)) }}
+              grep -qiE ':0868 ' ${UDP_FILES} 2>/dev/null || fail "UPF GTP-U port 2152 (0x0868) is not bound in host /proc/net/udp"
+              {{- end }}
+              echo "[post-flight:datapath]   OK: UPF datapath sockets verified"
+
+              echo "=================================================================="
+              echo "[post-flight:datapath] All host datapath checks PASSED."
+              echo "=================================================================="
+{{- end }}
+{{- end }}

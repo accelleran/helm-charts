@@ -1,0 +1,112 @@
+{{- if .Values.udsf.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.udsf.serviceName }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: {{ .Values.udsf.serviceName }}
+    tier: udsf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.udsf.serviceName }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.udsf.serviceName }}
+        tier: udsf
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      initContainers:
+        - name: wait-for-redis
+          image: {{ .Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Waiting for udsf-redis..."
+              until nc -z udsf-redis {{ .Values.udsf.redis.port }}; do
+                echo "Redis not reachable, retrying in 3s..."
+                sleep 3
+              done
+              echo "Redis is reachable!"
+      containers:
+        - name: udsf
+          image: {{ .Values.udsf.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.udsf.image "tag" .Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+            - name: DB_HOST
+              value: udsf-redis
+            - name: DB_PORT
+              value: {{ .Values.udsf.redis.port | quote }}
+            - name: PORT
+              value: {{ .Values.udsf.sbiPort | quote }}
+            {{- if .Values.udsf.fcaps.enabled }}
+            - name: FCAPS_CM_DATASTORE
+              value: {{ printf "%s/%s" .Values.udsf.fcaps.datastore.mountPath .Values.udsf.fcaps.datastore.file | quote }}
+            {{- with .Values.udsf.fcaps.seedConfigPath }}
+            - name: FCAPS_SEED_CONFIG
+              value: {{ . | quote }}
+            {{- end }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.udsf.sbiPort }}
+              protocol: TCP
+            {{- if .Values.udsf.fcaps.enabled }}
+            - name: mns
+              containerPort: {{ .Values.udsf.fcaps.mnsPort }}
+              protocol: TCP
+            {{- end }}
+          # UDSF v5.1.0.2 Gin app has no /healthz route (record API only); TCP probe on SBI port.
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 6
+          {{- if .Values.udsf.fcaps.enabled }}
+          volumeMounts:
+            - name: cm-state
+              mountPath: {{ .Values.udsf.fcaps.datastore.mountPath }}
+              {{- if eq .Values.udsf.fcaps.intentMode "configmap" }}
+              readOnly: true
+              {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.udsf.resources | nindent 12 }}
+      {{- if .Values.udsf.fcaps.enabled }}
+      volumes:
+        - name: cm-state
+          {{- if eq .Values.udsf.fcaps.intentMode "configmap" }}
+          # A directory, not a subPath: kubelet never refreshes a ConfigMap
+          # mounted through subPath, which would make every change need a pod
+          # restart and defeat the HOT path.
+          configMap:
+            name: {{ .Values.udsf.fcaps.intentConfigMap.name }}
+            optional: {{ .Values.udsf.fcaps.intentConfigMap.optional }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: oai-udsf-cm-state
+          {{- end }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

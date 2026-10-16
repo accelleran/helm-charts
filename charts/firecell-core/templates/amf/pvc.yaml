@@ -1,0 +1,19 @@
+{{- if and .Values.amf.enabled .Values.amf.fcaps.enabled }}
+{{- if eq .Values.amf.fcaps.intentMode "pvc" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oai-amf-cm-state
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-amf
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ .Values.amf.fcaps.datastore.storageClassName }}
+  resources:
+    requests:
+      storage: {{ .Values.amf.fcaps.datastore.size }}
+{{- end }}
+{{- end }}

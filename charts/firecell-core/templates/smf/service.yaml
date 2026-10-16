@@ -1,0 +1,97 @@
+{{- if .Values.smf.enabled }}
+{{- $smfHostNet := .Values.smf.hostNetwork | default false }}
+{{- $smfSbiIP := .Values.smf.sbiClusterIP | default "10.42.0.1" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-smf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-smf
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    - name: sbi
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: n4
+      port: 8805
+      targetPort: 8805
+      protocol: UDP
+    {{- if .Values.smf.fcaps.enabled }}
+    # The NMS reaches the MnS producer through this port. It stays on the
+    # ClusterIP service rather than a LoadBalancer because the NMS runs in the
+    # cluster; the AMF only has an external MnS address because its service was
+    # already a LoadBalancer for N2.
+    - name: mns
+      port: {{ .Values.smf.fcaps.mnsPort }}
+      targetPort: {{ .Values.smf.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
+  {{- if not $smfHostNet }}
+  selector:
+    app: oai-smf
+  {{- end }}
+{{- if $smfHostNet }}
+---
+# hostNetwork SMF binds SBI on cni0 ({{ $smfSbiIP }}), not node primary IP — fix Endpoints manually.
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: oai-smf
+  namespace: {{ .Values.global.namespace }}
+  annotations:
+    meta.helm.sh/release-name: {{ .Release.Name }}
+    meta.helm.sh/release-namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-smf
+    tier: core-network
+subsets:
+  - addresses:
+      - ip: {{ $smfSbiIP | quote }}
+    ports:
+      - name: sbi
+        port: 80
+        protocol: TCP
+      - name: http
+        port: 8080
+        protocol: TCP
+      - name: n4
+        port: 8805
+        protocol: UDP
+      {{- if .Values.smf.fcaps.enabled }}
+      - name: mns
+        port: {{ .Values.smf.fcaps.mnsPort }}
+        protocol: TCP
+      {{- end }}
+{{- end }}
+---
+# Headless service for PFCP N4 — DNS resolves directly to SMF pod IP (no ClusterIP SNAT).
+# UPF connects here so PFCP peer identity is stable and consistent.
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-smf-pfcp
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-smf
+    tier: core-network
+spec:
+  clusterIP: None
+  ports:
+    - name: n4
+      port: 8805
+      targetPort: 8805
+      protocol: UDP
+  selector:
+    app: oai-smf
+{{- end }}

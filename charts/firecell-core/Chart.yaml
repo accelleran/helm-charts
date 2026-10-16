@@ -1,0 +1,15 @@
+apiVersion: v2
+name: firecell-core
+description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF, MySQL)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - 5g
+  - core-network
+  - oai
+  - open5gs
+  - firecell
+maintainers:
+  - name: Firecell
+    email: support@firecell.io

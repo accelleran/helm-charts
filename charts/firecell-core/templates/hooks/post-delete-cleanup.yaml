@@ -1,0 +1,188 @@
+{{- $hooks := .Values.hooks | default dict }}
+{{- $cleanup := $hooks.postDelete | default dict }}
+{{- if and ($hooks.enabled | default false) ($cleanup.enabled | default true) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-postdelete-cleanup
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postdelete-cleanup
+  annotations:
+    "helm.sh/hook": post-delete
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: {{ $cleanup.timeoutSeconds | default 90 }}
+  template:
+    metadata:
+      labels:
+        {{- include "firecell-5gc.labels" . | nindent 8 }}
+        app.kubernetes.io/component: postdelete-cleanup
+    spec:
+      restartPolicy: Never
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- with .Values.upf.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upf.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upf.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: host-network-cleanup
+          image: {{ $cleanup.image | default (.Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+          volumeMounts:
+            - name: bpf-fs
+              mountPath: /sys/fs/bpf
+            - name: host-run
+              mountPath: /host-run
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "=================================================================="
+              echo "[post-delete] Cleaning up Firecell 5GC Host Network & Dataplane"
+              echo "=================================================================="
+
+              SMF_PFCP_MAC="{{ .Values.smf.hostPfcpMacvlan }}"
+              SMF_N4_IP="{{ .Values.smf.n4IP }}"
+
+              {{- $instances := .Values.upf.instances }}
+              {{- if not $instances }}
+              {{- $instances = list (dict
+                  "suffix"              ""
+                  "n3IP"                .Values.upf.n3IP
+                  "n3Interface"         .Values.upf.n3Interface
+                  "n4Interface"         .Values.upf.n4Interface
+                  "n6Interface"         .Values.upf.n6Interface
+                  "n6Cidr"              .Values.upf.n6Cidr
+                  "remoteN6Gw"          .Values.upf.remoteN6Gw
+                  "hostPfcpMacvlan"     .Values.upf.hostPfcpMacvlan
+                  "autoCreateN3Macvlan" .Values.upf.autoCreateN3Macvlan
+              ) }}
+              {{- end }}
+              {{- range $idx, $inst := $instances }}
+              N3_IF="{{ coalesce $inst.n3Interface $.Values.upf.n3Interface }}"
+              N4_IF="{{ coalesce $inst.n4Interface $.Values.upf.n4Interface }}"
+              N6_IF="{{ coalesce $inst.n6Interface $.Values.upf.n6Interface $inst.n3Interface $.Values.upf.n3Interface }}"
+              N3_IP="{{ coalesce $inst.n3IP $.Values.upf.n3IP }}"
+              N6_CIDR="{{ coalesce $inst.n6Cidr $.Values.upf.n6Cidr }}"
+              N6_GW="{{ coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw }}"
+              PFCP_MAC="{{ coalesce $inst.hostPfcpMacvlan $.Values.upf.hostPfcpMacvlan }}"
+              AUTO_N3_MAC="{{ if hasKey $inst "autoCreateN3Macvlan" }}{{ $inst.autoCreateN3Macvlan }}{{ else }}{{ $.Values.upf.autoCreateN3Macvlan }}{{ end }}"
+
+              # 1. Detach XDP and remove tc filters/qdiscs on N3 and N6 interfaces
+              for dev in "${N3_IF}" "${N6_IF}"; do
+                [ -n "${dev}" ] || continue
+                if ip link show dev "${dev}" >/dev/null 2>&1; then
+                  echo "[post-delete] Resetting XDP/tc on ${dev}..."
+                  ip link set dev "${dev}" xdp off 2>/dev/null || true
+                  tc filter del dev "${dev}" ingress 2>/dev/null || true
+                  tc qdisc del dev "${dev}" clsact 2>/dev/null || true
+                  tc qdisc del dev "${dev}" root 2>/dev/null || true
+                fi
+              done
+
+              # 2. Remove UPF policy routing rules and flush policy routing tables
+              if [ -n "${N6_CIDR}" ]; then
+                N6_IP="${N6_CIDR%/*}"
+                N6_OCTET="${N6_IP##*.}"
+                if [ "${N6_OCTET}" -ge 250 ] || [ "${N6_OCTET}" -le 0 ]; then
+                  TABLE=$(( (N6_OCTET % 100) + 100 ))
+                else
+                  TABLE="${N6_OCTET}"
+                fi
+                echo "[post-delete] Removing policy routing rules and flushing table ${TABLE} (for ${N6_IP})..."
+                ip rule del from "${N6_IP}/32" lookup "${TABLE}" 2>/dev/null || true
+                if [ -n "${N3_IP}" ]; then
+                  ip rule del from "${N3_IP}/32" lookup "${TABLE}" 2>/dev/null || true
+                fi
+                ip route flush table "${TABLE}" 2>/dev/null || true
+              elif [ -n "${N3_IP}" ]; then
+                N3_OCTET="${N3_IP##*.}"
+                if [ "${N3_OCTET}" -ge 250 ] || [ "${N3_OCTET}" -le 0 ]; then
+                  TABLE=$(( (N3_OCTET % 100) + 100 ))
+                else
+                  TABLE="${N3_OCTET}"
+                fi
+                ip rule del from "${N3_IP}/32" lookup "${TABLE}" 2>/dev/null || true
+                ip route flush table "${TABLE}" 2>/dev/null || true
+              fi
+
+              if [ -n "${N6_GW}" ] && [ -n "${N3_IF}" ]; then
+                ip route del "${N6_GW}/32" dev "${N3_IF}" 2>/dev/null || true
+              fi
+
+              # 3. Remove UPF PFCP macvlan interface
+              if [ -n "${PFCP_MAC}" ] && ip link show dev "${PFCP_MAC}" >/dev/null 2>&1; then
+                echo "[post-delete] Deleting macvlan interface ${PFCP_MAC}..."
+                [ -n "${SMF_N4_IP}" ] && ip route del "${SMF_N4_IP}/32" dev "${PFCP_MAC}" 2>/dev/null || true
+                ip link del "${PFCP_MAC}" 2>/dev/null || true
+              fi
+
+              # 4. Remove N3 macvlan interface (upf-n3) or secondary /32 VIP
+              if [ -n "${N3_IF}" ] && ip link show dev "${N3_IF}" >/dev/null 2>&1; then
+                if [ -n "${N4_IF}" ] && [ "${N3_IF}" = "${N4_IF}" ]; then
+                  echo "[post-delete] N3_IF (${N3_IF}) equals N4_IF; preserving physical interface..."
+                  if [ -n "${N3_IP}" ]; then
+                    echo "[post-delete] Removing N3 VIP ${N3_IP}/32 from ${N3_IF}..."
+                    ip addr del "${N3_IP}/32" dev "${N3_IF}" 2>/dev/null || true
+                  fi
+                elif [ "${AUTO_N3_MAC}" = "true" ] || [ "${N3_IF}" = "upf-n3" ] || ( ip -d link show "${N3_IF}" 2>/dev/null | grep -q "macvlan" ); then
+                  echo "[post-delete] Deleting N3 macvlan interface ${N3_IF}..."
+                  ip link del "${N3_IF}" 2>/dev/null || true
+                elif [ -n "${N3_IP}" ]; then
+                  echo "[post-delete] Removing N3 VIP ${N3_IP}/32 from ${N3_IF}..."
+                  ip addr del "${N3_IP}/32" dev "${N3_IF}" 2>/dev/null || true
+                fi
+              fi
+              {{- end }}
+
+              # Remove SMF PFCP macvlan interfaces
+              for mac in "${SMF_PFCP_MAC}" "smf-pfcp-mac" "smf-n4-mac"; do
+                [ -n "${mac}" ] || continue
+                if ip link show dev "${mac}" >/dev/null 2>&1; then
+                  echo "[post-delete] Deleting macvlan interface ${mac}..."
+                  [ -n "${SMF_N4_IP}" ] && ip route del "${SMF_N4_IP}/32" dev "${mac}" 2>/dev/null || true
+                  ip link del "${mac}" 2>/dev/null || true
+                fi
+              done
+
+              # 5. Clean up UPF lease files and BPF pin directories
+              rm -rf /host-run/firecell/upf-leases/oai-upf* 2>/dev/null || true
+              rm -rf /sys/fs/bpf/oai-upf* 2>/dev/null || true
+
+              echo "=================================================================="
+              echo "[post-delete] Host network cleanup complete."
+              echo "=================================================================="
+              exit 0
+      volumes:
+        - name: bpf-fs
+          hostPath:
+            path: /sys/fs/bpf
+            type: DirectoryOrCreate
+        - name: host-run
+          hostPath:
+            path: /run
+            type: Directory
+{{- end }}

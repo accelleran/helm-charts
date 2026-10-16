@@ -1,0 +1,662 @@
+{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") }}
+{{- /* Validate configSchema when explicitly set — catches copy-paste of develop overlays onto release images */}}
+{{- if and .Values.upf.hostNetwork (.Values.upf.configSchema | ne "") }}
+{{- $validSchemas := list "legacy" "mr97" }}
+{{- if not (has .Values.upf.configSchema $validSchemas) }}
+{{- fail (printf "upf.configSchema=%q is invalid; must be one of %v (legacy=v5.1.0.x release, mr97=develop+MR97). SMF/UPF PFCP will silently fail on mismatch." .Values.upf.configSchema $validSchemas) }}
+{{- end }}
+{{- end }}
+{{- $instances := .Values.upf.instances }}
+{{- if not $instances }}
+{{- $instances = list (dict
+    "suffix"          ""
+    "n3IP"            .Values.upf.n3IP
+    "n3Interface"     .Values.upf.n3Interface
+    "n6Interface"     .Values.upf.n6Interface
+    "n4Interface"     .Values.upf.n4Interface
+    "hostPfcpMacvlan" .Values.upf.hostPfcpMacvlan
+    "hostPfcpIP"      .Values.upf.hostPfcpIP
+    "pfcpHost"        .Values.upf.pfcpHost
+) }}
+{{- end }}
+{{- $multiHostNet := and .Values.upf.hostNetwork (gt (len $instances) 1) }}
+{{- $omitKubePorts := .Values.upf.hostNetwork }}
+{{- $pcapDefaults := .Values.upf.packetCapture | default dict }}
+{{- range $idx, $inst := $instances }}
+{{- $suffix := ($inst.suffix | default "" | toString) }}
+{{- $healthPort := add 9090 $idx }}
+{{- $capturePort := add 8095 $idx }}
+{{- $appName := printf "oai-upf%s" $suffix }}
+{{- $cmName := printf "firecell-oai-upf%s-hostnet" $suffix }}
+{{- $fcaps := $.Values.upf.fcaps | default dict }}
+{{- $fcapsOn := $fcaps.enabled | default false }}
+{{- $cmIntent := dig "intentConfigMap" "name" (printf "%s-cm-intent" $appName) $fcaps }}
+{{- if $suffix }}
+{{- $cmIntent = printf "%s-cm-intent" $appName }}
+{{- end }}
+{{- $n3if := coalesce $inst.n3Interface $.Values.upf.n3Interface "eth0" }}
+{{- $n6if := coalesce $inst.n6Interface $.Values.upf.n6Interface $n3if }}
+{{- $n3ip := coalesce $inst.n3IP $.Values.upf.n3IP "" }}
+{{- $n3cidr := coalesce $inst.n3Cidr $.Values.upf.n3Cidr "" }}
+{{- $n6cidr := coalesce $inst.n6Cidr $.Values.upf.n6Cidr "" }}
+{{- $captureSidecar := true }}
+{{- if hasKey $pcapDefaults "enabled" }}
+{{- $captureSidecar = $pcapDefaults.enabled }}
+{{- end }}
+{{- if and (hasKey $inst "packetCapture") (hasKey $inst.packetCapture "enabled") }}
+{{- $captureSidecar = $inst.packetCapture.enabled }}
+{{- end }}
+{{- if and $multiHostNet ($pcapDefaults.disableOnMultiInstance | default true) }}
+{{- $captureSidecar = false }}
+{{- end }}
+{{- $dnnDp := $.Values.upf.dnnDataplane | default dict }}
+{{- $dnnDpOn := $dnnDp.enabled | default false }}
+{{- $dnnDpPort := add ($dnnDp.basePort | default 8196 | int) $idx }}
+{{- $pfcpMac := coalesce $inst.hostPfcpMacvlan $.Values.upf.hostPfcpMacvlan "" }}
+{{- $pfcpIP := coalesce $inst.hostPfcpIP $.Values.upf.hostPfcpIP "" }}
+{{- $n4parent := coalesce $inst.n4Interface $.Values.upf.n4Interface "eno1" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+    app: {{ $appName }}
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $appName }}
+  {{- if $.Values.upf.hostNetwork }}
+  # Per-Deployment Recreate (oai-upf-a / oai-upf-b are independent). Only this
+  # instance's pod stops before the replacement starts — other UPF Deployments
+  # on the same or another node are unaffected.
+  strategy:
+    type: Recreate
+  {{- else }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  {{- end }}
+  progressDeadlineSeconds: 600
+  revisionHistoryLimit: 2
+  minReadySeconds: 20
+  template:
+    metadata:
+      labels:
+        app: {{ $appName }}
+        tier: core-network
+        firecell.io/role: core-nf
+        firecell.io/packet-capture: upf
+        firecell.io/upf-instance: {{ $appName }}
+        firecell.io/upf-n3-dev: {{ $n3if | quote }}
+        firecell.io/upf-n6-dev: {{ $n6if | quote }}
+        role: active
+      annotations:
+        {{- include "firecell-5gc.configChecksum" $ | nindent 8 }}
+        {{- if $.Values.upf.hostNetwork }}
+        checksum/oai-upf-hostnet: {{ include (print $.Template.BasePath "/upf/configmap-oai-hostnet.yaml") $ | sha256sum }}
+        {{- end }}
+    spec:
+      priorityClassName: firecell-prio-high
+      terminationGracePeriodSeconds: 30
+      {{- with $.Values.upf.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.upf.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.upf.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if $.Values.upf.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- if $.Values.upf.dnsServers }}
+      dnsConfig:
+        nameservers:
+          {{- toYaml $.Values.upf.dnsServers | nindent 10 }}
+        {{- if $.Values.upf.dnsSearchDomains }}
+        searches:
+          {{- toYaml $.Values.upf.dnsSearchDomains | nindent 10 }}
+        {{- end }}
+        options:
+          - name: ndots
+            value: "2"
+      {{- end }}
+      {{- end }}
+      initContainers:
+        {{- include "firecell-5gc.waitForNrf" $ | nindent 8 }}
+        {{- if $n3ip }}
+        {{- $n6gwInit := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
+        {{- $autoN3Macvlan := coalesce $inst.autoCreateN3Macvlan $.Values.upf.autoCreateN3Macvlan false }}
+        - name: n3-ip-init
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              _IFACE="{{ $n3if }}"
+              _PARENT="{{ $n4parent }}"
+              _IP="{{ $n3ip }}"
+              _N6_GW="{{ $n6gwInit }}"
+              _AUTO_MAC="{{ $autoN3Macvlan }}"
+              {{- if $n3cidr }}
+              _ADDR="{{ $n3cidr }}"
+              {{- else }}
+              _ADDR="${_IP}/32"
+              {{- end }}
+              if [ -n "${_PARENT}" ] && [ "${_IFACE}" != "${_PARENT}" ] && ( [ "${_AUTO_MAC}" = "true" ] || ! ip link show "${_IFACE}" >/dev/null 2>&1 ); then
+                echo "[n3-init] {{ $appName }}: ensuring macvlan ${_IFACE} on parent ${_PARENT}"
+                if ip link show "${_IFACE}" >/dev/null 2>&1; then
+                  _mode=$(ip -d link show "${_IFACE}" 2>/dev/null | awk '/macvlan mode/{print $3; exit}')
+                  if [ -n "${_mode}" ] && [ "${_mode}" != "bridge" ]; then
+                    ip link del "${_IFACE}"
+                  fi
+                fi
+                if ! ip link show "${_IFACE}" >/dev/null 2>&1; then
+                  ip link add "${_IFACE}" link "${_PARENT}" type macvlan mode bridge
+                fi
+                ip addr del "${_IP}/32" dev "${_PARENT}" 2>/dev/null || true
+              fi
+              echo "[n3-init] {{ $appName }}: ${_IFACE} ${_ADDR}"
+              ip link set "${_IFACE}" up
+              if ip -4 -o addr show dev "${_IFACE}" | awk '{print $4}' | grep -q "^${_IP}/"; then
+                echo "[n3-init] ${_IP} already assigned on ${_IFACE}, keeping existing prefix"
+              else
+                ip addr add "${_ADDR}" dev "${_IFACE}"
+              fi
+              if [ -n "${_N6_GW}" ] && [ "${_IFACE}" = "{{ $n6if }}" ]; then
+                ip route replace "${_N6_GW}/32" dev "${_IFACE}" 2>/dev/null || true
+              fi
+        {{- end }}
+        {{- if and $.Values.upf.hostNetwork (ne $n6if $n3if) }}
+        - name: n6-link-init
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              _IFACE="{{ $n6if }}"
+              echo "[n6-init] {{ $appName }}: bringing up ${_IFACE}"
+              ip link set "${_IFACE}" up
+              {{- if $n6cidr }}
+              _CIDR="{{ $n6cidr }}"
+              echo "[n6-init] {{ $appName }}: ${_IFACE} ${_CIDR}"
+              _IP="${_CIDR%/*}"
+              if ip -4 -o addr show dev "${_IFACE}" | awk '{print $4}' | grep -q "^${_IP}/"; then
+                echo "[n6-init] ${_IP} already assigned on ${_IFACE}, keeping existing prefix"
+              else
+                ip addr add "${_CIDR}" dev "${_IFACE}"
+              fi
+              {{- end }}
+        {{- end }}
+        {{- if and $.Values.upf.hostNetwork $n3ip $n6cidr }}
+        {{- $n6ip := $n6cidr | regexFind "[^/]+" }}
+        {{- $n6gw := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
+        {{- $di := $.Values.upf.datapathInit | default dict }}
+        {{- $n6ArpRetries := $di.n6GatewayArpRetries | default 60 | int }}
+        {{- $n6ArpInterval := $di.n6GatewayArpIntervalSec | default 5 | int }}
+        {{- $rawTableId := $n6ip | splitList "." | last | atoi }}
+        {{- $tableId := $rawTableId }}
+        {{- if or (le $rawTableId 0) (ge $rawTableId 250) }}
+        {{- $tableId = add 100 (mod $rawTableId 100) }}
+        {{- end }}
+        {{- $ruleBase := add 100 (mul $idx 2) }}
+        {{- $injectCiliumRoute := coalesce $inst.injectCiliumPodRoute $.Values.upf.injectCiliumPodRoute true }}
+        - name: datapath-init
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN, NET_RAW]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              UPF_APP="{{ $appName }}"
+              LEASE_DIR=/run/firecell/upf-leases
+              N3_DEV="{{ $n3if }}"
+              N6_DEV="{{ $n6if }}"
+              N3_IP="{{ $n3ip }}"
+              N6_IP="{{ $n6ip }}"
+              N6_GW="{{ $n6gw }}"
+              TABLE="{{ $tableId }}"
+              RULE_PRIO_N3="{{ $ruleBase }}"
+              RULE_PRIO_N6="{{ add $ruleBase 1 }}"
+
+              echo "[datapath-init] ${UPF_APP}: table ${TABLE} N3=${N3_IP}@${N3_DEV} N6=${N6_IP}@${N6_DEV} gw=${N6_GW}"
+
+              # Orphan XDP/clsact on THIS instance's netdevs only. Skip netdevs leased
+              # by another running UPF (multi-instance / multi-UPF on one host).
+              _dev_leased_by_other() {
+                _d="$1"
+                for _f in "${LEASE_DIR}"/*@"${_d}"; do
+                  [ -e "$_f" ] || continue
+                  _owner="${_f##*/}"; _owner="${_owner%@*}"
+                  [ "$_owner" = "${UPF_APP}" ] && continue
+                  echo "[datapath-init] ${UPF_APP}: skip reset ${_d} (leased by ${_owner})"
+                  return 0
+                done
+                return 1
+              }
+              _reset_dev() {
+                _d="$1"
+                [ -n "${_d}" ] || return 0
+                ip link show dev "${_d}" >/dev/null 2>&1 || return 0
+                if _dev_leased_by_other "${_d}"; then return 0; fi
+                ip link set dev "${_d}" xdp off 2>/dev/null || true
+                tc filter del dev "${_d}" ingress 2>/dev/null || true
+                tc qdisc del dev "${_d}" clsact 2>/dev/null || true
+                tc qdisc del dev "${_d}" root 2>/dev/null || true
+                rm -f "${LEASE_DIR}/${UPF_APP}@${_d}"
+              }
+              _reset_dev "${N3_DEV}"
+              _reset_dev "${N6_DEV}"
+
+              # Policy routes: N6 egress table — default via N6 gateway only.
+              # N3 does NOT use this table: 10.20.0.0/24 is directly connected on N3_DEV
+              # and the main routing table routes it correctly. Adding N3 to this table
+              # would send all N3-sourced lookups via the N6 gateway (RUTX50), causing
+              # NextHopFinder to populate m_arp_table with the wrong MAC for DL GTP-U.
+              ip route flush table "${TABLE}" 2>/dev/null || true
+              # When N6_DEV carries a /32 (e.g. macvlan VIP), ensure N6_GW is on-link first.
+              ip route replace "${N6_GW}/32" dev "${N6_DEV}" 2>/dev/null || true
+              ip route replace "${N6_GW}/32" dev "${N6_DEV}" table "${TABLE}" 2>/dev/null || true
+              ip route add default via "${N6_GW}" dev "${N6_DEV}" src "${N6_IP}" table "${TABLE}" || \
+                ip route replace default via "${N6_GW}" dev "${N6_DEV}" src "${N6_IP}" onlink table "${TABLE}"
+
+              # Cilium host-network pod reachability: traffic sourced from N3/N6 VIP uses
+              # table ${TABLE}; inject the more-specific cilium_host pod CIDR route so GTP/SNAT
+              # toward in-cluster pods (gNB, ext-dn) stays on-node instead of egressing to LAN gw.
+              if [ "{{ $injectCiliumRoute }}" = "true" ] && ip link show cilium_host >/dev/null 2>&1; then
+                _podcidr=$(ip route show | awk '/dev cilium_host/ && $1 ~ /\// {print $1; exit}')
+                _via=$(ip route show | awk '/dev cilium_host/ && /via/ {for(i=1;i<NF;i++) if($i=="via") print $(i+1); exit}')
+                if [ -n "${_podcidr}" ] && [ -n "${_via}" ]; then
+                  ip route replace "${_podcidr}" via "${_via}" dev cilium_host table "${TABLE}"
+                  echo "[datapath-init] ${UPF_APP}: injected Cilium pod route ${_podcidr} via ${_via} into table ${TABLE}"
+                elif [ -n "${_podcidr}" ]; then
+                  ip route replace "${_podcidr}" dev cilium_host table "${TABLE}"
+                  echo "[datapath-init] ${UPF_APP}: injected Cilium pod route ${_podcidr} into table ${TABLE}"
+                fi
+              fi
+
+              # Policy rules: only N6 IP uses the per-UPF routing table.
+              # Remove any stale N3 rule from previous deployments (it was wrong — see above).
+              ip rule del from "${N3_IP}/32" lookup "${TABLE}" priority "${RULE_PRIO_N3}" 2>/dev/null || true
+              ip rule del from "${N6_IP}/32" lookup "${TABLE}" priority "${RULE_PRIO_N6}" 2>/dev/null || true
+              ip rule add from "${N6_IP}/32" lookup "${TABLE}" priority "${RULE_PRIO_N6}"
+
+              # N6 gateway ARP: required for XDP FIB lookup (NO_NEIGH rc=7 without it).
+              # Retry until L2 is up (RUTX50/cable may lag host boot) — do not start UPF with empty neigh.
+              _neigh_ok() {
+                ip neigh show dev "$1" to "$2" 2>/dev/null | grep -q lladdr
+              }
+              _wait_neigh() {
+                _dev="$1" _ip="$2" _src="$3" _label="$4" _max="$5" _interval="$6"
+                _try=0
+                while [ "${_try}" -lt "${_max}" ]; do
+                  if command -v arping >/dev/null 2>&1; then
+                    arping -I "${_dev}" -c 1 -s "${_src}" -w 2 "${_ip}" >/dev/null 2>&1 || true
+                  fi
+                  if ! _neigh_ok "${_dev}" "${_ip}"; then
+                    ping -c 1 -W 2 -I "${_src}" "${_ip}" >/dev/null 2>&1 || true
+                  fi
+                  if _neigh_ok "${_dev}" "${_ip}"; then
+                    echo "[datapath-init] {{ $appName }}: ${_label} ARP OK (${_ip} on ${_dev})"
+                    return 0
+                  fi
+                  _try=$((_try + 1))
+                  echo "[datapath-init] {{ $appName }}: waiting for ${_label} ARP (${_try}/${_max})..."
+                  sleep "${_interval}"
+                done
+                echo "[datapath-init] {{ $appName }}: FATAL: no L2 neighbour for ${_ip} on ${_dev}"
+                return 1
+              }
+
+              echo "[datapath-init] {{ $appName }}: ARP resolve ${N6_GW} on ${N6_DEV}"
+              if [ -z "${N6_GW}" ]; then
+                echo "[datapath-init] {{ $appName }}: FATAL: upf.remoteN6Gw must be set when upf.n6Cidr is configured"
+                exit 1
+              fi
+              _wait_neigh "${N6_DEV}" "${N6_GW}" "${N6_IP}" "N6 gateway" {{ $n6ArpRetries }} {{ $n6ArpInterval }}
+
+              # Gratuitous ARP: ensure gateway uses N6 VF MAC (not eno1 MAC)
+              if command -v arping >/dev/null 2>&1; then
+                arping -U -I "${N6_DEV}" -c 2 -s "${N6_IP}" "${N6_IP}" || true
+                arping -U -I "${N3_DEV}" -c 2 -s "${N3_IP}" "${N3_IP}" || true
+              fi
+
+              mkdir -p "${LEASE_DIR}"
+              echo "${UPF_APP}" > "${LEASE_DIR}/${UPF_APP}@${N3_DEV}"
+              echo "${UPF_APP}" > "${LEASE_DIR}/${UPF_APP}@${N6_DEV}"
+              echo "[datapath-init] ${UPF_APP}: OK"
+        {{- end }}
+        {{- if and $pfcpMac $pfcpIP }}
+        - name: pfcp-macvlan-init
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              _PARENT="{{ $n4parent }}"
+              _MAC="{{ $pfcpMac }}"
+              _IP="{{ $pfcpIP }}"
+              _SMF_IP="{{ coalesce $.Values.smf.hostPfcpIP $.Values.smf.n4IP }}"
+              echo "[pfcp-init] {{ $appName }}: macvlan ${_MAC} on ${_PARENT}"
+              if ip link show "${_MAC}" >/dev/null 2>&1; then
+                _mode=$(ip -d link show "${_MAC}" 2>/dev/null | awk '/macvlan mode/{print $3; exit}')
+                if [ -n "${_mode}" ] && [ "${_mode}" != "bridge" ]; then
+                  echo "[pfcp-init] ${_MAC} mode=${_mode}, recreating as bridge"
+                  ip link del "${_MAC}"
+                fi
+              fi
+              if ! ip link show "${_MAC}" >/dev/null 2>&1; then
+                ip link add "${_MAC}" link "${_PARENT}" type macvlan mode bridge
+              fi
+              ip addr flush dev "${_MAC}" 2>/dev/null || true
+              ip addr add "${_IP}/32" dev "${_MAC}" 2>/dev/null || true
+              ip link set "${_MAC}" up
+              _mode=$(ip -d link show "${_MAC}" 2>/dev/null | awk '/macvlan mode/{print $3; exit}')
+              echo "[pfcp-init] ${_MAC} macvlan mode=${_mode:-unknown (busybox)}"
+              if [ -n "${_mode}" ] && [ "${_mode}" != "bridge" ]; then
+                echo "[pfcp-init] FATAL: ${_MAC} must be macvlan bridge for Multus SMF PFCP"
+                exit 1
+              fi
+              {{- if eq $idx 0 }}
+              # BUG-007: only the primary UPF (idx 0) owns the SMF hairpin route. `ip route
+              # replace` is last-writer-wins, so without this gate the N concurrent UPF pods
+              # race and the hairpin lands on a non-primary macvlan -> PFCP breaks for all.
+              [ -n "${_SMF_IP}" ] && \
+                ip route replace "${_SMF_IP}/32" dev "${_MAC}" 2>/dev/null || true
+              {{- else }}
+              # Non-primary: remove any hairpin on our own macvlan so we don't steal it.
+              [ -n "${_SMF_IP}" ] && \
+                ip route del "${_SMF_IP}/32" dev "${_MAC}" 2>/dev/null || true
+              {{- end }}
+        {{- end }}
+      containers:
+        - name: upf
+          image: {{ $.Values.upf.oaiImageOverride | default (include "firecell-5gc.image" (dict "registry" $.Values.global.imageRegistry "image" $.Values.upf.oaiImage "tag" $.Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          command:
+            - /openair-upf/bin/oai_upf
+            - -c
+            - /openair-upf/etc/config.yaml
+            - -o
+          env:
+            - name: TZ
+              value: {{ $.Values.global.timezone }}
+            - name: UPF_APP_NAME
+              value: {{ $appName | quote }}
+            - name: UPF_N3_IF
+              value: {{ $n3if | quote }}
+            - name: UPF_N6_IF
+              value: {{ $n6if | quote }}
+            - name: UPF_BPF_PIN_PREFIX
+              value: {{ printf "/sys/fs/bpf/%s" $appName | quote }}
+            - name: UPF_XDP_ATTACH_MODE
+              value: {{ coalesce $inst.xdpAttachMode $.Values.upf.xdpAttachMode "auto" | quote }}
+            {{- if $fcapsOn }}
+            - name: FCAPS_CM_DATASTORE
+              value: {{ printf "%s/%s" $fcaps.datastore.mountPath $fcaps.datastore.file | quote }}
+            {{- with $fcaps.seedConfigPath }}
+            - name: FCAPS_SEED_CONFIG
+              value: {{ . | quote }}
+            {{- end }}
+            {{- if $.Values.upf.hostNetwork }}
+            # hostNetwork + bind on sbi/cni0 makes kube-proxy's DNAT to the
+            # node IP miss the producer. Listen on every interface; advertise
+            # the Service DNS the NMS is seeded with.
+            - name: FCAPS_MNS_LISTEN_HOST
+              value: "0.0.0.0"
+            - name: FCAPS_MNS_ROOT
+              value: {{ printf "http://%s.%s.svc.cluster.local:%v" $appName $.Values.global.namespace $fcaps.mnsPort | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if eq ($.Values.coreConfig.logLevel | default "info") "debug" }}
+            - name: LIBBPF_DEBUG
+              value: "1"
+            {{- end }}
+          {{- if not $omitKubePorts }}
+          ports:
+            - containerPort: 2152
+              protocol: UDP
+            - containerPort: 8805
+              protocol: UDP
+            - containerPort: 8080
+              protocol: TCP
+            {{- if $fcapsOn }}
+            - name: mns
+              containerPort: {{ $fcaps.mnsPort }}
+              protocol: TCP
+            {{- end }}
+          {{- end }}
+          volumeMounts:
+            {{- if $.Values.upf.hostNetwork }}
+            - name: oai-upf-hostnet-config
+              mountPath: /openair-upf/etc/config.yaml
+              subPath: basic_nrf_config_ebpf_oai_upf_hostnet.yaml
+            {{- else }}
+            - name: common-config
+              mountPath: /openair-upf/etc/config.yaml
+              subPath: basic_nrf_config_ebpf_qos.yaml
+            {{- end }}
+            - name: bpf-fs
+              mountPath: /sys/fs/bpf
+            {{- if $fcapsOn }}
+            - name: cm-state
+              mountPath: {{ $fcaps.datastore.mountPath }}
+              {{- if eq ($fcaps.intentMode | default "configmap") "configmap" }}
+              readOnly: true
+              {{- end }}
+            {{- end }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+              drop:
+                - ALL
+          resources:
+            {{- toYaml $.Values.upf.resources | nindent 12 }}
+          {{- if $.Values.upf.hostNetwork }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    LEASE_DIR=/run/firecell/upf-leases
+                    for dev in "${UPF_N3_IF}" "${UPF_N6_IF}"; do
+                      [ -n "${dev}" ] || continue
+                      rm -f "${LEASE_DIR}/${UPF_APP_NAME}@${dev}"
+                      ip link set dev "${dev}" xdp off 2>/dev/null || true
+                      tc filter del dev "${dev}" ingress 2>/dev/null || true
+                      tc qdisc del dev "${dev}" clsact 2>/dev/null || true
+                      tc qdisc del dev "${dev}" root 2>/dev/null || true
+                    done
+                    sleep 2
+          # hostNetwork: do not probe healthz :9090 (busybox nc -l races → connection reset).
+          # startupProbe: process alive (gates readiness + liveness until UPF binary starts).
+          # readinessProbe: process + PFCP N4 port 8805 bound — prevents traffic until UPF is
+          #   fully initialised (XDP attached, N4 listening). Port 8805 = 0x2265 in /proc/net/udp.
+          # livenessProbe: process alive only (restart pod if oai_upf crashes).
+          startupProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -f '[o]ai_upf' >/dev/null
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 36
+            timeoutSeconds: 3
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -f '[o]ai_upf' >/dev/null && grep -qE ':2265 ' /proc/net/udp /proc/net/udp6 2>/dev/null
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 6
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -f '[o]ai_upf' >/dev/null
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 10
+            timeoutSeconds: 5
+          {{- else }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $healthPort }}
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $healthPort }}
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 10
+            timeoutSeconds: 5
+          {{- end }}
+        {{- if $captureSidecar }}
+        - name: fc-packet-capture
+          image: {{ ($.Values.upf.packetCapture | default dict).imageOverride | default (include "firecell-5gc.image" (dict "registry" $.Values.global.imageRegistry "image" "fc-packet-capture" "tag" (($.Values.upf.packetCapture | default dict).imageTag | default $.Values.global.pkgVersion))) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          workingDir: /agent
+          env:
+            # hostNetwork: each UPF pod needs a unique REST port (binary defaults to 8095).
+            - name: FC_REST_PORT
+              value: {{ $capturePort | quote }}
+            # cn-agent POST /create_capture uses interface_name; must match this pod's N3 netdev.
+            - name: FC_CAPTURE_N3_INTERFACE
+              value: {{ $n3if | quote }}
+            {{- if ne $n6if $n3if }}
+            - name: FC_CAPTURE_N6_INTERFACE
+              value: {{ $n6if | quote }}
+            {{- end }}
+          command:
+            - /agent/fc_packet_capture
+          {{- if not $omitKubePorts }}
+          ports:
+            - containerPort: {{ $capturePort }}
+              protocol: TCP
+          {{- end }}
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          livenessProbe:
+            exec:
+              command:
+                - "true"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - "true"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: 512Mi
+              cpu: 500m
+            limits:
+              memory: 1Gi
+              cpu: 2000m
+        {{- end }}
+        {{- if $dnnDpOn }}
+        {{- include "firecell-5gc.dnnDataplaneSidecar" (dict
+            "Values" $.Values
+            "global" $.Values.global
+            "port" $dnnDpPort
+            "mode" "auto"
+            "configVolume" (ternary "oai-upf-hostnet-config" "common-config" $.Values.upf.hostNetwork)
+            "configSubPath" (ternary "basic_nrf_config_ebpf_oai_upf_hostnet.yaml" "config.yaml" $.Values.upf.hostNetwork)
+            "intentVolume" (ternary "cm-state" "" $fcapsOn)
+            "omitContainerPort" $omitKubePorts
+        ) | nindent 8 }}
+        {{- end }}
+        {{- include "firecell-5gc.healthzSidecar" (dict "Values" $.Values "nfName" "upf" "healthPath" "/nupf-access/v1/health" "healthPort" $healthPort "omitContainerPort" $omitKubePorts) | nindent 8 }}
+      volumes:
+        {{- if $.Values.upf.hostNetwork }}
+        - name: oai-upf-hostnet-config
+          configMap:
+            name: {{ $cmName }}
+        {{- else }}
+        - name: common-config
+          configMap:
+            name: firecell-common-config
+        {{- end }}
+        - name: bpf-fs
+          hostPath:
+            path: /sys/fs/bpf
+            type: Directory
+        {{- if $fcapsOn }}
+        - name: cm-state
+          {{- if eq ($fcaps.intentMode | default "configmap") "configmap" }}
+          # Mounted as a directory on purpose. A ConfigMap mounted through
+          # subPath is NEVER refreshed by kubelet, which would silently make
+          # every change require a pod restart and defeat the HOT path.
+          configMap:
+            name: {{ $cmIntent }}
+            optional: {{ dig "intentConfigMap" "optional" true $fcaps }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ printf "%s-cm-state" $appName }}
+          {{- end }}
+        {{- end }}
+        {{- include "firecell-5gc.healthzVolume" $ | nindent 8 }}
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}

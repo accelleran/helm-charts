@@ -1,0 +1,126 @@
+{{- if .Values.udm.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oai-udm
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-udm
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oai-udm
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: oai-udm
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+      annotations:
+        {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
+    spec:
+      priorityClassName: {{ .Values.udm.priorityClassName }}
+      initContainers:
+        {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
+      containers:
+        - name: udm
+          image: {{ .Values.udm.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.udm.image "tag" .Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            {{- toYaml .Values.udm.command | nindent 12 }}
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+            {{- if .Values.udm.fcaps.enabled }}
+            - name: FCAPS_CM_DATASTORE
+              value: {{ printf "%s/%s" .Values.udm.fcaps.datastore.mountPath .Values.udm.fcaps.datastore.file | quote }}
+            {{- with .Values.udm.fcaps.seedConfigPath }}
+            - name: FCAPS_SEED_CONFIG
+              value: {{ . | quote }}
+            {{- end }}
+            {{- end }}
+          ports:
+            {{- toYaml .Values.udm.ports | nindent 12 }}
+            {{- if .Values.udm.fcaps.enabled }}
+            - name: mns
+              containerPort: {{ .Values.udm.fcaps.mnsPort }}
+              protocol: TCP
+            {{- end }}
+          volumeMounts:
+            - name: common-config
+              mountPath: {{ .Values.udm.configMountPath }}
+              subPath: basic_nrf_config_ebpf_qos.yaml
+            - name: udm-suci-key
+              mountPath: /openair-udm/etc/a.key
+              subPath: a.key
+            {{- if .Values.udm.fcaps.enabled }}
+            - name: cm-state
+              mountPath: {{ .Values.udm.fcaps.datastore.mountPath }}
+              {{- if eq .Values.udm.fcaps.intentMode "configmap" }}
+              readOnly: true
+              {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.udm.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          {{- include "firecell-5gc.nfLivenessProbe" (dict "initialDelaySeconds" 30 "periodSeconds" 10 "failureThreshold" 5 "timeoutSeconds" 5) | nindent 10 }}
+        {{- include "firecell-5gc.healthzSidecar" (dict "Values" .Values "nfName" "udm" "healthPath" "/nudm-uecm/v1/health") | nindent 8 }}
+      volumes:
+        - name: common-config
+          configMap:
+            name: firecell-common-config
+        - name: udm-suci-key
+          configMap:
+            name: oai-udm-config
+        {{- if .Values.udm.fcaps.enabled }}
+        - name: cm-state
+          {{- if eq .Values.udm.fcaps.intentMode "configmap" }}
+          # Mounted as a directory on purpose. A ConfigMap mounted through
+          # subPath is NEVER refreshed by kubelet, which would silently make
+          # every change require a pod restart and defeat the HOT path.
+          configMap:
+            name: {{ .Values.udm.fcaps.intentConfigMap.name }}
+            optional: {{ .Values.udm.fcaps.intentConfigMap.optional }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: oai-udm-cm-state
+          {{- end }}
+        {{- end }}
+        {{- include "firecell-5gc.healthzVolume" . | nindent 8 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+# UDM SUCI key ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oai-udm-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-udm
+data:
+  a.key: |
+    {{- if .Values.udm.suciKey }}
+    {{- .Values.udm.suciKey | nindent 4 }}
+    {{- else }}
+    -----BEGIN PRIVATE KEY-----
+    MC4CAQAwBQYDK2VuBCIEIKDMPgJYPmCobTpdYVvSkcHQ0hufGZ4A6ZOMpTzKIBRQ
+    -----END PRIVATE KEY-----
+    {{- end }}
+{{- end }}
