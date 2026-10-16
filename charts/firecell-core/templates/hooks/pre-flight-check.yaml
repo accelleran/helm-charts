@@ -1,0 +1,216 @@
+{{- $hooks := .Values.hooks | default dict }}
+{{- $pre := $hooks.preFlight | default dict }}
+{{- if and ($hooks.enabled | default false) ($pre.enabled | default true) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-preflight
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: preflight-check
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $pre.backoffLimit | default 1 }}
+  activeDeadlineSeconds: {{ $pre.timeoutSeconds | default 120 }}
+  template:
+    metadata:
+      labels:
+        {{- include "firecell-5gc.labels" . | nindent 8 }}
+        app.kubernetes.io/component: preflight-check
+    spec:
+      restartPolicy: Never
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- if and .Values.upf.hostNetwork .Values.upf.dnsServers }}
+      dnsConfig:
+        nameservers:
+          {{- toYaml .Values.upf.dnsServers | nindent 10 }}
+        searches:
+          {{- toYaml .Values.upf.dnsSearchDomains | nindent 10 }}
+      {{- end }}
+      {{- with .Values.upf.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upf.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.upf.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: preflight-check
+          image: {{ $pre.image | default (.Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+                - SYS_MODULE
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "=================================================================="
+              echo "[pre-flight] Firecell 5GC Standalone Pre-Flight Validation"
+              echo "=================================================================="
+
+              fail() {
+                echo "[pre-flight] FATAL: $*" >&2
+                exit 1
+              }
+
+              # 1. Cluster DNS resolution check
+              echo "[pre-flight] 1/4 Checking cluster DNS resolution..."
+              DNS_SERVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf 2>/dev/null || true)
+              [ -n "${DNS_SERVER}" ] || fail "No nameserver found in /etc/resolv.conf"
+              if ! nslookup kubernetes.default.svc.cluster.local "${DNS_SERVER}" >/dev/null 2>&1; then
+                fail "Cluster DNS (${DNS_SERVER}) failed to resolve kubernetes.default.svc.cluster.local"
+              fi
+              echo "[pre-flight]   OK: Cluster DNS (${DNS_SERVER}) resolves kubernetes.default.svc.cluster.local"
+
+              # 2. SCTP kernel module / protocol support (required by AMF NGAP port 38412/SCTP)
+              {{- if and .Values.amf.enabled ($pre.requireSctp | default true) }}
+              echo "[pre-flight] 2/4 Checking kernel SCTP support for AMF N2/NGAP..."
+              if [ ! -d /sys/module/sctp ] && [ ! -e /proc/net/sctp/eps ]; then
+                modprobe sctp 2>/dev/null || true
+              fi
+              if [ ! -d /sys/module/sctp ] && [ ! -e /proc/net/sctp/eps ] && ! grep -qi '^SCTP' /proc/net/protocols 2>/dev/null; then
+                fail "Kernel SCTP support is not available (/sys/module/sctp and /proc/net/sctp/eps missing)"
+              fi
+              echo "[pre-flight]   OK: Kernel SCTP support verified"
+              {{- else }}
+              echo "[pre-flight] 2/4 Skipping SCTP check"
+              {{- end }}
+
+              # 3. Host network interface & IP validation
+              echo "[pre-flight] 3/4 Validating host network interfaces and UPF/SMF configuration..."
+              {{- if and .Values.upf.enabled .Values.upf.hostNetwork }}
+              {{- $instances := .Values.upf.instances }}
+              {{- if not $instances }}
+              {{- $instances = list (dict
+                  "suffix"              ""
+                  "n3IP"                .Values.upf.n3IP
+                  "n3Interface"         .Values.upf.n3Interface
+                  "n6Interface"         .Values.upf.n6Interface
+                  "n4Interface"         .Values.upf.n4Interface
+                  "sbiInterface"        .Values.upf.sbiInterface
+                  "hostPfcpMacvlan"     .Values.upf.hostPfcpMacvlan
+                  "hostPfcpIP"          .Values.upf.hostPfcpIP
+                  "autoCreateN3Macvlan" .Values.upf.autoCreateN3Macvlan
+                  "remoteN6Gw"          .Values.upf.remoteN6Gw
+              ) }}
+              {{- end }}
+              {{- range $idx, $inst := $instances }}
+              N3_IF="{{ coalesce $inst.n3Interface $.Values.upf.n3Interface }}"
+              N6_IF="{{ coalesce $inst.n6Interface $.Values.upf.n6Interface $inst.n3Interface $.Values.upf.n3Interface }}"
+              N4_IF="{{ coalesce $inst.n4Interface $.Values.upf.n4Interface }}"
+              SBI_IF="{{ coalesce $inst.sbiInterface $.Values.upf.sbiInterface }}"
+              N3_IP="{{ coalesce $inst.n3IP $.Values.upf.n3IP }}"
+              PFCP_MAC="{{ coalesce $inst.hostPfcpMacvlan $.Values.upf.hostPfcpMacvlan }}"
+              PFCP_IP="{{ coalesce $inst.hostPfcpIP $.Values.upf.hostPfcpIP }}"
+              AUTO_N3_MAC="{{ if hasKey $inst "autoCreateN3Macvlan" }}{{ $inst.autoCreateN3Macvlan }}{{ else }}{{ $.Values.upf.autoCreateN3Macvlan }}{{ end }}"
+
+              [ -n "${N3_IP}" ] || fail "upf.n3IP must be set when upf.hostNetwork=true (instance {{ $idx }})"
+
+              if [ -n "${N4_IF}" ]; then
+                ip link show dev "${N4_IF}" >/dev/null 2>&1 || fail "Host N4 parent interface '${N4_IF}' does not exist"
+                echo "[pre-flight]   OK: N4 parent interface '${N4_IF}' exists"
+              fi
+
+              if [ -n "${SBI_IF}" ]; then
+                ip link show dev "${SBI_IF}" >/dev/null 2>&1 || fail "Host UPF SBI interface '${SBI_IF}' does not exist"
+                echo "[pre-flight]   OK: UPF SBI interface '${SBI_IF}' exists"
+              fi
+
+              if [ "${AUTO_N3_MAC}" = "true" ] && [ "${N3_IF}" != "${N4_IF}" ]; then
+                [ -n "${N4_IF}" ] || fail "upf.n4Interface must be set as parent when upf.autoCreateN3Macvlan=true"
+                echo "[pre-flight]   OK: N3 macvlan '${N3_IF}' will be created on parent '${N4_IF}'"
+              else
+                if ! ip link show dev "${N3_IF}" >/dev/null 2>&1; then
+                  fail "Host N3 interface '${N3_IF}' does not exist (and upf.autoCreateN3Macvlan is false)"
+                fi
+                echo "[pre-flight]   OK: N3 interface '${N3_IF}' exists"
+              fi
+
+              if [ "${N6_IF}" != "${N3_IF}" ]; then
+                ip link show dev "${N6_IF}" >/dev/null 2>&1 || fail "Host N6 interface '${N6_IF}' does not exist"
+                echo "[pre-flight]   OK: N6 interface '${N6_IF}' exists"
+              fi
+
+              if [ -n "${PFCP_MAC}" ]; then
+                [ -n "${PFCP_IP}" ] || fail "upf.hostPfcpIP must be set when upf.hostPfcpMacvlan='${PFCP_MAC}'"
+                if [ "${PFCP_IP}" = "${N3_IP}" ]; then
+                  fail "upf.hostPfcpIP (${PFCP_IP}) must not collide with upf.n3IP (${N3_IP})"
+                fi
+                echo "[pre-flight]   OK: PFCP macvlan '${PFCP_MAC}' configured with IP ${PFCP_IP}"
+              fi
+              {{- end }}
+              {{- end }}
+
+              {{- if and .Values.smf.enabled (or (.Values.smf.hostNetwork | default false) (.Values.smf.multus.enabled | default false)) }}
+              SMF_PARENT="{{ coalesce .Values.smf.pfcpParentInterface .Values.smf.multus.masterInterface }}"
+              if [ -n "${SMF_PARENT}" ]; then
+                ip link show dev "${SMF_PARENT}" >/dev/null 2>&1 || fail "SMF parent interface '${SMF_PARENT}' does not exist"
+                echo "[pre-flight]   OK: SMF parent interface '${SMF_PARENT}' exists"
+              fi
+              {{- end }}
+
+              # 4. N6 Gateway reachability check
+              {{- $n6gw := .Values.upf.remoteN6Gw | default "" | toString | trim }}
+              {{- if and .Values.upf.enabled .Values.upf.hostNetwork ($pre.verifyGateway | default true) }}
+              {{- $gwInstances := .Values.upf.instances }}
+              {{- if not $gwInstances }}
+              {{- $gwInstances = list (dict "remoteN6Gw" $n6gw) }}
+              {{- end }}
+              {{- range $idx, $inst := $gwInstances }}
+              {{- $instGw := coalesce $inst.remoteN6Gw $n6gw "" | toString | trim }}
+              {{- if $instGw }}
+              N6_GW="{{ $instGw }}"
+              echo "[pre-flight] 4/4 Verifying N6 gateway (${N6_GW}) reachability..."
+              GW_OK=0
+              for attempt in 1 2 3 4 5; do
+                if ping -c 1 -W 2 "${N6_GW}" >/dev/null 2>&1; then
+                  GW_OK=1
+                  break
+                fi
+                if ip neigh show to "${N6_GW}" 2>/dev/null | grep -q lladdr; then
+                  GW_OK=1
+                  break
+                fi
+                echo "[pre-flight]   Waiting for gateway ${N6_GW} (attempt ${attempt}/5)..."
+                sleep 2
+              done
+              [ "${GW_OK}" -eq 1 ] || fail "N6 gateway ${N6_GW} is unreachable via ping/ARP"
+              echo "[pre-flight]   OK: N6 gateway ${N6_GW} is reachable"
+              {{- end }}
+              {{- end }}
+              {{- else }}
+              echo "[pre-flight] 4/4 Skipping N6 gateway reachability check"
+              {{- end }}
+
+              echo "=================================================================="
+              echo "[pre-flight] All pre-flight checks PASSED."
+              echo "=================================================================="
+          volumeMounts:
+            - name: host-modules
+              mountPath: /lib/modules
+              readOnly: true
+      volumes:
+        - name: host-modules
+          hostPath:
+            path: /lib/modules
+{{- end }}

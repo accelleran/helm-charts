@@ -1,0 +1,2 @@
+# chart-testing install is skipped: the 5GC chart requires host networking,
+# kernel SCTP sockets, and macvlan interfaces that KinD CI cannot provide.

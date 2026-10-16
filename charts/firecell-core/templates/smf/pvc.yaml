@@ -1,0 +1,24 @@
+{{- /*
+The writable-datastore variant of smf.fcaps. Only rendered for
+intentMode: "pvc" — under "configmap" the NMS owns the document and the NF
+mounts it read-only, so a claim here would be an unused volume that still
+consumes storage and still has to be reclaimed by hand.
+*/ -}}
+{{- if and .Values.smf.enabled .Values.smf.fcaps.enabled (eq .Values.smf.fcaps.intentMode "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oai-smf-cm-state
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-smf
+    tier: core-network
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.smf.fcaps.datastore.size }}
+  storageClassName: {{ .Values.smf.fcaps.datastore.storageClassName }}
+{{- end }}

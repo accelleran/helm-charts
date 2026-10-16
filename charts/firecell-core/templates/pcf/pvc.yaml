@@ -1,0 +1,24 @@
+{{- /*
+The writable-datastore variant of pcf.fcaps. Only rendered for
+intentMode: "pvc" — under "configmap" the NMS owns the document and the NF
+mounts it read-only, so a claim here would be an unused volume that still
+consumes storage and still has to be reclaimed by hand.
+*/ -}}
+{{- if and .Values.pcf.enabled .Values.pcf.fcaps.enabled (eq .Values.pcf.fcaps.intentMode "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oai-pcf-cm-state
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-pcf
+    tier: core-network
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.pcf.fcaps.datastore.size }}
+  storageClassName: {{ .Values.pcf.fcaps.datastore.storageClassName }}
+{{- end }}

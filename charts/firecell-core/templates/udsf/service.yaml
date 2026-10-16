@@ -1,0 +1,33 @@
+{{- if .Values.udsf.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.udsf.serviceName }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: {{ .Values.udsf.serviceName }}
+    tier: udsf
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ .Values.udsf.serviceName }}
+  ports:
+    - name: sbi
+      port: 80
+      targetPort: http
+      protocol: TCP
+    - name: http
+      port: {{ .Values.udsf.sbiPort }}
+      targetPort: http
+      protocol: TCP
+    {{- if .Values.udsf.fcaps.enabled }}
+    # Same MnS port as every other producer. The UDSF is a Go service rather
+    # than the C++ codebase the other NFs share, but its fcaps package reads
+    # the same environment contract and listens on the same 9091.
+    - name: mns
+      port: {{ .Values.udsf.fcaps.mnsPort }}
+      targetPort: {{ .Values.udsf.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
+{{- end }}

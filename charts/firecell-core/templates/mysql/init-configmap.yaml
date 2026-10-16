@@ -1,0 +1,25 @@
+{{- if .Values.mysql.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-scripts
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: mysql
+    tier: database
+data:
+  01-oai-db.sql: |
+{{ .Files.Get "sql/oai_db.sql" | indent 4 }}
+  02-oai-db-ims-supplement.sql: |
+{{ .Files.Get "sql/oai_db-ims-supplement.sql" | indent 4 }}
+{{- range $path, $_ := .Files.Glob "sql/pcf-provisioning/*.sql" }}
+  03-pcf-{{ base $path }}: |
+    USE oai_db;
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+{{- range $path, $_ := .Files.Glob "sql/fc-acs-agent/*.sql" }}
+  {{ base $path }}: |
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}
+{{- end }}

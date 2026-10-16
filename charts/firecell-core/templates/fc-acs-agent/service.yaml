@@ -1,0 +1,28 @@
+{{- if .Values.fcAcsAgent.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: fc-acs-agent
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: fc-acs-agent
+    tier: core-network
+  {{- if eq (.Values.fcAcsAgent.serviceType | default "LoadBalancer") "LoadBalancer" }}
+  annotations:
+    metallb.universe.tf/address-pool: firecell-cp-pool
+    metallb.universe.tf/loadBalancerIPs: {{ required "network.acsExternalIP must be set for the fc-acs-agent LoadBalancer Service (or set fcAcsAgent.serviceType=ClusterIP)" .Values.network.acsExternalIP }}
+  {{- end }}
+spec:
+  type: {{ .Values.fcAcsAgent.serviceType | default "LoadBalancer" }}
+  {{- if eq (.Values.fcAcsAgent.serviceType | default "LoadBalancer") "LoadBalancer" }}
+  externalTrafficPolicy: Cluster
+  {{- end }}
+  ports:
+    - name: acs
+      port: 7547
+      targetPort: 7547
+      protocol: TCP
+  selector:
+    app: fc-acs-agent
+{{- end }}

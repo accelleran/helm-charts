@@ -1,0 +1,24 @@
+{{- if .Values.networkPolicies.enabled }}
+# Allow SMF → UPF on N4 interface (PFCP: 8805/UDP)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: smf-to-upf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ if eq .Values.upf.type "oai" }}oai-upf{{ else }}o5gs-upf{{ end }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: oai-smf
+      ports:
+        - protocol: UDP
+          port: 8805
+{{- end }}
