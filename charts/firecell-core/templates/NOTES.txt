@@ -22,4 +22,14 @@ The chart does not create the namespace. Create it first, or pass
 Ensure Secret gitlab-regcred (or your configured imagePullSecrets) is pre-created
 in namespace {{ .Values.global.namespace }} before installation.
 
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "asterisk") }}
+
+IMS engine: asterisk. For Kamailio + Cx-on-UDR (chart default), omit examples/values-ims-asterisk.yaml.
+{{- else if .Values.ims.enabled }}
+
+IMS engine: kamailio (default) — P/I/S-CSCF + Cx. CX_SOT={{ .Values.ims.cxGateway.cxSot | default "udr" }}.
+Ensure hostNetwork IPs (.205–.208) and kamailio-ims / ims-cx-gateway images are available.
+Asterisk-only: layer examples/values-ims-asterisk.yaml.
+{{- end }}
+
 ################################################################################

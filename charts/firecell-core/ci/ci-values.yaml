@@ -21,3 +21,9 @@ networkPolicies:
 
 hooks:
   enabled: true
+
+# Default IMS is Kamailio; set a reachable mysqlHost for hostNetwork wait init.
+ims:
+  enabled: true
+  engine: kamailio
+  mysqlHost: "127.0.0.1"

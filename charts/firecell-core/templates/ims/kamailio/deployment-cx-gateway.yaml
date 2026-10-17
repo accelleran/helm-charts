@@ -1,0 +1,72 @@
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.cxGateway.enabled }}
+{{- $imsDomain := include "firecell-5gc.imsDomain" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-cx-gateway
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: ims-cx-gateway
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims-cx-gateway
+  template:
+    metadata:
+      labels:
+        app: ims-cx-gateway
+        tier: core-network
+    spec:
+      hostNetwork: {{ .Values.ims.cxGateway.hostNetwork | default true }}
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        {{- include "firecell-5gc.waitForMysql" . | nindent 8 }}
+      containers:
+        - name: cx-gateway
+          # Diameter Cx peer for S-CSCF SAR/MAR. CX_SOT=udr hydrates from oai_db on Cx lookup.
+          image: {{ .Values.ims.cxGateway.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.cxGateway.image .Values.ims.cxGateway.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: MYSQL_HOST
+              value: {{ .Values.ims.mysqlHost | default (printf "mysql.%s.svc.cluster.local" .Values.global.namespace) | quote }}
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: root-password
+            - name: CX_GATEWAY_IP
+              value: {{ .Values.ims.cxGateway.ip | quote }}
+            - name: CX_GATEWAY_PORT
+              value: {{ .Values.ims.cxGateway.port | default "3868" | quote }}
+            - name: MCC
+              value: {{ .Values.coreConfig.mcc | default "001" | quote }}
+            - name: MNC
+              value: {{ .Values.coreConfig.mnc | default "01" | quote }}
+            - name: IMS_DOMAIN
+              value: {{ $imsDomain | quote }}
+            - name: CX_SOT
+              value: {{ .Values.ims.cxGateway.cxSot | default "udr" | quote }}
+          ports:
+            - name: diameter
+              containerPort: {{ .Values.ims.cxGateway.port | default 3868 }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.ims.cxGateway.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-cx-gateway
+  namespace: {{ .Values.global.namespace }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: diameter
+      port: {{ .Values.ims.cxGateway.port | default 3868 }}
+      protocol: TCP
+  selector:
+    app: ims-cx-gateway
+{{- end }}

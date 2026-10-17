@@ -1,0 +1,87 @@
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") }}
+{{- $scscfIp := .Values.ims.scscf.ip }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-scscf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: ims-scscf
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims-scscf
+  template:
+    metadata:
+      labels:
+        app: ims-scscf
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      priorityClassName: {{ .Values.ims.priorityClassName | default .Values.ims.priorityClassName }}
+      hostNetwork: {{ .Values.ims.scscf.hostNetwork | default true }}
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        {{- if .Values.ims.cxGateway.enabled }}
+        {{- include "firecell-5gc.waitForMysql" . | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: scscf
+          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["/bin/bash", "-lc"]
+          args:
+            - |
+              mkdir -p /var/run/kamailio_scscf
+              sed -i '/#!define REG_AUTH_DEFAULT_ALG/d' /opt/firecell/config/scscf/firecell-scscf.cfg 2>/dev/null || true
+              sed -i "s|@127.0.0.1/scscf|@${MYSQL_HOST}/scscf|g; s|@MYSQL_IP/scscf|@${MYSQL_HOST}/scscf|g" /opt/firecell/config/scscf/scscf.cfg
+              exec /firecell-entrypoint.sh
+          env:
+            {{- include "firecell-5gc.kamailioCommonEnv" (dict "root" . "component" "scscf") | nindent 12 }}
+            - name: SCSCF_IP
+              value: {{ $scscfIp | quote }}
+            - name: SCSCF_BIND_PORT
+              value: {{ .Values.ims.scscf.bindPort | default "6060" | quote }}
+            - name: CX_GATEWAY_IP
+              value: {{ .Values.ims.cxGateway.ip | quote }}
+            - name: CX_GATEWAY_PORT
+              value: {{ .Values.ims.cxGateway.port | default "3868" | quote }}
+          ports:
+            # SIP only — Cx/Diameter is client-side toward ims-cx-gateway (not a second hostPort).
+            - name: sip-tcp
+              containerPort: {{ .Values.ims.scscf.bindPort | default 6060 }}
+              protocol: TCP
+            - name: sip-udp
+              containerPort: {{ .Values.ims.scscf.bindPort | default 6060 }}
+              protocol: UDP
+          resources:
+            {{- toYaml (.Values.ims.scscf.resources | default .Values.ims.resources) | nindent 12 }}
+          readinessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "pgrep -x kamailio > /dev/null"]
+            initialDelaySeconds: 45
+            periodSeconds: 10
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-scscf
+  namespace: {{ .Values.global.namespace }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: sip-tcp
+      port: {{ .Values.ims.scscf.bindPort | default 6060 }}
+      protocol: TCP
+  selector:
+    app: ims-scscf
+{{- end }}
