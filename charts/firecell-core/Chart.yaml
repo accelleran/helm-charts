@@ -1,6 +1,6 @@
 apiVersion: v2
 name: firecell-core
-description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF, MySQL, IMS Asterisk or Kamailio+Cx)
+description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF, MySQL, IMS Kamailio+Cx (Asterisk optional))
 type: application
 version: 0.1.0
 appVersion: "1.0.0"
