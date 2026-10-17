@@ -1,0 +1,78 @@
+# Opt-in Kamailio IMS + Cx-on-UDR overlay for firecell-core.
+#
+# Layer last:
+#   helm upgrade --install firecell-core ./charts/firecell-core \
+#     -n firecell-core -f <site-values.yaml> -f examples/values-ims-kamailio.yaml
+#
+# Prerequisites:
+#   - HostNetwork IPs .205–.208 on the core node
+#   - Images kamailio-ims + ims-cx-gateway available (local import or registry)
+#   - MySQL reachable at ims.mysqlHost from hostNetwork pods
+#
+# Galaxy lab runbook (reference): firecell-5gc-nms-k8s-vanilla docs/deployment/ims-lab-bringup.md
+
+ims:
+  engine: kamailio
+  enabled: true
+  imageOverride: kamailio-ims:latest
+  image: kamailio-ims
+  imageTag: latest
+  priorityClassName: firecell-prio-support
+  registrationExpires: "3600"
+  # hostNetwork CSCF/Cx: ClusterIP mysql is unreachable — use node external IP.
+  mysqlHost: "192.168.30.11"
+  ueImsSubnet: "14.1.1.0/25"
+  upfN6Gateway: "10.20.0.3"
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+  pcscf:
+    ip: "192.168.31.205"
+    hostNetwork: true
+    privileged: true
+    bindPort: 5060
+    ipsecClientPort: 5100
+    ipsecServerPort: 6100
+  icscf:
+    ip: "192.168.31.206"
+    hostNetwork: true
+    bindPort: 4060
+  scscf:
+    ip: "192.168.31.207"
+    hostNetwork: true
+    bindPort: 6060
+  cxGateway:
+    enabled: true
+    ip: "192.168.31.208"
+    hostNetwork: true
+    port: 3868
+    imageOverride: ims-cx-gateway:latest
+    image: ims-cx-gateway
+    imageTag: latest
+    cxSot: udr
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+coreConfig:
+  ims:
+    pcscfIpv4: "192.168.31.205"
+
+# Keep OAI UPF for IMS/QoS path when using this lab overlay.
+upf:
+  type: oai
+
+qos:
+  dynamicEnabled: false
+
+global:
+  imagePullPolicy: IfNotPresent
+  busyboxImage: docker.io/library/busybox:1.36

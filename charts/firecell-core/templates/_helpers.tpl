@@ -313,9 +313,11 @@ Volume for the healthz sidecar scripts ConfigMap.
 
 {{/*
 Init container that waits for MySQL to be ready.
+HostNetwork IMS (Kamailio/Cx): set ims.mysqlHost to a node/external IP — ClusterIP
+"mysql" is unreachable from hostNetwork pods.
 */}}
 {{- define "firecell-5gc.waitForMysql" -}}
-{{- $dbHost := coalesce .Values.coreConfig.database.host "mysql" -}}
+{{- $dbHost := .Values.ims.mysqlHost | default .Values.coreConfig.database.host | default "mysql" -}}
 {{- $dbPort := .Values.coreConfig.database.port | default 3306 -}}
 - name: wait-for-mysql
   image: {{ .Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry) }}
@@ -330,6 +332,42 @@ Init container that waits for MySQL to be ready.
         sleep 5
       done
       echo "MySQL is ready!"
+{{- end }}
+
+{{/*
+IMS SIP domain from PLMN (999/99 -> ims.mnc099.mcc999.3gppnetwork.org).
+*/}}
+{{- define "firecell-5gc.imsDomain" -}}
+{{- $mcc := .Values.coreConfig.mcc | default "001" -}}
+{{- $mnc := .Values.coreConfig.mnc | default "01" -}}
+{{- if eq (len $mnc) 3 -}}
+ims.mnc{{ $mnc }}.mcc{{ $mcc }}.3gppnetwork.org
+{{- else -}}
+ims.mnc0{{ $mnc }}.mcc{{ $mcc }}.3gppnetwork.org
+{{- end -}}
+{{- end }}
+
+{{/*
+Kamailio CSCF common env (UDR MySQL).
+*/}}
+{{- define "firecell-5gc.kamailioCommonEnv" -}}
+- name: COMPONENT_NAME
+  value: {{ .component | quote }}
+- name: MCC
+  value: {{ .root.Values.coreConfig.mcc | default "001" | quote }}
+- name: MNC
+  value: {{ .root.Values.coreConfig.mnc | default "01" | quote }}
+- name: MYSQL_HOST
+  value: {{ .root.Values.ims.mysqlHost | default (printf "mysql.%s.svc.cluster.local" .root.Values.global.namespace) | quote }}
+- name: MYSQL_ROOT_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: mysql-secrets
+      key: root-password
+- name: REGISTRATION_EXPIRES
+  value: {{ .root.Values.ims.registrationExpires | default "3600" | quote }}
+- name: IMS_DOMAIN
+  value: {{ include "firecell-5gc.imsDomain" .root | quote }}
 {{- end }}
 
 {{- /*

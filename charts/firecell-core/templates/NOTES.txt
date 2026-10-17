@@ -22,4 +22,13 @@ The chart does not create the namespace. Create it first, or pass
 Ensure Secret ghcr-regcred (or your configured imagePullSecrets) is pre-created
 in namespace {{ .Values.global.namespace }} before installation.
 
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "asterisk") "kamailio") }}
+
+IMS engine: kamailio (P/I/S-CSCF + Cx). CX_SOT={{ .Values.ims.cxGateway.cxSot | default "udr" }}.
+Ensure hostNetwork IPs and kamailio-ims / ims-cx-gateway images are available.
+{{- else if .Values.ims.enabled }}
+
+IMS engine: asterisk (default). For Kamailio + Cx-on-UDR, layer examples/values-ims-kamailio.yaml.
+{{- end }}
+
 ################################################################################

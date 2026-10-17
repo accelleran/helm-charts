@@ -1,0 +1,78 @@
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "asterisk") "kamailio") }}
+{{- $icscfIp := .Values.ims.icscf.ip }}
+{{- $scscfIp := .Values.ims.scscf.ip }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-icscf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: ims-icscf
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims-icscf
+  template:
+    metadata:
+      labels:
+        app: ims-icscf
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      priorityClassName: {{ .Values.ims.priorityClassName | default .Values.ims.priorityClassName }}
+      hostNetwork: {{ .Values.ims.icscf.hostNetwork | default true }}
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: icscf
+          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["/bin/bash", "-lc"]
+          args:
+            - |
+              mkdir -p /var/run/kamailio_icscf
+              sed -i "s|@localhost/icscf|@${MYSQL_HOST}/icscf|g; s|@127.0.0.1/icscf|@${MYSQL_HOST}/icscf|g; s|@MYSQL_IP/icscf|@${MYSQL_HOST}/icscf|g" /opt/firecell/config/icscf/icscf.cfg
+              exec /firecell-entrypoint.sh
+          env:
+            {{- include "firecell-5gc.kamailioCommonEnv" (dict "root" . "component" "icscf") | nindent 12 }}
+            - name: ICSCF_IP
+              value: {{ $icscfIp | quote }}
+            - name: SCSCF_IP
+              value: {{ $scscfIp | quote }}
+          ports:
+            - name: sip-tcp
+              containerPort: {{ .Values.ims.icscf.bindPort | default 4060 }}
+              protocol: TCP
+            - name: sip-udp
+              containerPort: {{ .Values.ims.icscf.bindPort | default 4060 }}
+              protocol: UDP
+          resources:
+            {{- toYaml (.Values.ims.icscf.resources | default .Values.ims.resources) | nindent 12 }}
+          readinessProbe:
+            exec:
+              command: ["/bin/sh", "-c", "pgrep -x kamailio > /dev/null"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-icscf
+  namespace: {{ .Values.global.namespace }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: sip-tcp
+      port: {{ .Values.ims.icscf.bindPort | default 4060 }}
+      protocol: TCP
+  selector:
+    app: ims-icscf
+{{- end }}
