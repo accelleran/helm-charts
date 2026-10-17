@@ -25,6 +25,7 @@ The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network sta
   - **CN-Agent** (`cn-agent`): Core network local agent for metric collection and status reporting.
   - **FC-ACS-Agent** (`fc-acs-agent`): Auto-Configuration Server agent for TR-069 management.
   - **UDSF** (`udsf`): Unstructured Data Storage Function with Redis backend.
+  - **IMS**: Asterisk by default (`ims.engine=asterisk`), or Kamailio P/I/S-CSCF + Cx gateway (`ims.engine=kamailio`, Cx-on-UDR via `ims.cxGateway.cxSot=udr`). Opt-in overlay: `examples/values-ims-kamailio.yaml`.
 
 ## 2. Standalone Atomic Lifecycle
 The chart incorporates built-in Kubernetes job hooks to guarantee atomic lifecycle management (installation, upgrade, rollback, uninstallation):
@@ -77,7 +78,21 @@ helm upgrade firecell-core ./charts/firecell-core \
   --timeout 15m
 ```
 
-### 3.4 Uninstallation
+### 3.4 Opt-in Kamailio IMS + Cx-on-UDR
+Default IMS is Asterisk. For Kamailio CSCFs and Diameter Cx backed by UDR (`oai_db`):
+
+1. Ensure hostNetwork IPs for P/I/S-CSCF and Cx exist on the node (lab defaults `.205–.208`).
+2. Build/import `kamailio-ims` and `ims-cx-gateway` images.
+3. Layer the example overlay **last**:
+```bash
+helm upgrade --install firecell-core ./charts/firecell-core \
+  --namespace firecell-core \
+  -f examples/values-ims-kamailio.yaml \
+  --atomic --timeout 15m
+```
+MySQL init applies `sql/ims_subscribers.sql` and `sql/cx_scscf_binding.sql`. Subscriber SoT is UDR (`ims.cxGateway.cxSot=udr`).
+
+### 3.5 Uninstallation
 ```bash
 helm uninstall firecell-core --namespace firecell-core
 ```

@@ -1,0 +1,117 @@
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "asterisk") "kamailio") }}
+{{- $pcscfIp := .Values.ims.pcscf.ip | default .Values.coreConfig.ims.pcscfIpv4 }}
+{{- $icscfIp := .Values.ims.icscf.ip }}
+{{- $scscfIp := .Values.ims.scscf.ip }}
+{{- $cxIp := .Values.ims.cxGateway.ip }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ims-pcscf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: ims-pcscf
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ims-pcscf
+  template:
+    metadata:
+      labels:
+        app: ims-pcscf
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      priorityClassName: {{ .Values.ims.priorityClassName | default .Values.ims.priorityClassName }}
+      hostNetwork: {{ .Values.ims.pcscf.hostNetwork | default true }}
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: pcscf
+          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          # ctl/jsonrpcs need a writable rundir (image may predate mkdir in init).
+          command: ["/bin/bash", "-lc"]
+          args:
+            - |
+              mkdir -p /var/run/kamailio_pcscf
+              sed -i "s|@127.0.0.1/pcscf|@${MYSQL_HOST}/pcscf|g; s|@MYSQL_IP/pcscf|@${MYSQL_HOST}/pcscf|g" /opt/firecell/config/pcscf/pcscf.cfg
+              exec /firecell-entrypoint.sh
+          securityContext:
+            privileged: {{ .Values.ims.pcscf.privileged | default true }}
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          env:
+            {{- include "firecell-5gc.kamailioCommonEnv" (dict "root" . "component" "pcscf") | nindent 12 }}
+            - name: PCSCF_IP
+              value: {{ $pcscfIp | quote }}
+            - name: ICSCF_IP
+              value: {{ $icscfIp | quote }}
+            - name: SCSCF_IP
+              value: {{ $scscfIp | quote }}
+            - name: UPF_N6_GW
+              value: {{ .Values.ims.upfN6Gateway | quote }}
+            - name: UE_IMS_SUBNET
+              value: {{ .Values.ims.ueImsSubnet | quote }}
+            - name: RTPENGINE_IP
+              value: {{ .Values.ims.rtpengine.ip | default "127.0.0.1" | quote }}
+          ports:
+            - name: sip-tcp
+              containerPort: {{ .Values.ims.pcscf.bindPort | default 5060 }}
+              protocol: TCP
+            - name: sip-udp
+              containerPort: {{ .Values.ims.pcscf.bindPort | default 5060 }}
+              protocol: UDP
+            - name: ipsec-s
+              containerPort: {{ .Values.ims.pcscf.ipsecServerPort | default 6100 }}
+              protocol: UDP
+            - name: ipsec-c
+              containerPort: {{ .Values.ims.pcscf.ipsecClientPort | default 5100 }}
+              protocol: UDP
+          resources:
+            {{- toYaml (.Values.ims.pcscf.resources | default .Values.ims.resources) | nindent 12 }}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -x kamailio > /dev/null
+            initialDelaySeconds: 45
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - pgrep -x kamailio > /dev/null
+            initialDelaySeconds: 90
+            periodSeconds: 20
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ims-pcscf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: ims-pcscf
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: sip-tcp
+      port: {{ .Values.ims.pcscf.bindPort | default 5060 }}
+      protocol: TCP
+    - name: sip-udp
+      port: {{ .Values.ims.pcscf.bindPort | default 5060 }}
+      protocol: UDP
+  selector:
+    app: ims-pcscf
+{{- end }}

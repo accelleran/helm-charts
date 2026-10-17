@@ -755,13 +755,20 @@ upf:
 # --- IMS (Asterisk) ---
 ims:
   enabled: true
+  # asterisk (default) | kamailio — see examples/values-ims-kamailio.yaml
+  engine: asterisk
   image: asterisk-ims
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
+  # Kamailio: set image/imageOverride to kamailio-ims (CSCF image).
   imageOverride: ""
   imageTag: latest
   priorityClassName: firecell-prio-support
+  registrationExpires: "3600"
+  # HostNetwork CSCF/Cx cannot reach ClusterIP mysql — set node/external IP
+  # when engine=kamailio (examples/values-ims-kamailio.yaml).
+  mysqlHost: ""
   resources:
     requests:
       memory: 128Mi
@@ -782,15 +789,8 @@ ims:
   # Filling this in would reintroduce a second writer.
   usersConf: ""
   sidecar:
-    # OFF by default until the image is published to imageRegistry. The
-    # composed default below resolves to
-    # registry.gitlab.com/.../nms-ims-sidecar:latest, which does not exist: the
-    # image is built locally and imported into the node. A default-on sidecar
-    # whose image cannot be pulled leaves the whole pod NotReady, and the
-    # Service then drops the endpoint - turning a working Asterisk into an
-    # unreachable one. Enable it explicitly, with imageOverride:
-    #   --set ims.sidecar.enabled=true \
-    #   --set ims.sidecar.imageOverride=nms-ims-sidecar:<tag>
+    # OFF by default until the image is published to imageRegistry. Enable
+    # explicitly with imageOverride for Asterisk engine only.
     enabled: false
     image: nms-ims-sidecar
     imageOverride: ""
@@ -802,6 +802,44 @@ ims:
       limits:
         memory: 128Mi
         cpu: 200m
+  # Kamailio CSCFs (used when engine=kamailio). HostNetwork IPs must exist on the node.
+  ueImsSubnet: ""
+  upfN6Gateway: ""
+  rtpengine:
+    enabled: false
+    ip: "127.0.0.1"
+  pcscf:
+    ip: ""
+    hostNetwork: true
+    privileged: true
+    bindPort: 5060
+    ipsecClientPort: 5100
+    ipsecServerPort: 6100
+  icscf:
+    ip: ""
+    hostNetwork: true
+    bindPort: 4060
+  scscf:
+    ip: ""
+    hostNetwork: true
+    bindPort: 6060
+  cxGateway:
+    enabled: false
+    ip: ""
+    hostNetwork: true
+    port: 3868
+    image: ims-cx-gateway
+    imageOverride: ""
+    imageTag: latest
+    # udr = oai_db SoT (Cx-on-UDR); legacy = pyHSS DB + seed
+    cxSot: udr
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
 
 # --- External Data Network ---
 extDn:
