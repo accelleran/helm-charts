@@ -724,7 +724,7 @@ upf:
     socketWmemMax: 26214400   # net.core.wmem_max
     conntrackMax: 524288      # net.netfilter.nf_conntrack_max
     conntrackUdpTimeout: 120        # seconds; default 30 causes flow stall when iperf report-back is lost
-    conntrackUdpStreamTimeout: 3600 # seconds after first bidirectional UDP exchange
+    conntrackUdpStreamTimeout: 3600  # seconds after first bidirectional UDP exchange
     enableBBR: true           # load tcp_bbr2 / tcp_bbr kernel module
     txQueueLen: 10000         # ogstun txqueuelen (default 500 is too small for bursts)
     disableLRO: true          # ethtool lro off on N3 NIC (LRO corrupts GTP inner checksums)
@@ -870,7 +870,7 @@ cnAgent:
     logLevel: debug
     qosEnabled: true
     deployment: kubernetes    # docker-compose | kubernetes
-    n3InterfaceName: eno8303 #later make it bond0
+    n3InterfaceName: eno8303  # later make it bond0
 
     # Platform-agnostic health check settings
     healthCheck:
