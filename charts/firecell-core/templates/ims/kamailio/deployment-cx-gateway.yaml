@@ -1,4 +1,4 @@
-{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "asterisk") "kamailio") .Values.ims.cxGateway.enabled }}
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.cxGateway.enabled }}
 {{- $imsDomain := include "firecell-5gc.imsDomain" . }}
 apiVersion: apps/v1
 kind: Deployment

@@ -1,0 +1,25 @@
+# Opt-in Asterisk IMS (disables Kamailio CSCF + Cx).
+#
+# Layer last when you want Asterisk instead of the Kamailio default:
+#   helm upgrade --install firecell-core ./charts/firecell-core \
+#     -n firecell-core -f <site-values.yaml> -f examples/values-ims-asterisk.yaml
+
+ims:
+  engine: asterisk
+  enabled: true
+  image: asterisk-ims
+  imageOverride: ""
+  imageTag: latest
+  priorityClassName: firecell-prio-support
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 500m
+  # Cx / Kamailio CSCFs off
+  cxGateway:
+    enabled: false
+  sidecar:
+    enabled: false

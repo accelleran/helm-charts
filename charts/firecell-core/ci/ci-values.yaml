@@ -22,8 +22,8 @@ networkPolicies:
 hooks:
   enabled: true
 
-# Keep default Asterisk IMS in CI; Kamailio path is exercised via
-# examples/values-ims-kamailio.yaml in docs / manual template checks.
+# Default IMS is Kamailio; set a reachable mysqlHost for hostNetwork wait init.
 ims:
   enabled: true
-  engine: asterisk
+  engine: kamailio
+  mysqlHost: "127.0.0.1"

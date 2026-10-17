@@ -1,4 +1,4 @@
-{{- if and .Values.ims.enabled (ne (.Values.ims.engine | default "asterisk") "kamailio") }}
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "asterisk") }}
 apiVersion: v1
 kind: Service
 metadata:
