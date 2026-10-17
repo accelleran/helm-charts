@@ -1,4 +1,4 @@
-{{- if .Values.ims.enabled }}
+{{- if and .Values.ims.enabled (ne (.Values.ims.engine | default "asterisk") "kamailio") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
