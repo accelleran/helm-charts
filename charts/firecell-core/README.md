@@ -25,7 +25,7 @@ The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network sta
   - **CN-Agent** (`cn-agent`): Core network local agent for metric collection and status reporting.
   - **FC-ACS-Agent** (`fc-acs-agent`): Auto-Configuration Server agent for TR-069 management.
   - **UDSF** (`udsf`): Unstructured Data Storage Function with Redis backend.
-  - **IMS**: Asterisk by default (`ims.engine=asterisk`), or Kamailio P/I/S-CSCF + Cx gateway (`ims.engine=kamailio`, Cx-on-UDR via `ims.cxGateway.cxSot=udr`). Opt-in overlay: `examples/values-ims-kamailio.yaml`.
+  - **IMS**: Kamailio P/I/S-CSCF + Cx-on-UDR by default (`ims.engine=kamailio`, `ims.cxGateway.cxSot=udr`). Asterisk-only opt-in: `examples/values-ims-asterisk.yaml`.
 
 ## 2. Standalone Atomic Lifecycle
 The chart incorporates built-in Kubernetes job hooks to guarantee atomic lifecycle management (installation, upgrade, rollback, uninstallation):
@@ -78,19 +78,20 @@ helm upgrade firecell-core ./charts/firecell-core \
   --timeout 15m
 ```
 
-### 3.4 Opt-in Kamailio IMS + Cx-on-UDR
-Default IMS is Asterisk. For Kamailio CSCFs and Diameter Cx backed by UDR (`oai_db`):
+### 3.4 IMS (Kamailio default) / Asterisk option
+Default IMS is **Kamailio** P/I/S-CSCF + Cx (`CX_SOT=udr`). MySQL init applies `sql/ims_subscribers.sql` and `sql/cx_scscf_binding.sql`.
 
-1. Ensure hostNetwork IPs for P/I/S-CSCF and Cx exist on the node (lab defaults `.205–.208`).
+1. Ensure hostNetwork IPs `.205–.208` exist on the node.
 2. Build/import `kamailio-ims` and `ims-cx-gateway` images.
-3. Layer the example overlay **last**:
+3. Set `ims.mysqlHost` to a node/external MySQL IP (hostNetwork cannot use ClusterIP).
+
+**Asterisk-only** — layer last:
 ```bash
 helm upgrade --install firecell-core ./charts/firecell-core \
   --namespace firecell-core \
-  -f examples/values-ims-kamailio.yaml \
+  -f examples/values-ims-asterisk.yaml \
   --atomic --timeout 15m
 ```
-MySQL init applies `sql/ims_subscribers.sql` and `sql/cx_scscf_binding.sql`. Subscriber SoT is UDR (`ims.cxGateway.cxSot=udr`).
 
 ### 3.5 Uninstallation
 ```bash
