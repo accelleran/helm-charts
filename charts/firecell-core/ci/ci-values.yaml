@@ -21,3 +21,9 @@ networkPolicies:
 
 hooks:
   enabled: true
+
+# Keep default Asterisk IMS in CI; Kamailio path is exercised via
+# examples/values-ims-kamailio.yaml in docs / manual template checks.
+ims:
+  enabled: true
+  engine: asterisk

@@ -13,6 +13,11 @@ data:
 {{ .Files.Get "sql/oai_db.sql" | indent 4 }}
   02-oai-db-ims-supplement.sql: |
 {{ .Files.Get "sql/oai_db-ims-supplement.sql" | indent 4 }}
+  # Kamailio/Cx-on-UDR: ImsSubscriptionData seed + CxScscfBinding DDL (additive).
+  02b-ims-subscribers.sql: |
+{{ .Files.Get "sql/ims_subscribers.sql" | indent 4 }}
+  02c-cx-scscf-binding.sql: |
+{{ .Files.Get "sql/cx_scscf_binding.sql" | indent 4 }}
 {{- range $path, $_ := .Files.Glob "sql/pcf-provisioning/*.sql" }}
   03-pcf-{{ base $path }}: |
     USE oai_db;
