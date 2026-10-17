@@ -756,30 +756,31 @@ upf:
   #     pfcpHost: "10.x.x.y"
   #     sessions: "12.1.1.0/24"           # comma-separated UE subnets for this instance
 
-# --- IMS (Asterisk) ---
+# --- IMS (Kamailio + Cx-on-UDR default; Asterisk via examples/values-ims-asterisk.yaml) ---
 ims:
   enabled: true
-  # asterisk (default) | kamailio — see examples/values-ims-kamailio.yaml
-  engine: asterisk
-  image: asterisk-ims
+  # kamailio (default) | asterisk — Asterisk-only: examples/values-ims-asterisk.yaml
+  engine: kamailio
+  image: kamailio-ims
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
-  # Kamailio: set image/imageOverride to kamailio-ims (CSCF image).
   imageOverride: ""
   imageTag: latest
   priorityClassName: firecell-prio-support
   registrationExpires: "3600"
-  # HostNetwork CSCF/Cx cannot reach ClusterIP mysql — set node/external IP
-  # when engine=kamailio (examples/values-ims-kamailio.yaml).
+  # Empty → templates default to mysql.<namespace>.svc.cluster.local (works for
+  # hostNetwork CSCF/Cx when cluster DNS + ClusterIP reachability exist). Override
+  # only if MySQL is external / on a host IP.
   mysqlHost: ""
   resources:
     requests:
-      memory: 128Mi
-      cpu: 100m
+      memory: 512Mi
+      cpu: 250m
     limits:
-      memory: 256Mi
-      cpu: 500m
+      memory: 2Gi
+      cpu: 2000m
+  # Asterisk-only (ignored when engine=kamailio)
   sipConf: |
     [general]
     language=en
@@ -793,14 +794,13 @@ ims:
   # Filling this in would reintroduce a second writer.
   usersConf: ""
   sidecar:
-    # OFF by default until the image is published to imageRegistry. The
-    # composed default below resolves to
+    # Asterisk engine only. OFF by default until the image is published to
+    # imageRegistry. The composed default resolves to
     # ghcr.io/accelleran/.../nms-ims-sidecar:latest, which does not exist: the
     # image is built locally and imported into the node. A default-on sidecar
     # whose image cannot be pulled leaves the whole pod NotReady, and the
     # Service then drops the endpoint - turning a working Asterisk into an
-    # unreachable one. Enable it explicitly, with imageOverride (Asterisk
-    # engine only):
+    # unreachable one. Enable it explicitly, with imageOverride:
     #   --set ims.sidecar.enabled=true \
     #   --set ims.sidecar.imageOverride=nms-ims-sidecar:<tag>
     enabled: false
@@ -814,30 +814,30 @@ ims:
       limits:
         memory: 128Mi
         cpu: 200m
-  # Kamailio CSCFs (used when engine=kamailio). HostNetwork IPs must exist on the node.
-  ueImsSubnet: ""
+  # Kamailio CSCFs — hostNetwork IPs must exist on the node before Ready.
+  ueImsSubnet: "14.1.1.0/25"
   upfN6Gateway: ""
   rtpengine:
     enabled: false
     ip: "127.0.0.1"
   pcscf:
-    ip: ""
+    ip: "192.168.31.205"
     hostNetwork: true
     privileged: true
     bindPort: 5060
     ipsecClientPort: 5100
     ipsecServerPort: 6100
   icscf:
-    ip: ""
+    ip: "192.168.31.206"
     hostNetwork: true
     bindPort: 4060
   scscf:
-    ip: ""
+    ip: "192.168.31.207"
     hostNetwork: true
     bindPort: 6060
   cxGateway:
-    enabled: false
-    ip: ""
+    enabled: true
+    ip: "192.168.31.208"
     hostNetwork: true
     port: 3868
     image: ims-cx-gateway

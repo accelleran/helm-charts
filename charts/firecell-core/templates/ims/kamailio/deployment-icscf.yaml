@@ -1,4 +1,4 @@
-{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "asterisk") "kamailio") }}
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") }}
 {{- $icscfIp := .Values.ims.icscf.ip }}
 {{- $scscfIp := .Values.ims.scscf.ip }}
 apiVersion: apps/v1
