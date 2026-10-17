@@ -1,0 +1,14 @@
+{{- if .Values.fcAcsAgent.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fc-acs-agent-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: fc-acs-agent
+    tier: core-network
+data:
+  acs_config.yaml: |
+{{ tpl .Values.fcAcsAgent.config . | nindent 4 }}
+{{- end }}

@@ -1,0 +1,26 @@
+{{- if .Values.extDn.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-ext-dn
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-ext-dn
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    {{- if and .Values.extDn.sidecar .Values.extDn.sidecar.enabled }}
+    - name: probe-http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    {{- end }}
+  selector:
+    app: oai-ext-dn
+{{- end }}

@@ -1,0 +1,108 @@
+{{- if .Values.extDn.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oai-ext-dn
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-ext-dn
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oai-ext-dn
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: oai-ext-dn
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      priorityClassName: {{ .Values.extDn.priorityClassName }}
+      containers:
+        - name: ext-dn
+          image: {{ .Values.extDn.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.extDn.image .Values.extDn.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - exec sleep infinity
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          # sleep-infinity debug endpoint: performs no privileged operation itself,
+          # so no privileged flag. NET_ADMIN/SYS_ADMIN stay for exec-based
+          # datapath debugging (ip route/iptables/nft from kubectl exec).
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_ADMIN
+              drop:
+                - ALL
+          resources:
+            {{- toYaml .Values.extDn.resources | nindent 12 }}
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "true"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command: ["true"]
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 5
+            timeoutSeconds: 3
+        {{- if and .Values.extDn.sidecar .Values.extDn.sidecar.enabled }}
+        # Shares the pod network namespace with ext-dn. NET_ADMIN stays here so
+        # the NMS backend does not need pods/exec to ping a UE.
+        - name: extdn-probe
+          image: {{ .Values.extDn.sidecar.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.extDn.sidecar.image .Values.extDn.sidecar.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: EXTDN_PING_BIN
+              value: /usr/bin/ping
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+              drop:
+                - ALL
+          resources:
+            {{- toYaml .Values.extDn.sidecar.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+        {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

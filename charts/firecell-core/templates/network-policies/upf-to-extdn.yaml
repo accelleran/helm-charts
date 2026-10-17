@@ -1,0 +1,21 @@
+{{- if .Values.networkPolicies.enabled }}
+# Allow UPF → ext-dn (GTP-U data plane and ICMP for testing)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: upf-to-extdn
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: oai-ext-dn
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ if eq .Values.upf.type "oai" }}oai-upf{{ else }}o5gs-upf{{ end }}
+{{- end }}

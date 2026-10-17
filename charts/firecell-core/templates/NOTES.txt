@@ -1,0 +1,25 @@
+################################################################################
+
+Firecell Core {{ .Chart.Version }} (app {{ .Chart.AppVersion }})
+
+Release {{ .Release.Name }} in namespace {{ .Values.global.namespace }}.
+
+Standalone 3GPP 5G Core Network with built-in atomic lifecycle:
+  - Pre-flight validation hook: validates host interfaces, kernel SCTP, storage, and cluster resources.
+  - Post-flight verification hook: validates MySQL schema, NF readiness, SCTP NGAP (38412), GTP-U (2152), and datapath.
+  - Automatic rollback on install or upgrade failure (--atomic).
+
+{{- if .Values.namespace.create }}
+
+The chart creates Namespace {{ .Values.global.namespace }}. Set
+namespace.create=false when something else already owns it.
+{{- else }}
+
+The chart does not create the namespace. Create it first, or pass
+--create-namespace.
+{{- end }}
+
+Ensure Secret gitlab-regcred (or your configured imagePullSecrets) is pre-created
+in namespace {{ .Values.global.namespace }} before installation.
+
+################################################################################

@@ -1,0 +1,52 @@
+{{- if .Values.cnAgent.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firecell-agent-config
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: firecell-agent
+    tier: core-network
+data:
+  cn_agent_ebpf_qos_config.yaml: |
+    log_level: {{ .Values.cnAgent.config.logLevel | quote }}
+    qosEnabled: {{ .Values.cnAgent.config.qosEnabled }}
+    deployment: {{ .Values.cnAgent.config.deployment }}
+    n3_interface_name: {{ .Values.cnAgent.config.n3InterfaceName | quote }}
+
+    health_check:
+      sbi_check: {{ .Values.cnAgent.config.healthCheck.sbiCheck }}
+      sbi_probe_timeout_s: {{ .Values.cnAgent.config.healthCheck.sbiProbeTimeoutS }}
+
+    packet_capture:
+      connect_timeout_s: {{ .Values.cnAgent.config.packetCapture.connectTimeoutS }}
+      read_timeout_s: {{ .Values.cnAgent.config.packetCapture.readTimeoutS }}
+      retry_count: {{ .Values.cnAgent.config.packetCapture.retryCount }}
+      retry_backoff_s: {{ .Values.cnAgent.config.packetCapture.retryBackoffS }}
+      k8s_service_name: {{ .Values.cnAgent.config.packetCapture.k8sServiceName | quote }}
+      service_port: {{ .Values.cnAgent.config.packetCapture.servicePort }}
+
+    {{- if eq .Values.cnAgent.config.deployment "kubernetes" }}
+    kubernetes_config:
+      namespace: {{ .Values.cnAgent.config.kubernetes.namespace | default .Values.global.namespace | quote }}
+      core_nf_label_selector: {{ .Values.cnAgent.config.kubernetes.coreNfLabelSelector | quote }}
+      pod_selection: {{ .Values.cnAgent.config.kubernetes.podSelection }}
+      exec_container: {{ .Values.cnAgent.config.kubernetes.execContainer }}
+      {{- if .Values.cnAgent.config.kubernetes.minHealthy }}
+      min_healthy: {{ .Values.cnAgent.config.kubernetes.minHealthy }}
+      {{- end }}
+      {{- if .Values.cnAgent.config.kubernetes.kubeconfigPath }}
+      kubeconfig_path: {{ .Values.cnAgent.config.kubernetes.kubeconfigPath | quote }}
+      {{- end }}
+      {{- if .Values.cnAgent.config.kubernetes.components }}
+      components:
+        {{- toYaml .Values.cnAgent.config.kubernetes.components | nindent 8 }}
+      {{- else }}
+      components: {}
+      {{- end }}
+    {{- end }}
+
+  a.key: |
+    {{- .Values.udm.suciKey | nindent 4 }}
+{{- end }}

@@ -1,0 +1,32 @@
+{{- if .Values.nrf.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-nrf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-nrf
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    - name: sbi
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    {{- if .Values.nrf.fcaps.enabled }}
+    # The NMS reaches the MnS producer here. ClusterIP rather than a
+    # LoadBalancer because the NMS runs in the cluster.
+    - name: mns
+      port: {{ .Values.nrf.fcaps.mnsPort }}
+      targetPort: {{ .Values.nrf.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
+  selector:
+    app: oai-nrf
+{{- end }}

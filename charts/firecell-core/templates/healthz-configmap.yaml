@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: healthz-scripts
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+data:
+  check.sh: |
+    #!/bin/sh
+    # Health/readiness check called by the healthz sidecar.
+    #
+    # Available env vars (set by the healthz sidecar):
+    #   NF_NAME     - e.g. "nrf", "udr", "udm", "ausf", "pcf", "amf", "smf", "upf"
+    #   HEALTH_PATH - NF-specific SBI path, e.g. /nnrf-nfm/v1/nf-instances
+    #
+    # Return 0 -> sidecar replies HTTP 200 (healthy)
+    # Return non-0 -> sidecar replies HTTP 503 (not ready)
+    set -e
+
+    PROC_NET_TCP="${PROC_NET_TCP:-/proc/net/tcp}"
+    PROC_NET_TCP6="${PROC_NET_TCP6:-/proc/net/tcp6}"
+    PROC_NET_UDP="${PROC_NET_UDP:-/proc/net/udp}"
+    PROC_NET_UDP6="${PROC_NET_UDP6:-/proc/net/udp6}"
+    PROC_NET_SCTP_EPS="${PROC_NET_SCTP_EPS:-/proc/net/sctp/eps}"
+
+    if [ "${NF_NAME}" = "upf" ]; then
+      # UPF readiness: PFCP UDP port 8805 (0x2265) must be bound
+      UDP_FILES=""
+      for f in "${PROC_NET_UDP}" "${PROC_NET_UDP6}"; do
+        [ -r "${f}" ] && UDP_FILES="${UDP_FILES} ${f}"
+      done
+      [ -n "${UDP_FILES}" ] || exit 1
+      # shellcheck disable=SC2086
+      grep -qiE ':2265 ' ${UDP_FILES} 2>/dev/null || exit 1
+      exit 0
+    fi
+
+    # 1. Verify SBI TCP port 8080 (0x1F90) or 80 (0x0050) is in LISTEN state (0A)
+    TCP_FILES=""
+    for f in "${PROC_NET_TCP}" "${PROC_NET_TCP6}"; do
+      [ -r "${f}" ] && TCP_FILES="${TCP_FILES} ${f}"
+    done
+    [ -n "${TCP_FILES}" ] || exit 1
+    # shellcheck disable=SC2086
+    if ! awk 'toupper($2) ~ /:(1F90|0050)$/ && $4 == "0A" { found=1 } END { exit(found ? 0 : 1) }' ${TCP_FILES} 2>/dev/null; then
+      exit 1
+    fi
+
+    # 2. For AMF, require NGAP SCTP port 38412 (0x960C) to be bound in /proc/net/sctp/eps
+    if [ "${NF_NAME}" = "amf" ]; then
+      if [ ! -r "${PROC_NET_SCTP_EPS}" ] || ! awk 'NR > 1 && ($6 == "38412" || $5 == "38412" || $6 ~ /^(0x)?960[cC]$/ || $5 ~ /^(0x)?960[cC]$/) { found=1 } END { exit(found ? 0 : 1) }' "${PROC_NET_SCTP_EPS}" 2>/dev/null; then
+        exit 1
+      fi
+    fi
+
+    # 3. Active TCP/HTTP probe against the bound SBI port (8080 or 80)
+    CANDIDATE_IPS="127.0.0.1 $(ip -4 -o addr show scope global 2>/dev/null | awk '{split($4,a,"/"); print a[1]}')"
+    REACHABLE_IP=""
+    REACHABLE_PORT=""
+    for ip in ${CANDIDATE_IPS}; do
+      for port in 8080 80; do
+        if nc -z -w 2 "${ip}" "${port}" 2>/dev/null; then
+          REACHABLE_IP="${ip}"
+          REACHABLE_PORT="${port}"
+          break 2
+        fi
+      done
+    done
+
+    if [ -z "${REACHABLE_IP}" ]; then
+      exit 1
+    fi
+
+    # 4. Verify HTTP SBI endpoint responds (2xx/3xx/4xx) if HEALTH_PATH is configured
+    Path="${HEALTH_PATH}"
+    if [ "${NF_NAME}" = "nrf" ] && [ -z "${Path}" ]; then
+      Path="/nnrf-nfm/v1/nf-instances"
+    fi
+    if [ -n "${Path}" ]; then
+      if command -v wget >/dev/null 2>&1; then
+        if ! wget -S -T 2 -O /dev/null "http://${REACHABLE_IP}:${REACHABLE_PORT}${Path}" 2>&1 | grep -qE "HTTP/[0-9.]+ [234][0-9][0-9]"; then
+          exit 1
+        fi
+      elif command -v curl >/dev/null 2>&1; then
+        _status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 "http://${REACHABLE_IP}:${REACHABLE_PORT}${Path}" 2>/dev/null || echo "000")
+        case "${_status}" in
+          2*|3*|4*) ;;
+          *) exit 1 ;;
+        esac
+      fi
+    fi
+
+    exit 0

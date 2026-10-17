@@ -1,0 +1,54 @@
+{{- if .Values.networkPolicies.enabled }}
+# Deny all ingress to the core namespace except from within it
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cp-isolation
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow traffic from within the firecell-core namespace (including Helm verification hooks)
+    - from:
+        - podSelector: {}
+    {{- $allowNms := or .Values.cnAgent.enabled .Values.fcAcsAgent.enabled }}
+    {{- if hasKey (.Values.networkPolicies | default dict) "allowNmsNamespace" }}
+    {{- $allowNms = .Values.networkPolicies.allowNmsNamespace }}
+    {{- end }}
+    {{- if $allowNms }}
+    # Allow traffic from firecell-nms namespace (CN agent / NMS -> core)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ (.Values.networkPolicies).nmsNamespace | default "firecell-nms" }}
+    {{- end }}
+    {{- range (.Values.networkPolicies).allowedNamespaces }}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+    {{- end }}
+    {{- if .Values.networkPolicies.allowedExternalCIDRs }}
+    # Allow external traffic from configured external CIDRs
+    - from:
+        {{- range .Values.networkPolicies.allowedExternalCIDRs }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+    {{- end }}
+    # Allow gNB NGAP (SCTP 38412) and TR-069 ACS (TCP 7547) ingress
+    {{- if .Values.amf.enabled }}
+    - ports:
+        - protocol: SCTP
+          port: 38412
+    {{- end }}
+    {{- if .Values.fcAcsAgent.enabled }}
+    - ports:
+        - protocol: TCP
+          port: 7547
+    {{- end }}
+{{- end }}
