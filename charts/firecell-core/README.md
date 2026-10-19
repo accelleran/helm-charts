@@ -44,6 +44,8 @@ The chart incorporates built-in Kubernetes job hooks to guarantee atomic lifecyc
 
 ## 3. Quick Start & Installation
 
+MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when `network.metallb.enabled` is true (for AMF/ACS LoadBalancer VIPs toward an off-cluster gNB). Set `network.metallb.enabled: false` (and typically `network.amfServiceType: ClusterIP` or hostNetwork UPF paths) when the cluster has no MetalLB.
+
 ### 3.1 Prerequisites
 1. Ensure the `sctp` kernel module is loaded on Kubernetes nodes:
    ```bash
@@ -62,7 +64,7 @@ The chart incorporates built-in Kubernetes job hooks to guarantee atomic lifecyc
 ### 3.2 Atomic Installation
 Deploy the chart with `--atomic` and an appropriate timeout:
 ```bash
-helm install firecell-core ./charts/firecell-core \
+helm install --repo https://accelleran.github.io/helm-charts firecell-core firecell-core \
   --namespace firecell-core \
   --atomic \
   --timeout 15m
@@ -71,7 +73,7 @@ helm install firecell-core ./charts/firecell-core \
 ### 3.3 Atomic Upgrade
 Upgrades will automatically roll back to the previous release if post-flight verification detects any regression:
 ```bash
-helm upgrade firecell-core ./charts/firecell-core \
+helm upgrade --repo https://accelleran.github.io/helm-charts firecell-core firecell-core \
   --namespace firecell-core \
   --atomic \
   --timeout 15m
