@@ -585,8 +585,13 @@ upf:
   privileged: true
   # Multus secondary NICs when hostNetwork=false: eth0 (pod/CNI) stays SBI+N4;
   # Multus attaches net1 (N3) then net2 (N6). Requires Multus CNI + macvlan/ipvlan.
+  # XDP_REDIRECT between Multus macvlan net1/net2 in the pod netns drops UL —
+  # multus.enableBpfDatapath defaults false (simpleswitch). Same-host gNB on a
+  # host macvlan needs a /32 to UPF N3 via that macvlan (parent cannot reach children).
   multus:
     enabled: false
+    # Opt-in XDP for Multus only (ignored when hostNetwork=true). Default false.
+    enableBpfDatapath: false
     n3:
       nadName: upf-n3-net
       cniType: macvlan
@@ -628,7 +633,7 @@ upf:
   injectCiliumPodRoute: true
   # OAI: optional N9; defaults to n3Interface in generated YAML
   n9Interface: ""
-  # OAI UPF: yes = native XDP / eBPF datapath; no = simpleswitch (userspace) datapath.
+  # OAI UPF hostNetwork: yes = XDP/eBPF; no = simpleswitch. Multus uses multus.enableBpfDatapath.
   enableBpfDatapath: true
   # Hostnet config.yaml schema: mr97 (develop @ 486acc3+) or legacy (cn5g-upf v5.1.0.x).
   configSchema: mr97
