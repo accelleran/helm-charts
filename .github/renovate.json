@@ -4,12 +4,16 @@
     "local>accelleran/renovate-config",
     ":semanticCommitTypeAll(fix)"
   ],
-  "reviewers": ["team:dRAX"],
+  "reviewers": [
+    "team:dRAX"
+  ],
   "customManagers": [
     {
       "customType": "regex",
       "datasourceTemplate": "docker",
-      "fileMatch": ["(^|/)Chart\\.yaml$"],
+      "fileMatch": [
+        "(^|/)Chart\\.yaml$"
+      ],
       "matchStrings": [
         "#\\s?renovate: image=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s?appVersion:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
@@ -18,7 +22,20 @@
     {
       "customType": "regex",
       "datasourceTemplate": "docker",
-      "fileMatch": ["(^|/)values\\.y[a]?ml$"],
+      "fileMatch": [
+        "(^|/)External\\.yaml$"
+      ],
+      "matchStrings": [
+        "name:\\s+\"?(?<chartName>.*?)\"?\\s+(.*\\s)?repository:\\s+\"?oci://(?<registryRef>.*?)\"?\\s+(.*\\s)?version:\\s+\"?(?<currentValue>[\\w\\.\\-]*)\"?"
+      ],
+      "packageNameTemplate": "{{registryRef}}/{{chartName}}"
+    },
+    {
+      "customType": "regex",
+      "datasourceTemplate": "docker",
+      "fileMatch": [
+        "(^|/)values\\.y[a]?ml$"
+      ],
       "matchStrings": [
         "#\\s?renovate:( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s+image:\\s?\"?(?<depName>[^:]*?):(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
@@ -27,7 +44,9 @@
     {
       "customType": "regex",
       "datasourceTemplate": "helm",
-      "fileMatch": ["(^|/)values\\.y[a]?ml$"],
+      "fileMatch": [
+        "(^|/)values\\.y[a]?ml$"
+      ],
       "matchStrings": [
         "#\\s?renovate: repository=(?<registryUrl>.*?) chart=(?<depName>.*?)\\s?[\\w\\-]*[vV]ersion:\\s?\"?(?<currentValue>[\\w\\.\\-]*)\"?"
       ]
@@ -35,7 +54,9 @@
     {
       "customType": "regex",
       "datasourceTemplate": "github-releases",
-      "fileMatch": ["(^|/)helm-charts\\.y[a]?ml$"],
+      "fileMatch": [
+        "(^|/)helm-charts\\.y[a]?ml$"
+      ],
       "matchStrings": [
         "#\\s?renovate: github_repository=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s*[\\w\\-]*_version:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
@@ -44,7 +65,9 @@
     {
       "customType": "regex",
       "datasourceTemplate": "github-releases",
-      "fileMatch": ["(^|/).+\\.sh$"],
+      "fileMatch": [
+        "(^|/).+\\.sh$"
+      ],
       "matchStrings": [
         "#\\s?renovate: github_repository=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s*(export\\s+)?[\\w\\-]*_[vV][eE][rR][sS][iI][oO][nN]=\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
       ],
@@ -53,9 +76,20 @@
   ],
   "packageRules": [
     {
+      "description": "Automerge external chart updates",
+      "automerge": true,
+      "matchFileNames": [
+        "/External\\.yaml/"
+      ]
+    },
+    {
       "description": "Use loose versioning for acc-generic-img to allow k8s suffix changes",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["accelleran/acc-generic-img"],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "accelleran/acc-generic-img"
+      ],
       "versioning": "loose"
     }
   ]
