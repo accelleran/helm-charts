@@ -28,6 +28,10 @@ namespace:
   keepOnUninstall: true
 
 # --- Network / MetalLB ---
+# MetalLB is optional. templates/metallb-pool.yaml is rendered only when
+# metallb.enabled is true (AMF/ACS LoadBalancer VIPs for an off-cluster gNB).
+# Set metallb.enabled: false when the cluster has no MetalLB.
+#
 # CP/UP separation model:
 #   cp.interface (e.g. eth0 / bond0) — control plane NIC: AMF NGAP, SBI
 #   up.interface (e.g. eth1 / bond1) — user plane NIC:  UPF GTP-U (N3)
@@ -446,7 +450,7 @@ smf:
       cpu: 4000m
   # Multus secondary NIC for PFCP N4 — gives SMF a stable IP on the CP network
   # so UPFs (in-cluster and external) always see a consistent PFCP peer identity.
-  # Requires Multus CNI (see bootstrap/ubuntu/install-multus.sh).
+  # Requires Multus CNI on the cluster (disabled by default).
   multus:
     enabled: false
     cniType: ipvlan        # ipvlan (recommended for single-NIC) or macvlan
