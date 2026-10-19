@@ -55,8 +55,8 @@ MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when
 2. Pre-create the container registry secret in the target namespace (e.g. `firecell-core`):
    ```bash
    kubectl create namespace firecell-core
-   kubectl create secret docker-registry gitlab-regcred \
-     --docker-server=registry.gitlab.com \
+   kubectl create secret docker-registry ghcr-regcred \
+     --docker-server=ghcr.io \
      --docker-username=<USERNAME> \
      --docker-password=<TOKEN> \
      --namespace firecell-core
