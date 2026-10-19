@@ -36225,17 +36225,6 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/du-metrics-server-0.1.0/du-metrics-server-0.1.0.tgz
     version: 0.1.0
-  firecell-5gc:
-  - apiVersion: v2
-    appVersion: 1.0.0
-    created: "2026-09-23T15:01:13.798807+02:00"
-    description: Firecell 5G Core Network - Simplified (non-HA) deployment for MicroK8s
-    digest: a7b197fac3fbd9a65accec21253c159eabfc8613c6b2a2ab7f934dd123685402
-    name: firecell-5gc
-    type: application
-    urls:
-    - https://github.com/accelleran/helm-charts/releases/download/firecell-5gc-0.1.0/firecell-5gc-0.1.0.tgz
-    version: 0.1.0
   firecell-nms:
   - apiVersion: v2
     appVersion: 5.0.1
