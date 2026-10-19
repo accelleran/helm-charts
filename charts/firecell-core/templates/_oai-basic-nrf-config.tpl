@@ -110,7 +110,7 @@ nfs:
       interface_name: {{ if $hostNet }}{{ coalesce $v.upf.hostPfcpMacvlan $v.upf.n4Interface "eth0" }}{{ else }}{{ $v.upf.hostPfcpMacvlan | default "eth0" }}{{ end }}
       port: 8805
     n6:
-      interface_name: {{ coalesce $v.upf.n6Interface $v.upf.sbiInterface "eno8303" }}
+      interface_name: {{ coalesce $v.upf.n6Interface $v.upf.n3Interface "eth0" }}
     n9:
       interface_name: {{ coalesce $v.upf.n9Interface $v.upf.n3Interface "eth0" }}
       port: 2152
@@ -322,8 +322,10 @@ pcf:
 
 upf:
   {{- if eq $v.upf.type "oai" }}
+  {{- $bpfRaw := $v.upf.enableBpfDatapath | default true }}
   support_features:
-    enable_bpf_datapath: yes
+    enable_bpf_datapath: {{ if kindIs "bool" $bpfRaw }}{{ if $bpfRaw }}yes{{ else }}no{{ end }}{{ else if or (eq ($bpfRaw | toString | lower) "false") (eq ($bpfRaw | toString | lower) "no") (eq ($bpfRaw | toString) "0") }}no{{ else }}yes{{ end }}
+    enable_qos: yes
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
   {{- end }}
@@ -340,7 +342,7 @@ upf:
           - dnn: {{ .dnn | quote }}
         {{- end }}
     {{- end }}
-  remote_n6_gw: "127.0.0.1"
+  remote_n6_gw: {{ $v.upf.remoteN6Gw | default "127.0.0.1" | quote }}
   upf_slice_list:
   {{- range $v.coreConfig.nssai }}
     - nssai:
