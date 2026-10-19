@@ -55,6 +55,9 @@
 {{- $pfcpMac := coalesce $inst.hostPfcpMacvlan $.Values.upf.hostPfcpMacvlan "" }}
 {{- $pfcpIP := coalesce $inst.hostPfcpIP $.Values.upf.hostPfcpIP "" }}
 {{- $n4parent := coalesce $inst.n4Interface $.Values.upf.n4Interface "eno1" }}
+{{- $upfMultus := and (not $.Values.upf.hostNetwork) ($.Values.upf.multus.enabled | default false) }}
+{{- $upfMultusN3 := $.Values.upf.multus.n3 | default dict }}
+{{- $upfMultusN6 := $.Values.upf.multus.n6 | default dict }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -102,6 +105,10 @@ spec:
         {{- if $.Values.upf.hostNetwork }}
         checksum/oai-upf-hostnet: {{ include (print $.Template.BasePath "/upf/configmap-oai-hostnet.yaml") $ | sha256sum }}
         {{- end }}
+        {{- if $upfMultus }}
+        # eth0 = pod CNI (SBI/N4). Multus order → net1=N3, net2=N6.
+        k8s.v1.cni.cncf.io/networks: '[{"name":"{{ $upfMultusN3.nadName | default "upf-n3-net" }}","namespace":"{{ $.Values.global.namespace }}","interface":"net1"},{"name":"{{ $upfMultusN6.nadName | default "upf-n6-net" }}","namespace":"{{ $.Values.global.namespace }}","interface":"net2"}]'
+        {{- end }}
     spec:
       priorityClassName: firecell-prio-high
       terminationGracePeriodSeconds: 30
@@ -135,7 +142,8 @@ spec:
       {{- end }}
       initContainers:
         {{- include "firecell-5gc.waitForNrf" $ | nindent 8 }}
-        {{- if $n3ip }}
+        {{- /* Multus static IPAM owns net1/net2 addresses — skip host-style n3-ip-init */}}
+        {{- if and $n3ip (not $upfMultus) }}
         {{- $n6gwInit := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
         {{- $autoN3Macvlan := coalesce $inst.autoCreateN3Macvlan $.Values.upf.autoCreateN3Macvlan false }}
         - name: n3-ip-init

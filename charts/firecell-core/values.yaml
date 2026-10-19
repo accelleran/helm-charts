@@ -583,14 +583,33 @@ upf:
   serviceType: LoadBalancer
   hostNetwork: true
   privileged: true
+  # Multus secondary NICs when hostNetwork=false: eth0 (pod/CNI) stays SBI+N4;
+  # Multus attaches net1 (N3) then net2 (N6). Requires Multus CNI + macvlan/ipvlan.
+  multus:
+    enabled: false
+    n3:
+      nadName: upf-n3-net
+      cniType: macvlan
+      mode: bridge
+      masterInterface: ""       # site: physical parent bridged toward CU-UP N3
+      ip: ""                    # e.g. 10.3.0.101
+      subnetPrefix: 24
+    n6:
+      nadName: upf-n6-net
+      cniType: macvlan
+      mode: bridge
+      masterInterface: ""       # site: physical parent toward DN
+      ip: ""                    # e.g. 10.10.0.101
+      subnetPrefix: 24
   # CP/UP interface separation
   # n3IP: explicit GTP-U bind/advertise IP (set to network.upfExternalIP for MetalLB UP VIP)
   n3IP: "198.51.100.101"        # Must match network.upfExternalIP
-  n3Interface: "eth1"            # UP NIC — used when n3IP is empty
+  n3Interface: "eth1"            # UP NIC — used when n3IP is empty; Multus → net1
   n4Interface: "eth0"            # CP NIC — parent for pfcp-macvlan-init; PFCP toward SMF
   # OAI hostNetwork only: SBI/NRF HTTP bind (e.g. k3s cni0 — must reach ClusterIP/pod CIDR)
   sbiInterface: ""
   # OAI hostNetwork: N6 data-plane NIC (do not set to cni0; use physical uplink/DN)
+  # Multus non-hostNetwork: set to net2
   n6Interface: ""
   # OAI hostNetwork: optional N6 IP/CIDR on n6Interface (required for datapath-init in single-instance mode).
   n6Cidr: ""
