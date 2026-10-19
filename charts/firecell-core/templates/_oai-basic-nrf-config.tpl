@@ -322,10 +322,15 @@ pcf:
 
 upf:
   {{- if eq $v.upf.type "oai" }}
-  {{- $bpfRaw := $v.upf.enableBpfDatapath | default true }}
+  {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use
+       upf.multus.enableBpfDatapath (default false). hostNetwork uses upf.enableBpfDatapath. */}}
+  {{- $upfMultus := and (not ($v.upf.hostNetwork | default false)) (($v.upf.multus).enabled | default false) }}
+  {{- $bpfRaw := ternary (dig "enableBpfDatapath" false ($v.upf.multus | default dict)) ($v.upf.enableBpfDatapath | default true) $upfMultus }}
+  {{- $bpfOn := false }}
+  {{- if kindIs "bool" $bpfRaw }}{{ $bpfOn = $bpfRaw }}{{ else if or (eq ($bpfRaw | toString | lower) "false") (eq ($bpfRaw | toString | lower) "no") (eq ($bpfRaw | toString) "0") }}{{ $bpfOn = false }}{{ else }}{{ $bpfOn = true }}{{ end }}
   support_features:
-    enable_bpf_datapath: {{ if kindIs "bool" $bpfRaw }}{{ if $bpfRaw }}yes{{ else }}no{{ end }}{{ else if or (eq ($bpfRaw | toString | lower) "false") (eq ($bpfRaw | toString | lower) "no") (eq ($bpfRaw | toString) "0") }}no{{ else }}yes{{ end }}
-    enable_qos: yes
+    enable_bpf_datapath: {{ if $bpfOn }}yes{{ else }}no{{ end }}
+    enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
   {{- end }}
