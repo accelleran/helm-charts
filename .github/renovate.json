@@ -2,7 +2,8 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>accelleran/renovate-config",
-    ":semanticCommitTypeAll(fix)"
+    ":semanticCommitTypeAll(fix)",
+    ":automergeMinor"
   ],
   "reviewers": [
     "team:dRAX"
