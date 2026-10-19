@@ -19,7 +19,7 @@ The chart does not create the namespace. Create it first, or pass
 --create-namespace.
 {{- end }}
 
-Ensure Secret gitlab-regcred (or your configured imagePullSecrets) is pre-created
+Ensure Secret ghcr-regcred (or your configured imagePullSecrets) is pre-created
 in namespace {{ .Values.global.namespace }} before installation.
 
 ################################################################################

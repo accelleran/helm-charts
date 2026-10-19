@@ -54,8 +54,8 @@ MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when
 2. Pre-create the container registry secret in the target namespace (e.g. `firecell-core`):
    ```bash
    kubectl create namespace firecell-core
-   kubectl create secret docker-registry gitlab-regcred \
-     --docker-server=registry.gitlab.com \
+   kubectl create secret docker-registry ghcr-regcred \
+     --docker-server=ghcr.io \
      --docker-username=<USERNAME> \
      --docker-password=<TOKEN> \
      --namespace firecell-core
@@ -284,8 +284,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | fcAcsAgent.serviceType | string | `"LoadBalancer"` |  |
 | global.busyboxImage | string | `""` |  |
 | global.imagePullPolicy | string | `"IfNotPresent"` |  |
-| global.imagePullSecrets[0].name | string | `"gitlab-regcred"` |  |
-| global.imageRegistry | string | `"registry.gitlab.com/firecell/r-d/firecellrd"` |  |
+| global.imagePullSecrets[0].name | string | `"ghcr-regcred"` |  |
+| global.imageRegistry | string | `"ghcr.io/accelleran"` |  |
 | global.namespace | string | `"firecell-core"` |  |
 | global.pkgVersion | string | `"1.0.0"` |  |
 | global.timezone | string | `"Europe/Paris"` |  |

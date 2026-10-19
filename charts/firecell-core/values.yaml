@@ -5,14 +5,14 @@ global:
   # Namespace for all resources
   namespace: firecell-core
 
-  # GitLab registry — pre-create gitlab-regcred secret before helm install
-  imageRegistry: registry.gitlab.com/firecell/r-d/firecellrd
+  # GHCR — pre-create ghcr-regcred secret before helm install
+  imageRegistry: ghcr.io/accelleran
   # The busybox used by every initContainer in this chart. Composed from
   # imageRegistry when unset; name it in full to pull it from anywhere else.
   busyboxImage: ""
   imagePullPolicy: IfNotPresent
   imagePullSecrets:
-    - name: gitlab-regcred
+    - name: ghcr-regcred
 
   # Package version — used as the image tag suffix (images tagged as v<pkgVersion>)
   pkgVersion: "1.0.0"
@@ -99,7 +99,7 @@ udsf:
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
-  # e.g. imageOverride: registry.gitlab.com/firecell/r-d/firecellrd-core/firecell-udsf:v5.1.0.2
+  # e.g. imageOverride: ghcr.io/accelleran/firecell-udsf:v5.1.0.2
   imageOverride: ""
   serviceName: oai-udsf
   host: oai-udsf
@@ -788,7 +788,7 @@ ims:
   sidecar:
     # OFF by default until the image is published to imageRegistry. The
     # composed default below resolves to
-    # registry.gitlab.com/.../nms-ims-sidecar:latest, which does not exist: the
+    # ghcr.io/accelleran/.../nms-ims-sidecar:latest, which does not exist: the
     # image is built locally and imported into the node. A default-on sidecar
     # whose image cannot be pulled leaves the whole pod NotReady, and the
     # Service then drops the endpoint - turning a working Asterisk into an
@@ -827,7 +827,7 @@ extDn:
   sidecar:
     # OFF by default until the image is published to imageRegistry. The
     # composed default below resolves to
-    # registry.gitlab.com/.../nms-extdn-probe-sidecar:latest, which does not exist: the
+    # ghcr.io/accelleran/.../nms-extdn-probe-sidecar:latest, which does not exist: the
     # image is built locally and imported into the node. A default-on sidecar
     # whose image cannot be pulled leaves the whole pod NotReady, and the
     # Service then drops the endpoint - turning a working ext-dn into an
@@ -1127,7 +1127,7 @@ hooks:
 
 # --- Image Pull Secret ---
 # Pre-create before helm install:
-#   kubectl create secret docker-registry gitlab-regcred \
-#     --docker-server=registry.gitlab.com \
+#   kubectl create secret docker-registry ghcr-regcred \
+#     --docker-server=ghcr.io \
 #     --docker-username=<user> --docker-password=<token> \
 #     -n firecell-core
