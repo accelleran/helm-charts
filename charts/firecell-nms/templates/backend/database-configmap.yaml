@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nms-db-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-db
+data:
+  nms.cnf: |
+    [mysqld]
+    # A single server with no replicas or point-in-time recovery: the
+    # binary log would only fill nms-db-data (30 days by default).
+    skip-log-bin
