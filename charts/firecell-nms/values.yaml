@@ -174,7 +174,7 @@ networkPolicy:
   # /api/alarms/webhook, the platform monitor that pushes FCAPS.
   extraFrom: []
   # -- More NetworkPolicyPeers allowed to nms-front besides oauth2-proxy,
-  # e.g. a landing page.
+  # e.g. a landing page that probes /healthz.
   frontExtraFrom: []
 
 # --- Victoria Metrics ---
