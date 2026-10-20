@@ -1,0 +1,61 @@
+{{- $i := include "firecell-du.inst" . | fromJson }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $i.name }}-launcher
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    app: {{ $i.name }}
+    {{- include "firecell-du.labels" . | nindent 4 }}
+data:
+  du-launcher.sh: |
+    #!/bin/bash
+    # Inputs (env): POD_IP, DU_BINARY, DU_CPUS (taskset mask for the whole DU),
+    # DU_POOL_CPUS (where non-RU threads end up), MPLANE_SSH_PASSWORD (optional).
+    set -uo pipefail
+    # bash 5.2 expands "&" in ${var//pat/rep}; secrets may contain it.
+    shopt -u patsub_replacement 2>/dev/null || true
+
+    mkdir -p /tmp/logs
+    cfg=$(</config/du.yml)
+    cfg=${cfg//__POD_IP__/${POD_IP:?POD_IP is not set}}
+    if [[ $cfg == *__MPLANE_SSH_PASSWORD__* ]]; then
+      cfg=${cfg//__MPLANE_SSH_PASSWORD__/${MPLANE_SSH_PASSWORD:?M-plane password Secret is not mounted}}
+    fi
+    printf '%s\n' "$cfg" > /run/du.yml
+
+    stdbuf -oL -eL taskset -c "$DU_CPUS" "$DU_BINARY" -c /run/du.yml &
+    DU=$!
+    trap 'kill -TERM "$DU" 2>/dev/null' TERM INT
+
+    # Threads spawn with the full mask. OFH threads (ru_*) pin themselves to
+    # their cores; move everything else onto the pool so it never preempts the
+    # symbol-timing threads. Threads started late are caught by the 5 s re-run.
+    for _ in $(seq 1 100); do
+      kill -0 "$DU" 2>/dev/null || break
+      grep -qx ru_timing /proc/$DU/task/*/comm 2>/dev/null && break
+      sleep 0.1
+    done
+    pin_non_ru() {
+      for t in /proc/$DU/task/*; do
+        case "$(cat "$t/comm" 2>/dev/null)" in
+          ru_*) ;;
+          *) taskset -pc "$DU_POOL_CPUS" "${t##*/}" >/dev/null 2>&1 ;;
+        esac
+      done
+    }
+    pin_non_ru
+    for _ in 1 2 3 4 5; do
+      sleep 1
+      kill -0 "$DU" 2>/dev/null || break
+      pin_non_ru
+    done
+
+    # wait returns early when the TERM trap fires; keep waiting until the DU
+    # itself has exited so the container reports its real exit status.
+    while :; do
+      wait "$DU"
+      rc=$?
+      kill -0 "$DU" 2>/dev/null || break
+    done
+    exit "$rc"

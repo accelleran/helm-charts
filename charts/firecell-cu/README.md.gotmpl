@@ -1,0 +1,44 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.description" . }}
+
+## 1. Architectural Role
+Deploys the central unit of the Ocudu split gNB: O-CU-CP (`ocucp`) and O-CU-UP (`ocuup`).
+DUs are separate [`firecell-du`](../firecell-du) releases, one per DU, that attach to the
+CU-CP over F1 through the headless Service `cuCpService.name`.
+
+### 1.1 Components
+| Component | Objects | Notes |
+|-----------|---------|-------|
+| CU-CP | Deployment/ConfigMap `cu-cp`, headless Service `cu-cp` (SCTP F1-C 38472, E1 38462) | N2 towards `amf.addr` |
+| CU-UP | Deployment/ConfigMap `cu-up`, NAD `cu-up-n3` | N3 on a macvlan when `cuUp.n3.enabled` |
+
+## 2. Install
+```bash
+helm install ran-cu charts/firecell-cu -n oran -f common.yaml -f cu.yaml
+helm install du     charts/firecell-du -n oran -f common.yaml -f du.yaml
+helm install du-2   charts/firecell-du -n oran -f common.yaml -f du-2.yaml
+```
+
+`common.yaml` holds what the CU and every DU must agree on: `global.image` and `gnb.*`
+(gNB-ID, PLMN, TAC, slices). DUs in the same namespace find the CU-CP at
+`cu-cp.<namespace>.svc.cluster.local` without further configuration.
+Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig`.
+
+## 3. Node prerequisites
+- Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
+- SCTP enabled in the cluster (F1-C, E1, N2).
+
+## 4. Configuration Parameters
+
+{{ template "chart.valuesTable" . }}
+
+## 5. Maintenance & Troubleshooting
+- If CU-CP and CU-UP restart together, CU-UP can time out on its first E1 connect and restart once. That restart is expected.
+- CU-UP starts `min(cuUp.nofThreads, len(cuUp.cpus) - 3)` pool workers, so a 4-CPU `cuUp.cpus` gives one worker. Give it at least `nofThreads + 3` CPUs.
+- Restarting CU-CP drops every DU's F1 association; the DUs reconnect on their own.
+
+{{ template "helm-docs.versionFooter" . }}

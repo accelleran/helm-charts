@@ -1,0 +1,12 @@
+{{- $i := include "firecell-du.inst" . | fromJson -}}
+firecell-du {{ .Chart.Version }} installed as "{{ .Release.Name }}" in namespace {{ include "firecell-du.namespace" . }}.
+
+  {{ $i.name }} (gNB-DU ID {{ $i.duId }})  F1 -> {{ include "firecell-du.cuCpAddress" . }}, VF {{ $i.ofh.vfPciAddr }}, CPUs {{ include "firecell-du.allCpus" $i }}{{ if $i.mplane.enabled }}, M-plane {{ $i.mplane.duCidr }} on {{ $i.mplane.parentInterface }}{{ end }}
+{{- if $i.o1.enabled }}
+
+O1 NETCONF endpoint for NMS element registration:
+  netconf://{{ $i.name }}.{{ include "firecell-du.namespace" . }}.svc.cluster.local:{{ $i.o1.port }}
+{{- end }}
+
+Check:
+  kubectl -n {{ include "firecell-du.namespace" . }} get pods -l app={{ $i.name }}

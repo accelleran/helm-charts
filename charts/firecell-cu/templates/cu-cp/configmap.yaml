@@ -1,0 +1,12 @@
+{{- if .Values.cuCp.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cu-cp-config
+  namespace: {{ include "firecell-cu.namespace" . }}
+  labels:
+    {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-cp") | nindent 4 }}
+data:
+  cu_cp.yml: |
+    {{- include "firecell-cu.cuCpConfig" . | nindent 4 }}
+{{- end }}

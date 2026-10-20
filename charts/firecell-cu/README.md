@@ -1,0 +1,81 @@
+# firecell-cu
+
+![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+
+Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service DUs (firecell-du) attach to
+
+## 1. Architectural Role
+Deploys the central unit of the Ocudu split gNB: O-CU-CP (`ocucp`) and O-CU-UP (`ocuup`).
+DUs are separate [`firecell-du`](../firecell-du) releases, one per DU, that attach to the
+CU-CP over F1 through the headless Service `cuCpService.name`.
+
+### 1.1 Components
+| Component | Objects | Notes |
+|-----------|---------|-------|
+| CU-CP | Deployment/ConfigMap `cu-cp`, headless Service `cu-cp` (SCTP F1-C 38472, E1 38462) | N2 towards `amf.addr` |
+| CU-UP | Deployment/ConfigMap `cu-up`, NAD `cu-up-n3` | N3 on a macvlan when `cuUp.n3.enabled` |
+
+## 2. Install
+```bash
+helm install ran-cu charts/firecell-cu -n oran -f common.yaml -f cu.yaml
+helm install du     charts/firecell-du -n oran -f common.yaml -f du.yaml
+helm install du-2   charts/firecell-du -n oran -f common.yaml -f du-2.yaml
+```
+
+`common.yaml` holds what the CU and every DU must agree on: `global.image` and `gnb.*`
+(gNB-ID, PLMN, TAC, slices). DUs in the same namespace find the CU-CP at
+`cu-cp.<namespace>.svc.cluster.local` without further configuration.
+Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig`.
+
+## 3. Node prerequisites
+- Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
+- SCTP enabled in the cluster (F1-C, E1, N2).
+
+## 4. Configuration Parameters
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| amf.addr | string | `"oai-amf-n2.firecell-core.svc.cluster.local"` | AMF N2 address. With firecell-core this is the headless oai-amf-n2 Service. |
+| amf.port | int | `38412` | AMF NGAP SCTP port. |
+| amf.procedureTimeoutMs | int | `15000` | NGAP procedure timeout (ms). |
+| cuCp.cpus | string | `""` | CPU list for taskset. Empty runs unpinned. |
+| cuCp.enabled | bool | `true` | Deploy CU-CP and its headless F1/E1 Service. |
+| cuCp.extraConfig | object | `{"log":{"all_level":"warning","cu_level":"info","e1ap_level":"warning","f1ap_level":"info","filename":"/tmp/logs/ocudu_cu_cp.log","hex_max_size":0,"ngap_level":"info","pdcp_level":"warning","rrc_level":"info"},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9093},"pcap":{"e1ap_enable":false,"e1ap_filename":"/tmp/logs/cu_cp_e1ap.pcap","f1ap_enable":false,"f1ap_filename":"/tmp/logs/cu_cp_f1ap.pcap","ngap_enable":false,"ngap_filename":"/tmp/logs/cu_cp_ngap.pcap"}}` | Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict). |
+| cuCp.image | string | `""` | Image override (defaults to global.image). |
+| cuCp.nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
+| cuCp.requestPduSessionTimeout | int | `15` | Seconds the CU-CP waits for PDU session setup before releasing the UE. |
+| cuCp.resources | object | `{}` |  |
+| cuCp.tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |
+| cuCpService.name | string | `"cu-cp"` | Service name. firecell-du defaults its cuCpAddress to cu-cp.<namespace>. |
+| cuUp.cpus | string | `""` | CPU list for taskset. Empty runs unpinned. |
+| cuUp.cuCpAddress | string | `""` | E1 target. Empty resolves to <cuCpService.name>.<namespace>.svc.cluster.local. |
+| cuUp.enabled | bool | `true` | Deploy CU-UP. |
+| cuUp.extraConfig | object | `{"cu_up":{"ngu":{"gtpu":{"ignore_ue_ambr":true}},"warn_on_drop":true},"log":{"all_level":"warning","filename":"/tmp/logs/ocudu_cu_up.log","hex_max_size":0},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9094},"pcap":{"e1ap_enable":false,"f1u_enable":false,"n3_enable":false}}` | Raw Ocudu cu_up YAML merged over the generated config. |
+| cuUp.image | string | `""` |  |
+| cuUp.n3.cidr | string | `"10.3.0.4/24"` | Static N3 address with prefix. The IP part is the NG-U bind address. |
+| cuUp.n3.enabled | bool | `true` | Attach a macvlan for N3. When false, N3 binds the pod IP. |
+| cuUp.n3.mac | string | `""` | Fixed MAC for the N3 macvlan (keeps the UPF neighbour entry valid). Empty lets CNI pick. |
+| cuUp.n3.master | string | `"eth1"` | Host parent interface of the N3 macvlan. |
+| cuUp.nodeSelector | object | `{}` |  |
+| cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
+| cuUp.resources | object | `{}` |  |
+| cuUp.tolerations | list | `[]` |  |
+| global.image | string | `""` | Ocudu runtime image. Required. Components may override it. |
+| global.imagePullPolicy | string | `"IfNotPresent"` | Pull policy for the Ocudu image. Use Never for images imported into containerd. |
+| global.imagePullSecrets | list | `[]` | Image pull secrets for every pod. |
+| global.namespace | string | `""` | Namespace for every object. Empty uses the release namespace. |
+| global.nodeSelector | object | `{}` | Default nodeSelector for every pod. Components may override it. |
+| global.tolerations | list | `[]` | Default tolerations for every pod. Components may override them. |
+| gnb.gnbId | int | `1` | gNB-ID. |
+| gnb.gnbIdBitLength | int | `22` | gNB-ID length in bits. |
+| gnb.plmn | string | `"00101"` | Serving PLMN (MCC+MNC). |
+| gnb.slices | list | `[{"schedCfg":{"max_prb_policy_ratio":100,"min_prb_policy_ratio":15,"priority":10},"sd":1,"sst":1}]` | Slices. sst/sd go to the CU-CP TAI slice list (schedCfg is only read by firecell-du). |
+| gnb.tac | int | `1` | Tracking area code. |
+
+## 5. Maintenance & Troubleshooting
+- If CU-CP and CU-UP restart together, CU-UP can time out on its first E1 connect and restart once. That restart is expected.
+- CU-UP starts `min(cuUp.nofThreads, len(cuUp.cpus) - 3)` pool workers, so a 4-CPU `cuUp.cpus` gives one worker. Give it at least `nofThreads + 3` CPUs.
+- Restarting CU-CP drops every DU's F1 association; the DUs reconnect on their own.
+
+----------------------------------------------
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

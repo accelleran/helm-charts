@@ -1,0 +1,136 @@
+# Firecell RAN CU - Ocudu O-CU-CP and O-CU-UP.
+#
+# DUs are separate firecell-du releases that reach the CU-CP through the
+# headless Service cuCpService.name. Values the CU and its DUs must agree on
+# (global.image, gnb.*) belong in one shared site file passed to every release.
+
+global:
+  # -- Namespace for every object. Empty uses the release namespace.
+  namespace: ""
+  # -- Ocudu runtime image. Required. Components may override it.
+  image: ""
+  # -- Pull policy for the Ocudu image. Use Never for images imported into containerd.
+  imagePullPolicy: IfNotPresent
+  # -- Image pull secrets for every pod.
+  imagePullSecrets: []
+  # -- Default nodeSelector for every pod. Components may override it.
+  nodeSelector: {}
+  # -- Default tolerations for every pod. Components may override them.
+  tolerations: []
+
+# gNB identity. Must be identical in the CU release and every DU release.
+gnb:
+  # -- gNB-ID.
+  gnbId: 1
+  # -- gNB-ID length in bits.
+  gnbIdBitLength: 22
+  # -- Serving PLMN (MCC+MNC).
+  plmn: "00101"
+  # -- Tracking area code.
+  tac: 1
+  # -- Slices. sst/sd go to the CU-CP TAI slice list (schedCfg is only read by firecell-du).
+  slices:
+    - sst: 1
+      sd: 1
+      schedCfg:
+        min_prb_policy_ratio: 15
+        max_prb_policy_ratio: 100
+        priority: 10
+
+amf:
+  # -- AMF N2 address. With firecell-core this is the headless oai-amf-n2 Service.
+  addr: oai-amf-n2.firecell-core.svc.cluster.local
+  # -- AMF NGAP SCTP port.
+  port: 38412
+  # -- NGAP procedure timeout (ms).
+  procedureTimeoutMs: 15000
+
+cuCp:
+  # -- Deploy CU-CP and its headless F1/E1 Service.
+  enabled: true
+  # -- Image override (defaults to global.image).
+  image: ""
+  # -- nodeSelector override (defaults to global.nodeSelector).
+  nodeSelector: {}
+  # -- Tolerations override (defaults to global.tolerations).
+  tolerations: []
+  # -- CPU list for taskset. Empty runs unpinned.
+  cpus: ""
+  # -- Seconds the CU-CP waits for PDU session setup before releasing the UE.
+  requestPduSessionTimeout: 15
+  resources: {}
+  # -- Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict).
+  extraConfig:
+    log:
+      filename: /tmp/logs/ocudu_cu_cp.log
+      all_level: warning
+      cu_level: info
+      ngap_level: info
+      rrc_level: info
+      e1ap_level: warning
+      f1ap_level: info
+      pdcp_level: warning
+      hex_max_size: 0
+    metrics:
+      enable_log: false
+    pcap:
+      ngap_enable: false
+      ngap_filename: /tmp/logs/cu_cp_ngap.pcap
+      f1ap_enable: false
+      f1ap_filename: /tmp/logs/cu_cp_f1ap.pcap
+      e1ap_enable: false
+      e1ap_filename: /tmp/logs/cu_cp_e1ap.pcap
+    o2:
+      enabled: true
+      bind_addr: 0.0.0.0
+      port: 9093
+
+# Headless Service in front of CU-CP. DUs (F1-C) and CU-UP (E1) resolve it.
+cuCpService:
+  # -- Service name. firecell-du defaults its cuCpAddress to cu-cp.<namespace>.
+  name: cu-cp
+
+cuUp:
+  # -- Deploy CU-UP.
+  enabled: true
+  image: ""
+  nodeSelector: {}
+  tolerations: []
+  # -- E1 target. Empty resolves to <cuCpService.name>.<namespace>.svc.cluster.local.
+  cuCpAddress: ""
+  # -- CPU list for taskset. Empty runs unpinned.
+  cpus: ""
+  # -- CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads).
+  nofThreads: 3
+  # N3 (GTP-U toward the UPF) on a macvlan of a host NIC.
+  n3:
+    # -- Attach a macvlan for N3. When false, N3 binds the pod IP.
+    enabled: true
+    # -- Host parent interface of the N3 macvlan.
+    master: eth1
+    # -- Static N3 address with prefix. The IP part is the NG-U bind address.
+    cidr: 10.3.0.4/24
+    # -- Fixed MAC for the N3 macvlan (keeps the UPF neighbour entry valid). Empty lets CNI pick.
+    mac: ""
+  resources: {}
+  # -- Raw Ocudu cu_up YAML merged over the generated config.
+  extraConfig:
+    cu_up:
+      warn_on_drop: true
+      ngu:
+        gtpu:
+          ignore_ue_ambr: true
+    log:
+      filename: /tmp/logs/ocudu_cu_up.log
+      all_level: warning
+      hex_max_size: 0
+    metrics:
+      enable_log: false
+    pcap:
+      e1ap_enable: false
+      f1u_enable: false
+      n3_enable: false
+    o2:
+      enabled: true
+      bind_addr: 0.0.0.0
+      port: 9094

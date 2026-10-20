@@ -1,0 +1,65 @@
+{{- if .Values.preflight.enabled }}
+{{- $i := include "firecell-du.inst" . | fromJson }}
+{{- $pages := include "firecell-du.hugepages2MiCount" $i.hugepages2Mi }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $i.name }}-preflight
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    {{- include "firecell-du.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ .Values.preflight.timeoutSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "firecell-du.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      # Host netns so /sys/class/net lists the node's interfaces.
+      hostNetwork: true
+      {{- include "firecell-du.scheduling" (dict "root" $ "nodeSelector" $i.nodeSelector "tolerations" $i.tolerations) | trim | nindent 6 }}
+      containers:
+        - name: preflight
+          image: {{ .Values.preflight.image | default (include "firecell-du.image" (dict "root" $ "image" $i.image)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              fail=0
+              ok()  { echo "PASS $*"; }
+              bad() { echo "FAIL $*"; fail=1; }
+              drv=$(basename "$(readlink /sys/bus/pci/devices/{{ $i.ofh.vfPciAddr }}/driver 2>/dev/null)" 2>/dev/null)
+              if [ "$drv" = vfio-pci ]; then ok "VF {{ $i.ofh.vfPciAddr }} on vfio-pci"
+              else bad "VF {{ $i.ofh.vfPciAddr }} driver is '${drv:-none}', expected vfio-pci"; fi
+              {{- if $i.mplane.enabled }}
+              if [ -e /sys/class/net/{{ $i.mplane.parentInterface }} ]; then ok "M-plane parent {{ $i.mplane.parentInterface }} present"
+              else bad "M-plane parent {{ $i.mplane.parentInterface }} not found"; fi
+              {{- end }}
+              hp=/sys/kernel/mm/hugepages/hugepages-2048kB
+              {{- if .Release.IsInstall }}
+              have=$(cat $hp/free_hugepages)
+              what=free
+              {{- else }}
+              # On upgrade this DU still holds its pages; check the pool size.
+              have=$(cat $hp/nr_hugepages)
+              what=total
+              {{- end }}
+              if [ "$have" -ge {{ $pages }} ]; then ok "hugepages-2Mi: $have $what >= {{ $pages }} needed"
+              else bad "hugepages-2Mi: $have $what < {{ $pages }} needed"; fi
+              exit $fail
+          volumeMounts:
+            - name: sys
+              mountPath: /sys
+              readOnly: true
+      volumes:
+        - name: sys
+          hostPath:
+            path: /sys
+{{- end }}

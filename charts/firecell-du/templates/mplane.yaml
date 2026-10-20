@@ -1,0 +1,34 @@
+{{- $i := include "firecell-du.inst" . | fromJson }}
+{{- if $i.mplane.enabled }}
+{{- $cfg := dict
+  "cniVersion" "0.3.1"
+  "type" "macvlan"
+  "master" $i.mplane.parentInterface
+  "mode" "bridge"
+  "ipam" (dict "type" "static" "addresses" (list (dict "address" $i.mplane.duCidr))) }}
+# The O-RU calls home to this address; the DHCP sidecar listens here too.
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ $i.name }}-mplane
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    app: {{ $i.name }}
+    {{- include "firecell-du.labels" . | nindent 4 }}
+spec:
+  config: {{ toJson $cfg | quote }}
+{{- if not $i.mplane.existingSecret }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "firecell-du.mplaneSecretName" $i }}
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    app: {{ $i.name }}
+    {{- include "firecell-du.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  ssh-password: {{ $i.mplane.sshPassword | toString | quote }}
+{{- end }}
+{{- end }}

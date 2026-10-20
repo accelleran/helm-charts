@@ -69,6 +69,14 @@
     "charts/firecell-nms": {
       "component": "firecell-nms",
       "package-name": "firecell-nms"
+    },
+    "charts/firecell-cu": {
+      "component": "firecell-cu",
+      "package-name": "firecell-cu"
+    },
+    "charts/firecell-du": {
+      "component": "firecell-du",
+      "package-name": "firecell-du"
     }
   }
 }
