@@ -38,6 +38,8 @@ spec:
         app: nms-db
         app.kubernetes.io/component: nms-db
         app.kubernetes.io/part-of: firecell-nms
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/backend/database-configmap.yaml") . | sha256sum }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -80,6 +82,7 @@ spec:
             - {name: mysql, containerPort: 3306}
           volumeMounts:
             - {name: data, mountPath: /var/lib/mysql}
+            - {name: config, mountPath: /etc/mysql/conf.d, readOnly: true}
             - {name: run, mountPath: /var/run/mysqld}
             - {name: tmp, mountPath: /tmp}
           # No credentials: mysqladmin ping succeeds once the server answers
@@ -105,6 +108,9 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: nms-db-data
+        - name: config
+          configMap:
+            name: nms-db-config
         - {name: run, emptyDir: {}}
         - {name: tmp, emptyDir: {}}
 ---
