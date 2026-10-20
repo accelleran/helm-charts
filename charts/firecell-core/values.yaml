@@ -283,6 +283,10 @@ udm:
       cpu: 2000m
   # SUCI decryption private key — REQUIRED via overlay (see values-lab-insecure-defaults.yaml for lab demo key)
   suciKey: ""
+  # Existing Secret holding the SUCI private key under the `a.key` entry. When
+  # set it replaces suciKey, and the key is never written to a ConfigMap or to
+  # the release values.
+  suciKeySecret: ""
   fcaps:
     enabled: false
     mnsPort: 9091
@@ -371,6 +375,17 @@ amf:
     enabled: false
     serviceName: oai-amf-n2
     publishNotReadyAddresses: true
+  # Multus secondary NIC for NGAP: the AMF binds N2 on net1 at `ip`, so a RAN on
+  # a layer-2 underlay reaches it without MetalLB. eth0 stays SBI.
+  # Requires Multus CNI on the cluster (disabled by default).
+  multus:
+    enabled: false
+    nadName: amf-n2-net
+    cniType: macvlan
+    mode: bridge
+    masterInterface: ""    # site: physical parent bridged toward the CU-CP
+    ip: ""                 # e.g. 192.168.60.80
+    subnetPrefix: 24
   priorityClassName: firecell-prio-crit
   command:
     - /openair-amf/bin/oai_amf

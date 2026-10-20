@@ -83,8 +83,14 @@ spec:
           configMap:
             name: firecell-common-config
         - name: udm-suci-key
+          {{- if .Values.udm.suciKeySecret }}
+          secret:
+            secretName: {{ .Values.udm.suciKeySecret }}
+            defaultMode: 0400
+          {{- else }}
           configMap:
             name: oai-udm-config
+          {{- end }}
         {{- if .Values.udm.fcaps.enabled }}
         - name: cm-state
           {{- if eq .Values.udm.fcaps.intentMode "configmap" }}
@@ -104,6 +110,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- if not .Values.udm.suciKeySecret }}
 ---
 # UDM SUCI key ConfigMap
 apiVersion: v1
@@ -123,4 +130,5 @@ data:
     MC4CAQAwBQYDK2VuBCIEIKDMPgJYPmCobTpdYVvSkcHQ0hufGZ4A6ZOMpTzKIBRQ
     -----END PRIVATE KEY-----
     {{- end }}
+{{- end }}
 {{- end }}

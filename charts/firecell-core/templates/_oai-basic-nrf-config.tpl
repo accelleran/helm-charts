@@ -47,7 +47,7 @@ nfs:
       api_version: v1
       interface_name: {{ if $hostNet }}{{ $stub }}{{ else }}eth0{{ end }}
     n2:
-      interface_name: {{ if $hostNet }}{{ $stub }}{{ else }}eth0{{ end }}
+      interface_name: {{ if $v.amf.multus.enabled }}net1{{ else if $hostNet }}{{ $stub }}{{ else }}eth0{{ end }}
       port: 38412
   smf:
     host: {{ include "firecell-5gc.oaiSbiHost" (dict "ctx" $ctx "name" "oai-smf" "clusterDNS" (and $useClusterDNS (not $smfHostNet))) }}

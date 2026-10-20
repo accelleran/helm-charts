@@ -1,0 +1,28 @@
+{{- if and .Values.amf.enabled .Values.amf.multus.enabled .Values.amf.multus.masterInterface .Values.amf.multus.ip }}
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ .Values.amf.multus.nadName }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-amf
+    tier: core-network
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "{{ .Values.amf.multus.nadName }}",
+      "type": "{{ .Values.amf.multus.cniType }}",
+      "master": "{{ .Values.amf.multus.masterInterface }}",
+      "mode": "{{ .Values.amf.multus.mode }}",
+      "ipam": {
+        "type": "static",
+        "addresses": [
+          {
+            "address": "{{ .Values.amf.multus.ip }}/{{ .Values.amf.multus.subnetPrefix }}"
+          }
+        ]
+      }
+    }
+{{- end }}
