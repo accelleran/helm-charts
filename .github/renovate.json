@@ -12,8 +12,8 @@
     {
       "customType": "regex",
       "datasourceTemplate": "docker",
-      "fileMatch": [
-        "(^|/)Chart\\.yaml$"
+      "managerFilePatterns": [
+        "/(^|/)Chart\\.yaml$/"
       ],
       "matchStrings": [
         "#\\s?renovate: image=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s?appVersion:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
@@ -23,8 +23,8 @@
     {
       "customType": "regex",
       "datasourceTemplate": "docker",
-      "fileMatch": [
-        "(^|/)External\\.yaml$"
+      "managerFilePatterns": [
+        "/(^|/)External\\.yaml$/"
       ],
       "matchStrings": [
         "name:\\s+\"?(?<chartName>.*?)\"?\\s+(.*\\s)?repository:\\s+\"?oci://(?<registryRef>.*?)\"?\\s+(.*\\s)?version:\\s+\"?(?<currentValue>[\\w\\.\\-]*)\"?"
@@ -34,8 +34,8 @@
     {
       "customType": "regex",
       "datasourceTemplate": "docker",
-      "fileMatch": [
-        "(^|/)values\\.y[a]?ml$"
+      "managerFilePatterns": [
+        "/(^|/)values\\.y[a]?ml$/"
       ],
       "matchStrings": [
         "#\\s?renovate:( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s+image:\\s?\"?(?<depName>[^:]*?):(?<currentValue>[\\w+\\.\\-]*)\"?"
@@ -45,8 +45,8 @@
     {
       "customType": "regex",
       "datasourceTemplate": "helm",
-      "fileMatch": [
-        "(^|/)values\\.y[a]?ml$"
+      "managerFilePatterns": [
+        "/(^|/)values\\.y[a]?ml$/"
       ],
       "matchStrings": [
         "#\\s?renovate: repository=(?<registryUrl>.*?) chart=(?<depName>.*?)\\s?[\\w\\-]*[vV]ersion:\\s?\"?(?<currentValue>[\\w\\.\\-]*)\"?"
@@ -55,8 +55,8 @@
     {
       "customType": "regex",
       "datasourceTemplate": "github-releases",
-      "fileMatch": [
-        "(^|/)helm-charts\\.y[a]?ml$"
+      "managerFilePatterns": [
+        "/(^|/)helm-charts\\.y[a]?ml$/"
       ],
       "matchStrings": [
         "#\\s?renovate: github_repository=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s*[\\w\\-]*_version:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
@@ -66,8 +66,8 @@
     {
       "customType": "regex",
       "datasourceTemplate": "github-releases",
-      "fileMatch": [
-        "(^|/).+\\.sh$"
+      "managerFilePatterns": [
+        "/(^|/).+\\.sh$/"
       ],
       "matchStrings": [
         "#\\s?renovate: github_repository=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s*(export\\s+)?[\\w\\-]*_[vV][eE][rR][sS][iI][oO][nN]=\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
