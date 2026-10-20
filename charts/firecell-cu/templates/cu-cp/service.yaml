@@ -1,0 +1,26 @@
+{{- if .Values.cuCp.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.cuCpService.name }}
+  namespace: {{ include "firecell-cu.namespace" . }}
+  labels:
+    {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-cp") | nindent 4 }}
+spec:
+  # Headless: F1-C (DUs) and E1 (CU-UP) resolve straight to the CU-CP pod IP,
+  # so SCTP never goes through a ClusterIP. Ready addresses are published early
+  # because peers retry the association themselves.
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app: cu-cp
+  ports:
+    - name: e1ap
+      port: 38462
+      targetPort: 38462
+      protocol: SCTP
+    - name: f1ap
+      port: 38472
+      targetPort: 38472
+      protocol: SCTP
+{{- end }}

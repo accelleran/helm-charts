@@ -1,0 +1,2 @@
+# chart-testing install is skipped: the DUs need SR-IOV VFs bound to vfio-pci,
+# 2 MiB hugepages, Multus and SCTP, none of which exist on a kind cluster.

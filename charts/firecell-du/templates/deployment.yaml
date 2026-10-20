@@ -1,0 +1,172 @@
+{{- $i := include "firecell-du.inst" . | fromJson }}
+{{- $ns := include "firecell-du.namespace" . }}
+{{- $img := include "firecell-du.image" (dict "root" $ "image" $i.image) }}
+{{- $o2Port := dig "o2" "port" 9090 $i.extraConfig }}
+{{- $networks := list }}
+{{- if $i.mplane.enabled }}
+{{- $networks = append $networks (dict "name" (printf "%s-mplane" $i.name) "namespace" $ns "interface" "mplane0") }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $i.name }}
+  namespace: {{ $ns }}
+  labels:
+    app: {{ $i.name }}
+    {{- include "firecell-du.labels" . | nindent 4 }}
+  annotations:
+    {{- include "firecell-du.claims" . | nindent 4 }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  # The VF, hugepages and pinned CPUs are exclusive: never run two pods at once.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ $i.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $i.name }}
+        {{- include "firecell-du.labels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include "firecell-du.duConfig" (dict "root" $ "inst" $i) | sha256sum }}
+        {{- if and $i.mplane.enabled (not $i.mplane.existingSecret) }}
+        # The launcher reads the password once at start; roll the pod when it changes.
+        checksum/mplane-secret: {{ printf "%s/%s" (include "firecell-du.mplaneSecretName" $i) (toString $i.mplane.sshPassword) | sha256sum }}
+        {{- end }}
+        {{- with $networks }}
+        k8s.v1.cni.cncf.io/networks: {{ toJson . | quote }}
+        {{- end }}
+    spec:
+      {{- include "firecell-du.scheduling" (dict "root" $ "nodeSelector" $i.nodeSelector "tolerations" $i.tolerations) | trim | nindent 6 }}
+      initContainers:
+        - name: wait-cu-cp-f1
+          image: {{ $img }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - bash
+            - -c
+            - |
+              for i in $(seq 1 90); do
+                getent hosts {{ include "firecell-du.cuCpAddress" . }} >/dev/null 2>&1 && exit 0
+                sleep 2
+              done
+              echo "timeout resolving {{ include "firecell-du.cuCpAddress" . }} for F1-C" >&2
+              exit 1
+      containers:
+        - name: odu
+          image: {{ $img }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            {{- if $i.o1.enabled }}
+            # Starts netopeer2/sysrepo (O1), then execs the launcher.
+            - /usr/local/bin/entrypoint-o1.sh
+            {{- end }}
+            - /bin/bash
+            - /opt/firecell/du-launcher.sh
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: DU_BINARY
+              value: {{ $i.binary | quote }}
+            - name: DU_CPUS
+              value: {{ include "firecell-du.allCpus" $i | quote }}
+            - name: DU_POOL_CPUS
+              value: {{ $i.cpus.pool | toString | quote }}
+            - name: O1_ENABLED
+              value: {{ $i.o1.enabled | toString | quote }}
+            {{- if $i.mplane.enabled }}
+            - name: MPLANE_SSH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "firecell-du.mplaneSecretName" $i }}
+                  key: ssh-password
+            {{- end }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [SYS_NICE, SYS_PTRACE, NET_ADMIN]
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - curl -sf -m 2 http://127.0.0.1:{{ $o2Port }}/o2/health >/dev/null
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 36
+          resources:
+            {{- $res := $i.resources | default dict }}
+            requests:
+              hugepages-2Mi: {{ $i.hugepages2Mi }}
+              memory: {{ $i.memory }}
+              {{- with $res.requests }}
+              {{- toYaml (omit . "hugepages-2Mi" "memory") | nindent 14 }}
+              {{- end }}
+            limits:
+              hugepages-2Mi: {{ $i.hugepages2Mi }}
+              {{- with $res.limits }}
+              {{- toYaml (omit . "hugepages-2Mi") | nindent 14 }}
+              {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config/du.yml
+              subPath: du.yml
+            - name: launcher
+              mountPath: /opt/firecell
+            - name: logs
+              mountPath: /tmp/logs
+            - name: hugepages
+              mountPath: /dev/hugepages
+            {{- if $i.o1.enabled }}
+            - name: o1-state
+              mountPath: /var/lib/ocudu
+            {{- end }}
+        {{- if and $i.mplane.enabled $i.mplane.dhcp.enabled }}
+        - name: mplane-dhcp
+          image: {{ $i.mplane.dhcp.image }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - dnsmasq
+            - --keep-in-foreground
+            - --log-facility=-
+            - --conf-file=/etc/firecell/dnsmasq.conf
+          securityContext:
+            capabilities:
+              add: [NET_ADMIN, NET_RAW, NET_BIND_SERVICE]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/firecell/dnsmasq.conf
+              subPath: dnsmasq.conf
+        {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ $i.name }}-config
+        - name: launcher
+          configMap:
+            name: {{ $i.name }}-launcher
+            defaultMode: 0755
+        - name: logs
+          emptyDir: {}
+        - name: hugepages
+          hostPath:
+            path: /dev/hugepages
+            type: DirectoryOrCreate
+        {{- if $i.o1.enabled }}
+        - name: o1-state
+          hostPath:
+            path: {{ include "firecell-du.o1StatePath" $i }}
+            type: DirectoryOrCreate
+        {{- end }}

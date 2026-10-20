@@ -1,0 +1,14 @@
+apiVersion: v2
+name: firecell-du
+description: Firecell RAN on Ocudu - one O-RAN 7.2 O-DU per release, with DPDK fronthaul, O-RU M-plane and O1 NETCONF
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - 5g
+  - ran
+  - o-ran
+  - ocudu
+  - du
+  - dpdk
+  - netconf

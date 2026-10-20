@@ -73,6 +73,14 @@
     "charts/firecell-core": {
       "component": "firecell-core",
       "package-name": "firecell-core"
+    },
+    "charts/firecell-cu": {
+      "component": "firecell-cu",
+      "package-name": "firecell-cu"
+    },
+    "charts/firecell-du": {
+      "component": "firecell-du",
+      "package-name": "firecell-du"
     }
   }
 }

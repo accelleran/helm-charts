@@ -1,0 +1,64 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.description" . }}
+
+## 1. Architectural Role
+Deploys one Ocudu O-DU (`odu_split_7_2`) driving an O-RAN 7.2x radio unit over DPDK, with
+optional O-RU M-plane (NETCONF call-home) and an O1 NETCONF server for the NMS. Install one
+release per DU; each attaches over F1 to the CU-CP of a [`firecell-cu`](../firecell-cu) release.
+
+### 1.1 Components
+| Component | Objects | Notes |
+|-----------|---------|-------|
+| DU | Deployment `<name>`, ConfigMaps `<name>-config` and `<name>-launcher`, Service `<name>` (O1 :830) | DPDK VF, hugepages, pinned CPUs |
+| M-plane | NAD `<name>-mplane`, Secret `<name>-mplane`, optional `mplane-dhcp` sidecar | dnsmasq leases the O-RU and sends option 43/129 (call-home) |
+| Pre-flight | hook Job `<name>-preflight` on the DU node | checks VF on vfio-pci, M-plane parent NIC, hugepages |
+
+`<name>` is `name`, or the release name when `name` is empty.
+
+## 2. Install
+```bash
+# CU once, then one release per DU in the same namespace
+helm install ran-cu charts/firecell-cu -n oran -f common.yaml -f cu.yaml
+helm install du     charts/firecell-du -n oran -f common.yaml -f du.yaml
+helm install du-2   charts/firecell-du -n oran -f common.yaml -f du-2.yaml
+```
+
+`common.yaml` holds what the CU and every DU must agree on: `global.image` and `gnb.*`.
+A DU's own file lists only what is specific to it: `duId`, `cell`, `cpus`, `ofh` (VF and MACs),
+and optionally `mplane` and `o1`. The DU reaches the CU-CP at `cuCpAddress` (default
+`cu-cp.<namespace>.svc.cluster.local`). Any Ocudu YAML key can be added through `extraConfig`.
+
+Adding a DU to a running gNB is a new release; the CU and the other DUs are not touched.
+
+### 2.1 Clash checks
+Each DU Deployment records its gNB-DU ID, node, CPUs, VF and DHCP-served M-plane NIC in
+`firecell.io/*` annotations. On install and upgrade the chart reads the other `firecell-du`
+Deployments in the namespace and refuses a DU that reuses a gNB-DU ID, or that shares a VF,
+a CPU or a DHCP-served M-plane NIC with another DU on the same node. `helm template` cannot
+see the cluster and skips these checks.
+
+## 3. Node prerequisites
+- VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).
+- 2 MiB hugepages: at least `hugepages2Mi` per DU on the node (`vm.nr_hugepages`); restart kubelet after changing them.
+- Isolated CPUs for `cpus.timing`, `cpus.txrx` and `cpus.pool`.
+- Multus with the macvlan and static IPAM plugins when `mplane.enabled`.
+- One O-RU per M-plane parent NIC when `mplane.dhcp.enabled` (one DHCP server per segment).
+- An image that ships `/usr/local/bin/entrypoint-o1.sh` when `o1.enabled`.
+
+## 4. Configuration Parameters
+
+{{ template "chart.valuesTable" . }}
+
+## 5. Maintenance & Troubleshooting
+- The DU launcher waits for the `ru_timing` thread, then re-pins every non-`ru_*` thread onto `cpus.pool`.
+- With `mplane.dhcp.enabled`, `kubectl logs <name> -c mplane-dhcp` shows the O-RU DHCP exchange; the O-RU then calls home to `<duCidr IP>:4334`. With it off, the node must serve that lease (option 43, sub-options 129/130).
+- An O-RU that calls home after the DU has activated its cell over F1 keeps its carriers INACTIVE. Restart the DU once the O-RU is up.
+- A DU that was killed (not stopped) leaves `/dev/hugepages/<name>map_*` behind. DPDK only reclaims files with its own prefix, so remove stale files of a DU that no longer exists while no DU on the node is running.
+- O1 state (host key, overlay) persists under `o1.statePath` on the node (default `/var/lib/firecell/ocudu/<name>`).
+- Set `preflight.enabled=false` on clusters where hook Jobs cannot use `hostNetwork`.
+
+{{ template "helm-docs.versionFooter" . }}

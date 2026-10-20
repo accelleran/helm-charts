@@ -1,0 +1,82 @@
+{{- if .Values.cuCp.enabled }}
+{{- $c := .Values.cuCp }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cu-cp
+  namespace: {{ include "firecell-cu.namespace" . }}
+  labels:
+    app: cu-cp
+    {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-cp") | nindent 4 }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: cu-cp
+  template:
+    metadata:
+      labels:
+        app: cu-cp
+        {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-cp") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include "firecell-cu.cuCpConfig" . | sha256sum }}
+    spec:
+      {{- include "firecell-cu.scheduling" (dict "root" $ "nodeSelector" $c.nodeSelector "tolerations" $c.tolerations) | trim | nindent 6 }}
+      containers:
+        - name: ocucp
+          image: {{ include "firecell-cu.image" (dict "root" $ "image" $c.image) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p /tmp/logs
+              {{- if $c.cpus }}
+              exec taskset -c {{ $c.cpus }} ocucp -c /config/cu_cp.yml
+              {{- else }}
+              exec ocucp -c /config/cu_cp.yml
+              {{- end }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [SYS_NICE, SYS_PTRACE, NET_ADMIN]
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - ss -l -H -A sctp 'sport = :38462' | grep -q . && ss -l -H -A sctp 'sport = :38472' | grep -q .
+            initialDelaySeconds: 5
+            periodSeconds: 3
+            timeoutSeconds: 2
+            failureThreshold: 40
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - ss -l -H -A sctp 'sport = :38462' | grep -q .
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          {{- with $c.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config/cu_cp.yml
+              subPath: cu_cp.yml
+            - name: logs
+              mountPath: /tmp/logs
+      volumes:
+        - name: config
+          configMap:
+            name: cu-cp-config
+        - name: logs
+          emptyDir: {}
+{{- end }}

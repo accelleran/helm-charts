@@ -1,0 +1,16 @@
+{{- $i := include "firecell-du.inst" . | fromJson }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $i.name }}-config
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    app: {{ $i.name }}
+    {{- include "firecell-du.labels" . | nindent 4 }}
+data:
+  du.yml: |
+    {{- include "firecell-du.duConfig" (dict "root" $ "inst" $i) | nindent 4 }}
+  {{- if and $i.mplane.enabled $i.mplane.dhcp.enabled }}
+  dnsmasq.conf: |
+    {{- include "firecell-du.dnsmasqConfig" $i | nindent 4 }}
+  {{- end }}

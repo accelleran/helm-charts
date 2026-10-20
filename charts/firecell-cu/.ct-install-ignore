@@ -1,0 +1,2 @@
+# chart-testing install is skipped: CU-UP needs Multus for its N3 macvlan and
+# CU-CP needs SCTP and a reachable AMF, none of which exist on a kind cluster.
