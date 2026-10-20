@@ -77,6 +77,13 @@
   ],
   "packageRules": [
     {
+      "description": "Disable org docker:pinDigests here. Charts often leave image.tag empty so templates fall back to Chart.AppVersion and render repository:tag (colon). Digest pinning would rewrite those to digest-only values and break image refs; appVersion must stay a plain version, not tag@digest. Revisit when tags are always explicit and helpers support digests.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "pinDigests": false
+    },
+    {
       "description": "Automerge external chart updates",
       "automerge": true,
       "matchFileNames": [
