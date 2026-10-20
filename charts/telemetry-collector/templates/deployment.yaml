@@ -27,5 +27,10 @@ env:
       secretKeyRef:
         name: "{{ tpl $.Values.influxdbAuthSecret $ }}"
         key: admin-token
+  - name: INTERNAL_TIMESCALEDB_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: "{{ tpl $.Values.timescaledbAuthSecret $ }}"
+        key: password
 
 {{- end -}}
