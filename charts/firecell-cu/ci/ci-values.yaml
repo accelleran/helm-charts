@@ -1,0 +1,13 @@
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+cuCp:
+  cpus: "0,1"
+
+cuUp:
+  cpus: "2,3,4,5,6,7"
+  n3:
+    enabled: true
+    master: eth1
+    cidr: 10.3.0.4/24
+    mac: "02:fc:00:03:00:04"

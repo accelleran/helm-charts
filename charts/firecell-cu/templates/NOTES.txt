@@ -1,0 +1,17 @@
+firecell-cu {{ .Chart.Version }} installed as "{{ .Release.Name }}" in namespace {{ include "firecell-cu.namespace" . }}.
+
+Components:
+{{- if .Values.cuCp.enabled }}
+  cu-cp   N2 -> {{ .Values.amf.addr }}:{{ .Values.amf.port }}, F1/E1 Service {{ .Values.cuCpService.name }}
+{{- end }}
+{{- if .Values.cuUp.enabled }}
+  cu-up   E1 -> {{ include "firecell-cu.cuCpAddress" . }}
+{{- end }}
+{{- if .Values.cuCp.enabled }}
+
+Attach DUs with one firecell-du release each, in this namespace:
+  helm install <du-name> firecell-du -n {{ include "firecell-cu.namespace" . }} -f common.yaml -f <du-name>.yaml
+{{- end }}
+
+Check:
+  kubectl -n {{ include "firecell-cu.namespace" . }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}

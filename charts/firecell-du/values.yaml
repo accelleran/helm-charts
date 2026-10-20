@@ -1,0 +1,255 @@
+# Firecell RAN DU - one Ocudu O-RAN 7.2 DU per release.
+#
+# Install one release per DU next to a firecell-cu release (same namespace by
+# default). Values the CU and its DUs must agree on (global.image, gnb.*) belong
+# in one shared site file passed to every release; only the per-DU differences
+# go in the DU's own file.
+
+global:
+  # -- Namespace for every object. Empty uses the release namespace.
+  namespace: ""
+  # -- Ocudu runtime image built with -DENABLE_MPLANE=ON and the O1 entrypoint
+  # (/usr/local/bin/entrypoint-o1.sh). Required unless `image` is set.
+  image: ""
+  # -- Pull policy for the Ocudu image. Use Never for images imported into containerd.
+  imagePullPolicy: IfNotPresent
+  # -- Image pull secrets for every pod.
+  imagePullSecrets: []
+  # -- Default nodeSelector. `nodeSelector` overrides it.
+  nodeSelector: {}
+  # -- Default tolerations. `tolerations` overrides them.
+  tolerations: []
+
+# gNB identity. Must be identical in the CU release and every DU release.
+gnb:
+  # -- gNB-ID.
+  gnbId: 1
+  # -- gNB-ID length in bits.
+  gnbIdBitLength: 22
+  # -- Serving PLMN (MCC+MNC).
+  plmn: "00101"
+  # -- Tracking area code.
+  tac: 1
+  # -- Slices. sst/sd go to the DU slicing list; schedCfg, when set, becomes the per-slice sched_cfg.
+  slices:
+    - sst: 1
+      sd: 1
+      schedCfg:
+        min_prb_policy_ratio: 15
+        max_prb_policy_ratio: 100
+        priority: 10
+
+# -- F1-C target. Empty resolves to cu-cp.<namespace>.svc.cluster.local (the firecell-cu Service).
+cuCpAddress: ""
+
+# -- DU name: Deployment, Service (O1), ConfigMaps, DPDK file prefix. Empty uses the release name.
+name: ""
+# -- gNB-DU ID (gnb_du_id). Required; unique among the DUs of one CU.
+duId: ""
+# -- Binary started by the launcher.
+binary: odu_split_7_2
+# -- Image override (defaults to global.image).
+image: ""
+# -- nodeSelector override (defaults to global.nodeSelector).
+nodeSelector: {}
+# -- Tolerations override (defaults to global.tolerations).
+tolerations: []
+# -- 2 MiB hugepages for this DU (requests = limits).
+hugepages2Mi: 2Gi
+# -- Memory request.
+memory: 1Gi
+cpus:
+  # -- OFH timing thread CPU. Required.
+  timing: ""
+  # -- OFH TX/RX thread CPU(s), comma list. Required.
+  txrx: ""
+  # -- Main pool CPUs (comma list, ranges allowed). Required. The build reserves 3 CPUs in the mask.
+  pool: ""
+  # -- DPDK EAL lcores CPU set (hal.eal_args --lcores (0-1)@(...)). Required.
+  ealLcores: ""
+  # -- Main pool worker threads. Ocudu starts min(nofThreads, len(pool) - 3).
+  nofThreads: 3
+cell:
+  sectorId: 1
+  pci: 1
+  dlArfcn: 663680
+  band: 77
+  bandwidthMHz: 100
+  commonScs: 30
+  antennasDl: 4
+  antennasUl: 4
+ofh:
+  # -- PCI address of the SR-IOV VF bound to vfio-pci (DPDK). Required.
+  vfPciAddr: ""
+  duMac: ""
+  ruMac: ""
+  # -- C-plane VLAN tag. 0 sends untagged.
+  vlanCp: 0
+  # -- U-plane VLAN tag. 0 sends untagged.
+  vlanUp: 0
+  dlPorts: [0, 1, 2, 3]
+  ulPorts: [0, 1]
+  prachPorts: [4, 5]
+  promiscuous: false
+  # -- O-RU vendor profile for M-plane (benetel | comba | eridan).
+  ruType: benetel
+  # -- Raw ru_ofh keys (timing windows, compression) merged into ru_ofh.
+  ruOfh:
+    ru_bandwidth_MHz: 100
+    t1a_max_cp_dl: 336
+    t1a_min_cp_dl: 285
+    t1a_max_cp_ul: 336
+    t1a_min_cp_ul: 285
+    t1a_max_up: 300
+    t1a_min_up: 80
+    ta4_max: 500
+    ta4_min: 50
+    is_prach_cp_enabled: true
+    compr_method_ul: bfp
+    compr_bitwidth_ul: 9
+    compr_method_dl: bfp
+    compr_bitwidth_dl: 9
+    compr_method_prach: bfp
+    compr_bitwidth_prach: 9
+    enable_ul_static_compr_hdr: true
+    enable_dl_static_compr_hdr: true
+    iq_scaling: 1.0
+mplane:
+  # -- Run the M-plane NETCONF client toward the O-RU (needs an M-plane build).
+  enabled: false
+  # -- Host interface the M-plane macvlan sits on. One O-RU per interface.
+  parentInterface: ""
+  # -- DU M-plane address with prefix (call-home target the RU learns via DHCP).
+  duCidr: ""
+  callHomePort: 4334
+  sshUser: oranbenetel
+  # -- SSH password rendered into a chart Secret. Ignored when existingSecret is set.
+  sshPassword: ""
+  # -- Existing Secret holding the password under key ssh-password. The DU reads it
+  # at start, so restart the DU after changing that Secret.
+  existingSecret: ""
+  txArrayGainDb: 27.0
+  # -- Raw mplane keys merged over the generated mplane section.
+  extra:
+    supervision_enabled: true
+    supervision_watchdog_period_s: 23
+    copy_to_startup_after_provision: false
+    require_oper_state_enabled: false
+    log_xml: false
+    mplane_log_filename: /tmp/logs/mplane.log
+    cache_path: /tmp/logs/mplane_cache
+    ptp_lock_timeout_ms: 60000
+    radiate_gate_bypass_on_timeout: false
+  dhcp:
+    # -- Serve the O-RU its M-plane lease from a dnsmasq sidecar on the macvlan.
+    # Off by default: a Benetel RU went silent after taking this lease, so
+    # serve DHCP from the node unless the sidecar is proven with your RU.
+    enabled: false
+    image: docker.io/4km3/dnsmasq:2.90-r3
+    # -- Fixed address handed to ofh.ruMac.
+    ruIp: ""
+    leaseTime: 12h
+    # -- Router option. Empty omits it.
+    router: ""
+    # -- O-RAN option 43 sub-option 130 (controller FQDN). Empty omits it.
+    controllerFqdn: ""
+o1:
+  # -- Run netopeer2/sysrepo (O1 NETCONF server for the NMS) in the DU container.
+  enabled: false
+  port: 830
+  # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Empty uses /var/lib/firecell/ocudu/<name>.
+  statePath: ""
+  yangSearchPath: /usr/local/yang
+  restartOnColdCommit: false
+resources: {}
+# -- Raw Ocudu DU YAML merged over the generated config.
+extraConfig:
+  cell_cfg:
+    ssb:
+      ssb_period: 10
+      ssb_block_power_dbm: -11
+      pss_to_sss_epre_db: 0
+    ul_common:
+      p_max: 23
+    pdsch:
+      mcs_table: qam256
+      max_pdschs_per_slot: 6
+      max_alloc_attempts: 8
+      olla_target_bler: 0.1
+      olla_max_cqi_offset: 20
+      olla_cqi_inc_step: 0.05
+      dc_offset: center
+    pusch:
+      mcs_table: qam64
+      min_k2: 3
+      olla_target_bler: 0.1
+      olla_snr_inc_step: 0.05
+      olla_max_snr_offset: 20
+      p0_nominal_with_grant: -76
+    pucch:
+      min_k1: 3
+      sr_period_ms: 40
+      p0_nominal: -96
+    prach:
+      preamble_trans_max: 200
+      power_ramping_step_db: 2
+      prach_config_index: 159
+      prach_frequency_start: 11
+    tdd_ul_dl_cfg:
+      dl_ul_tx_period: 10
+      nof_dl_slots: 7
+      nof_dl_symbols: 6
+      nof_ul_slots: 2
+      nof_ul_symbols: 4
+    srs:
+      period_ms: 40
+    scheduler:
+      policy:
+        qos_sched:
+          pdb_enabled: true
+          gbr_enabled: true
+  expert_phy:
+    max_request_headroom_slots: 3
+    pusch_dec_max_iterations: 4
+    max_proc_delay: 5
+  expert_execution:
+    threads:
+      upper_phy:
+        pdsch_processor_type: flexible
+      ofh:
+        enable_busy_waiting: true
+  log:
+    filename: /tmp/logs/ocudu_du.log
+    all_level: warning
+    du_level: info
+    f1ap_level: info
+    mac_level: info
+    rlc_level: warning
+    f1u_level: info
+    gtpu_level: warning
+    hex_max_size: 0
+    high_latency_diagnostics_enabled: false
+  metrics:
+    autostart_stdout_metrics: true
+    enable_log: false
+    layers:
+      enable_sched: false
+      enable_rlc: false
+      enable_mac: true
+    periodicity:
+      du_report_period: 1000
+  pcap:
+    mac_enable: false
+    f1ap_enable: false
+    f1u_enable: false
+  o2:
+    enabled: true
+    bind_addr: 0.0.0.0
+    port: 9090
+
+preflight:
+  # -- Pre-install/pre-upgrade Job on the DU node: VF on vfio-pci, hugepages, M-plane parent NIC.
+  enabled: true
+  # -- Image for the check (needs bash). Empty uses the DU image.
+  image: ""
+  timeoutSeconds: 120

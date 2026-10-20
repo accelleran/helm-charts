@@ -1,0 +1,22 @@
+{{- $i := include "firecell-du.inst" . | fromJson }}
+{{- if $i.o1.enabled }}
+# O1 NETCONF endpoint the NMS manages this DU through: netconf://<name>.<ns>.svc.cluster.local:<port>
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $i.name }}
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    app: {{ $i.name }}
+    firecell.io/o1: netconf
+    {{- include "firecell-du.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ $i.name }}
+  ports:
+    - name: netconf
+      port: {{ $i.o1.port }}
+      targetPort: 830
+      protocol: TCP
+{{- end }}

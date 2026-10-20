@@ -1,0 +1,12 @@
+{{- if .Values.cuUp.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cu-up-config
+  namespace: {{ include "firecell-cu.namespace" . }}
+  labels:
+    {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 4 }}
+data:
+  cu_up.yml: |
+    {{- include "firecell-cu.cuUpConfig" . | nindent 4 }}
+{{- end }}

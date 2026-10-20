@@ -1,0 +1,28 @@
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+name: du-2
+duId: 2
+cell:
+  pci: 2
+cpus:
+  timing: 7
+  txrx: 8
+  pool: "9,10"
+  ealLcores: "9,10"
+ofh:
+  vfPciAddr: "0000:01:11.0"
+  duMac: "02:fc:02:00:00:11"
+  ruMac: "70:b3:d5:e1:51:56"
+  vlanCp: 14
+  vlanUp: 14
+mplane:
+  enabled: true
+  parentInterface: eth2
+  duCidr: 10.10.0.24/24
+  sshPassword: ci-password
+  dhcp:
+    enabled: true
+    ruIp: 10.10.0.141
+o1:
+  enabled: true

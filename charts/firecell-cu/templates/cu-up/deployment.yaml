@@ -1,0 +1,97 @@
+{{- if .Values.cuUp.enabled }}
+{{- $c := .Values.cuUp }}
+{{- $img := include "firecell-cu.image" (dict "root" $ "image" $c.image) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cu-up
+  namespace: {{ include "firecell-cu.namespace" . }}
+  labels:
+    app: cu-up
+    {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 4 }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: cu-up
+  template:
+    metadata:
+      labels:
+        app: cu-up
+        {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include "firecell-cu.cuUpConfig" . | sha256sum }}
+        {{- if $c.n3.enabled }}
+        k8s.v1.cni.cncf.io/networks: {{ toJson (list (dict "name" "cu-up-n3" "namespace" (include "firecell-cu.namespace" .))) | quote }}
+        {{- end }}
+    spec:
+      {{- include "firecell-cu.scheduling" (dict "root" $ "nodeSelector" $c.nodeSelector "tolerations" $c.tolerations) | trim | nindent 6 }}
+      initContainers:
+        - name: wait-cu-cp-e1
+          image: {{ $img }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - bash
+            - -c
+            - |
+              for i in $(seq 1 90); do
+                getent hosts {{ include "firecell-cu.cuCpAddress" . }} >/dev/null 2>&1 && exit 0
+                sleep 2
+              done
+              echo "timeout resolving {{ include "firecell-cu.cuCpAddress" . }} for E1AP" >&2
+              exit 1
+      containers:
+        - name: ocuup
+          image: {{ $img }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          command:
+            - /bin/bash
+            - -c
+            - |
+              mkdir -p /tmp/logs
+              # F1-U binds the pod IP, which is only known at start.
+              sed "s/__POD_IP__/$POD_IP/" /config/cu_up.yml > /run/cu_up.yml
+              {{- if $c.cpus }}
+              exec taskset -c {{ $c.cpus }} ocuup -c /run/cu_up.yml
+              {{- else }}
+              exec ocuup -c /run/cu_up.yml
+              {{- end }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [SYS_NICE, SYS_PTRACE, NET_ADMIN]
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - ss -H -A sctp | grep -q ESTAB || ss -l -H -A tcp 'sport = :{{ dig "o2" "port" 9094 $c.extraConfig }}' | grep -q .
+            initialDelaySeconds: 8
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 24
+          {{- with $c.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config/cu_up.yml
+              subPath: cu_up.yml
+            - name: logs
+              mountPath: /tmp/logs
+      volumes:
+        - name: config
+          configMap:
+            name: cu-up-config
+        - name: logs
+          emptyDir: {}
+{{- end }}
