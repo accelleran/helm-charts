@@ -99,4 +99,13 @@ data:
             return 200 "healthy\n";
             add_header Content-Type text/plain;
         }
+
+        # The backend's /healthz, so one probe covers nginx and the API
+        # without a login (/api/health_check requires one).
+        location = /healthz {
+            access_log off;
+            proxy_pass {{ trimSuffix "/" $backendUrl }}/healthz;
+            proxy_connect_timeout 2s;
+            proxy_read_timeout 3s;
+        }
     }

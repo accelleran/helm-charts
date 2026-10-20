@@ -17,7 +17,8 @@ Give upgrades a timeout of at least backend.progressDeadlineSeconds
 manual schema downgrade first (see the README).
 
 Services (fixed names):
-  nms-front              :80    UI, /api/ -> nms-api, /nms-cm/ -> nms-api /ui/
+  nms-front              :80    UI, /api/ -> nms-api, /nms-cm/ -> nms-api /ui/,
+                                /healthz -> nms-api /healthz (no login)
   nms-api                :8080  API, FCAPS receiver, /api/alarms/webhook
   nms-db                 :3306  backend MySQL (user {{ .Values.backend.database.user }})
   nms-victoria-metrics   :8430  VictoriaMetrics (Grafana datasource)

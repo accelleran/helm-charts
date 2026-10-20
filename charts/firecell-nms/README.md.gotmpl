@@ -26,7 +26,7 @@ Names are fixed, not derived from the release name, so other releases can rely o
 
 | Service | Port | Serves |
 |---------|------|--------|
-| `nms-front` | 80 | UI, `/nginx-health` |
+| `nms-front` | 80 | UI, `/nginx-health` (nginx only), `/healthz` (the API's `/healthz` through nginx, no login) |
 | `nms-api` | 8080 | API, `/healthz`, FCAPS notification receiver, Grafana alert webhook `/api/alarms/webhook` |
 | `nms-db` | 3306 | Backend MySQL |
 | `nms-victoria-metrics` | 8430 | VictoriaMetrics (Prometheus API) |

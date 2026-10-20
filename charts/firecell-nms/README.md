@@ -25,7 +25,7 @@ Names are fixed, not derived from the release name, so other releases can rely o
 
 | Service | Port | Serves |
 |---------|------|--------|
-| `nms-front` | 80 | UI, `/nginx-health` |
+| `nms-front` | 80 | UI, `/nginx-health` (nginx only), `/healthz` (the API's `/healthz` through nginx, no login) |
 | `nms-api` | 8080 | API, `/healthz`, FCAPS notification receiver, Grafana alert webhook `/api/alarms/webhook` |
 | `nms-db` | 3306 | Backend MySQL |
 | `nms-victoria-metrics` | 8430 | VictoriaMetrics (Prometheus API) |
@@ -173,7 +173,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | global.storageClass | string | `"local-path"` | StorageClass of every PVC. Must be non-empty: omitting storageClassName lets the API inject the default StorageClass, and Helm upgrades then try to unset it (immutable field). |
 | networkPolicy.enabled | bool | `false` | Restrict who reaches the API (nms-api, port 8080) and nms-front (port 80). Needed for backend.config.trustGatewayHeaders. |
 | networkPolicy.extraFrom | list | `[]` | More NetworkPolicyPeers allowed to the API besides nms-front, oauth2-proxy and rbac.coreNamespace: the Grafana that posts alerts to /api/alarms/webhook, the platform monitor that pushes FCAPS. |
-| networkPolicy.frontExtraFrom | list | `[]` | More NetworkPolicyPeers allowed to nms-front besides oauth2-proxy, e.g. a landing page. |
+| networkPolicy.frontExtraFrom | list | `[]` | More NetworkPolicyPeers allowed to nms-front besides oauth2-proxy, e.g. a landing page that probes /healthz. |
 | networkPolicy.oauth2ProxyLabel | string | `"oauth2-proxy"` | app.kubernetes.io/name label of the oauth2-proxy pods in this namespace. |
 | rbac.coreNamespace | string | `"firecell-core"` | Namespace of the 5GC NFs. The chart renders a Role there, so it must exist before install. |
 | rbac.deploymentNames | list | `["oai-amf","oai-smf","oai-upf","oai-udr","oai-udm","oai-pcf","oai-nrf","oai-ausf"]` | Deployments in coreNamespace the lifecycle may restart, stop and start. Empty grants no Deployment access. |
