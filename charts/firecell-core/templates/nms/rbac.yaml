@@ -1,0 +1,57 @@
+{{- if .Values.nms.rbac }}
+{{- $ns := .Values.global.namespace }}
+{{- $nmsNs := include "firecell-5gc.nmsNamespace" . }}
+{{- $deployments := include "firecell-5gc.nmsDeployments" . | fromJsonArray }}
+# The namespace-wide rules (pods, logs, intent ConfigMaps) come from the
+# firecell-nms chart's ClusterRole, granted in this namespace only. Grants
+# nothing until that chart is installed.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-nms
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nms-core-{{ $nmsNs }}
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ $nmsNs }}
+{{- with $deployments }}
+---
+# Restart (rollout restart patches the pod template), stop and start (scale)
+# of the NF Deployments this release renders, by name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $.Release.Name }}-nms-lifecycle
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    resourceNames:
+      {{- toYaml . | nindent 6 }}
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $.Release.Name }}-nms-lifecycle
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $.Release.Name }}-nms-lifecycle
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ $nmsNs }}
+{{- end }}
+{{- end }}
