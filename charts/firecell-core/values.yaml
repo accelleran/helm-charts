@@ -1093,9 +1093,8 @@ coreConfig:
 # --- Network Policies ---
 networkPolicies:
   enabled: true
-  # Whether to allow ingress from firecell-nms namespace (defaults to true when cnAgent/fcAcsAgent enabled)
+  # Whether to allow ingress from nms.namespace (defaults to true when cnAgent/fcAcsAgent enabled)
   allowNmsNamespace: true
-  nmsNamespace: firecell-nms
   allowedNamespaces: []
   # CIDRs allowed to reach core NFs from outside the cluster (RAN, gNB, test hosts)
   # Example: ["10.218.184.0/24"] to allow the Multipass lab subnet
@@ -1107,9 +1106,9 @@ nms:
   # write intent ConfigMaps, and restart, stop and start the NF Deployments
   # (AMF, SMF, PCF, UDR, UDM, NRF, AUSF, UDSF and every UPF instance) here.
   rbac: true
-  # -- Namespace of the firecell-nms release. Empty uses
-  # networkPolicies.nmsNamespace.
-  namespace: ""
+  # -- Namespace of the firecell-nms release: the RBAC subject, and the
+  # namespace networkPolicies.allowNmsNamespace admits.
+  namespace: firecell-nms
 
 # --- Helm Lifecycle Hooks (Standalone Atomic Install / Upgrade / Uninstall) ---
 hooks:

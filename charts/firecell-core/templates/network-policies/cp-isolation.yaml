@@ -24,7 +24,7 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: {{ (.Values.networkPolicies).nmsNamespace | default "firecell-nms" }}
+              kubernetes.io/metadata.name: {{ include "firecell-5gc.nmsNamespace" . }}
     {{- end }}
     {{- range (.Values.networkPolicies).allowedNamespaces }}
     - from:
