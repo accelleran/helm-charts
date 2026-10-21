@@ -73,6 +73,30 @@ spec:
     {{- end }}
   selector:
     app: {{ $appName }}
+{{- if and (not $.Values.upf.hostNetwork) ($.Values.upf.multus.enabled | default false) }}
+---
+# Headless service exposing the UPF pod IP directly so oai-smf can resolve the
+# ephemeral pod IP at startup and bind n3_local_ipv4 to the NRF-discovered node_id (KI-1).
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $appName }}-pod
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+    app: {{ $appName }}
+    tier: core-network
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: pfcp
+      port: 8805
+      targetPort: 8805
+      protocol: UDP
+  selector:
+    app: {{ $appName }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- $pcapSvcEnabled := and .Values.upf.enabled (.Values.upf.packetCapture.enabled | default true) }}

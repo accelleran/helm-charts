@@ -1,7 +1,11 @@
 {{- if and .Values.upf.enabled (eq .Values.upf.type "oai") (not .Values.upf.hostNetwork) (.Values.upf.multus.enabled | default false) }}
 {{- $n3 := .Values.upf.multus.n3 | default dict }}
 {{- $n6 := .Values.upf.multus.n6 | default dict }}
-{{- if and $n3.masterInterface $n3.ip }}
+{{- $n3cni := $n3.cniType | default "macvlan" }}
+{{- $n6cni := $n6.cniType | default "macvlan" }}
+{{- $n3dev := coalesce $n3.device $n3.bridge $n3.masterInterface "" }}
+{{- $n6dev := coalesce $n6.device $n6.bridge $n6.masterInterface "" }}
+{{- if and $n3dev $n3.ip }}
 ---
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
@@ -18,9 +22,19 @@ spec:
     {
       "cniVersion": "0.3.1",
       "name": "{{ $n3.nadName | default "upf-n3-net" }}",
-      "type": "{{ $n3.cniType | default "macvlan" }}",
-      "master": "{{ $n3.masterInterface }}",
+      {{- if eq $n3cni "host-device" }}
+      "type": "host-device",
+      "device": "{{ $n3dev }}",
+      {{- else if eq $n3cni "bridge" }}
+      "type": "bridge",
+      "bridge": "{{ $n3dev }}",
+      "isGateway": false,
+      "ipMasq": false,
+      {{- else }}
+      "type": "{{ $n3cni }}",
+      "master": "{{ $n3dev }}",
       "mode": "{{ $n3.mode | default "bridge" }}",
+      {{- end }}
       "ipam": {
         "type": "static",
         "addresses": [
@@ -31,7 +45,7 @@ spec:
       }
     }
 {{- end }}
-{{- if and $n6.masterInterface $n6.ip }}
+{{- if and $n6dev $n6.ip }}
 ---
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
@@ -48,9 +62,19 @@ spec:
     {
       "cniVersion": "0.3.1",
       "name": "{{ $n6.nadName | default "upf-n6-net" }}",
-      "type": "{{ $n6.cniType | default "macvlan" }}",
-      "master": "{{ $n6.masterInterface }}",
+      {{- if eq $n6cni "host-device" }}
+      "type": "host-device",
+      "device": "{{ $n6dev }}",
+      {{- else if eq $n6cni "bridge" }}
+      "type": "bridge",
+      "bridge": "{{ $n6dev }}",
+      "isGateway": false,
+      "ipMasq": false,
+      {{- else }}
+      "type": "{{ $n6cni }}",
+      "master": "{{ $n6dev }}",
       "mode": "{{ $n6.mode | default "bridge" }}",
+      {{- end }}
       "ipam": {
         "type": "static",
         "addresses": [

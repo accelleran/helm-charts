@@ -1,0 +1,25 @@
+# Option 2: CU with DU on 192.168.30.30, UPF on 192.168.30.11 with physical NICs (host-device) + native XDP
+# Usage:
+#   helm upgrade --install firecell-5gc ./charts/firecell-core -n firecell-core \
+#     -f values/values-5gc-common.yaml \
+#     -f values/values-5gc-option2-phys-native.yaml
+
+upf:
+  xdpAttachMode: native
+  multus:
+    enabled: true
+    enableBpfDatapath: true
+    n3:
+      nadName: upf-n3-phys
+      cniType: host-device
+      masterInterface: enp1s0f0np0
+      ip: 10.3.0.101
+      subnetPrefix: 24
+      arpWarmIPs:
+        - "10.3.0.4"
+    n6:
+      nadName: upf-n6-phys
+      cniType: host-device
+      masterInterface: enp1s0f1np1
+      ip: 10.10.0.101
+      subnetPrefix: 24

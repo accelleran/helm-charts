@@ -110,75 +110,181 @@ Then re-attach the UE (power off/on) and ping the N6 gateway.
 
 - NG Setup, Registration and PDU session all succeed; `uesimtun0` gets its
   PAA IPv4 (e.g. `12.1.1.5`).
-- **Uplink works**: UE → gNB → UPF N3 (`net1` rx increments) → UPF SNATs to
-  the N6 macvlan IP (`10.10.0.101`) → N6 (`net2`) tx increments. Verified on
-  the wire: `10.10.0.101 > 10.10.0.2 ICMP echo request`.
-- **Downlink fails**: the external N6 gateway's reply never gets delivered
-  back through the UPF — `net2` rx stays 0 and `net1` tx (DL GTP) stays 0, so
-  `uesimtun0` rx = 0 (100% ping loss).
+- **UL GTP reaches the UPF N3 counter** (`net1` rx increments) but is **not
+  forwarded**: `net2` (N6) tx stays 0, `net2` rx stays 0, `net1` tx (DL GTP)
+  stays 0, so the UE sees 100% ping loss in both directions.
+- The UPF N3 XDP program is **never invoked** for these frames (its bpftool
+  `run_cnt` does not advance), so no SNAT/redirect happens — see root cause.
 - An **external** gNB on a different host (e.g. Amarisoft at `10.3.0.5`) over
   the same core/UPF works end to end (N6 rx increments, DL GTP emitted).
 
 ### Root cause
 
-This is **not** a UERANSIM config bug, a subscriber-data bug, or SMF/UPF rule
+This is **not** a UERANSIM/gNB bug, a subscriber-data bug, or an SMF/UPF rule
 bug — all control-plane state is correct (N3 F-TEID at `10.3.0.101`, DL FAR
-`GTPU_UDP_IPV4:10.3.0.12`, reverse-SNAT map maps `10.10.0.2 → 12.1.1.5`). The
-blocker is in the **UPF generic-XDP datapath** for a UL frame that ingressed
-from a **same-host interface**:
+`GTPU_UDP_IPV4:<gnb>`, reverse-SNAT map maps `10.10.0.2 → <ue-ip>`).
+**Reproduced with the real Accelleran CU-UP** (not just UERANSIM): moving
+`cu-up` onto the UPF node with its N3 macvlan on the same parent
+(`enp1s0f0np0`) shows the identical signature below, so the gNB
+implementation is irrelevant.
 
-- Captured on the physical N6 parent (`enp1s0f1np1`), an **external** gNB
-  (Amarisoft) produces both directions:
-  `10.10.0.101 > 10.10.0.2 echo request` **and** `10.10.0.2 > 10.10.0.101
-  echo reply` — works end to end.
-- A **colocated** UERANSIM session produces **nothing on the wire**: the UPF
-  `net2` tx *counter* increments (the BPF `XDP_REDIRECT` is counted) but the
-  SNAT'd UL frame **never physically egresses** the NIC, so the gateway never
-  sees it and never replies (host-side capture of `src 10.10.0.2` is empty).
-  There are no `tx_dropped` / `tx_errors` on `net2` — the redirect is
-  silently not transmitted.
+The blocker is in the **ingress path for host-local macvlan traffic under
+generic XDP**. Decisive evidence (bpftool prog `run_cnt`, kernel xdp
+tracepoints, interface counters):
 
-The distinguishing factor is the **ingress** of the uplink: Amarisoft's UL
-arrives on N3 from an external source; UERANSIM's UL arrives on N3 from a
-**same-host macvlan sibling** on the shared parent. Generic XDP
-(`xdpgeneric`, the only mode these macvlan/ipvlan virtual interfaces support)
-does not reliably transmit a redirected frame whose path is entirely
-host-local across the shared parent NIC.
+- `net1` (N3) **rx counter increments** when a colocated gNB sends UL GTP, but
+  the N3 XDP program `xdp_handle_uplink` **`run_cnt` does not change** — i.e.
+  the XDP hook is **never invoked** for those frames. The N6 TC program
+  `tc_redirect_traffic` `run_cnt` likewise does not change, and **all** xdp
+  tracepoints (`xdp_redirect`, `xdp_redirect_err`, `xdp_devmap_xmit`,
+  `xdp_exception`) stay at **0**.
+- Consequently the UPF never SNATs/redirects the packet: `net2` (N6) tx stays
+  **0**, nothing egresses to the DN, the DN never replies, and the downlink
+  never happens.
+- An **external** gNB on a separate host works end to end: its GTP arrives via
+  the **physical NIC**, so `xdp_handle_uplink` runs, SNAT/redirect happen, and
+  both UL and the DL reply are seen on the N6 wire.
+
+Mechanism: **generic XDP** (`xdpgeneric`, the only mode macvlan/ipvlan virtual
+interfaces support) runs at `netif_receive_skb`. When a frame is delivered
+**host-locally between two sibling macvlans on the same parent NIC**
+(colocated gNB macvlan → UPF N3 macvlan), the macvlan RX forwarding path takes
+a shortcut that **bypasses the generic-XDP hook**. The frame bumps the rx
+counter but the XDP program never sees it. Externally-received frames go
+through the normal path and are processed.
 
 Observed secondary effect: repeated UE off/on churn left **stale BPF session
-rows** in the UPF datapath (`m_session_mappi` / `m_rules_match_p`), and two
-sessions' DL FAR gNB addresses appeared **crossed** (UERANSIM's DL pointing at
-the other gNB's IP/TEID). A UPF pod restart flushes this; the underlying
-transmit problem remains.
+rows** (`m_session_mappi` / `m_rules_match_p`) with two sessions' DL FAR gNB
+addresses **crossed**; a UPF restart flushes this but does not change the
+ingress-bypass behavior.
 
 ### What does NOT fix it (all tested)
 
 - Moving UERANSIM off `network_mode: host` into a **dedicated netns**
-  (`setup-uersim-netns.sh`) — still same parent NIC, same datapath behavior.
-- Correcting the N3 neighbor to the UPF `net1` **macvlan MAC** (fixes uplink
-  ingress to the UPF only) and adding a static UPF→gNB neigh on `net1`.
+  (`setup-uersim-netns.sh`) — still same parent NIC, same bypass.
+- Correcting the N3 neighbor to the UPF `net1` **macvlan MAC** and adding a
+  static UPF→gNB neigh on `net1`.
 - Priming a static UPF neigh for the N6 gateway (`10.10.0.2`).
 - Restarting UPF/SMF to clear stale BPF session state.
-- **Switching the N6 NAD from `macvlan` to `ipvlan` L2** and restarting the
-  UPF — N6 came up as ipvlan (generic XDP still attached) but the UL frame
-  still did not egress the wire (N6 rx stayed 0). ipvlan does not change the
-  generic-XDP same-host transmit behavior.
+- Switching the **N6** NAD from `macvlan` to `ipvlan` L2 and restarting the
+  UPF — N6 came up as ipvlan with generic XDP, UL still did not egress.
+- Running the **real Accelleran CU-UP** colocated on the UPF node (N3 macvlan
+  on the same parent) instead of UERANSIM — identical N3 rx↑ / XDP run_cnt
+  flat / N6 tx=0 signature.
 
-### What DOES work (and current status)
+### What DOES work — Option C (Linux bridge) fixes the sibling bypass
 
-Run the UERANSIM gNB on a **separate machine** (external RAN host), exactly as
-`scripts/ueransim-docker/README.md` prescribes (external host → core
-`192.168.30.11`). Its N3/N6 traffic then enters the UPF over the lab switch
-via a distinct physical host, so the uplink is not a host-local XDP redirect —
-this matches the working Amarisoft topology.
+**Confirmed fix for the macvlan-sibling problem: put the UPF N3 (and N6) on a
+Linux bridge instead of macvlan.** A bridge delivers frames to each port via
+the normal `netif_receive_skb` path, so the generic-XDP hook on the UPF's
+`net1` **does fire** for colocated-gNB uplink — the exact thing macvlan
+bypassed.
 
-**True host colocation on `.11` is still UNSOLVED.** macvlan→ipvlan did not
-help; the remaining candidate is **native XDP** (proper redirect semantics)
-instead of generic, but macvlan/ipvlan virtual interfaces generally do not
-support native XDP, which is why the UPF runs generic here. A real fix likely
-requires either a dedicated physical NIC for N3/N6 (so UL ingress and N6
-egress are not host-local on the same parent) or a UPF-datapath change in how
-the UL frame is transmitted after redirect. Left open.
+Lab topology that worked on `.11`:
+
+- `br-n3` (standalone host bridge): UPF `net1` (`10.3.0.101`) and the
+  **colocated cu-up** `net1` (`10.3.0.15`) both attached as **veth** ports via
+  the `bridge` CNI (NADs `upf-n3-bridge`, `gnb-n3-bridge`).
+- `br-n6` (host bridge **enslaving the physical N6 uplink `enp1s0f1np1`** so
+  the real DN gateway `10.10.0.2` is reachable): UPF `net2` (`10.10.0.101`)
+  attached as a veth (NAD `upf-n6-bridge`); host DN IP `10.10.0.3/24` +
+  `192.168.1.203/24` and the UE return routes (`12.1.1.0/24`, `15.1.1.0/24 via
+  10.10.0.2`) moved onto `br-n6`.
+
+Evidence the bypass is gone:
+
+- UPF `net1` is now driver `veth` (not macvlan); `xdp_handle_uplink`
+  `run_cnt` **advances** on colocated-gNB uplink (observed 0→13, 0→7) — under
+  macvlan it stayed flat.
+- End-to-end downlink **works** from the colocated Accelleran cu-up: UE
+  (`12.1.1.2`) ping to the DN gateway `10.10.0.2` returned replies (e.g. 6/6
+  and 9/10) — impossible under macvlan.
+
+Migration gotchas (all hit and solved in the lab):
+
+- A PF cannot be enslaved into a Linux bridge while it still has **macvlan
+  children** or **active SR-IOV VFs** (`RTNETLINK ... Device or resource
+  busy`). Order: move the UPF `net2` onto the bridge NAD first (removes the
+  macvlan child) and set `sriov_numvfs=0` on that PF, *then* enslave the
+  physical uplink.
+- Do the physical-NIC→bridge migration step-ordered (bridge up + `stp_state
+  0`, enslave the live port, then flush/move the L3 addresses and the UE
+  return routes) — a naive `set -e` one-shot leaves the bridge `NO-CARRIER`
+  and strands the DN uplink.
+
+### Remaining blocker — type-independent "UL forwarding stops ~15 s after setup"
+
+**Correction / important finding:** after clean, *timed* testing the remaining
+failure is **NOT** specific to the bridge/veth path or to colocation. It
+reproduces **identically on macvlan with an external CU** (standard Amarisoft
+topology). Earlier "it works" results were all captured in a brief window
+right after session setup; they time out.
+
+Measured behavior (same on macvlan-external and veth-colocated): for the first
+~12–15 s after a fresh PDU session the UL works (`net1` rx↑ **and** `net2`
+tx↑, ping OK); then the UPF **silently stops forwarding UL N3→N6**:
+
+- `net1` (N3) rx **keeps incrementing** (+3 per 3-ping burst) — the gNB is
+  still sending UL GTP and the UPF still receives it.
+- `net2` (N6) tx **freezes** — the decapsulated/SNAT'd UL is no longer emitted.
+- `net1` clsact `tc_redirect_traffic` `dropped` counter climbs 1:1 with the UL
+  packets; `xdp_handle_uplink` returns XDP_PASS (0 redirect events) and the TC
+  program returns `TC_ACT_SHOT`.
+- No SMF/AMF idle/release/modify events at the cutoff; `m_session_pdrs` still
+  holds the UL PDR; interface/ARP maps are correct.
+
+So ~12–15 s into an otherwise-healthy session the UPF datapath stops
+redirecting UL even though the session, PDRs and gNB traffic are all still
+live. This is a **UPF eBPF datapath bug in the `af-qos-upf:bugbot-master-…`
+build** (image `af-qos-upf:bugbot-master-udsf-20261001-nrfbind`), independent
+of N3 interface type (macvlan or veth) and of CU colocation. A UPF restart +
+fresh session restores it for another ~12–15 s. Needs a fix in the UPF BPF
+source (the N3→N6 TC redirect path / whatever time-or-state expiry gates it);
+tracked separately from the networking work.
+
+Note: this is distinct from, and sits *on top of*, the macvlan-sibling bypass
+fixed by Option C. The bridge fix is still correct and necessary for
+colocation; this timeout bug then blocks sustained traffic in **all**
+topologies on this build.
+
+### Option A (SR-IOV VF + native XDP) — viable mechanism, blocked here
+
+SR-IOV was also tried. The decisive mechanism check **passed**: two VFs on the
+same PF (`enp1s0f0v0`↔`enp1s0f0v1`) ping with 0% loss, i.e. the `ice` embedded
+switch (VEB) delivers **same-node VF→VF** frames up the VF driver RX ring —
+where XDP runs — so there is no macvlan-style bypass. **But** on this
+kernel/driver the VF driver `iavf` **does not support native XDP**
+(`libbpf: Underlying driver does not support XDP in native mode`; native XDP
+exists on the `ice` PF, not the VF), and VF + generic XDP broke the N3 L2 path
+even for the external gNB. So Option A needs native-XDP-capable VFs (or PF
+passthrough) plus VF MAC/ARP steering work; left as a future option.
+
+### Also works: external RAN host (unchanged baseline)
+
+Run the gNB on a **separate machine** (external RAN host): its N3/N6 traffic
+enters the UPF over the lab switch via a distinct physical host, so the uplink
+is not a host-local macvlan sibling — this matches the working Amarisoft
+topology and needs no bridge/SR-IOV changes.
+
+**The macvlan-sibling networking problem is SOLVED** (Option C, Linux bridge —
+see above). What remains for a *stable* colocated deployment is the separate
+UPF BPF session-mapping bug under UE churn. The cleanest production options,
+in order: (1) **bridge N3/N6** as above; (2) **native-XDP-capable VFs / PF
+passthrough** (Option A mechanism is sound once the driver supports native
+XDP); (3) keep the **external RAN host** topology.
+
+#### Quick confirmation that the XDP hook is the culprit
+
+```bash
+NS=firecell-core
+PID=$(sudo crictl inspect $(sudo crictl ps --name upf -q | head -1) \
+      | python3 -c 'import json,sys;print(json.load(sys.stdin)["info"]["pid"])')
+UP_ID=$(sudo nsenter -t "$PID" -n ip link show net1 | grep -oE 'prog/xdp id [0-9]+' | grep -oE '[0-9]+')
+sudo sh -c 'echo 1 > /proc/sys/kernel/bpf_stats_enabled'
+sudo nsenter -t "$PID" -n bpftool prog show id "$UP_ID" | grep run_cnt   # before ping
+# ... send UL from the colocated gNB ...
+sudo nsenter -t "$PID" -n bpftool prog show id "$UP_ID" | grep run_cnt   # after: unchanged == hook bypassed
+```
 
 ### Useful diagnostics (per-leg counters settle it fast)
 
@@ -190,7 +296,7 @@ for i in net1 net2; do
        "tx=$(kubectl -n $NS exec $UPF -c upf -- cat /sys/class/net/$i/statistics/tx_packets)"
 done
 # UL ok  => net1 rx↑ then net2 tx↑ ; DL ok => net2 rx↑ then net1 tx↑
-# Colocated-UERANSIM failure signature: net1 rx↑, net2 tx↑, net2 rx=0, net1 tx=0.
+# Colocated-gNB failure signature: net1 rx↑ but XDP run_cnt flat, net2 tx=0, net2 rx=0, net1 tx=0.
 ```
 
 > Note: the UPF eBPF datapath (`tc_redirect_traffic` + generic XDP) bypasses
