@@ -154,10 +154,20 @@ Name of the Secret holding the M-plane SSH password. Pass the DU.
 {{- end }}
 
 {{/*
-Placement key: DUs with the same key land on the same node.
+Node the DU is pinned to (kubernetes.io/hostname in its nodeSelector), or "".
+Only two DUs pinned to the same hostname are known to share a node; any other
+selector may match several nodes, so it gives no key.
 */}}
 {{- define "firecell-du.nodeKey" -}}
-{{- toJson (.Values.nodeSelector | default .Values.global.nodeSelector | default dict) -}}
+{{- $sel := .Values.nodeSelector | default .Values.global.nodeSelector | default dict -}}
+{{- get $sel "kubernetes.io/hostname" | default "" | toString -}}
+{{- end }}
+
+{{/*
+True ("true") unless the value is null or empty. 0 counts as set.
+*/}}
+{{- define "firecell-du.isSet" -}}
+{{- if not (or (kindIs "invalid" .) (eq (toString .) "")) }}true{{ end -}}
 {{- end }}
 
 {{/*
@@ -185,10 +195,12 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- if not (regexMatch "^[a-z]([-a-z0-9]*[a-z0-9])?$" $n) }}
 {{- fail (printf "name %q is not a DNS-1123 label" $n) }}
 {{- end }}
-{{- if not (toString $i.duId) }}{{ fail (printf "%s: duId is required" $n) }}{{ end }}
+{{- if not (include "firecell-du.isSet" $i.duId) }}{{ fail (printf "%s: duId is required" $n) }}{{ end }}
 {{- if not $i.ofh.vfPciAddr }}{{ fail (printf "%s: ofh.vfPciAddr is required" $n) }}{{ end }}
-{{- if or (not $i.cpus.timing) (not $i.cpus.txrx) (not $i.cpus.pool) (not $i.cpus.ealLcores) }}
+{{- range (list $i.cpus.timing $i.cpus.txrx $i.cpus.pool $i.cpus.ealLcores) }}
+{{- if not (include "firecell-du.isSet" .) }}
 {{- fail (printf "%s: cpus.timing, cpus.txrx, cpus.pool and cpus.ealLcores are required" $n) }}
+{{- end }}
 {{- end }}
 {{- if $i.mplane.enabled }}
 {{- if or (not $i.mplane.parentInterface) (not $i.mplane.duCidr) }}
@@ -214,7 +226,8 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- if eq (get $a "firecell.io/du-id") (get $mine "firecell.io/du-id") }}
 {{- fail (printf "%s: duId %s is already used by DU %s" $n (get $mine "firecell.io/du-id") $other) }}
 {{- end }}
-{{- if eq (get $a "firecell.io/node") (get $mine "firecell.io/node") }}
+{{- $node := get $mine "firecell.io/node" }}
+{{- if and $node (eq (get $a "firecell.io/node" | default "") $node) }}
 {{- if eq (get $a "firecell.io/vf") (get $mine "firecell.io/vf") }}
 {{- fail (printf "%s: VF %s is already used by DU %s" $n (get $mine "firecell.io/vf") $other) }}
 {{- end }}
