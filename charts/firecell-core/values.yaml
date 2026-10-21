@@ -1101,6 +1101,16 @@ networkPolicies:
   # Example: ["10.218.184.0/24"] to allow the Multipass lab subnet
   allowedExternalCIDRs: []
 
+# --- NMS access ---
+nms:
+  # -- Let ServiceAccount nms of the firecell-nms release read pods and logs,
+  # write intent ConfigMaps, and restart, stop and start the NF Deployments
+  # (AMF, SMF, PCF, UDR, UDM, NRF, AUSF, UDSF and every UPF instance) here.
+  rbac: true
+  # -- Namespace of the firecell-nms release. Empty uses
+  # networkPolicies.nmsNamespace.
+  namespace: ""
+
 # --- Helm Lifecycle Hooks (Standalone Atomic Install / Upgrade / Uninstall) ---
 hooks:
   enabled: true

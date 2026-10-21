@@ -420,3 +420,34 @@ Init container that waits for MySQL to be ready.
   resources:
     {{- toYaml ($dnnDp.resources | default dict) | nindent 4 }}
 {{- end }}
+
+{{/*
+Namespace of the firecell-nms release: nms.namespace, else
+networkPolicies.nmsNamespace.
+*/}}
+{{- define "firecell-5gc.nmsNamespace" -}}
+{{- .Values.nms.namespace | default .Values.networkPolicies.nmsNamespace | required "nms.namespace or networkPolicies.nmsNamespace is required" -}}
+{{- end }}
+
+{{/*
+The NF Deployments the NMS manages, as a JSON list. Must follow the names and
+conditions of the NF Deployment templates.
+*/}}
+{{- define "firecell-5gc.nmsDeployments" -}}
+{{- $names := list -}}
+{{- range $nf := list "amf" "smf" "pcf" "udr" "udm" "nrf" "ausf" -}}
+{{- if (index $.Values $nf).enabled -}}
+{{- $names = append $names (printf "oai-%s" $nf) -}}
+{{- end -}}
+{{- end -}}
+{{- if .Values.udsf.enabled -}}
+{{- $names = append $names .Values.udsf.serviceName -}}
+{{- end -}}
+{{- if and .Values.upf.enabled (has .Values.upf.type (list "oai" "o5gs")) -}}
+{{- $prefix := ternary "oai-upf" "o5gs-upf" (eq .Values.upf.type "oai") -}}
+{{- range (.Values.upf.instances | default (list (dict))) -}}
+{{- $names = append $names (printf "%s%s" $prefix (.suffix | default "" | toString)) -}}
+{{- end -}}
+{{- end -}}
+{{- toJson $names -}}
+{{- end }}

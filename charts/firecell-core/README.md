@@ -84,6 +84,14 @@ helm upgrade --repo https://accelleran.github.io/helm-charts firecell-core firec
 helm uninstall firecell-core --namespace firecell-core
 ```
 
+### 3.5 NMS Access
+With `nms.rbac` (the default), the chart grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release (namespace `nms.namespace`, default `networkPolicies.nmsNamespace`) what the NMS needs in this namespace:
+
+- RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-core-<nms namespace>`: pod reads and logs, and intent ConfigMaps.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` or `o5gs-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.
+
+The NMS and the core can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
+
 ## 4. Configuration Parameters
 The following table lists the configurable parameters of the Firecell Core chart and their default values.
 
@@ -359,6 +367,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | networkPolicies.allowedNamespaces | list | `[]` |  |
 | networkPolicies.enabled | bool | `true` |  |
 | networkPolicies.nmsNamespace | string | `"firecell-nms"` |  |
+| nms.namespace | string | `""` | Namespace of the firecell-nms release. Empty uses networkPolicies.nmsNamespace. |
+| nms.rbac | bool | `true` | Let ServiceAccount nms of the firecell-nms release read pods and logs, write intent ConfigMaps, and restart, stop and start the NF Deployments (AMF, SMF, PCF, UDR, UDM, NRF, AUSF, UDSF and every UPF instance) here. |
 | nrf.command[0] | string | `"/openair-nrf/bin/oai_nrf"` |  |
 | nrf.command[1] | string | `"-c"` |  |
 | nrf.command[2] | string | `"/openair-nrf/etc/config.yaml"` |  |
