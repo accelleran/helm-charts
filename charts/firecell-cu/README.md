@@ -27,6 +27,14 @@ helm install du-2   charts/firecell-du -n oran -f common.yaml -f du-2.yaml
 `cu-cp.<namespace>.svc.cluster.local` without further configuration.
 Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig`.
 
+### 2.1 NMS Access
+With `nms.rbac` (the default), the release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs here:
+
+- RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: pod reads.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for `cu-cp` and `cu-up`, so the NMS can restart, stop and start them.
+
+The NMS and the CU can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
+
 ## 3. Node prerequisites
 - Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
 - SCTP enabled in the cluster (F1-C, E1, N2).
@@ -84,6 +92,8 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 | gnb.plmn | string | `"00101"` | Serving PLMN (MCC+MNC). |
 | gnb.slices | list | `[{"schedCfg":{"max_prb_policy_ratio":100,"min_prb_policy_ratio":15,"priority":10},"sd":1,"sst":1}]` | Slices. sst/sd go to the CU-CP TAI slice list (schedCfg is only read by firecell-du). |
 | gnb.tac | int | `1` | Tracking area code. |
+| nms.namespace | string | `"firecell-nms"` | Namespace of the firecell-nms release. |
+| nms.rbac | bool | `true` | Let the NMS read pods here, and restart, stop and start the cu-cp and cu-up Deployments. |
 
 ## 5. Maintenance & Troubleshooting
 - If CU-CP and CU-UP restart together, CU-UP can time out on its first E1 connect and restart once. That restart is expected.

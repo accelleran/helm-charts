@@ -163,3 +163,11 @@ cuUp:
       enabled: true
       bind_addr: 0.0.0.0
       port: 9094
+
+# NMS access: ServiceAccount nms of the firecell-nms release.
+nms:
+  # -- Let the NMS read pods here, and restart, stop and start the cu-cp and
+  # cu-up Deployments.
+  rbac: true
+  # -- Namespace of the firecell-nms release.
+  namespace: firecell-nms
