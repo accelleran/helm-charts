@@ -1,4 +1,4 @@
-# Option 1: Colocated CU-UP on 192.168.30.11, UPF on 192.168.30.11 with Linux bridges (br-n3/br-n6) + generic XDP
+# Option 1: Colocated CU (cu-cp + cu-up) on 192.168.30.11, UPF on 192.168.30.11 with Linux bridges (br-n3/br-n6) + generic XDP
 # Usage:
 #   helm upgrade --install firecell-5gc ./charts/firecell-core -n firecell-core \
 #     -f values/values-5gc-common.yaml \

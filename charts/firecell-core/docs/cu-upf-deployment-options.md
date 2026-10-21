@@ -12,8 +12,8 @@ This document defines **two supported deployment options**. Same CN build; only 
 
 | Goal | Meaning |
 |------|---------|
-| Option 1 | CU (at least CU-UP) **colocated** with UPF on the CN host → user plane must hit the eBPF hook |
-| Option 2 | CU **with DU** on the RAN host; CN/UPF on a separate machine → production-like path |
+| Option 1 | CU (`cu-cp` + `cu-up`) **colocated** with UPF on the CN host → user plane must hit the eBPF hook |
+| Option 2 | CU (`cu-cp` + `cu-up`) **with DU** on the RAN host; CN/UPF on a separate machine → production-like path |
 | Stability | Sustained UL/DL (≫15 s), not only a short post-attach window |
 | No code fork | One UPF image; topology selects wiring + `UPF_XDP_ATTACH_MODE` |
 
@@ -23,23 +23,24 @@ This document defines **two supported deployment options**. Same CN build; only 
 
 | | Option 1 — CU near UPF | Option 2 — CU with DU |
 |--|------------------------|------------------------|
-| **CU / DU** | CU-UP (and often CU-CP) on **CN host** | CU-CP, CU-UP, DU on **RAN host** |
-| **UPF host** | Same as CU | Separate from RAN |
+| **CU / DU** | `cu-cp` and `cu-up` on **CN host** (`du` on RAN host) | `cu-cp`, `cu-up`, `du` on **RAN host** |
+| **UPF host** | Same as CU (`192.168.30.11`) | Separate from RAN (`192.168.30.11`) |
 | **N3/N6 wiring** | Linux **bridge + veth** (or equivalent) into UPF netns | **Physical NICs** (or `hostNetwork` bind to those NICs) |
 | **Multus macvlan** | **Do not use** for colocated N3 (sibling bypass) | **Not required / not used** |
 | **XDP mode** | **`generic`** | **`native`** |
 | **Why** | Bridge delivers frames via `netif_receive_skb` so generic XDP runs | Frames arrive on the wire; native XDP on the PF is the intended path |
 
 ```text
-Option 1 (colocated)
-  [CN host]
-    CU-UP ──veth──► br-n3 ──veth──► UPF net1 (N3)   XDP=generic
-    DN   ◄──────── br-n6 ──veth──► UPF net2 (N6)
+Option 1 (colocated CU on CN host)
+  [RAN host .30]          [CN host .11]
+    DU ────── F1 ───────► CU-CP (hostNetwork .11)
+       ────── F1-U ─────► CU-UP ──veth──► br-n3 ──veth──► UPF net1 (N3)   XDP=generic
+                                            DN   ◄──────── br-n6 ──veth──► UPF net2 (N6)
 
-Option 2 (CU with DU)
-  [RAN host]              [switch]              [CN host]
-    DU ── F1 ── CU-UP ════════════ N3 GTP ═══════► UPF on phys NIC (N3)  XDP=native
-                                      N6 ◄════════ UPF on phys NIC (N6) ──► DN
+Option 2 (CU with DU on RAN host)
+  [RAN host .30]          [switch]              [CN host .11]
+    DU ── F1 ── CU-CP/UP ════════ N3 GTP ═══════► UPF on phys NIC (N3)  XDP=native
+                                    N6 ◄════════ UPF on phys NIC (N6) ──► DN
 ```
 
 ---
@@ -144,7 +145,7 @@ Use the **same** traffic checks for both options; only topology/mode preconditio
 
 | ID | Option 1 | Option 2 |
 |----|----------|----------|
-| P1 | CU-UP on CN host; UPF on bridge/veth | CU-UP (+ DU) on RAN host; UPF on **physical** N3/N6 |
+| P1 | `cu-cp` + `cu-up` on CN host; UPF on bridge/veth | `cu-cp` + `cu-up` (+ `du`) on RAN host; UPF on **physical** N3/N6 |
 | P2 | `UPF_XDP_ATTACH_MODE=generic`; `xdpgeneric` on UPF N3 | `UPF_XDP_ATTACH_MODE=native`; **native** XDP on phys N3 |
 | P3 | No macvlan siblings on N3 parent for CU↔UPF | **No** macvlan, **no** br-n3/br-n6 required |
 
@@ -193,13 +194,13 @@ Captured during playbook authoring (adjust as lab drifts):
 | T6 (A5–A6) | `m_qos_enabling` **0 entries** (`keep XDP redirect`); static N9 `tests/n9/tv_8390_skeleton.sh` **25/25 PASS** |
 | Verdict | **PASS** — meets C1–C4 and A1–A6 |
 
-### 2026-10-20 — Option 1 target architecture (colocated CU-UP on CN + `br-n3` / `br-n6` + `xdpgeneric`)
+### 2026-10-20 / 2026-10-21 — Option 1 target architecture (colocated `cu-cp` + `cu-up` on CN + `br-n3` / `br-n6` + `xdpgeneric`)
 
 | Item | Result |
 |------|--------|
-| Placement & Wiring (B1–B2) | `cu-up` scheduled on `core-firecell-30-11` attached to `br-n3` via `gnb-n3-bridge` (`10.3.0.5/24`); UPF `net1` on `upf-n3-bridge` (`br-n3`, `10.3.0.101/24`) and `net2` on `upf-n6-bridge` (`br-n6` enslaving `enp1s0f1np1`, `10.10.0.101/24`); `UPF_XDP_ATTACH_MODE=generic` (`mode=xdpgeneric`, `kind=veth`) |
-| Operational note | Set `nmcli dev set enp1s0f0np0 managed no` and `nmcli dev set enp1s0f1np1 managed no` on `.11` so NetworkManager DHCP timeout does not detach `enp1s0f1np1` from `br-n6` after releasing `host-device` PFs |
-| T1–T2 (A1–A2) | UE2 registered (`12.1.1.2`); ping `10.10.0.2` **32/32 over 64s** (`SUMMARY_opt1_colocated_bridge ok=32 fail=0 first_fail_at=none`) |
+| Placement & Wiring (B1–B2) | Both `cu-cp` (`hostNetwork: true`, `bind_addrs: ${POD_IP}` = `192.168.30.11`) and `cu-up` (attached to `br-n3` via `gnb-n3-bridge`, `10.3.0.5/24`) scheduled on `core-firecell-30-11`; UPF `net1` on `upf-n3-bridge` (`br-n3`, `10.3.0.101/24`) and `net2` on `upf-n6-bridge` (`br-n6` enslaving `enp1s0f1np1`, `10.10.0.101/24`); `UPF_XDP_ATTACH_MODE=generic` (`mode=xdpgeneric`, `kind=veth`) |
+| Operational note | Persist `/etc/NetworkManager/conf.d/99-unmanaged-upf.conf` (`unmanaged-devices=interface-name:enp1s0f0np0;interface-name:enp1s0f1np1;interface-name:br-n3;interface-name:br-n6`) on `.11` so NetworkManager DHCP timeout does not detach `enp1s0f1np1` from `br-n6` after releasing `host-device` PFs |
+| T1–T2 (A1–A2) | UE2 registered (`12.1.1.2`); ping `10.10.0.2` **32/32 over 64s** (`SUMMARY_opt1_colocated_bridge ok=32 fail=0`) and **5/5** with both `cu-cp` + `cu-up` colocated (`SUMMARY_opt1_full_cu_colocated ok=5 fail=0`) |
 | T3–T5 (A3–A4) | UL: `net1` rx `45→81` (+36), `net2` tx `24→59` (+35), `xdp_handle_uplink` `run_cnt` `40→76` (+36), `m_dp_iface_coun` N6 TX `4→36` (+32). DL: `net2` rx `55→131` (+76), `net1` tx `25→59` (+34), `xdp_handle_shaping` `run_cnt` `46→122` (+76), `m_dp_iface_coun` N3 TX `4→36` (+32) |
 | T6 (A5) | `m_qos_enabling` **0 entries** (`keep XDP redirect (no m_qos_enabling)`) |
 | Verdict | **PASS** — meets B1–B3 and A1–A5 |
@@ -213,4 +214,5 @@ Captured during playbook authoring (adjust as lab drifts):
 | 2026-10-20 | Initial architecture, requirements, assumptions, flaws; dual-option test plan |
 | 2026-10-20 | Option 2 placement sustained UL PASS (macvlan+generic drift noted as F7) |
 | 2026-10-20 | Option 1 colocated bridge initial attempt (`net2` left on macvlan): UL N6 tx↑ but DL 0% |
-| 2026-10-20 | Full PASS on both target architectures: Option 2 (`upf-n3-phys`/`upf-n6-phys` + `native` XDP, 32/32 over 64s) and Option 1 (colocated `cu-up` + `upf-n3-bridge`/`upf-n6-bridge` + `generic` XDP, 32/32 over 64s) |
+| 2026-10-20 | Full PASS on both target architectures: Option 2 (`upf-n3-phys`/`upf-n6-phys` + `native` XDP, 32/32 over 64s) and Option 1 (`upf-n3-bridge`/`upf-n6-bridge` + `generic` XDP, 32/32 over 64s) |
+| 2026-10-21 | Updated `cu-cp` startup script to dynamically bind `status.podIP` (`192.168.30.11` on `.11` / `192.168.30.30` on `.30`) so both `cu-cp` and `cu-up` colocate on `core-firecell-30-11` in Option 1 (`SUMMARY_opt1_full_cu_colocated ok=5 fail=0`) |
