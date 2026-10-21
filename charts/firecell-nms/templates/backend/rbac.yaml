@@ -1,4 +1,3 @@
-{{- $rbac := .Values.rbac }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -9,13 +8,13 @@ metadata:
     app.kubernetes.io/component: backend
 automountServiceAccountToken: true
 ---
-# In coreNamespace, which must exist before install. Binds the ServiceAccount
-# from the release namespace.
+# Grants nothing until the core chart binds it in coreNamespace, together
+# with its own Role on its Deployments (see the README). The name carries the
+# release namespace, which the binding charts already need for the subject.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: nms-runtime
-  namespace: {{ $rbac.coreNamespace }}
+  name: nms-core-{{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
@@ -29,45 +28,19 @@ rules:
   - apiGroups: [""]
     resources: ["pods/log"]
     verbs: ["get"]
-  {{- with $rbac.deploymentNames }}
-  # Lifecycle operations (restart, stop, start) on these Deployments only.
-  - apiGroups: ["apps"]
-    resources: ["deployments", "deployments/scale"]
-    resourceNames:
-      {{- toYaml . | nindent 6 }}
-    verbs: ["get", "patch", "update"]
-  {{- end }}
   # Intent ConfigMap names come from the runtime inventory. Kubernetes does
   # not permit resourceNames on create, so access stays namespace-scoped.
   - apiGroups: [""]
     resources: ["configmaps"]
     verbs: ["get", "create", "update", "patch"]
 ---
+# Bound in ranNamespace by every CU-CP, CU-UP and DU chart, each with its own
+# Role on its Deployments. Pods are read so the lifecycle can follow the
+# rollout.
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRole
 metadata:
-  name: nms-runtime
-  namespace: {{ $rbac.coreNamespace }}
-  labels:
-    {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: backend
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: nms-runtime
-subjects:
-  - kind: ServiceAccount
-    name: nms
-    namespace: {{ .Release.Namespace }}
-{{- if and $rbac.ranNamespace $rbac.ranDeploymentNames }}
----
-# RAN Deployments (the ocudu DU) outside coreNamespace. Pods are read so the
-# lifecycle can follow the rollout.
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: nms-ran
-  namespace: {{ $rbac.ranNamespace }}
+  name: nms-ran-{{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
@@ -75,26 +48,3 @@ rules:
   - apiGroups: [""]
     resources: ["pods", "pods/status"]
     verbs: ["get", "list", "watch"]
-  - apiGroups: ["apps"]
-    resources: ["deployments", "deployments/scale"]
-    resourceNames:
-      {{- toYaml $rbac.ranDeploymentNames | nindent 6 }}
-    verbs: ["get", "patch", "update"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: nms-ran
-  namespace: {{ $rbac.ranNamespace }}
-  labels:
-    {{- include "firecell-nms.labels" . | nindent 4 }}
-    app.kubernetes.io/component: backend
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: nms-ran
-subjects:
-  - kind: ServiceAccount
-    name: nms
-    namespace: {{ .Release.Namespace }}
-{{- end }}

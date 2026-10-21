@@ -32,7 +32,7 @@ Names are fixed, not derived from the release name, so other releases can rely o
 
 ## 2. Before Installation
 
-- Create the release namespace and `rbac.coreNamespace` (default `firecell-core`), plus `rbac.ranNamespace` when set. The chart renders Roles there and creates no namespace.
+- Create the release namespace. The chart creates no namespace and renders nothing in `rbac.coreNamespace` (default `firecell-core`) or `rbac.ranNamespace`, so they need not exist yet: the charts deployed into them grant the NMS its access (see [Access to the Core and RAN](#21-access-to-the-core-and-ran)).
 - Create the Secret named by `backend.existingSecret` (default `nms-secrets`) in the release namespace. The chart never creates it and has no default credentials.
 
 | Key | Content |
@@ -64,6 +64,58 @@ What the Secret changes after the first install:
 - A changed Secret rolls no pod. Restart them yourself (`kubectl rollout restart deployment/nms-api deployment/nms-worker statefulset/nms-control-plane`).
 - MySQL applies `database-root-password`, the user and `database-password` on its first start only, on an empty `nms-db-data`. To change a password later, change it in MySQL first, then in the Secret.
 - Bootstrap never rotates anything: it creates the OP only when the network has none, and the admin only when no user has that login. A new `op` is ignored; a new `default-admin-user` adds a second admin.
+
+### 2.1 Access to the Core and RAN
+
+The backend reads pods, writes intent ConfigMaps, and restarts, stops and starts Deployments in the core and RAN namespaces. The chart ships the rules that apply to a whole namespace as two ClusterRoles, which grant nothing until bound. Each chart deployed into those namespaces binds one of them and grants its own Deployments by name.
+
+| ClusterRole | Rules | Bound by |
+|-------------|-------|----------|
+| `nms-core-<namespace>` | pods and `pods/status`: get, list, watch; `pods/log`: get; ConfigMaps: get, create, update, patch | the core chart, in `rbac.coreNamespace` |
+| `nms-ran-<namespace>` | pods and `pods/status`: get, list, watch | every CU-CP, CU-UP and DU chart, in `rbac.ranNamespace` |
+
+`<namespace>` is the NMS release namespace. Each binding chart renders the following, named after its release, since several CU-CPs, CU-UPs and DUs share the RAN namespace (`<nms-namespace>`, `<release>` and `<deployment>` are placeholders):
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <release>-nms
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nms-ran-<nms-namespace>   # nms-core-<nms-namespace> in the core chart
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: <nms-namespace>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: <release>-nms-lifecycle
+rules:
+  # rollout restart patches the pod template; stop and start scale.
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    resourceNames: [<deployment>]   # every Deployment the chart renders
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <release>-nms-lifecycle
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: <release>-nms-lifecycle
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: <nms-namespace>
+```
+
+Until a chart carries these, the NMS sees no pods in that namespace (element readiness is unknown), and its CM writes, support bundles and lifecycle operations there fail with Forbidden.
 
 ## 3. Installation
 
@@ -175,10 +227,8 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | networkPolicy.extraFrom | list | `[]` | More NetworkPolicyPeers allowed to the API besides nms-front, oauth2-proxy and rbac.coreNamespace: the Grafana that posts alerts to /api/alarms/webhook, the platform monitor that pushes FCAPS. |
 | networkPolicy.frontExtraFrom | list | `[]` | More NetworkPolicyPeers allowed to nms-front besides oauth2-proxy, e.g. a landing page that probes /healthz. |
 | networkPolicy.oauth2ProxyLabel | string | `"oauth2-proxy"` | app.kubernetes.io/name label of the oauth2-proxy pods in this namespace. |
-| rbac.coreNamespace | string | `"firecell-core"` | Namespace of the 5GC NFs. The chart renders a Role there, so it must exist before install. |
-| rbac.deploymentNames | list | `["oai-amf","oai-smf","oai-upf","oai-udr","oai-udm","oai-pcf","oai-nrf","oai-ausf"]` | Deployments in coreNamespace the lifecycle may restart, stop and start. Empty grants no Deployment access. |
-| rbac.ranDeploymentNames | list | `[]` | Deployments in ranNamespace the lifecycle may roll (only when ranNamespace is set), e.g. the ocudu DU `du-1`. |
-| rbac.ranNamespace | string | `""` | Namespace of the RAN Deployments (the ocudu DU) when they do not run in coreNamespace. When set, RAN-domain elements are rolled there and a second Role over rbac.ranDeploymentNames is rendered. |
+| rbac.coreNamespace | string | `"firecell-core"` | Namespace of the 5GC NFs: CM intent ConfigMaps, the default southbound URLs and the NetworkPolicy. The chart renders nothing there, so it need not exist yet; the core chart grants the access (see the README). |
+| rbac.ranNamespace | string | `""` | Namespace of all the CU-CPs, CU-UPs and DUs when they do not run in coreNamespace. When set, RAN-domain elements are rolled there. The chart renders nothing there; the RAN charts grant the access. |
 | victoriaMetrics.image | string | `"docker.io/victoriametrics/victoria-metrics:v1.93.4"` | VictoriaMetrics image, as a full reference. |
 | victoriaMetrics.maxConcurrentInserts | int | `16` |  |
 | victoriaMetrics.maxLabelsPerTimeseries | int | `50` |  |

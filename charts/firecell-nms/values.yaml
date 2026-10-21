@@ -138,29 +138,16 @@ backend:
   # e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL.
   extraEnv: []
 
-# --- Backend RBAC in the 5GC and RAN namespaces ---
+# --- The 5GC and RAN namespaces the backend manages ---
 rbac:
-  # -- Namespace of the 5GC NFs. The chart renders a Role there, so it must
-  # exist before install.
+  # -- Namespace of the 5GC NFs: CM intent ConfigMaps, the default southbound
+  # URLs and the NetworkPolicy. The chart renders nothing there, so it need
+  # not exist yet; the core chart grants the access (see the README).
   coreNamespace: firecell-core
-  # -- Namespace of the RAN Deployments (the ocudu DU) when they do not run in
-  # coreNamespace. When set, RAN-domain elements are rolled there and a
-  # second Role over rbac.ranDeploymentNames is rendered.
+  # -- Namespace of all the CU-CPs, CU-UPs and DUs when they do not run in
+  # coreNamespace. When set, RAN-domain elements are rolled there. The chart
+  # renders nothing there; the RAN charts grant the access.
   ranNamespace: ""
-  # -- Deployments in coreNamespace the lifecycle may restart, stop and
-  # start. Empty grants no Deployment access.
-  deploymentNames:
-    - oai-amf
-    - oai-smf
-    - oai-upf
-    - oai-udr
-    - oai-udm
-    - oai-pcf
-    - oai-nrf
-    - oai-ausf
-  # -- Deployments in ranNamespace the lifecycle may roll (only when
-  # ranNamespace is set), e.g. the ocudu DU `du-1`.
-  ranDeploymentNames: []
 
 # --- NetworkPolicies for the gateway identity headers ---
 networkPolicy:
