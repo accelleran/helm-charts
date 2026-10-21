@@ -40,6 +40,11 @@ Deployments in the namespace and refuses a DU that reuses a gNB-DU ID, or that s
 a CPU or a DHCP-served M-plane NIC with another DU on the same node. `helm template` cannot
 see the cluster and skips these checks.
 
+"Same node" means both DUs pin `kubernetes.io/hostname` to the same value in their
+`nodeSelector` (or `global.nodeSelector`). Any other selector can match several nodes, so
+those DUs are not compared for VF, CPU or NIC clashes. A DPDK DU with pinned CPUs should be
+pinned to a host anyway.
+
 ## 3. Node prerequisites
 - VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).
 - 2 MiB hugepages: at least `hugepages2Mi` per DU on the node (`vm.nr_hugepages`); restart kubelet after changing them.
