@@ -118,6 +118,19 @@ spec:
               else
                 cp {{ .Values.smf.configMountPath }} /tmp/smf-config.yaml
               fi
+              # Watchdog: detect if oai-upf pod restarts and receives a new pod IP.
+              # When UPF pod IP changes, restart SMF so it re-resolves and injects the new IP.
+              (
+                OLD_IP="${UPF_POD_IP}"
+                while true; do
+                  sleep 5
+                  CUR_IP=$(getent hosts oai-upf-pod.{{ .Values.global.namespace }}.svc.cluster.local 2>/dev/null | awk '{print $1; exit}')
+                  if [ -n "${CUR_IP}" ] && [ "${CUR_IP}" != "${OLD_IP}" ]; then
+                    echo "[smf-watchdog] oai-upf pod IP changed (${OLD_IP} -> ${CUR_IP}), restarting SMF to rebind n3_local_ipv4"
+                    kill -TERM 1 2>/dev/null || pkill -TERM oai_smf 2>/dev/null || exit 1
+                  fi
+                done
+              ) &
               exec /openair-smf/bin/oai_smf -c /tmp/smf-config.yaml -o
           {{- else }}
           command:
