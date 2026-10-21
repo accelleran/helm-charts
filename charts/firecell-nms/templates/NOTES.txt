@@ -8,7 +8,10 @@ Secret {{ .Values.backend.existingSecret }} must exist in that namespace with ke
   database-root-password, database-password, database-url, network-name, op,
   api-tokens-json, default-admin-user, default-admin-password
 A changed Secret rolls no pod: restart them yourself.
-Namespace {{ .Values.rbac.coreNamespace }}{{ with .Values.rbac.ranNamespace }} and {{ . }}{{ end }} must exist (the chart renders Roles there).
+The core chart (in {{ .Values.rbac.coreNamespace }}) and the CU-CP, CU-UP and DU charts
+must bind ServiceAccount nms to ClusterRole nms-core-{{ .Release.Namespace }} or
+nms-ran-{{ .Release.Namespace }} and grant their own Deployments (see the README).
+Until they do, the backend cannot read their pods or roll them.
 
 The nms-control-plane pod migrates the schema and bootstraps the
 catalogue in its init containers; the API and worker pods wait for it.
