@@ -422,11 +422,10 @@ Init container that waits for MySQL to be ready.
 {{- end }}
 
 {{/*
-Namespace of the firecell-nms release: nms.namespace, else
-networkPolicies.nmsNamespace.
+Namespace of the firecell-nms release.
 */}}
 {{- define "firecell-5gc.nmsNamespace" -}}
-{{- .Values.nms.namespace | default .Values.networkPolicies.nmsNamespace | required "nms.namespace or networkPolicies.nmsNamespace is required" -}}
+{{- required "nms.namespace is required" (.Values.nms).namespace -}}
 {{- end }}
 
 {{/*
