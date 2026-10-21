@@ -591,19 +591,27 @@ upf:
   multus:
     enabled: false
     # Opt-in XDP for Multus only (ignored when hostNetwork=true). Default false.
+    # Set true when using cniType: host-device (Option 2, xdpAttachMode: native)
+    # or cniType: bridge on both N3 and N6 (Option 1, xdpAttachMode: generic).
     enableBpfDatapath: false
     n3:
       nadName: upf-n3-net
+      # Supported cniType values:
+      #   - "host-device": moves physical NIC (masterInterface/device) into UPF pod netns (Option 2, native XDP)
+      #   - "bridge":      attaches veth to host Linux bridge (masterInterface/bridge) (Option 1, generic XDP)
+      #   - "macvlan" / "ipvlan": attaches sub-interface on masterInterface
       cniType: macvlan
       mode: bridge
-      masterInterface: ""       # site: physical parent bridged toward CU-UP N3
+      masterInterface: ""       # site: physical NIC (host-device/macvlan) or bridge name (bridge CNI)
       ip: ""                    # e.g. 10.3.0.101
       subnetPrefix: 24
+      # Optional list of N3 peer IPs (e.g. ["10.3.0.4", "10.3.0.5"]) to ping from net1 in multus-datapath-init
+      arpWarmIPs: []
     n6:
       nadName: upf-n6-net
       cniType: macvlan
       mode: bridge
-      masterInterface: ""       # site: physical parent toward DN
+      masterInterface: ""       # site: physical NIC (host-device/macvlan) or bridge name (bridge CNI)
       ip: ""                    # e.g. 10.10.0.101
       subnetPrefix: 24
   # CP/UP interface separation
