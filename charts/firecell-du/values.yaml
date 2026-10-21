@@ -268,3 +268,11 @@ preflight:
   # -- Image for the check (needs bash). Empty uses the DU image.
   image: ""
   timeoutSeconds: 120
+
+# NMS access: ServiceAccount nms of the firecell-nms release.
+nms:
+  # -- Let the NMS read pods here, and restart, stop and start this DU's
+  # Deployment.
+  rbac: true
+  # -- Namespace of the firecell-nms release.
+  namespace: firecell-nms

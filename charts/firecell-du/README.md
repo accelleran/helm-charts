@@ -45,6 +45,14 @@ see the cluster and skips these checks.
 those DUs are not compared for VF, CPU or NIC clashes. A DPDK DU with pinned CPUs should be
 pinned to a host anyway.
 
+### 2.2 NMS Access
+With `nms.rbac` (the default), each release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs for its DU:
+
+- RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: pod reads.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for Deployment `<name>` only, so the NMS can restart, stop and start this DU.
+
+Every DU release adds its own pair, so the NMS can manage all the DUs in the namespace. The NMS and the DUs can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
+
 ## 3. Node prerequisites
 - VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).
 - 2 MiB hugepages: at least `hugepages2Mi` per DU on the node (`vm.nr_hugepages`); restart kubelet after changing them.
@@ -107,6 +115,8 @@ pinned to a host anyway.
 | mplane.sshUser | string | `"oranbenetel"` |  |
 | mplane.txArrayGainDb | float | `27` |  |
 | name | string | `""` | DU name: Deployment, Service (O1), ConfigMaps, DPDK file prefix. Empty uses the release name. |
+| nms.namespace | string | `"firecell-nms"` | Namespace of the firecell-nms release. |
+| nms.rbac | bool | `true` | Let the NMS read pods here, and restart, stop and start this DU's Deployment. |
 | nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
 | o1.enabled | bool | `false` | Run netopeer2/sysrepo (O1 NETCONF server for the NMS) in the DU container. |
 | o1.port | int | `830` |  |
