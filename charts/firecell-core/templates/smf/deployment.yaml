@@ -20,8 +20,9 @@ spec:
     matchLabels:
       app: oai-smf
   strategy:
-    {{- if $smfHostNet }}
-    # hostNetwork binds 80/8080/8805/9090 on the node — RollingUpdate cannot schedule a second pod.
+    {{- if or $smfHostNet .Values.udsf.enabled (eq (.Values.coreConfig.smf.enableUdsf | default "no" | toString | lower) "yes") }}
+    # hostNetwork binds 80/8080/8805/9090 on the node; UDSF holds an exclusive writer lease per SMF.
+    # RollingUpdate cannot schedule a second pod or deadlocks waiting for the old pod's UDSF lease.
     type: Recreate
     {{- else }}
     type: RollingUpdate
@@ -87,8 +88,41 @@ spec:
         - name: smf
           image: {{ .Values.smf.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.smf.image "tag" .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          {{- if and (not (.Values.upf.hostNetwork | default false)) ((.Values.upf.multus).enabled | default false) .Values.upf.n3IP }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              UPF_POD_IP=""
+              for _i in $(seq 1 30); do
+                UPF_POD_IP=$(getent hosts oai-upf-pod.{{ .Values.global.namespace }}.svc.cluster.local | awk '{print $1; exit}')
+                [ -n "${UPF_POD_IP}" ] && break
+                sleep 1
+              done
+              if [ -n "${UPF_POD_IP}" ]; then
+                echo "[smf-init] resolved oai-upf pod IP ${UPF_POD_IP}; injecting n3_local_ipv4={{ .Values.upf.n3IP }} entry (KI-1)"
+                awk -v ip="${UPF_POD_IP}" -v n3="{{ .Values.upf.n3IP }}" '
+                  { print }
+                  /n3_local_ipv4:/ && !done {
+                    print "    - host: " ip
+                    print "      port: 8805"
+                    print "      config:"
+                    print "        enable_upf_wo_nf_discovery: yes"
+                    print "        enable_usage_reporting: no"
+                    print "        enable_dl_pdr_in_pfcp_session_establishment: yes"
+                    print "        n3_local_ipv4: " n3
+                    done = 1
+                  }
+                ' {{ .Values.smf.configMountPath }} > /tmp/smf-config.yaml
+              else
+                cp {{ .Values.smf.configMountPath }} /tmp/smf-config.yaml
+              fi
+              exec /openair-smf/bin/oai_smf -c /tmp/smf-config.yaml -o
+          {{- else }}
           command:
             {{- toYaml .Values.smf.command | nindent 12 }}
+          {{- end }}
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}

@@ -73,10 +73,9 @@ spec:
   selector:
     matchLabels:
       app: {{ $appName }}
-  {{- if $.Values.upf.hostNetwork }}
-  # Per-Deployment Recreate (oai-upf-a / oai-upf-b are independent). Only this
-  # instance's pod stops before the replacement starts — other UPF Deployments
-  # on the same or another node are unaffected.
+  {{- if or $.Values.upf.hostNetwork $upfMultus }}
+  # Per-Deployment Recreate: required for hostNetwork (host ports/netdevs) and
+  # Multus (host-device PFs and static IPAM must be released before replacement starts).
   strategy:
     type: Recreate
   {{- else }}
@@ -142,6 +141,44 @@ spec:
       {{- end }}
       initContainers:
         {{- include "firecell-5gc.waitForNrf" $ | nindent 8 }}
+        {{- if $upfMultus }}
+        {{- $n6gwMultus := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
+        {{- $n3ArpList := $upfMultusN3.arpWarmIPs | default list }}
+        - name: multus-datapath-init
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN, NET_RAW]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              N3_DEV="{{ $n3if }}"
+              N6_DEV="{{ $n6if }}"
+              N6_GW="{{ $n6gwMultus }}"
+              echo "[multus-datapath-init] {{ $appName }}: preparing ${N3_DEV} and ${N6_DEV}"
+              for _d in "${N3_DEV}" "${N6_DEV}"; do
+                [ -n "${_d}" ] || continue
+                ip link show dev "${_d}" >/dev/null 2>&1 || continue
+                ip link set dev "${_d}" up || true
+                ip link set dev "${_d}" xdp off 2>/dev/null || true
+                tc filter del dev "${_d}" ingress 2>/dev/null || true
+                tc qdisc del dev "${_d}" clsact 2>/dev/null || true
+                tc qdisc del dev "${_d}" root 2>/dev/null || true
+              done
+              if [ -n "${N6_GW}" ]; then
+                echo "[multus-datapath-init] warming N6 gateway ARP ${N6_GW} on ${N6_DEV}"
+                ping -c 2 -W 1 -I "${N6_DEV}" "${N6_GW}" >/dev/null 2>&1 || true
+              fi
+              {{- range $peerIp := $n3ArpList }}
+              echo "[multus-datapath-init] warming N3 peer ARP {{ $peerIp }} on ${N3_DEV}"
+              ping -c 1 -W 1 -I "${N3_DEV}" "{{ $peerIp }}" >/dev/null 2>&1 || true
+              {{- end }}
+              echo "[multus-datapath-init] {{ $appName }}: OK"
+        {{- end }}
         {{- /* Multus static IPAM owns net1/net2 addresses — skip host-style n3-ip-init */}}
         {{- if and $n3ip (not $upfMultus) }}
         {{- $n6gwInit := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
@@ -497,7 +534,7 @@ spec:
                 - ALL
           resources:
             {{- toYaml $.Values.upf.resources | nindent 12 }}
-          {{- if $.Values.upf.hostNetwork }}
+          {{- if or $.Values.upf.hostNetwork $upfMultus }}
           lifecycle:
             preStop:
               exec:
@@ -508,13 +545,15 @@ spec:
                     LEASE_DIR=/run/firecell/upf-leases
                     for dev in "${UPF_N3_IF}" "${UPF_N6_IF}"; do
                       [ -n "${dev}" ] || continue
-                      rm -f "${LEASE_DIR}/${UPF_APP_NAME}@${dev}"
+                      rm -f "${LEASE_DIR}/${UPF_APP_NAME}@${dev}" 2>/dev/null || true
                       ip link set dev "${dev}" xdp off 2>/dev/null || true
                       tc filter del dev "${dev}" ingress 2>/dev/null || true
                       tc qdisc del dev "${dev}" clsact 2>/dev/null || true
                       tc qdisc del dev "${dev}" root 2>/dev/null || true
                     done
                     sleep 2
+          {{- end }}
+          {{- if $.Values.upf.hostNetwork }}
           # hostNetwork: do not probe healthz :9090 (busybox nc -l races → connection reset).
           # startupProbe: process alive (gates readiness + liveness until UPF binary starts).
           # readinessProbe: process + PFCP N4 port 8805 bound — prevents traffic until UPF is

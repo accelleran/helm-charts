@@ -1,0 +1,132 @@
+# Common Firecell 5G Core values for the two-node lab (192.168.30.11 + 192.168.30.30)
+# Combine with EITHER:
+#   -f values/values-5gc-option2-phys-native.yaml     (Option 2: CU with DU on .30, UPF physical NICs + native XDP)
+#   -f values/values-5gc-option1-bridge-generic.yaml  (Option 1: CU colocated on .11, UPF Linux bridges + generic XDP)
+
+global:
+  namespace: firecell-core
+  imageRegistry: ""
+  busyboxImage: docker.io/library/busybox:1.36
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: ghcr-pull
+  pkgVersion: v5.1.0.2
+  timezone: Europe/Paris
+
+namespace:
+  create: false
+
+hooks:
+  enabled: false
+
+network:
+  amfServiceType: ClusterIP
+  metallb:
+    enabled: false
+
+coreConfig:
+  mcc: "999"
+  mnc: "99"
+  amf:
+    enableUdsf: "yes"
+  smf:
+    enableUdsf: "yes"
+
+mysql:
+  enabled: true
+  imageOverride: docker.io/library/mysql:8.0
+  rootPassword: linux
+  user: test
+  password: test
+
+udsf:
+  enabled: true
+  imageOverride: af-qos-udsf-ha:bugbot-master-udsf-20260930
+  redis:
+    image: redis:7-alpine
+
+nrf:
+  enabled: true
+  imageOverride: af-qos-nrf:subleak-20261001
+
+udr:
+  enabled: true
+  imageOverride: ghcr.io/accelleran/oai-udr:fcaps-main-20260911
+
+udm:
+  enabled: true
+  imageOverride: ghcr.io/accelleran/oai-udm:fcaps-main-20260911
+
+ausf:
+  enabled: true
+  imageOverride: ghcr.io/accelleran/oai-ausf:fcaps-main-20260911
+
+amf:
+  enabled: true
+  imageOverride: af-qos-amf:bugbot-master-udsf-20260930
+
+smf:
+  enabled: true
+  hostNetwork: false
+  imageOverride: af-qos-smf:subleak-20261001d
+  multus:
+    enabled: false
+
+pcf:
+  enabled: true
+  imageOverride: af-qos-pcf:bugbot-master-udsf-20260930
+
+extDn:
+  enabled: true
+  imageOverride: ghcr.io/accelleran/trf-gen-cn5g:latest
+
+cnAgent:
+  enabled: false
+
+fcAcsAgent:
+  enabled: false
+
+ims:
+  enabled: true
+  engine: kamailio
+  imageOverride: registry.gitlab.com/firecell/r-d/firecellrd/kamailio-ims:latest
+  mysqlHost: mysql.firecell-core.svc.cluster.local
+  ueImsSubnet: 14.1.1.0/25
+  upfN6Gateway: 10.20.0.3
+  pcscf:
+    hostNetwork: true
+    ip: 192.168.31.205
+  icscf:
+    hostNetwork: true
+    ip: 192.168.31.206
+  scscf:
+    hostNetwork: true
+    ip: 192.168.31.207
+  cxGateway:
+    cxSot: udr
+    hostNetwork: true
+    imageOverride: docker.io/library/ims-cx-gateway:cx-udr-s3b
+    ip: 192.168.31.208
+
+upf:
+  enabled: true
+  type: oai
+  oaiImageOverride: af-qos-upf:bugbot-ul-nongbr-htb-20261020b
+  configSchema: legacy
+  serviceType: ClusterIP
+  hostNetwork: false
+  privileged: true
+  nodeSelector:
+    kubernetes.io/hostname: core-firecell-30-11
+  n3IP: 10.3.0.101
+  n3Interface: net1
+  n4Interface: eth0
+  n6Interface: net2
+  n6Cidr: 10.10.0.101/24
+  remoteN6Gw: 10.10.0.2
+  enableBpfDatapath: true
+  packetCapture:
+    enabled: false
+  dnnDataplane:
+    enabled: false
+    imageOverride: ghcr.io/accelleran/fc-dnn-dataplane:route-fix
