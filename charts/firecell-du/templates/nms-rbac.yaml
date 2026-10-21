@@ -1,0 +1,53 @@
+{{- if .Values.nms.rbac }}
+{{- $i := include "firecell-du.inst" . | fromJson }}
+{{- $ns := include "firecell-du.namespace" . }}
+{{- $nmsNs := required "nms.namespace is required" .Values.nms.namespace }}
+# Pod reads come from the firecell-nms chart's ClusterRole, granted in this
+# namespace only. Grants nothing until that chart is installed.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-nms
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-du.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nms-ran-{{ $nmsNs }}
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ $nmsNs }}
+---
+# Restart (rollout restart patches the pod template), stop and start (scale)
+# of this DU's Deployment, by name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-nms-lifecycle
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-du.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    resourceNames: [{{ $i.name | quote }}]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-nms-lifecycle
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-du.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-nms-lifecycle
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ $nmsNs }}
+{{- end }}
