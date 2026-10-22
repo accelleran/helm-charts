@@ -614,6 +614,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.injectCiliumPodRoute | bool | `true` |  |
 | upf.instances | list | `[]` |  |
 | upf.maxSessions | int | `1024` |  |
+| upf.multus.rpsCpus | string | `""` | RPS CPU mask (hex) written to every rx queue of the N3/N6 interfaces at pod start; spreads generic-XDP softirq per flow. Use the host's NIC IRQ cores, e.g. `3c003c` = CPUs 2-5,18-21. Empty leaves RPS off. |
 | upf.n3IP | string | `"198.51.100.101"` |  |
 | upf.n3Interface | string | `"eth1"` |  |
 | upf.n4Interface | string | `"eth0"` |  |
