@@ -1,3 +1,6 @@
+{{- if and .Values.amf.enabled .Values.amf.multus.enabled (not (and .Values.amf.multus.masterInterface .Values.amf.multus.ip)) }}
+{{- fail "amf.multus.enabled requires amf.multus.masterInterface and amf.multus.ip; without them the AMF pod references a NetworkAttachmentDefinition that is never created and stays in ContainerCreating." }}
+{{- end }}
 {{- if and .Values.amf.enabled .Values.amf.multus.enabled .Values.amf.multus.masterInterface .Values.amf.multus.ip }}
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
