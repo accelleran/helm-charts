@@ -178,15 +178,28 @@ spec:
               ping -c 1 -W 1 -I "${N3_DEV}" "{{ $peerIp }}" >/dev/null 2>&1 || true
               {{- end }}
               {{- with $.Values.upf.multus.rpsCpus }}
-              {{- if not (regexMatch "^[0-9a-fA-F,]+$" (toString .)) }}
-              {{- fail (printf "upf.multus.rpsCpus must be a hex CPU mask like 3c003c (got %q)" (toString .)) }}
+              {{- if not (kindIs "string" .) }}
+              {{- fail (printf "upf.multus.rpsCpus must be a quoted hex CPU mask such as \"3c003c\" (got %v, a %s: YAML reads unquoted digits and 0x values as numbers)" . (kindOf .)) }}
               {{- end }}
-              # Generic XDP runs after RPS: spread each flow's N3/N6 softirq over these CPUs
+              {{- if not (regexMatch "^[0-9a-fA-F,]+$" .) }}
+              {{- fail (printf "upf.multus.rpsCpus must be a hex CPU mask like 3c003c (got %q)" .) }}
+              {{- end }}
+              {{- /* RPS only acts where the interface runs its own receive: bridge veths and host-device NICs.
+                     A macvlan/ipvlan receives in the parent NIC's softirq, which host IRQ pinning covers. */}}
+              {{- $rpsDevs := list }}
+              {{- if has ($upfMultusN3.cniType | default "macvlan") (list "bridge" "host-device") }}{{ $rpsDevs = append $rpsDevs "N3" }}{{ end }}
+              {{- if has ((($.Values.upf.multus.n6 | default dict).cniType) | default "macvlan") (list "bridge" "host-device") }}{{ $rpsDevs = append $rpsDevs "N6" }}{{ end }}
+              {{- if not $rpsDevs }}
+              {{- fail "upf.multus.rpsCpus needs n3 or n6 cniType bridge or host-device: on macvlan/ipvlan RPS has no effect (pin the parent NIC's IRQs on the host instead)" }}
+              {{- end }}
+              # Generic XDP runs after RPS: spread each flow's softirq over these CPUs
               # instead of the one core that took the NIC interrupt.
-              for _d in "${N3_DEV}" "${N6_DEV}"; do
+              for _d in {{ range $rpsDevs }}"${ {{- . -}} _DEV}" {{ end }}; do
                 [ -n "${_d}" ] && [ -d "/sys/class/net/${_d}/queues" ] || continue
-                for _q in /sys/class/net/${_d}/queues/rx-*; do echo "{{ . }}" > "${_q}/rps_cpus"; done
-                echo "[multus-datapath-init] ${_d} rps_cpus={{ . }}"
+                for _q in /sys/class/net/${_d}/queues/rx-*; do
+                  if echo "{{ . }}" 2>/dev/null > "${_q}/rps_cpus"; then :; else echo "[multus-datapath-init] WARNING: could not set rps_cpus={{ . }} on ${_d} $(basename ${_q})" >&2; fi
+                done
+                echo "[multus-datapath-init] ${_d} rps_cpus=$(cat /sys/class/net/${_d}/queues/rx-0/rps_cpus 2>/dev/null)"
               done
               {{- end }}
               echo "[multus-datapath-init] {{ $appName }}: OK"
