@@ -22,7 +22,8 @@ networkPolicies:
 hooks:
   enabled: true
 
-# Default IMS is Kamailio; set a reachable mysqlHost for hostNetwork wait init.
+# Default IMS is Kamailio. Empty mysqlHost → ClusterIP DNS in templates;
+# CI sets a concrete host so wait-init env is exercised in lint/template.
 ims:
   enabled: true
   engine: kamailio
