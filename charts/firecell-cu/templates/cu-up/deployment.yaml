@@ -66,6 +66,17 @@ spec:
               mkdir -p /tmp/logs
               # F1-U binds the pod IP, which is only known at start.
               sed "s/__POD_IP__/$POD_IP/" /config/cu_up.yml > /run/cu_up.yml
+              {{- with $c.rpsCpus }}
+              {{- if not (regexMatch "^[0-9a-fA-F,]+$" (toString .)) }}
+              {{- fail (printf "cuUp.rpsCpus must be a hex CPU mask like 3c003c (got %q)" (toString .)) }}
+              {{- end }}
+              # Spread N3/F1-U receive softirq per flow (RPS) instead of one interrupt core.
+              for d in net1 f1u0; do
+                [ -d /sys/class/net/$d/queues ] || continue
+                for q in /sys/class/net/$d/queues/rx-*; do echo {{ . }} > $q/rps_cpus; done
+                echo "$d rps_cpus={{ . }}"
+              done
+              {{- end }}
               {{- if $c.cpus }}
               exec taskset -c {{ $c.cpus }} ocuup -c /run/cu_up.yml
               {{- else }}
