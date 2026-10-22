@@ -425,7 +425,11 @@ spec:
               echo "[datapath-init] ${UPF_APP}: OK"
         {{- end }}
         {{- $n6gwMultus := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
-        {{- if and $upfMultus $upfMultusN6.ip $n6gwMultus }}
+        {{- /* Same rule as _oai-basic-nrf-config.tpl: Multus reads upf.multus.enableBpfDatapath (default false).
+             XDP redirects N3<->N6 itself; only simpleswitch sends UE traffic through tun0. */}}
+        {{- $mBpfRaw := dig "enableBpfDatapath" false ($.Values.upf.multus | default dict) }}
+        {{- $mSimpleswitch := or (not $mBpfRaw) (has ($mBpfRaw | toString | lower) (list "false" "no" "0")) }}
+        {{- if and $upfMultus $mSimpleswitch $upfMultusN6.ip $n6gwMultus }}
         {{- $mRawTable := $upfMultusN6.ip | splitList "." | last | atoi }}
         {{- $mTable := $mRawTable }}
         {{- if or (le $mRawTable 0) (ge $mRawTable 250) }}
