@@ -477,6 +477,15 @@ spec:
             - name: FCAPS_SEED_CONFIG
               value: {{ . | quote }}
             {{- end }}
+            {{- /* The UPF reads both periods from env only and silently falls back to 60/30 s outside 1-86399. */}}
+            {{- range $env, $key := dict "FCAPS_MEAS_PERIOD_SEC" "measPeriodSec" "FCAPS_NOTIFY_INTERVAL_SEC" "notifyIntervalSec" }}
+            {{- $sec := get $fcaps $key | default 5 | int }}
+            {{- if or (lt $sec 1) (gt $sec 86399) }}
+            {{- fail (printf "upf.fcaps.%s must be 1-86399 seconds (got %v)" $key $sec) }}
+            {{- end }}
+            - name: {{ $env }}
+              value: {{ $sec | quote }}
+            {{- end }}
             {{- if $.Values.upf.hostNetwork }}
             # hostNetwork + bind on sbi/cni0 makes kube-proxy's DNAT to the
             # node IP miss the producer. Listen on every interface; advertise
