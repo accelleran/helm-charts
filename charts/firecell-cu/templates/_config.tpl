@@ -44,6 +44,9 @@ CU-CP Ocudu config (YAML).
 {{- $mr := dig "measReport" dict $ueCtx -}}
 {{- $sectors := dig "sectorIds" list $mr -}}
 {{- if $sectors }}
+{{- if dig "cu_cp" "mobility" "" ($v.cuCp.extraConfig | default dict) }}
+{{- fail "cuCp.o1.ueContext.measReport.sectorIds and cuCp.extraConfig.cu_cp.mobility are both set: lists do not merge, so one would silently replace the other. Put the periodic serving-cell report into extraConfig.cu_cp.mobility yourself, or drop that block" }}
+{{- end }}
 {{- $interval := dig "intervalMs" 1024 $mr | int -}}
 {{- if not (has $interval (list 120 240 480 640 1024 2048)) }}
 {{- fail (printf "cuCp.o1.ueContext.measReport.intervalMs must be one of 120, 240, 480, 640, 1024, 2048 (got %v)" $interval) }}

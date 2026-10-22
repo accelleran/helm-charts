@@ -45,6 +45,7 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 | cuCp.nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
 | cuCp.o1.enabled | bool | `false` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
 | cuCp.o1.restartOnColdCommit | bool | `false` |  |
+| cuCp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp. |
 | cuCp.o1.ueContext.enabled | bool | `true` | Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty. |
 | cuCp.o1.ueContext.maxUes | int | `256` | Maximum published UE entries. |
 | cuCp.o1.ueContext.measReport.intervalMs | int | `1024` | Report interval in ms (120, 240, 480, 640, 1024 or 2048). Must stay below ocudu's ue_meas_max_age_ms (3000), or every report is dropped as stale. |
@@ -66,10 +67,10 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 | cuUp.n3.cniType | string | `"macvlan"` | macvlan (CU-UP on a different node than the UPF) or bridge (CU-UP on the UPF node with the UPF on a Linux bridge and generic XDP; macvlan siblings bypass generic XDP). |
 | cuUp.n3.enabled | bool | `true` | Attach a macvlan for N3. When false, N3 binds the pod IP. |
 | cuUp.n3.mac | string | `""` | Fixed MAC for the N3 macvlan (keeps the UPF neighbour entry valid). Empty lets CNI pick. |
-| cuUp.n3.master | string | `"eth1"` | Host parent interface of the N3 macvlan. |
+| cuUp.n3.master | string | `"eth1"` | Host parent interface (macvlan) or Linux bridge name (bridge, e.g. br-n3). |
 | cuUp.nodeSelector | object | `{}` |  |
 | cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
-| cuUp.rpsCpus | string | `""` | RPS CPU mask (hex, as in /sys/class/net/*/queues/rx-*/rps_cpus) for the N3 and F1-U interfaces, set at start. Spreads receive softirq per flow when the CU-UP shares a node with a generic-XDP UPF. Use the host's NIC IRQ cores, e.g. 3c003c = CPUs 2-5,18-21. Empty leaves RPS off. |
+| cuUp.rpsCpus | string | `""` | RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off. |
 | cuUp.resources | object | `{}` |  |
 | cuUp.tolerations | list | `[]` |  |
 | global.image | string | `""` | Ocudu runtime image. Required. Components may override it. |

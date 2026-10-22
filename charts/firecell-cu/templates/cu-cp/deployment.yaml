@@ -94,7 +94,7 @@ spec:
         {{- if $c.o1.enabled }}
         - name: o1-state
           hostPath:
-            path: /var/lib/firecell/ocudu/cu-cp
+            path: {{ $c.o1.statePath | default "/var/lib/firecell/ocudu/cu-cp" }}
             type: DirectoryOrCreate
         {{- end }}
 {{- end }}
