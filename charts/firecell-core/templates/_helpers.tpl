@@ -256,8 +256,8 @@ Init container that waits for UDSF SBI when stateless mode is enabled.
 {{- end }}
 
 {{/*
-Sidecar that serves /health and /ready endpoints (default port 9090).
-Calls /scripts/check.sh on every probe cycle; returns 200 if exit 0, 503 otherwise.
+Sidecar that serves /health (default port 9090) with busybox httpd.
+Runs /scripts/check.sh every 2 s; /health returns 200 if it exited 0, 404 otherwise.
 
 Optional dict key healthPort — required when multiple hostNetwork pods share a node.
 
