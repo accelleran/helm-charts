@@ -117,6 +117,8 @@ cuUp:
   cpus: ""
   # -- CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads).
   nofThreads: 3
+  # -- RPS CPU mask (hex, as in /sys/class/net/*/queues/rx-*/rps_cpus) for the N3 and F1-U interfaces, set at start. Spreads receive softirq per flow when the CU-UP shares a node with a generic-XDP UPF. Use the host's NIC IRQ cores, e.g. 3c003c = CPUs 2-5,18-21. Empty leaves RPS off.
+  rpsCpus: ""
   # N3 (GTP-U toward the UPF) on a secondary interface.
   n3:
     # -- Attach a secondary interface for N3. When false, N3 binds the pod IP.

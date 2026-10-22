@@ -69,6 +69,7 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 | cuUp.n3.master | string | `"eth1"` | Host parent interface of the N3 macvlan. |
 | cuUp.nodeSelector | object | `{}` |  |
 | cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
+| cuUp.rpsCpus | string | `""` | RPS CPU mask (hex, as in /sys/class/net/*/queues/rx-*/rps_cpus) for the N3 and F1-U interfaces, set at start. Spreads receive softirq per flow when the CU-UP shares a node with a generic-XDP UPF. Use the host's NIC IRQ cores, e.g. 3c003c = CPUs 2-5,18-21. Empty leaves RPS off. |
 | cuUp.resources | object | `{}` |  |
 | cuUp.tolerations | list | `[]` |  |
 | global.image | string | `""` | Ocudu runtime image. Required. Components may override it. |
