@@ -62,7 +62,7 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
 
 {{- $f1uBind := "__POD_IP__" -}}
 {{- if dig "network" "enabled" false ($i.f1u | default dict) }}
-{{- $f1uBind = first (splitList "/" (toString $i.f1u.network.cidr)) -}}
+{{- $f1uBind = include "firecell-du.ip" $i.f1u.network.cidr -}}
 {{- end }}
 
 {{- $base := dict
@@ -90,6 +90,9 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
 {{- /* Per-UE PM needs O1 and the scheduler metrics that feed ue-metrics. */ -}}
 {{- $uePm := $i.o1.ueMetrics | default dict -}}
 {{- $uePmOn := and $i.o1.enabled (dig "enabled" false $uePm) -}}
+{{- if and $uePmOn (eq (toString (dig "metrics" "layers" "enable_sched" "" ($i.extraConfig | default dict))) "false") }}
+{{- fail (printf "%s: o1.ueMetrics is on but extraConfig.metrics.layers.enable_sched is false: ue-metrics come from the scheduler metrics. Drop that override (the chart sets enable_sched itself) or set o1.ueMetrics.enabled false" $i.name) }}
+{{- end }}
 {{- $_ := set $base "metrics" (dict "layers" (dict "enable_sched" $uePmOn)) -}}
 
 {{- if $i.o1.enabled }}
@@ -101,8 +104,8 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
 {{- if $uePmOn }}
 {{- $_ := set $o1 "ue_metrics" (dict
   "enabled" true
-  "history_windows" (dig "historyWindows" 40 $uePm)
-  "max_ues" (dig "maxUes" 256 $uePm)) -}}
+  "history_windows" (dig "historyWindows" 40 $uePm | int)
+  "max_ues" (dig "maxUes" 256 $uePm | int)) -}}
 {{- end }}
 {{- $_ := set $base "o1" $o1 -}}
 {{- end }}

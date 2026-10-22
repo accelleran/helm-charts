@@ -9,6 +9,9 @@
   "type" $type
   "ipam" (dict "type" "static" "addresses" (list (dict "address" $n3.cidr))) }}
 {{- if eq $type "bridge" }}
+{{- if or (not $n3.master) (eq (toString $n3.master) "eth1") }}
+{{- fail "cuUp.n3.cniType bridge needs cuUp.n3.master set to the Linux bridge (e.g. br-n3), not the default NIC name eth1" }}
+{{- end }}
 {{- $_ := set $cfg "bridge" $n3.master }}
 {{- else }}
 {{- $_ := set $cfg "master" $n3.master }}
