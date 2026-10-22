@@ -19,7 +19,7 @@ global:
 backend:
   # -- Backend image (API, worker, control plane, migration and bootstrap),
   # as a full reference.
-  image: ghcr.io/accelleran/firecell-nms-backend-ng:master-de7132d
+  image: ghcr.io/accelleran/nms-backend:edge-1501118
   # -- Secret with the backend credentials, created before install; the
   # chart never creates it. Required keys: `database-root-password`,
   # `database-password`, `database-url`, `network-name`, `op`,
@@ -186,7 +186,7 @@ victoriaMetrics:
 front:
   # -- NMS frontend (nginx) image, as a full reference. Needs a CM-enabled
   # build that talks to the new backend.
-  image: ghcr.io/accelleran/nms-frontend:ping-299e22c
+  image: ghcr.io/accelleran/nms-frontend:edge-db0447e
   # -- Where nginx sends /api/. Empty: the in-chart nms-api Service.
   backendUrl: ""
   # -- Where nginx sends /nms-cm/ (the CM console). Empty: the backend's

@@ -18,7 +18,9 @@ The Network Management System (NMS) provides the dashboard and the REST API for 
 
 Not included: Grafana (use grafana-operator or any Grafana with a datasource on `nms-victoria-metrics`), an Ingress (route to `nms-front` with your gateway), the namespace, the platform monitor and anything from the 5G Core.
 
-The image name `firecell-nms-backend-ng`, the `firecell-nms-ng-*` commands and the `FIRECELL_NMS_NG_*` environment variables come from the backend itself, so they keep its `ng` naming.
+The `firecell-nms-ng-*` commands and the `FIRECELL_NMS_NG_*` environment variables come from the backend itself, so they keep its `ng` naming.
+
+Both images come from the `master` branches of [nms-backend](https://github.com/accelleran/nms-backend) and [nms-frontend](https://github.com/accelleran/nms-frontend). Until there are releases, the defaults are the GHCR `edge-<sha>` builds; releases will be `docker.io/accelleran/nms-backend:X.Y.Z` and `docker.io/accelleran/nms-frontend:X.Y.Z`.
 
 ### 1.2 Services
 
