@@ -85,8 +85,8 @@ helm upgrade --repo https://accelleran.github.io/helm-charts firecell-core firec
 Default IMS is **Kamailio** P/I/S-CSCF + Cx gateway (`CX_SOT=udr`). MySQL init applies `sql/ims_subscribers.sql` and `sql/cx_scscf_binding.sql`.
 
 1. Ensure hostNetwork IPs for P/I/S-CSCF and Cx exist on the node (defaults `.205–.208`).
-2. Build/import `kamailio-ims` and `ims-cx-gateway` images (galaxy `scripts/build-ims-images.sh`).
-3. Set `ims.mysqlHost` to a node/external MySQL IP (hostNetwork cannot use ClusterIP).
+2. Build/import `kamailio-ims` and `ims-cx-gateway` images (or set `imageOverride` to GHCR/local tags).
+3. Leave `ims.mysqlHost` empty to use `mysql.<ns>.svc.cluster.local` (works with hostNetwork when ClusterIP DNS is reachable). Override only for external MySQL.
 
 **Asterisk-only** (disables Kamailio/Cx) — layer last:
 ```bash
