@@ -1,0 +1,21 @@
+{{- $i := include "firecell-du.inst" . | fromJson }}
+{{- $f1u := dig "network" dict ($i.f1u | default dict) }}
+{{- if dig "enabled" false $f1u }}
+{{- $cfg := dict
+  "cniVersion" "0.3.1"
+  "type" "macvlan"
+  "master" $f1u.master
+  "mode" "bridge"
+  "ipam" (dict "type" "static" "addresses" (list (dict "address" $f1u.cidr))) }}
+# F1-U (GTP-U toward the CU-UP) off the pod network, e.g. over a direct link to the CU node.
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ $i.name }}-f1u
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    app: {{ $i.name }}
+    {{- include "firecell-du.labels" . | nindent 4 }}
+spec:
+  config: {{ toJson $cfg | quote }}
+{{- end }}

@@ -6,6 +6,9 @@
 {{- if $i.mplane.enabled }}
 {{- $networks = append $networks (dict "name" (printf "%s-mplane" $i.name) "namespace" $ns "interface" "mplane0") }}
 {{- end }}
+{{- if dig "network" "enabled" false ($i.f1u | default dict) }}
+{{- $networks = append $networks (dict "name" (printf "%s-f1u" $i.name) "namespace" $ns "interface" "f1u0") }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

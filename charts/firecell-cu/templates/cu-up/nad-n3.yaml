@@ -1,11 +1,19 @@
 {{- if and .Values.cuUp.enabled .Values.cuUp.n3.enabled }}
 {{- $n3 := .Values.cuUp.n3 }}
+{{- $type := $n3.cniType | default "macvlan" }}
+{{- if not (has $type (list "macvlan" "bridge")) }}
+{{- fail (printf "cuUp.n3.cniType must be macvlan or bridge (got %q)" $type) }}
+{{- end }}
 {{- $cfg := dict
   "cniVersion" "0.3.1"
-  "type" "macvlan"
-  "master" $n3.master
-  "mode" "bridge"
+  "type" $type
   "ipam" (dict "type" "static" "addresses" (list (dict "address" $n3.cidr))) }}
+{{- if eq $type "bridge" }}
+{{- $_ := set $cfg "bridge" $n3.master }}
+{{- else }}
+{{- $_ := set $cfg "master" $n3.master }}
+{{- $_ := set $cfg "mode" "bridge" }}
+{{- end }}
 {{- with $n3.mac }}
 {{- $_ := set $cfg "mac" . }}
 {{- end }}

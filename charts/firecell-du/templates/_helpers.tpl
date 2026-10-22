@@ -216,6 +216,12 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- fail (printf "%s: mplane.dhcp needs mplane.dhcp.ruIp and ofh.ruMac" $n) }}
 {{- end }}
 {{- end }}
+{{- $f1uNet := dig "network" dict ($i.f1u | default dict) }}
+{{- if dig "enabled" false $f1uNet }}
+{{- if or (not $f1uNet.master) (not (contains "/" (toString $f1uNet.cidr))) }}
+{{- fail (printf "%s: f1u.network needs master and cidr with a prefix (e.g. 10.6.0.1/24)" $n) }}
+{{- end }}
+{{- end }}
 {{- $uePm := $i.o1.ueMetrics | default dict }}
 {{- if and $i.o1.enabled (dig "enabled" false $uePm) }}
 {{- $hw := dig "historyWindows" 40 $uePm | int }}

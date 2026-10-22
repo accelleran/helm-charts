@@ -1,0 +1,22 @@
+{{- $f1u := dig "network" dict (.Values.cuUp.f1u | default dict) }}
+{{- if and .Values.cuUp.enabled (dig "enabled" false $f1u) }}
+{{- if or (not $f1u.master) (not (contains "/" (toString $f1u.cidr))) }}
+{{- fail "cuUp.f1u.network needs master and cidr with a prefix (e.g. 10.6.0.10/24)" }}
+{{- end }}
+{{- $cfg := dict
+  "cniVersion" "0.3.1"
+  "type" "macvlan"
+  "master" $f1u.master
+  "mode" "bridge"
+  "ipam" (dict "type" "static" "addresses" (list (dict "address" $f1u.cidr))) }}
+# F1-U (GTP-U toward the DUs) off the pod network, e.g. over a direct link to the DU node.
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: cu-up-f1u
+  namespace: {{ include "firecell-cu.namespace" . }}
+  labels:
+    {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 4 }}
+spec:
+  config: {{ toJson $cfg | quote }}
+{{- end }}

@@ -84,11 +84,15 @@ CU-UP Ocudu config (YAML). __POD_IP__ is filled in at container start.
 {{- if $v.cuUp.n3.enabled }}
 {{- $nguBind = include "firecell-cu.ip" $v.cuUp.n3.cidr -}}
 {{- end }}
+{{- $f1uBind := "__POD_IP__" -}}
+{{- if dig "network" "enabled" false ($v.cuUp.f1u | default dict) }}
+{{- $f1uBind = include "firecell-cu.ip" $v.cuUp.f1u.network.cidr -}}
+{{- end }}
 {{- $base := dict
   "cu_up" (dict
     "e1ap" (dict "addrs" (include "firecell-cu.cuCpAddress" .) "bind_addrs" "0.0.0.0")
     "ngu" (dict "socket" (list (dict "bind_addr" $nguBind)))
-    "f1u" (dict "socket" (list (dict "bind_addr" "__POD_IP__")))) -}}
+    "f1u" (dict "socket" (list (dict "bind_addr" $f1uBind)))) -}}
 {{- $exec := dict "threads" (dict "main_pool" (dict "nof_threads" $v.cuUp.nofThreads)) -}}
 {{- if $v.cuUp.cpus }}
 {{- $_ := set $exec "affinities" (dict "main_pool_cpus" (toString $v.cuUp.cpus) "main_pool_pinning" "mask") -}}
