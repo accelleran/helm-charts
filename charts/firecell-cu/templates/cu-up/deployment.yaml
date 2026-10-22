@@ -67,14 +67,21 @@ spec:
               # F1-U binds the pod IP, which is only known at start.
               sed "s/__POD_IP__/$POD_IP/" /config/cu_up.yml > /run/cu_up.yml
               {{- with $c.rpsCpus }}
-              {{- if not (regexMatch "^[0-9a-fA-F,]+$" (toString .)) }}
-              {{- fail (printf "cuUp.rpsCpus must be a hex CPU mask like 3c003c (got %q)" (toString .)) }}
+              {{- if not (kindIs "string" .) }}
+              {{- fail (printf "cuUp.rpsCpus must be a quoted hex CPU mask such as \"3c003c\" (got %v, a %s: YAML reads unquoted digits and 0x values as numbers)" . (kindOf .)) }}
               {{- end }}
-              # Spread N3/F1-U receive softirq per flow (RPS) instead of one interrupt core.
-              for d in net1 f1u0; do
-                [ -d /sys/class/net/$d/queues ] || continue
-                for q in /sys/class/net/$d/queues/rx-*; do echo {{ . }} > $q/rps_cpus; done
-                echo "$d rps_cpus={{ . }}"
+              {{- if not (regexMatch "^[0-9a-fA-F,]+$" .) }}
+              {{- fail (printf "cuUp.rpsCpus must be a hex CPU mask like 3c003c (got %q)" .) }}
+              {{- end }}
+              {{- if not (and $c.n3.enabled (eq ($c.n3.cniType | default "macvlan") "bridge")) }}
+              {{- fail "cuUp.rpsCpus needs cuUp.n3.cniType bridge: RPS only takes effect on the N3 veth. A macvlan receives in the parent NIC's softirq, so pin that NIC's IRQs on the host instead" }}
+              {{- end }}
+              # RPS on the N3 veth (net1, the first Multus network): spreads the receive
+              # softirq per flow instead of the CPU that took the NIC interrupt. Not on
+              # f1u0: a macvlan is fed from its parent NIC, which host IRQ pinning covers.
+              for q in /sys/class/net/net1/queues/rx-*; do
+                if echo {{ . }} 2>/dev/null > "$q/rps_cpus"; then echo "net1 $(basename $q) rps_cpus={{ . }}"
+                else echo "WARNING: could not set rps_cpus={{ . }} on net1 $(basename $q)" >&2; fi
               done
               {{- end }}
               {{- if $c.cpus }}
