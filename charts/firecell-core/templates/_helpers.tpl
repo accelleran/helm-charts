@@ -265,24 +265,22 @@ Usage:
     - /bin/sh
     - -c
     - |
-      echo 0 > /tmp/ready
+      # check.sh publishes /tmp/www/health while the NF is healthy; httpd answers
+      # 200 for it and 404 when it is absent. httpd forks per request, so the
+      # readiness and liveness probes can arrive together (a single nc -l refused
+      # the second one, and phase-aligned probes then failed liveness every time).
+      mkdir -p /tmp/www
       (
         while true; do
           if sh /scripts/check.sh >/dev/null 2>&1; then
-            echo 1 > /tmp/ready
+            echo OK > /tmp/www/.health && mv /tmp/www/.health /tmp/www/health
           else
-            echo 0 > /tmp/ready
+            rm -f /tmp/www/health
           fi
           sleep 2
         done
       ) &
-      while true; do
-        if [ "$(cat /tmp/ready 2>/dev/null)" = "1" ]; then
-          printf 'HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: 2\r\n\r\nOK' | nc -w 1 -l -p {{ $healthPort }} >/dev/null 2>&1 || sleep 0.1
-        else
-          printf 'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 9\r\n\r\nNOT READY' | nc -w 1 -l -p {{ $healthPort }} >/dev/null 2>&1 || sleep 0.1
-        fi
-      done
+      exec busybox httpd -f -p {{ $healthPort }} -h /tmp/www
   {{- if not $omitHealthzPort }}
   ports:
     - name: healthz
