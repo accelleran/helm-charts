@@ -177,6 +177,18 @@ spec:
               echo "[multus-datapath-init] warming N3 peer ARP {{ $peerIp }} on ${N3_DEV}"
               ping -c 1 -W 1 -I "${N3_DEV}" "{{ $peerIp }}" >/dev/null 2>&1 || true
               {{- end }}
+              {{- with $.Values.upf.multus.rpsCpus }}
+              {{- if not (regexMatch "^[0-9a-fA-F,]+$" (toString .)) }}
+              {{- fail (printf "upf.multus.rpsCpus must be a hex CPU mask like 3c003c (got %q)" (toString .)) }}
+              {{- end }}
+              # Generic XDP runs after RPS: spread each flow's N3/N6 softirq over these CPUs
+              # instead of the one core that took the NIC interrupt.
+              for _d in "${N3_DEV}" "${N6_DEV}"; do
+                [ -n "${_d}" ] && [ -d "/sys/class/net/${_d}/queues" ] || continue
+                for _q in /sys/class/net/${_d}/queues/rx-*; do echo "{{ . }}" > "${_q}/rps_cpus"; done
+                echo "[multus-datapath-init] ${_d} rps_cpus={{ . }}"
+              done
+              {{- end }}
               echo "[multus-datapath-init] {{ $appName }}: OK"
         {{- end }}
         {{- /* Multus static IPAM owns net1/net2 addresses — skip host-style n3-ip-init */}}
