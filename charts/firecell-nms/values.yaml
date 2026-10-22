@@ -128,8 +128,6 @@ backend:
     # -- How often the operator's PCC rules are re-asserted on the PCF. 0 disables it.
     qosReconcileIntervalSeconds: 30
     qosMaxRules: 4
-    # -- N3 capture interface on the UPF.
-    n3InterfaceName: any
     # -- Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires
     # networkPolicy.enabled: the backend does not check tokens on this path.
     trustGatewayHeaders: false
