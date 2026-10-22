@@ -82,12 +82,24 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
 {{- $_ := set $base "mplane" (include "firecell-du.merge" (dict "dst" $mp "src" $i.mplane.extra) | fromJson) -}}
 {{- end }}
 
+{{- /* Per-UE PM needs O1 and the scheduler metrics that feed ue-metrics. */ -}}
+{{- $uePm := $i.o1.ueMetrics | default dict -}}
+{{- $uePmOn := and $i.o1.enabled (dig "enabled" false $uePm) -}}
+{{- $_ := set $base "metrics" (dict "layers" (dict "enable_sched" $uePmOn)) -}}
+
 {{- if $i.o1.enabled }}
-{{- $_ := set $base "o1" (dict
+{{- $o1 := dict
   "enabled" true
   "yang_search_path" $i.o1.yangSearchPath
   "overlay_file_path" "/var/lib/ocudu/o1-overlay.yml"
-  "restart_on_cold_commit" $i.o1.restartOnColdCommit) -}}
+  "restart_on_cold_commit" $i.o1.restartOnColdCommit -}}
+{{- if $uePmOn }}
+{{- $_ := set $o1 "ue_metrics" (dict
+  "enabled" true
+  "history_windows" (dig "historyWindows" 40 $uePm)
+  "max_ues" (dig "maxUes" 256 $uePm)) -}}
+{{- end }}
+{{- $_ := set $base "o1" $o1 -}}
 {{- end }}
 
 {{- include "firecell-du.merge" (dict "dst" $base "src" $i.extraConfig) | fromJson | toYaml -}}

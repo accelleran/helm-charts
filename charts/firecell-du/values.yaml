@@ -161,6 +161,13 @@ o1:
   statePath: ""
   yangSearchPath: /usr/local/yang
   restartOnColdCommit: false
+  ueMetrics:
+    # -- Publish per-UE PM (/ocudu-performance gnb-du-id and ue-metrics) for the NMS UE dashboard. Needs o1.enabled. Turns on scheduler metrics (metrics.layers.enable_sched).
+    enabled: true
+    # -- Report windows kept per cell. Must cover the NMS poll interval plus timeout, in du_report_period units (1-60).
+    historyWindows: 40
+    # -- Maximum UE rows per cell and window.
+    maxUes: 256
 resources: {}
 # -- Raw Ocudu DU YAML merged over the generated config.
 extraConfig:
@@ -232,8 +239,8 @@ extraConfig:
   metrics:
     autostart_stdout_metrics: true
     enable_log: false
+    # enable_sched is generated from o1.ueMetrics (true when per-UE PM is on); set it here to override.
     layers:
-      enable_sched: false
       enable_rlc: false
       enable_mac: true
     periodicity:

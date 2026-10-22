@@ -216,6 +216,17 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- fail (printf "%s: mplane.dhcp needs mplane.dhcp.ruIp and ofh.ruMac" $n) }}
 {{- end }}
 {{- end }}
+{{- $uePm := $i.o1.ueMetrics | default dict }}
+{{- if and $i.o1.enabled (dig "enabled" false $uePm) }}
+{{- $hw := dig "historyWindows" 40 $uePm | int }}
+{{- if or (lt $hw 1) (gt $hw 60) }}
+{{- fail (printf "%s: o1.ueMetrics.historyWindows must be 1-60 (got %v)" $n $hw) }}
+{{- end }}
+{{- $mu := dig "maxUes" 256 $uePm | int }}
+{{- if or (lt $mu 1) (gt $mu 1024) }}
+{{- fail (printf "%s: o1.ueMetrics.maxUes must be 1-1024 (got %v)" $n $mu) }}
+{{- end }}
+{{- end }}
 {{- $mine := include "firecell-du.claims" . | fromYaml }}
 {{- $myCpus := splitList "," (get $mine "firecell.io/cpus") }}
 {{- $existing := lookup "apps/v1" "Deployment" (include "firecell-du.namespace" .) "" }}
