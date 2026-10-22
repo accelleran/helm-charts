@@ -595,7 +595,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.fcaps.intentConfigMap.name | string | `"oai-upf-cm-intent"` |  |
 | upf.fcaps.intentConfigMap.optional | bool | `true` |  |
 | upf.fcaps.intentMode | string | `"configmap"` |  |
+| upf.fcaps.measPeriodSec | int | `5` |  |
 | upf.fcaps.mnsPort | int | `9091` |  |
+| upf.fcaps.notifyIntervalSec | int | `5` |  |
 | upf.fcaps.seedConfigPath | string | `"/openair-upf/etc/config.yaml"` |  |
 | upf.hostNetwork | bool | `true` |  |
 | upf.hostPfcpIP | string | `""` |  |

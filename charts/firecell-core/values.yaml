@@ -738,6 +738,13 @@ upf:
     # Hashed raw for seedSha256 — the only signal covering parameters no
     # capability manifest models yet.
     seedConfigPath: /openair-upf/etc/config.yaml
+    # PM push period (FCAPS_MEAS_PERIOD_SEC): how often the UPF sends
+    # notifyMeasurementReport with the N3 GTP octet counters the NMS Dashboard
+    # turns into CN throughput. The UPF default is 60 s, which makes that
+    # figure a 60 s average that trails traffic by up to ~2 min.
+    measPeriodSec: 5
+    # Alarm dispatch interval (FCAPS_NOTIFY_INTERVAL_SEC). UPF default 30 s.
+    notifyIntervalSec: 5
   # UPF-specific env vars (o5gs)
   disableNat: "FALSE"
   blockSshAccess: "FALSE"
