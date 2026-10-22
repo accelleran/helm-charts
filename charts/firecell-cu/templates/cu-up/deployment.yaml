@@ -24,8 +24,15 @@ spec:
         {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 8 }}
       annotations:
         checksum/config: {{ include "firecell-cu.cuUpConfig" . | sha256sum }}
+        {{- $nets := list }}
         {{- if $c.n3.enabled }}
-        k8s.v1.cni.cncf.io/networks: {{ toJson (list (dict "name" "cu-up-n3" "namespace" (include "firecell-cu.namespace" .))) | quote }}
+        {{- $nets = append $nets (dict "name" "cu-up-n3" "namespace" (include "firecell-cu.namespace" .)) }}
+        {{- end }}
+        {{- if dig "network" "enabled" false ($c.f1u | default dict) }}
+        {{- $nets = append $nets (dict "name" "cu-up-f1u" "namespace" (include "firecell-cu.namespace" .) "interface" "f1u0") }}
+        {{- end }}
+        {{- with $nets }}
+        k8s.v1.cni.cncf.io/networks: {{ toJson . | quote }}
         {{- end }}
     spec:
       {{- include "firecell-cu.scheduling" (dict "root" $ "nodeSelector" $c.nodeSelector "tolerations" $c.tolerations) | trim | nindent 6 }}

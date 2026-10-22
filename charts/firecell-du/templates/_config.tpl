@@ -60,9 +60,14 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
   "threads" (dict "main_pool" (dict "nof_threads" $cpu.nofThreads))
   "cell_affinities" (list (dict "ru_cpus" (printf "%v,%v" $cpu.timing (join "," $txrx)) "ru_pinning" "mask")) -}}
 
+{{- $f1uBind := "__POD_IP__" -}}
+{{- if dig "network" "enabled" false ($i.f1u | default dict) }}
+{{- $f1uBind = first (splitList "/" (toString $i.f1u.network.cidr)) -}}
+{{- end }}
+
 {{- $base := dict
   "f1ap" (dict "addrs" (include "firecell-du.cuCpAddress" $root) "bind_addrs" "0.0.0.0")
-  "f1u" (dict "socket" (list (dict "bind_addr" "__POD_IP__")))
+  "f1u" (dict "socket" (list (dict "bind_addr" $f1uBind)))
   "gnb_id" $v.gnb.gnbId
   "gnb_id_bit_length" $v.gnb.gnbIdBitLength
   "gnb_du_id" $i.duId
