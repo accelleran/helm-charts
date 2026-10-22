@@ -594,11 +594,13 @@ upf:
     # Set true when using cniType: host-device (Option 2, xdpAttachMode: native)
     # or cniType: bridge on both N3 and N6 (Option 1, xdpAttachMode: generic).
     enableBpfDatapath: false
-    # RPS CPU mask (hex, as in /sys/class/net/*/queues/rx-*/rps_cpus) written to every
-    # rx queue of the N3/N6 interfaces at pod start. With generic XDP (Option 1) the
-    # whole N6 -> bridge -> XDP -> veth path runs in softirq on the core that took the
-    # NIC interrupt; RPS spreads it per flow. Use the cores the host pins its NIC IRQs
-    # to, e.g. "3c003c" = CPUs 2-5,18-21. Empty leaves RPS off.
+    # RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus, written to
+    # every rx queue of the N3/N6 interfaces at pod start. With generic XDP (Option 1)
+    # the whole N6 -> bridge -> XDP -> veth path runs in softirq on the core that took
+    # the NIC interrupt; RPS spreads it per flow. Applied to bridge (veth) and
+    # host-device interfaces only: a macvlan/ipvlan receives in the parent NIC's
+    # softirq, so pin that NIC's IRQs on the host instead. Use the cores the host pins
+    # its NIC IRQs to, e.g. "3c003c" = CPUs 2-5,18-21. Empty leaves RPS off.
     rpsCpus: ""
     n3:
       nadName: upf-n3-net
