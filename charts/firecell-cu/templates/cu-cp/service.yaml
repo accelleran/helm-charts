@@ -23,4 +23,10 @@ spec:
       port: 38472
       targetPort: 38472
       protocol: SCTP
+    {{- if .Values.cuCp.o1.enabled }}
+    - name: netconf
+      port: 830
+      targetPort: 830
+      protocol: TCP
+    {{- end }}
 {{- end }}
