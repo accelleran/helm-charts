@@ -26,11 +26,51 @@ CU-CP Ocudu config (YAML).
     "e1ap" (dict "bind_addrs" "0.0.0.0")
     "f1ap" (dict "bind_addrs" "0.0.0.0")) -}}
 {{- if $v.cuCp.o1.enabled }}
-{{- $_ := set $base "o1" (dict
+{{- $o1 := dict
   "enabled" true
   "yang_search_path" ($v.cuCp.o1.yangSearchPath | default "/usr/local/yang")
   "overlay_file_path" "/var/lib/ocudu/o1-overlay.yml"
-  "restart_on_cold_commit" ($v.cuCp.o1.restartOnColdCommit | default false)) -}}
+  "restart_on_cold_commit" ($v.cuCp.o1.restartOnColdCommit | default false) -}}
+{{- $ueCtx := $v.cuCp.o1.ueContext | default dict -}}
+{{- if dig "enabled" false $ueCtx }}
+{{- /* The CU-CP metrics report lists UEs only with RRC layer metrics on. */ -}}
+{{- $maxUes := dig "maxUes" 256 $ueCtx | int -}}
+{{- if or (lt $maxUes 1) (gt $maxUes 1024) }}
+{{- fail (printf "cuCp.o1.ueContext.maxUes must be 1-1024 (got %v)" $maxUes) }}
+{{- end }}
+{{- $_ := set $o1 "ue_context" (dict "enabled" true "max_ues" $maxUes) -}}
+{{- $_ := set $base "metrics" (dict "layers" (dict "enable_rrc" true)) -}}
+{{- /* RSRP/RSRQ/SINR come only from UE measurement reports, which need a periodic report per serving cell. */ -}}
+{{- $mr := dig "measReport" dict $ueCtx -}}
+{{- $sectors := dig "sectorIds" list $mr -}}
+{{- if $sectors }}
+{{- $interval := dig "intervalMs" 1024 $mr | int -}}
+{{- if not (has $interval (list 120 240 480 640 1024 2048)) }}
+{{- fail (printf "cuCp.o1.ueContext.measReport.intervalMs must be one of 120, 240, 480, 640, 1024, 2048 (got %v)" $interval) }}
+{{- end }}
+{{- $bits := $v.gnb.gnbIdBitLength | int -}}
+{{- $mult := 1 -}}
+{{- range until (sub 36 $bits | int) }}{{ $mult = mul $mult 2 }}{{ end -}}
+{{- $cells := list -}}
+{{- $ncis := list -}}
+{{- range $sectors }}
+{{- $sid := . | int -}}
+{{- if or (lt $sid 0) (ge $sid $mult) }}
+{{- fail (printf "cuCp.o1.ueContext.measReport.sectorIds: %v does not fit the %v-bit cell id (gnbIdBitLength %v)" $sid (sub 36 $bits) $bits) }}
+{{- end }}
+{{- $nci := add (mul ($v.gnb.gnbId | int64) $mult) $sid -}}
+{{- if has $nci $ncis }}
+{{- fail (printf "cuCp.o1.ueContext.measReport.sectorIds: %v is listed twice" $sid) }}
+{{- end }}
+{{- $ncis = append $ncis $nci -}}
+{{- $cells = append $cells (dict "nr_cell_id" $nci "periodic_report_cfg_id" 1) -}}
+{{- end }}
+{{- $_ := set $base.cu_cp "mobility" (dict
+  "cells" $cells
+  "report_configs" (list (dict "report_cfg_id" 1 "report_type" "periodical" "report_interval_ms" $interval))) -}}
+{{- end }}
+{{- end }}
+{{- $_ := set $base "o1" $o1 -}}
 {{- end }}
 {{- include "firecell-cu.merge" (dict "dst" $base "src" $v.cuCp.extraConfig) | fromJson | toYaml -}}
 {{- end }}

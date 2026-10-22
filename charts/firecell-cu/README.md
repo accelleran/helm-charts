@@ -43,6 +43,13 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 | cuCp.extraConfig | object | `{"log":{"all_level":"warning","cu_level":"info","e1ap_level":"warning","f1ap_level":"info","filename":"/tmp/logs/ocudu_cu_cp.log","hex_max_size":0,"ngap_level":"info","pdcp_level":"warning","rrc_level":"info"},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9093},"pcap":{"e1ap_enable":false,"e1ap_filename":"/tmp/logs/cu_cp_e1ap.pcap","f1ap_enable":false,"f1ap_filename":"/tmp/logs/cu_cp_f1ap.pcap","ngap_enable":false,"ngap_filename":"/tmp/logs/cu_cp_ngap.pcap"}}` | Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict). |
 | cuCp.image | string | `""` | Image override (defaults to global.image). |
 | cuCp.nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
+| cuCp.o1.enabled | bool | `false` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
+| cuCp.o1.restartOnColdCommit | bool | `false` |  |
+| cuCp.o1.ueContext.enabled | bool | `true` | Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty. |
+| cuCp.o1.ueContext.maxUes | int | `256` | Maximum published UE entries. |
+| cuCp.o1.ueContext.measReport.intervalMs | int | `1024` | Report interval in ms (120, 240, 480, 640, 1024 or 2048). Must stay below ocudu's ue_meas_max_age_ms (3000), or every report is dropped as stale. |
+| cuCp.o1.ueContext.measReport.sectorIds | list | `[]` | cell.sectorId of every DU cell on this CU-CP. Each gets a periodic serving-cell measurement report so ue-context carries RSRP/RSRQ/SINR. Empty sends no reports (the three panels stay empty). NCI = gnb.gnbId << (36 - gnb.gnbIdBitLength) \| sectorId. |
+| cuCp.o1.yangSearchPath | string | `"/usr/local/yang"` |  |
 | cuCp.requestPduSessionTimeout | int | `15` | Seconds the CU-CP waits for PDU session setup before releasing the UE. |
 | cuCp.resources | object | `{}` |  |
 | cuCp.tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |

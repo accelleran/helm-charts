@@ -63,6 +63,16 @@ cuCp:
     enabled: false
     yangSearchPath: /usr/local/yang
     restartOnColdCommit: false
+    ueContext:
+      # -- Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty.
+      enabled: true
+      # -- Maximum published UE entries.
+      maxUes: 256
+      measReport:
+        # -- cell.sectorId of every DU cell on this CU-CP. Each gets a periodic serving-cell measurement report so ue-context carries RSRP/RSRQ/SINR. Empty sends no reports (the three panels stay empty). NCI = gnb.gnbId << (36 - gnb.gnbIdBitLength) | sectorId.
+        sectorIds: []
+        # -- Report interval in ms (120, 240, 480, 640, 1024 or 2048). Must stay below ocudu's ue_meas_max_age_ms (3000), or every report is dropped as stale.
+        intervalMs: 1024
   resources: {}
   # -- Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict).
   extraConfig:
