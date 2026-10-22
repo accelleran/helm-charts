@@ -1095,7 +1095,9 @@ fcAcsAgent:
 
 # --- 5G Core Configuration (injected into shared ConfigMap) ---
 coreConfig:
-  logLevel: debug
+  # debug dumps key material (Kamf, KNASint, NAS cipher keys, XRES, ...) from
+  # the OAI NFs; use it only for troubleshooting.
+  logLevel: info
   registerNf: "yes"
   httpVersion: 1
 
