@@ -58,8 +58,12 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 | cuUp.cuCpAddress | string | `""` | E1 target. Empty resolves to <cuCpService.name>.<namespace>.svc.cluster.local. |
 | cuUp.enabled | bool | `true` | Deploy CU-UP. |
 | cuUp.extraConfig | object | `{"cu_up":{"ngu":{"gtpu":{"ignore_ue_ambr":true}},"warn_on_drop":true},"log":{"all_level":"warning","filename":"/tmp/logs/ocudu_cu_up.log","hex_max_size":0},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9094},"pcap":{"e1ap_enable":false,"f1u_enable":false,"n3_enable":false}}` | Raw Ocudu cu_up YAML merged over the generated config. |
+| cuUp.f1u.network.cidr | string | `""` | CU-UP F1-U address with prefix. The IP part is the F1-U bind address. |
+| cuUp.f1u.network.enabled | bool | `false` | Put F1-U (GTP-U toward the DUs) on a macvlan of a host NIC instead of the pod network. Use when the DUs run on another node and the pod network between the nodes is slower than the user plane. |
+| cuUp.f1u.network.master | string | `""` | Host interface the F1-U macvlan sits on (link toward the DU node). |
 | cuUp.image | string | `""` |  |
 | cuUp.n3.cidr | string | `"10.3.0.4/24"` | Static N3 address with prefix. The IP part is the NG-U bind address. |
+| cuUp.n3.cniType | string | `"macvlan"` | macvlan (CU-UP on a different node than the UPF) or bridge (CU-UP on the UPF node with the UPF on a Linux bridge and generic XDP; macvlan siblings bypass generic XDP). |
 | cuUp.n3.enabled | bool | `true` | Attach a macvlan for N3. When false, N3 binds the pod IP. |
 | cuUp.n3.mac | string | `""` | Fixed MAC for the N3 macvlan (keeps the UPF neighbour entry valid). Empty lets CNI pick. |
 | cuUp.n3.master | string | `"eth1"` | Host parent interface of the N3 macvlan. |
