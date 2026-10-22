@@ -58,6 +58,11 @@ cuCp:
   cpus: ""
   # -- Seconds the CU-CP waits for PDU session setup before releasing the UE.
   requestPduSessionTimeout: 15
+  # -- NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context.
+  o1:
+    enabled: false
+    yangSearchPath: /usr/local/yang
+    restartOnColdCommit: false
   resources: {}
   # -- Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict).
   extraConfig:

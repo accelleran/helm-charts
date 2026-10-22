@@ -25,6 +25,13 @@ CU-CP Ocudu config (YAML).
     "amf" $amf
     "e1ap" (dict "bind_addrs" "0.0.0.0")
     "f1ap" (dict "bind_addrs" "0.0.0.0")) -}}
+{{- if $v.cuCp.o1.enabled }}
+{{- $_ := set $base "o1" (dict
+  "enabled" true
+  "yang_search_path" ($v.cuCp.o1.yangSearchPath | default "/usr/local/yang")
+  "overlay_file_path" "/var/lib/ocudu/o1-overlay.yml"
+  "restart_on_cold_commit" ($v.cuCp.o1.restartOnColdCommit | default false)) -}}
+{{- end }}
 {{- include "firecell-cu.merge" (dict "dst" $base "src" $v.cuCp.extraConfig) | fromJson | toYaml -}}
 {{- end }}
 

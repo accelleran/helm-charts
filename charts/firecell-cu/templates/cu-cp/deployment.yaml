@@ -30,6 +30,9 @@ spec:
           image: {{ include "firecell-cu.image" (dict "root" $ "image" $c.image) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
+            {{- if $c.o1.enabled }}
+            - /usr/local/bin/entrypoint-o1.sh
+            {{- end }}
             - /bin/bash
             - -c
             - |
@@ -39,6 +42,11 @@ spec:
               {{- else }}
               exec ocucp -c /config/cu_cp.yml
               {{- end }}
+          {{- if $c.o1.enabled }}
+          env:
+            - name: O1_ENABLED
+              value: "true"
+          {{- end }}
           securityContext:
             privileged: true
             capabilities:
@@ -73,10 +81,20 @@ spec:
               subPath: cu_cp.yml
             - name: logs
               mountPath: /tmp/logs
+            {{- if $c.o1.enabled }}
+            - name: o1-state
+              mountPath: /var/lib/ocudu
+            {{- end }}
       volumes:
         - name: config
           configMap:
             name: cu-cp-config
         - name: logs
           emptyDir: {}
+        {{- if $c.o1.enabled }}
+        - name: o1-state
+          hostPath:
+            path: /var/lib/firecell/ocudu/cu-cp
+            type: DirectoryOrCreate
+        {{- end }}
 {{- end }}
