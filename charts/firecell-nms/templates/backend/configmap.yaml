@@ -41,7 +41,6 @@ data:
   FIRECELL_NMS_NG_RETENTION_INTERVAL: {{ $be.config.retentionIntervalSeconds | quote }}
   FIRECELL_NMS_NG_QOS_RECONCILE_INTERVAL: {{ $be.config.qosReconcileIntervalSeconds | quote }}
   FIRECELL_NMS_NG_QOS_MAX_RULES: {{ $be.config.qosMaxRules | quote }}
-  FIRECELL_NMS_NG_N3_INTERFACE_NAME: {{ $be.config.n3InterfaceName | quote }}
   FIRECELL_NMS_NG_TRUST_GATEWAY_HEADERS: {{ $be.config.trustGatewayHeaders | quote }}
   KUBECONFIG: /etc/firecell-nms/kubeconfig/config
 ---

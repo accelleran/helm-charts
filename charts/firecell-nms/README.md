@@ -172,7 +172,6 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.config.defaultPlmn | string | `"00101"` |  |
 | backend.config.defaultSnssaisJson | string | `"[]"` | JSON object array of extra S-NSSAIs given to new subscribers. |
 | backend.config.jobRetentionSeconds | int | `604800` | Finished jobs older than this are deleted. 0 keeps everything. |
-| backend.config.n3InterfaceName | string | `"any"` | N3 capture interface on the UPF. |
 | backend.config.observationRetentionSeconds | int | `604800` | nf_observed rows older than this are deleted (the newest 50 per instance always stay). 0 keeps everything. |
 | backend.config.qosMaxRules | int | `4` |  |
 | backend.config.qosReconcileIntervalSeconds | int | `30` | How often the operator's PCC rules are re-asserted on the PCF. 0 disables it. |
