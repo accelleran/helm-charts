@@ -18,10 +18,12 @@ CU-CP over F1 through the headless Service `cuCpService.name`.
 
 ## 2. Install
 ```bash
-helm install ran-cu charts/firecell-cu -n oran -f common.yaml -f cu.yaml
-helm install du     charts/firecell-du -n oran -f common.yaml -f du.yaml
-helm install du-2   charts/firecell-du -n oran -f common.yaml -f du-2.yaml
+helm install --repo https://accelleran.github.io/helm-charts ran-cu firecell-cu -n oran -f common.yaml -f cu.yaml
+helm install --repo https://accelleran.github.io/helm-charts du     firecell-du -n oran -f common.yaml -f du.yaml
+helm install --repo https://accelleran.github.io/helm-charts du-2   firecell-du -n oran -f common.yaml -f du-2.yaml
 ```
+
+From a checkout of this repository, use the chart paths instead: `helm install ran-cu ./charts/firecell-cu ...`.
 
 `common.yaml` holds what the CU and every DU must agree on: `global.image` and `gnb.*`
 (gNB-ID, PLMN, TAC, slices). DUs in the same namespace find the CU-CP at
