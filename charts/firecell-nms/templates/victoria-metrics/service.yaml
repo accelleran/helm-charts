@@ -1,10 +1,8 @@
-# Service name matches Grafana datasource URL hardcoded in image:
-# http://nms-api-victoria-metrics-dev:8430 — zero config change needed.
 apiVersion: v1
 kind: Service
 metadata:
-  name: nms-api-victoria-metrics-dev
-  namespace: {{ .Values.global.namespace }}
+  name: nms-victoria-metrics
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
     app: nms-victoria-metrics

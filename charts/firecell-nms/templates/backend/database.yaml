@@ -1,0 +1,130 @@
+{{- $db := .Values.backend.database }}
+# Kept on uninstall: it holds the inventory, the catalogue and the OP.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nms-db-data
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-db
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: {{ required "firecell-nms: set global.storageClass to your StorageClass name (see values.yaml)" .Values.global.storageClass }}
+  resources:
+    requests:
+      storage: {{ $db.storage }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nms-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-db
+    app.kubernetes.io/component: nms-db
+spec:
+  serviceName: nms-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nms-db
+  template:
+    metadata:
+      labels:
+        app: nms-db
+        app.kubernetes.io/component: nms-db
+        app.kubernetes.io/part-of: firecell-nms
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/backend/database-configmap.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile: {type: RuntimeDefault}
+      terminationGracePeriodSeconds: 120
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: mysql
+          image: {{ $db.image | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "firecell-nms.backend.secretName" . }}
+                  key: database-root-password
+            - name: MYSQL_DATABASE
+              value: {{ $db.name | quote }}
+            # The backend's own user, with every privilege on MYSQL_DATABASE
+            # and nothing else. Like the root password, created on the
+            # first start only.
+            - name: MYSQL_USER
+              value: {{ $db.user | quote }}
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "firecell-nms.backend.secretName" . }}
+                  key: database-password
+          ports:
+            - {name: mysql, containerPort: 3306}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/mysql}
+            - {name: config, mountPath: /etc/mysql/conf.d, readOnly: true}
+            - {name: run, mountPath: /var/run/mysqld}
+            - {name: tmp, mountPath: /tmp}
+          # No credentials: mysqladmin ping succeeds once the server answers
+          # on TCP, even with access denied. TCP stays closed while the
+          # entrypoint initialises the datadir.
+          startupProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            {{- toYaml $db.resources | nindent 12 }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nms-db-data
+        - name: config
+          configMap:
+            name: nms-db-config
+        - {name: run, emptyDir: {}}
+        - {name: tmp, emptyDir: {}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nms-db
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-db
+    app.kubernetes.io/component: nms-db
+spec:
+  selector:
+    app: nms-db
+  ports:
+    - {name: mysql, port: 3306, targetPort: mysql}

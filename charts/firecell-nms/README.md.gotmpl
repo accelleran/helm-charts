@@ -6,22 +6,173 @@
 {{ template "chart.description" . }}
 
 ## 1. Architectural Role
-The Network Management System (NMS) provides the central dashboard and REST API for provisioning the 5G Core.
+
+The Network Management System (NMS) provides the dashboard and the REST API for provisioning and supervising the 5G Core. One release installs all of it; install one release per namespace.
 
 ### 1.1 Stack Components
-- **Frontend:** React-based UI served via Nginx.
-- **Backend:** Flask REST API (`nms-api`).
-- **Persistence:** MySQL (`nms-db`) and Redis (`redis-cache`).
-- **Monitoring:** VictoriaMetrics and Grafana.
 
-## 2. Configuration Parameters
-The following table lists the configurable parameters of the Firecell-nms chart and their default values.
+- **Frontend:** React UI served by nginx (`nms-front`). nginx sends `/api/` to the API, `/nms-cm/` to the backend's built-in CM console (`/ui/`), `/metrics-api/` to VictoriaMetrics, and redirects `/grafana/` to `front.grafanaUrl`.
+- **Backend:** the API (`nms-api`, two or more replicas), the job workers (`nms-worker`), and exactly one control plane (`nms-control-plane`: supervision, reconciliation, subscriptions, audits).
+- **Persistence:** the backend's MySQL (`nms-db`).
+- **Metrics:** VictoriaMetrics, where the backend writes PM reports and alarm gauges.
+
+Not included: Grafana (use grafana-operator or any Grafana with a datasource on `nms-victoria-metrics`), an Ingress (route to `nms-front` with your gateway), the namespace, the platform monitor and anything from the 5G Core.
+
+The `firecell-nms-ng-*` commands and the `FIRECELL_NMS_NG_*` environment variables come from the backend itself, so they keep its `ng` naming.
+
+Both images come from the `master` branches of [nms-backend](https://github.com/accelleran/nms-backend) and [nms-frontend](https://github.com/accelleran/nms-frontend). Until there are releases, the defaults are the GHCR `edge-<sha>` builds; releases will be `docker.io/accelleran/nms-backend:X.Y.Z` and `docker.io/accelleran/nms-frontend:X.Y.Z`.
+
+### 1.2 Services
+
+Names are fixed, not derived from the release name, so other releases can rely on them.
+
+| Service | Port | Serves |
+|---------|------|--------|
+| `nms-front` | 80 | UI, `/nginx-health` (nginx only), `/healthz` (the API's `/healthz` through nginx, no login) |
+| `nms-api` | 8080 | API, `/healthz`, FCAPS notification receiver, Grafana alert webhook `/api/alarms/webhook` |
+| `nms-db` | 3306 | Backend MySQL |
+| `nms-victoria-metrics` | 8430 | VictoriaMetrics (Prometheus API) |
+
+## 2. Before Installation
+
+- Create the release namespace. The chart creates no namespace and renders nothing in `rbac.coreNamespace` (default `firecell-core`) or `rbac.ranNamespace`, so they need not exist yet: the charts deployed into them grant the NMS its access (see [Access to the Core and RAN](#21-access-to-the-core-and-ran)).
+- Create the Secret named by `backend.existingSecret` (default `nms-secrets`) in the release namespace. The chart never creates it and has no default credentials.
+
+| Key | Content |
+|-----|---------|
+| `database-root-password` | MySQL root password. Only MySQL uses it; the backend never connects as root. |
+| `database-password` | Password of the backend's MySQL user (`backend.database.user`, default `nms`), which has privileges on `backend.database.name` only. Use URL-safe characters (letters, digits, `. _ ~ -`): it is also part of `database-url`. |
+| `database-url` | `mysql+pymysql://<backend.database.user>:<database-password>@nms-db.<namespace>.svc.cluster.local:3306/<backend.database.name>` |
+| `network-name` | Name of the managed network, e.g. `firecell`. |
+| `op` | Operator variant key: exactly 32 hexadecimal characters. |
+| `api-tokens-json` | Non-empty JSON object of machine API tokens, e.g. `{"<token>":{"user":"automation","roles":["operator"]}}`. |
+| `default-admin-user` | Local admin login the bootstrap creates when it does not exist yet. |
+| `default-admin-password` | Its password. The backend always creates this user and would fall back to `admin`/`admin`, so both keys are required. |
+
+```sh
+pw="$(openssl rand -hex 16)"
+kubectl -n firecell-nms create secret generic nms-secrets \
+  --from-literal=database-root-password="$(openssl rand -hex 16)" \
+  --from-literal=database-password="$pw" \
+  --from-literal=database-url="mysql+pymysql://nms:${pw}@nms-db.firecell-nms.svc.cluster.local:3306/firecell_nms" \
+  --from-literal=network-name=firecell \
+  --from-literal=op="$(openssl rand -hex 16)" \
+  --from-literal=api-tokens-json="{\"$(openssl rand -hex 24)\":{\"user\":\"automation\",\"roles\":[\"operator\"]}}" \
+  --from-literal=default-admin-user=admin@example.com \
+  --from-literal=default-admin-password="$(openssl rand -base64 24)"
+```
+
+What the Secret changes after the first install:
+
+- A changed Secret rolls no pod. Restart them yourself (`kubectl rollout restart deployment/nms-api deployment/nms-worker statefulset/nms-control-plane`).
+- MySQL applies `database-root-password`, the user and `database-password` on its first start only, on an empty `nms-db-data`. To change a password later, change it in MySQL first, then in the Secret.
+- Bootstrap never rotates anything: it creates the OP only when the network has none, and the admin only when no user has that login. A new `op` is ignored; a new `default-admin-user` adds a second admin.
+
+### 2.1 Access to the Core and RAN
+
+The backend reads pods, writes intent ConfigMaps, and restarts, stops and starts Deployments in the core and RAN namespaces. The chart ships the rules that apply to a whole namespace as two ClusterRoles, which grant nothing until bound. Each chart deployed into those namespaces binds one of them and grants its own Deployments by name.
+
+| ClusterRole | Rules | Bound by |
+|-------------|-------|----------|
+| `nms-core-<namespace>` | pods and `pods/status`: get, list, watch; `pods/log`: get; ConfigMaps: get, create, update, patch | the core chart, in `rbac.coreNamespace` |
+| `nms-ran-<namespace>` | pods and `pods/status`: get, list, watch | every CU-CP, CU-UP and DU chart, in `rbac.ranNamespace` |
+
+`<namespace>` is the NMS release namespace. Each binding chart renders the following, named after its release, since several CU-CPs, CU-UPs and DUs share the RAN namespace (`<nms-namespace>`, `<release>` and `<deployment>` are placeholders):
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <release>-nms
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nms-ran-<nms-namespace>   # nms-core-<nms-namespace> in the core chart
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: <nms-namespace>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: <release>-nms-lifecycle
+rules:
+  # rollout restart patches the pod template; stop and start scale.
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    resourceNames: [<deployment>]   # every Deployment the chart renders
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: <release>-nms-lifecycle
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: <release>-nms-lifecycle
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: <nms-namespace>
+```
+
+Until a chart carries these, the NMS sees no pods in that namespace (element readiness is unknown), and its CM writes, support bundles and lifecycle operations there fail with Forbidden.
+
+## 3. Installation
+
+```sh
+helm install firecell-nms accelleran/firecell-nms --namespace firecell-nms --wait --timeout 20m
+```
+
+The install completes in one pass, with or without `--wait`, which also makes it safe under Flux helm-controller. There are no Helm hooks:
+
+- The `nms-control-plane` pod runs three init containers. `check-schema` waits until MySQL accepts the backend's credentials. `migrate` then upgrades the schema, and `bootstrap` seeds the catalogue. Both steps are idempotent and run again on every control-plane start.
+- The API and worker pods wait in a `wait-for-schema` init container until the schema is at the revision their image expects. The backend refuses to start on any other revision, so post-install hooks would leave `--wait` (and Flux) waiting for pods that can only become ready after the hook.
+- The control plane is a StatefulSet of exactly one pod. When the pod is deleted, evicted or drained, its replacement starts only once the old pod is gone, so two control planes, or two migrations, never run at once. A Deployment would start the replacement during the old pod's grace period.
+- The API and worker can start between `migrate` and `bootstrap`, before the catalogue is seeded. On a first install they briefly serve an empty network.
+- While the database is unreachable, the init containers log the error class and the MySQL error number: 1045 is a wrong user or password, 2003 or 2005 a server that cannot be reached yet. They never log the URL or the password.
+
+Bootstrap seeds the catalogue only when it is empty: `backend.config.seedDnnsJson` and `seedSliceJson` matter on the first install only.
+
+## 4. Upgrades and Rollbacks
+
+- **Migrations run once, before new pods serve.** On an upgrade that changes the backend image, the old control plane stops first. That takes up to `backend.terminationGracePeriodSeconds` (660s by default), while it finishes in-flight work. The new control plane then migrates. New API and worker pods wait for the migrated schema; until then the old pods keep serving.
+- **Timeouts.** New API and worker pods can wait for the grace period plus the migration, so their rollout deadline (`backend.progressDeadlineSeconds`, 1200s) must exceed the grace period; the chart refuses to render otherwise. Give `helm upgrade --timeout`, or the HelmRelease `spec.timeout`, at least 20m with the defaults, and more if you raise either value.
+- **Rolling the image back across a migration needs a manual schema downgrade.** The backend starts only on exactly its own head revision. An older image on a newer schema stops in `check-schema` / `wait-for-schema`, with `database is at migration <rev>, ahead of this image (head <old head>)`, and stays down. The API pods of the newer image keep serving: with two replicas, the rollout cannot take one away. Downgrade the schema with the newer image, from one of those pods; the older pods then start on their next retry:
+
+  ```sh
+  kubectl -n firecell-nms exec deploy/nms-api -c api -- python -c \
+    'import os; from nms_backend.platform.migrations import downgrade; downgrade(os.environ["FIRECELL_NMS_NG_DATABASE_URL"], "<old head>")'
+  ```
+
+  A downgrade can drop data that the newer schema added. Back up `nms-db-data` first.
+- **Keep Flux upgrade remediation off** (`spec.upgrade.remediation`, off by default). An automatic rollback after a failed upgrade that migrated would hit exactly this case. This holds until the backend adopts expand/contract migrations and a compatibility check, instead of exact-head equality.
+
+## 5. Gateway Identity
+
+Behind oauth2-proxy, set `backend.config.trustGatewayHeaders=true` and `networkPolicy.enabled=true` (the first without the second fails the render). The backend then believes `X-Forwarded-User` / `-Groups` without checking a token, so the NetworkPolicies decide who can send them:
+
+- `nms-api`: port 8080 from `nms-front`, oauth2-proxy (`app.kubernetes.io/name: <networkPolicy.oauth2ProxyLabel>`), every pod in `rbac.coreNamespace` (NFs post FCAPS notifications without a token) and `networkPolicy.extraFrom`. Add the Grafana that posts alerts and the platform monitor there.
+- `nms-front`: port 80 from oauth2-proxy and `networkPolicy.frontExtraFrom`. nginx forwards the identity headers, so it is closed too.
+
+Anything else that connects to `nms-front` or `nms-api` directly, such as a readiness probe from another namespace, needs its own entry in `frontExtraFrom` or `extraFrom`. It must not pass a client's `X-Forwarded-*` headers along.
+
+Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object whose keys are the role names, which is the shape of Zitadel's project roles claim (`urn:zitadel:iam:org:project:roles`), for example `{"operator": {"<org-id>": "<domain>"}}`:
+
+- Reads need only an authenticated user. Writes need the `operator` role.
+- A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
+- For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
+
+## 6. Configuration Parameters
+
+The following table lists the configurable parameters of the firecell-nms chart and their default values.
 
 {{ template "chart.valuesTable" . }}
 
-## 3. Maintenance & Troubleshooting
-- Ensure Secret `nms-secrets` is pre-created before installation. Set `global.createNamespace=false` when the namespace is managed outside the chart.
-- Ingress requires an Nginx Ingress Controller.
-- Set `grafana.enabled=false` when Grafana is provided by an operator or another release.
+## 7. Upgrading from 0.1.x
+
+There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 
 {{ template "helm-docs.versionFooter" . }}

@@ -1,86 +1,173 @@
-# Firecell NMS — Kubernetes-native deployment (Consul-free)
-# All Consul/Envoy sidecars removed; services communicate via k8s DNS.
+# Firecell NMS: the nginx frontend, the backend (API, worker, control plane
+# and its MySQL) and VictoriaMetrics. Install one release per namespace:
+# Service names are fixed so other releases can rely on them.
+
+# Every image is one full reference (registry/repository:tag[@digest]) with
+# an exact tag, so a mirror or a digest pin is a single value per image.
 
 global:
-  namespace: firecell-nms
-  imageRegistry: registry.gitlab.com/firecell/r-d/firecellrd
-  # The busybox used by every initContainer in this chart. Composed from
-  # imageRegistry when unset; name it in full to pull it from anywhere else.
-  busyboxImage: ""
-  # Display version only: the app.kubernetes.io/version label, and the fallback
-  # image tag for components that set no imageTag of their own. It is NOT the
-  # database schema version -- see api.schemaVersion.
-  pkgVersion: "6.0.0"
+  # -- Pull policy of every image in the chart.
   imagePullPolicy: IfNotPresent
-  imagePullSecrets:
-    - name: gitlab-regcred
-  timezone: Europe/Paris
-  # Must be non-empty: omitting storageClassName on PVCs lets the API inject the
-  # default StorageClass, then Helm upgrades try to "unset" it → immutable spec errors.
-  # k3s default is usually local-path; override per environment (e.g. longhorn in lab).
+  # -- Pull secrets of every pod in the chart, e.g. `[{name: ghcr-pull}]`.
+  imagePullSecrets: []
+  # -- StorageClass of every PVC. Must be non-empty: omitting storageClassName
+  # lets the API inject the default StorageClass, and Helm upgrades then try
+  # to unset it (immutable field).
   storageClass: "local-path"
-  # 0.1.0 always rendered a Namespace. Set false when GitOps already owns
-  # it: a failed install's uninstall would otherwise delete the namespace
-  # and everything else in it.
-  createNamespace: true
 
-# --- MySQL database ---
-# Service name: "db", port 3310 → targetPort 3306
-# Flask app uses FIRECELL_NMS_API_DATABASE_PORT=3310 and connects to host "db"
-# so zero code change required.
-#
-# Pre-create before helm install:
-#   kubectl create secret generic nms-secrets \
-#     --from-literal=db-root-password=<pass> \
-#     --from-literal=db-password=<pass> \
-#     --from-literal=mail-username=<user> \
-#     --from-literal=mail-password=<pass> \
-#     --from-literal=grafana-admin-password=<pass> \
-#     -n firecell-nms
-db:
-  image: mysql:8.0.31
-  database: firecell_nms_api
-  user: firecell_nms_user
-  # Credentials come from nms-secrets Secret
-  storage: 10Gi
-  readinessProbe:
-    initialDelaySeconds: 120
-    periodSeconds: 10
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 300m
-    limits:
-      memory: 2Gi
-      cpu: 1000m
+# --- Backend ---
+backend:
+  # -- Backend image (API, worker, control plane, migration and bootstrap),
+  # as a full reference.
+  image: ghcr.io/accelleran/nms-backend:edge-1501118
+  # -- Secret with the backend credentials, created before install; the
+  # chart never creates it. Required keys: `database-root-password`,
+  # `database-password`, `database-url`, `network-name`, `op`,
+  # `api-tokens-json`, `default-admin-user`, `default-admin-password`
+  # (see README).
+  existingSecret: nms-secrets
+  # -- Longer than the backend's slowest lifecycle operation (600s), so
+  # workers and the control plane can finish in-flight work after SIGTERM.
+  # On an image change the new control plane, and so the migration, starts
+  # only after the old one has stopped: up to this long.
+  terminationGracePeriodSeconds: 660
+  # -- Rollout deadline of the API and worker Deployments. New pods wait for
+  # the old control plane to stop and the migration to finish, so it must
+  # exceed terminationGracePeriodSeconds plus the migration time. Keep the
+  # Helm / HelmRelease timeout above it.
+  progressDeadlineSeconds: 1200
 
-# --- Redis cache ---
-# Service name: "redis-cache", port 6799 → targetPort 6379
-# App uses REDIS_CACHE_HOST=redis-cache, REDIS_CACHE_PORT=6799
-redis:
-  image: redis:stable
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  imageOverride: ""
-  storage: 1Gi
-  resources:
-    requests:
-      memory: 64Mi
-      cpu: 50m
-    limits:
-      memory: 256Mi
-      cpu: 200m
+  api:
+    # -- API replicas (at least 2).
+    replicas: 2
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 1Gi}
+
+  worker:
+    # -- Worker replicas (at least 1).
+    replicas: 1
+    # -- Job threads per worker.
+    threads: 4
+    # -- Seconds a new worker must stay up before it counts as available
+    # (its probes only check that the process lives).
+    minReadySeconds: 20
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 1Gi}
+
+  # The control plane is always exactly one pod, a StatefulSet of one: a
+  # replacement starts only once the old pod is gone. Its init containers
+  # check and migrate the schema and bootstrap the catalogue.
+  controlPlane:
+    # -- Seconds the control plane must stay up before it counts as
+    # available (its probes only check that the process lives).
+    minReadySeconds: 20
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {cpu: "1", memory: 1Gi}
+
+  # -- Resources of the check-schema, migrate, bootstrap and wait-for-schema
+  # init containers.
+  initResources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 512Mi}
+
+  database:
+    # -- Backend MySQL image, as a full reference.
+    image: docker.io/library/mysql:8.0.46
+    # -- Database the backend uses; `database-url` must name it.
+    name: firecell_nms
+    # -- MySQL user the backend connects as, with privileges on `name` only;
+    # `database-url` must name it. Created on the database's first start.
+    user: nms
+    # -- Size of PVC nms-db-data (kept on uninstall).
+    storage: 10Gi
+    resources:
+      requests: {cpu: 200m, memory: 512Mi}
+      limits: {cpu: "2", memory: 2Gi}
+
+  endpoints:
+    # -- UDR provisioning API. Empty: `http://oai-udr.<rbac.coreNamespace>.svc.cluster.local:8080`.
+    udr: ""
+    # -- PCF API. Empty: `http://oai-pcf.<rbac.coreNamespace>.svc.cluster.local:8080`.
+    pcf: ""
+    # -- IMS API. Empty: `http://ims.<rbac.coreNamespace>.svc.cluster.local:8080`.
+    ims: ""
+    # -- Where PM reports and alarm gauges are written. Empty: the in-chart
+    # VictoriaMetrics. Grafana alert rules read core_alarm_active from here
+    # and post to /api/alarms/webhook, so without it no alarm arrives.
+    victoria: ""
+    # -- ext-dn probe sidecar for device ping (enable extDn.sidecar in
+    # firecell-5gc first), e.g. `http://oai-ext-dn.firecell-core.svc.cluster.local:8080`.
+    # Empty: the ping routes answer 503.
+    extdnProbe: ""
+
+  config:
+    # -- JSON string array of allowed WebSocket origins.
+    allowedWsOriginsJson: "[]"
+    # -- JSON object array of extra S-NSSAIs given to new subscribers.
+    defaultSnssaisJson: "[]"
+    defaultPlmn: "00101"
+    # -- Level-1 "Data network" instances the bootstrap seeds on an EMPTY
+    # catalogue. Pass the DNNs the 5GC chart runs, e.g.
+    # `[{"dnn":"oai","ipv4Subnet":"12.1.1.0/25","pduSessionType":"IPV4"}]`.
+    # Empty keeps the built-in seed (a DNN called "default").
+    seedDnnsJson: ""
+    # -- The first slice the bootstrap seeds, e.g. `{"sst":1,"sd":"000001"}`.
+    seedSliceJson: ""
+    cmConfigMapKey: cm.json
+    southboundTimeoutSeconds: 6
+    reconcileTimeoutSeconds: 15
+    # -- Finished jobs older than this are deleted. 0 keeps everything.
+    jobRetentionSeconds: 604800
+    # -- nf_observed rows older than this are deleted (the newest 50 per
+    # instance always stay). 0 keeps everything.
+    observationRetentionSeconds: 604800
+    retentionIntervalSeconds: 3600
+    # -- How often the operator's PCC rules are re-asserted on the PCF. 0 disables it.
+    qosReconcileIntervalSeconds: 30
+    qosMaxRules: 4
+    # -- Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires
+    # networkPolicy.enabled: the backend does not check tokens on this path.
+    trustGatewayHeaders: false
+
+  # -- Extra environment (EnvVar list) for the API, worker and control plane,
+  # e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL.
+  extraEnv: []
+
+# --- The 5GC and RAN namespaces the backend manages ---
+rbac:
+  # -- Namespace of the 5GC NFs: CM intent ConfigMaps, the default southbound
+  # URLs and the NetworkPolicy. The chart renders nothing there, so it need
+  # not exist yet; the core chart grants the access (see the README).
+  coreNamespace: firecell-core
+  # -- Namespace of all the CU-CPs, CU-UPs and DUs when they do not run in
+  # coreNamespace. When set, RAN-domain elements are rolled there. The chart
+  # renders nothing there; the RAN charts grant the access.
+  ranNamespace: ""
+
+# --- NetworkPolicies for the gateway identity headers ---
+networkPolicy:
+  # -- Restrict who reaches the API (nms-api, port 8080) and nms-front
+  # (port 80). Needed for backend.config.trustGatewayHeaders.
+  enabled: false
+  # -- app.kubernetes.io/name label of the oauth2-proxy pods in this namespace.
+  oauth2ProxyLabel: oauth2-proxy
+  # -- More NetworkPolicyPeers allowed to the API besides nms-front,
+  # oauth2-proxy and rbac.coreNamespace: the Grafana that posts alerts to
+  # /api/alarms/webhook, the platform monitor that pushes FCAPS.
+  extraFrom: []
+  # -- More NetworkPolicyPeers allowed to nms-front besides oauth2-proxy,
+  # e.g. a landing page that probes /healthz.
+  frontExtraFrom: []
 
 # --- Victoria Metrics ---
-# Service name: "nms-api-victoria-metrics-dev", port 8430
-# Grafana datasource URL hardcoded to http://nms-api-victoria-metrics-dev:8430 — no ConfigMap change needed.
+# Service nms-victoria-metrics, port 8430: point the Grafana datasource here.
 victoriaMetrics:
-  image: ue-monitoring-victoria-metrics:stable
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  imageOverride: ""
+  # -- VictoriaMetrics image, as a full reference.
+  image: docker.io/victoriametrics/victoria-metrics:v1.93.4
+  # -- Size of PVC nms-vm-data.
   storage: 20Gi
   retentionPeriod: 7d
   maxLabelsPerTimeseries: 50
@@ -93,69 +180,23 @@ victoriaMetrics:
       memory: 1Gi
       cpu: 500m
 
-# --- Grafana ---
-grafana:
-  # 0.1.0 always deployed chart Grafana. Set false when an operator or
-  # another release owns dashboards.
-  enabled: true
-  image: ue-monitoring-graphana:stable
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  imageOverride: ""
-  storage: 2Gi
-  # Admin password from nms-secrets Secret (key: grafana-admin-password)
-  resources:
-    requests:
-      memory: 128Mi
-      cpu: 100m
-    limits:
-      memory: 512Mi
-      cpu: 500m
-
-# --- Flask API backend ---
-api:
-  image: nms-backend
-  # Full image reference (registry/repository:tag), which wins over the
-  # imageRegistry + image + imageTag composition above. Same escape hatch the
-  # firecell-5gc chart gives every NF: the composition glues on the registry
-  # and a "v" prefix, so an image published anywhere else cannot be named
-  # without it.
-  imageOverride: ""
-  # The NMS database schema version, passed to the backend as backend_version
-  # and taken by initialize_nms() as the migration TARGET. It must name a
-  # version the image's migration registry actually knows: that registry runs
-  # 4.0.0 -> 5.0.1, so a higher value finds no chain, fails the migration, and
-  # blocks every API call. Keep it on the schema the nms-backend image carries
-  # (its own /app/mysql-script.sql stamps Version) and raise it only when the
-  # image ships migrations for the new version -- which is why it is separate
-  # from global.pkgVersion, the product version.
-  schemaVersion: "5.0.1"
-  # Image build tag (4-part), decoupled from the display version global.pkgVersion (5.0.1).
-  # Unset falls back to global.pkgVersion.
-  imageTag: "5.0.1.0"
-  coreNamespace: firecell-core   # Namespace where firecell-5gc pods run (for RBAC)
-  # Mail credentials from nms-secrets Secret
-  mailServer: smtp.gmail.com
-  mailPort: 465
-  resources:
-    requests:
-      memory: 256Mi
-      cpu: 100m
-    limits:
-      memory: 1Gi
-      cpu: 1000m
-
 # --- nginx frontend ---
 front:
-  image: nms-frontend
-  # Full image reference (registry/repository:tag), which wins over the
-  # imageRegistry + image + imageTag composition above. Same escape hatch the
-  # firecell-5gc chart gives every NF: the composition glues on the registry
-  # and a "v" prefix, so an image published anywhere else cannot be named
-  # without it.
-  imageOverride: ""
-  imageTag: "5.0.1.0"   # see api.imageTag
+  # -- NMS frontend (nginx) image, as a full reference. Needs a CM-enabled
+  # build that talks to the new backend.
+  image: ghcr.io/accelleran/nms-frontend:edge-db0447e
+  # -- Where nginx sends /api/. Empty: the in-chart nms-api Service.
+  backendUrl: ""
+  # -- Where nginx sends /nms-cm/ (the CM console). Empty: the backend's
+  # built-in console, `<nms-api>/ui`.
+  cmUrl: ""
+  # -- VictoriaMetrics base URL for the Device Performance charts
+  # (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics.
+  metricsUrl: ""
+  # -- External Grafana base URL (the chart has no Grafana of its own). The UI
+  # links to <origin>/grafana/...; /grafana/ redirects there, path and query
+  # intact. Empty leaves the location out.
+  grafanaUrl: ""
   resources:
     requests:
       memory: 64Mi
@@ -163,28 +204,3 @@ front:
     limits:
       memory: 128Mi
       cpu: 200m
-
-# --- Ingress ---
-ingress:
-  enabled: true
-  className: nginx
-  hostname: nms.example.com
-  tls:
-    enabled: true
-    secretName: nms-tls
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-
-# --- Configuration Management console ---
-# Publishes the separately deployed cm-nms Service under this chart's NMS host.
-# The Ingress objects are created in the CM namespace because Kubernetes only
-# permits same-namespace Service backends.
-cmConsole:
-  enabled: false
-  namespace: firecell-cm
-  path: /nms-cm
-  service:
-    name: cm-nms
-    port: 8000

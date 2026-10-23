@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nms-victoria-metrics
-  namespace: {{ .Values.global.namespace }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "firecell-nms.labels" . | nindent 4 }}
     app: nms-victoria-metrics
@@ -22,7 +22,7 @@ spec:
       {{- end }}
       containers:
         - name: victoria-metrics
-          image: {{ .Values.victoriaMetrics.imageOverride | default (printf "%s/%s" .Values.global.imageRegistry .Values.victoriaMetrics.image) }}
+          image: {{ .Values.victoriaMetrics.image | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           args:
             - --storageDataPath=/victoria-metrics-data
