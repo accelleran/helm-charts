@@ -1,0 +1,88 @@
+{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") (not .Values.upf.hostNetwork) (.Values.upf.multus.enabled | default false) }}
+{{- $n3 := .Values.upf.multus.n3 | default dict }}
+{{- $n6 := .Values.upf.multus.n6 | default dict }}
+{{- $n3cni := $n3.cniType | default "macvlan" }}
+{{- $n6cni := $n6.cniType | default "macvlan" }}
+{{- $n3dev := coalesce $n3.device $n3.bridge $n3.masterInterface "" }}
+{{- $n6dev := coalesce $n6.device $n6.bridge $n6.masterInterface "" }}
+{{- if and $n3dev $n3.ip }}
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ $n3.nadName | default "upf-n3-net" }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-upf
+    tier: core-network
+    firecell.io/upf-net: n3
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "{{ $n3.nadName | default "upf-n3-net" }}",
+      {{- if eq $n3cni "host-device" }}
+      "type": "host-device",
+      "device": "{{ $n3dev }}",
+      {{- else if eq $n3cni "bridge" }}
+      "type": "bridge",
+      "bridge": "{{ $n3dev }}",
+      "isGateway": false,
+      "ipMasq": false,
+      {{- else }}
+      "type": "{{ $n3cni }}",
+      "master": "{{ $n3dev }}",
+      "mode": "{{ $n3.mode | default "bridge" }}",
+      {{- end }}
+      "ipam": {
+        "type": "static",
+        "addresses": [
+          {
+            "address": "{{ $n3.ip }}/{{ $n3.subnetPrefix | default 24 }}"
+          }
+        ]
+      }
+    }
+{{- end }}
+{{- if and $n6dev $n6.ip }}
+---
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ $n6.nadName | default "upf-n6-net" }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-upf
+    tier: core-network
+    firecell.io/upf-net: n6
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "{{ $n6.nadName | default "upf-n6-net" }}",
+      {{- if eq $n6cni "host-device" }}
+      "type": "host-device",
+      "device": "{{ $n6dev }}",
+      {{- else if eq $n6cni "bridge" }}
+      "type": "bridge",
+      "bridge": "{{ $n6dev }}",
+      "isGateway": false,
+      "ipMasq": false,
+      {{- else }}
+      "type": "{{ $n6cni }}",
+      "master": "{{ $n6dev }}",
+      "mode": "{{ $n6.mode | default "bridge" }}",
+      {{- end }}
+      "ipam": {
+        "type": "static",
+        "addresses": [
+          {
+            "address": "{{ $n6.ip }}/{{ $n6.subnetPrefix | default 24 }}"
+          }
+        ]
+      }
+    }
+{{- end }}
+{{- end }}

@@ -583,14 +583,54 @@ upf:
   serviceType: LoadBalancer
   hostNetwork: true
   privileged: true
+  # Multus secondary NICs when hostNetwork=false: eth0 (pod/CNI) stays SBI+N4;
+  # Multus attaches net1 (N3) then net2 (N6). Requires Multus CNI + macvlan/ipvlan.
+  # XDP_REDIRECT between Multus macvlan net1/net2 in the pod netns drops UL —
+  # multus.enableBpfDatapath defaults false (simpleswitch). Same-host gNB on a
+  # host macvlan needs a /32 to UPF N3 via that macvlan (parent cannot reach children).
+  multus:
+    enabled: false
+    # Opt-in XDP for Multus only (ignored when hostNetwork=true). Default false.
+    # Set true when using cniType: host-device (Option 2, xdpAttachMode: native)
+    # or cniType: bridge on both N3 and N6 (Option 1, xdpAttachMode: generic).
+    enableBpfDatapath: false
+    # RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus, written to
+    # every rx queue of the N3/N6 interfaces at pod start. With generic XDP (Option 1)
+    # the whole N6 -> bridge -> XDP -> veth path runs in softirq on the core that took
+    # the NIC interrupt; RPS spreads it per flow. Applied to bridge (veth) and
+    # host-device interfaces only: a macvlan/ipvlan receives in the parent NIC's
+    # softirq, so pin that NIC's IRQs on the host instead. Use the cores the host pins
+    # its NIC IRQs to, e.g. "3c003c" = CPUs 2-5,18-21. Empty leaves RPS off.
+    rpsCpus: ""
+    n3:
+      nadName: upf-n3-net
+      # Supported cniType values:
+      #   - "host-device": moves physical NIC (masterInterface/device) into UPF pod netns (Option 2, native XDP)
+      #   - "bridge":      attaches veth to host Linux bridge (masterInterface/bridge) (Option 1, generic XDP)
+      #   - "macvlan" / "ipvlan": attaches sub-interface on masterInterface
+      cniType: macvlan
+      mode: bridge
+      masterInterface: ""       # site: physical NIC (host-device/macvlan) or bridge name (bridge CNI)
+      ip: ""                    # e.g. 10.3.0.101
+      subnetPrefix: 24
+      # Optional list of N3 peer IPs (e.g. ["10.3.0.4", "10.3.0.5"]) to ping from net1 in multus-datapath-init
+      arpWarmIPs: []
+    n6:
+      nadName: upf-n6-net
+      cniType: macvlan
+      mode: bridge
+      masterInterface: ""       # site: physical NIC (host-device/macvlan) or bridge name (bridge CNI)
+      ip: ""                    # e.g. 10.10.0.101
+      subnetPrefix: 24
   # CP/UP interface separation
   # n3IP: explicit GTP-U bind/advertise IP (set to network.upfExternalIP for MetalLB UP VIP)
   n3IP: "198.51.100.101"        # Must match network.upfExternalIP
-  n3Interface: "eth1"            # UP NIC — used when n3IP is empty
+  n3Interface: "eth1"            # UP NIC — used when n3IP is empty; Multus → net1
   n4Interface: "eth0"            # CP NIC — parent for pfcp-macvlan-init; PFCP toward SMF
   # OAI hostNetwork only: SBI/NRF HTTP bind (e.g. k3s cni0 — must reach ClusterIP/pod CIDR)
   sbiInterface: ""
   # OAI hostNetwork: N6 data-plane NIC (do not set to cni0; use physical uplink/DN)
+  # Multus non-hostNetwork: set to net2
   n6Interface: ""
   # OAI hostNetwork: optional N6 IP/CIDR on n6Interface (required for datapath-init in single-instance mode).
   n6Cidr: ""
@@ -609,7 +649,7 @@ upf:
   injectCiliumPodRoute: true
   # OAI: optional N9; defaults to n3Interface in generated YAML
   n9Interface: ""
-  # OAI UPF: yes = native XDP / eBPF datapath; no = simpleswitch (userspace) datapath.
+  # OAI UPF hostNetwork: yes = XDP/eBPF; no = simpleswitch. Multus uses multus.enableBpfDatapath.
   enableBpfDatapath: true
   # Hostnet config.yaml schema: mr97 (develop @ 486acc3+) or legacy (cn5g-upf v5.1.0.x).
   configSchema: mr97
@@ -706,6 +746,13 @@ upf:
     # Hashed raw for seedSha256 — the only signal covering parameters no
     # capability manifest models yet.
     seedConfigPath: /openair-upf/etc/config.yaml
+    # PM push period (FCAPS_MEAS_PERIOD_SEC): how often the UPF sends
+    # notifyMeasurementReport with the N3 GTP octet counters the NMS Dashboard
+    # turns into CN throughput. The UPF default is 60 s, which makes that
+    # figure a 60 s average that trails traffic by up to ~2 min.
+    measPeriodSec: 5
+    # Alarm dispatch interval (FCAPS_NOTIFY_INTERVAL_SEC). UPF default 30 s.
+    notifyIntervalSec: 5
   # UPF-specific env vars (o5gs)
   disableNat: "FALSE"
   blockSshAccess: "FALSE"

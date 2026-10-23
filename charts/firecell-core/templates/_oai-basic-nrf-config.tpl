@@ -110,7 +110,7 @@ nfs:
       interface_name: {{ if $hostNet }}{{ coalesce $v.upf.hostPfcpMacvlan $v.upf.n4Interface "eth0" }}{{ else }}{{ $v.upf.hostPfcpMacvlan | default "eth0" }}{{ end }}
       port: 8805
     n6:
-      interface_name: {{ coalesce $v.upf.n6Interface $v.upf.sbiInterface "eno8303" }}
+      interface_name: {{ coalesce $v.upf.n6Interface $v.upf.n3Interface "eth0" }}
     n9:
       interface_name: {{ coalesce $v.upf.n9Interface $v.upf.n3Interface "eth0" }}
       port: 2152
@@ -322,8 +322,15 @@ pcf:
 
 upf:
   {{- if eq $v.upf.type "oai" }}
+  {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use
+       upf.multus.enableBpfDatapath (default false). hostNetwork uses upf.enableBpfDatapath. */}}
+  {{- $upfMultus := and (not ($v.upf.hostNetwork | default false)) (($v.upf.multus).enabled | default false) }}
+  {{- $bpfRaw := ternary (dig "enableBpfDatapath" false ($v.upf.multus | default dict)) ($v.upf.enableBpfDatapath | default true) $upfMultus }}
+  {{- $bpfOn := false }}
+  {{- if kindIs "bool" $bpfRaw }}{{ $bpfOn = $bpfRaw }}{{ else if or (eq ($bpfRaw | toString | lower) "false") (eq ($bpfRaw | toString | lower) "no") (eq ($bpfRaw | toString) "0") }}{{ $bpfOn = false }}{{ else }}{{ $bpfOn = true }}{{ end }}
   support_features:
-    enable_bpf_datapath: yes
+    enable_bpf_datapath: {{ if $bpfOn }}yes{{ else }}no{{ end }}
+    enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
   {{- end }}
@@ -340,7 +347,7 @@ upf:
           - dnn: {{ .dnn | quote }}
         {{- end }}
     {{- end }}
-  remote_n6_gw: "127.0.0.1"
+  remote_n6_gw: {{ $v.upf.remoteN6Gw | default "127.0.0.1" | quote }}
   upf_slice_list:
   {{- range $v.coreConfig.nssai }}
     - nssai:
