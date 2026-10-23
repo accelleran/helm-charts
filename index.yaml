@@ -36225,6 +36225,27 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/du-metrics-server-0.1.0/du-metrics-server-0.1.0.tgz
     version: 0.1.0
+  firecell-core:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-10-23T15:14:12.819270015Z"
+    description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF,
+      MySQL)
+    digest: b9769a25e45b909daa7266719410c2862c8b11343c1e97f1abaf24f692fe4987
+    keywords:
+    - 5g
+    - core-network
+    - oai
+    - open5gs
+    - firecell
+    maintainers:
+    - email: support@firecell.io
+      name: Firecell
+    name: firecell-core
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-core-0.1.0/firecell-core-0.1.0.tgz
+    version: 0.1.0
   firecell-nms:
   - apiVersion: v2
     appVersion: 5.0.1
@@ -39371,4 +39392,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2026-10-13T10:08:42.845462742Z"
+generated: "2026-10-23T15:14:13.050007931Z"
