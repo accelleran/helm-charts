@@ -156,6 +156,14 @@ Behind oauth2-proxy, set `backend.config.trustGatewayHeaders=true` and `networkP
 - `nms-api`: port 8080 from `nms-front`, oauth2-proxy (`app.kubernetes.io/name: <networkPolicy.oauth2ProxyLabel>`), every pod in `rbac.coreNamespace` (NFs post FCAPS notifications without a token) and `networkPolicy.extraFrom`. Add the Grafana that posts alerts and the platform monitor there.
 - `nms-front`: port 80 from oauth2-proxy and `networkPolicy.frontExtraFrom`. nginx forwards the identity headers, so it is closed too.
 
+Anything else that connects to `nms-front` or `nms-api` directly, such as a readiness probe from another namespace, needs its own entry in `frontExtraFrom` or `extraFrom`. It must not pass a client's `X-Forwarded-*` headers along.
+
+Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object whose keys are the role names, which is the shape of Zitadel's project roles claim (`urn:zitadel:iam:org:project:roles`), for example `{"operator": {"<org-id>": "<domain>"}}`:
+
+- Reads need only an authenticated user. Writes need the `operator` role.
+- A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
+- For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
+
 ## 6. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
