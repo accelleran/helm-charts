@@ -22,10 +22,12 @@ release per DU; each attaches over F1 to the CU-CP of a [`firecell-cu`](../firec
 ## 2. Install
 ```bash
 # CU once, then one release per DU in the same namespace
-helm install ran-cu charts/firecell-cu -n oran -f common.yaml -f cu.yaml
-helm install du     charts/firecell-du -n oran -f common.yaml -f du.yaml
-helm install du-2   charts/firecell-du -n oran -f common.yaml -f du-2.yaml
+helm install --repo https://accelleran.github.io/helm-charts ran-cu firecell-cu -n oran -f common.yaml -f cu.yaml
+helm install --repo https://accelleran.github.io/helm-charts du     firecell-du -n oran -f common.yaml -f du.yaml
+helm install --repo https://accelleran.github.io/helm-charts du-2   firecell-du -n oran -f common.yaml -f du-2.yaml
 ```
+
+From a checkout of this repository, use the chart paths instead: `helm install du ./charts/firecell-du ...`.
 
 `common.yaml` holds what the CU and every DU must agree on: `global.image` and `gnb.*`.
 A DU's own file lists only what is specific to it: `duId`, `cell`, `cpus`, `ofh` (VF and MACs),
