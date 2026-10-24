@@ -38,7 +38,7 @@ global:
 #     --from-literal=grafana-admin-password=<pass> \
 #     -n firecell-nms
 db:
-  image: mysql:8.0.31
+  image: mysql:8.0.46
   database: firecell_nms_api
   user: firecell_nms_user
   # Credentials come from nms-secrets Secret
