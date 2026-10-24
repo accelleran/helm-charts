@@ -14,7 +14,7 @@ jobs:
     name: Variables
     # This is a work-around to be able to properly use variables.
     # This job should be made a dependency in order to be able to use its outputs.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       is_main_branch: ${{ github.ref_type == 'branch' && github.ref_name == 'main' }}
       is_release_branch: ${{ github.ref_type == 'branch' && startsWith(github.ref_name, 'releases/') }}
@@ -34,12 +34,12 @@ jobs:
         run: echo "Exposing variables for proper usage"
 
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
 
       - name: Set up python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.14'
           check-latest: true
@@ -60,11 +60,11 @@ jobs:
     name: Lint Charts
     needs:
       - vars
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     if: ${{ needs.vars.outputs.charts_to_lint != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Helm
         uses: azure/setup-helm@v5.0.1
@@ -72,7 +72,7 @@ jobs:
           version: "${{ needs.vars.outputs.helm_version }}"
 
       - name: Set up python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.14'
           check-latest: true
@@ -107,10 +107,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.vars.outputs.charts_to_test_matrix) }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Helm
         uses: azure/setup-helm@v5.0.1
@@ -118,7 +118,7 @@ jobs:
           version: "${{ needs.vars.outputs.helm_version }}"
 
       - name: Set up python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.14'
           check-latest: true
@@ -191,7 +191,7 @@ jobs:
       - lint-charts
       - test-charts
     if: ${{ needs.vars.outputs.is_pull_request == 'true' && !cancelled() }}
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Successful checks
         if: ${{ !(contains(needs.*.result, 'failure')) }}
@@ -207,12 +207,12 @@ jobs:
       - vars
       - lint-charts
       - test-charts
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
