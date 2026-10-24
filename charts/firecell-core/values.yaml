@@ -70,7 +70,7 @@ network:
 #   environments/values-lab-insecure-defaults.yaml
 mysql:
   enabled: true
-  image: mysql:8.0
+  image: mysql:8.3
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
