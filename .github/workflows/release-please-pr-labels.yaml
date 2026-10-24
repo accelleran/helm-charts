@@ -15,14 +15,14 @@ jobs:
       pull-requests: write
     steps:
       - name: Remove pending release label
-        uses: buildsville/add-remove-label@v2.0.1
+        uses: buildsville/add-remove-label@ac59c9f0aeb66eb12d6366eb1d69ec1906e9ef9a # v2.0.1
         with:
           type: remove
           labels: "release: pending"
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add  ${{ github.event.pull_request.merged && 'approved' || 'rejected' }} release label
-        uses: buildsville/add-remove-label@v2.0.1
+        uses: buildsville/add-remove-label@ac59c9f0aeb66eb12d6366eb1d69ec1906e9ef9a # v2.0.1
         with:
           type: add
           labels: "release: ${{ github.event.pull_request.merged && 'approved' || 'rejected' }}"
