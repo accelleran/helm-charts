@@ -96,6 +96,14 @@ CU-UP Ocudu config (YAML). __POD_IP__ is filled in at container start.
     "e1ap" (dict "addrs" (include "firecell-cu.cuCpAddress" .) "bind_addrs" "0.0.0.0")
     "ngu" (dict "socket" (list (dict "bind_addr" $nguBind)))
     "f1u" (dict "socket" (list (dict "bind_addr" $f1uBind)))) -}}
+{{- $o1 := $v.cuUp.o1 | default dict -}}
+{{- if $o1.enabled }}
+{{- $_ := set $base "o1" (dict
+  "enabled" true
+  "yang_search_path" ($o1.yangSearchPath | default "/usr/local/yang")
+  "overlay_file_path" "/var/lib/ocudu/o1-overlay.yml"
+  "restart_on_cold_commit" ($o1.restartOnColdCommit | default false)) -}}
+{{- end }}
 {{- $exec := dict "threads" (dict "main_pool" (dict "nof_threads" $v.cuUp.nofThreads)) -}}
 {{- if $v.cuUp.cpus }}
 {{- $_ := set $exec "affinities" (dict "main_pool_cpus" (toString $v.cuUp.cpus) "main_pool_pinning" "mask") -}}

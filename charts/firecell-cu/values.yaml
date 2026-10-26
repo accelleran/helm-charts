@@ -121,6 +121,13 @@ cuUp:
   cpus: ""
   # -- CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads).
   nofThreads: 3
+  o1:
+    # -- NETCONF (netopeer2) on the CU-UP, so the NMS registers and manages it over O1. Needs an image whose ocuup carries the O1 service; renders Service cu-up:830.
+    enabled: false
+    yangSearchPath: /usr/local/yang
+    restartOnColdCommit: false
+    # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up.
+    statePath: ""
   # -- RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off.
   rpsCpus: ""
   # N3 (GTP-U toward the UPF) on a secondary interface.

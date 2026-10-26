@@ -80,6 +80,10 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuUp.n3.master | string | `"eth1"` | Host parent interface (macvlan) or Linux bridge name (bridge, e.g. br-n3). |
 | cuUp.nodeSelector | object | `{}` |  |
 | cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
+| cuUp.o1.enabled | bool | `false` | NETCONF (netopeer2) on the CU-UP, so the NMS registers and manages it over O1. Needs an image whose ocuup carries the O1 service; renders Service cu-up:830. |
+| cuUp.o1.restartOnColdCommit | bool | `false` |  |
+| cuUp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up. |
+| cuUp.o1.yangSearchPath | string | `"/usr/local/yang"` |  |
 | cuUp.rpsCpus | string | `""` | RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off. |
 | cuUp.resources | object | `{}` |  |
 | cuUp.tolerations | list | `[]` |  |
