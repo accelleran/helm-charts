@@ -1,5 +1,6 @@
 {{- if .Values.cuUp.enabled }}
 {{- $c := .Values.cuUp }}
+{{- $o1 := $c.o1 | default dict }}
 {{- $img := include "firecell-cu.image" (dict "root" $ "image" $c.image) }}
 apiVersion: apps/v1
 kind: Deployment
@@ -59,7 +60,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            {{- if $o1.enabled }}
+            - name: O1_ENABLED
+              value: "true"
+            {{- end }}
           command:
+            {{- if $o1.enabled }}
+            - /usr/local/bin/entrypoint-o1.sh
+            {{- end }}
             - /bin/bash
             - -c
             - |
@@ -113,10 +121,20 @@ spec:
               subPath: cu_up.yml
             - name: logs
               mountPath: /tmp/logs
+            {{- if $o1.enabled }}
+            - name: o1-state
+              mountPath: /var/lib/ocudu
+            {{- end }}
       volumes:
         - name: config
           configMap:
             name: cu-up-config
         - name: logs
           emptyDir: {}
+        {{- if $o1.enabled }}
+        - name: o1-state
+          hostPath:
+            path: {{ $o1.statePath | default "/var/lib/firecell/ocudu/cu-up" }}
+            type: DirectoryOrCreate
+        {{- end }}
 {{- end }}
