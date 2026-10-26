@@ -7,7 +7,7 @@ consumes storage and still has to be reclaimed by hand.
 First slice is one NE (`oai-upf`). Extra hostNetwork instances would need
 their own claim; this template only covers the primary Deployment.
 */ -}}
-{{- if and .Values.upf.enabled (eq (.Values.upf.type | default "o5gs") "oai") .Values.upf.fcaps.enabled (eq .Values.upf.fcaps.intentMode "pvc") }}
+{{- if and .Values.upf.enabled (eq (.Values.upf.type | default "oai") "oai") .Values.upf.fcaps.enabled (eq .Values.upf.fcaps.intentMode "pvc") }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

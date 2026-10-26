@@ -55,6 +55,20 @@ Build a full image reference: registry/image:tag
 {{- end }}
 
 {{/*
+Image reference for a cn5g NF: registry/image:imageTag, used as-is (the CI tags
+are <UTC build time>-<sha12>, with no "v"). Empty imageTag falls back to
+registry/image:v<pkgVersion>.
+dict: registry, image, imageTag, pkgVersion
+*/}}
+{{- define "firecell-5gc.nfImage" -}}
+{{- if .imageTag -}}
+{{- printf "%s/%s:%s" .registry .image .imageTag }}
+{{- else -}}
+{{- include "firecell-5gc.image" (dict "registry" .registry "image" .image "tag" .pkgVersion) }}
+{{- end -}}
+{{- end }}
+
+{{/*
 OAI nfs.*.host for SBI peers. hostNetwork SMF/UPF must use cluster DNS (not /etc/hosts pod IPs).
 dict: ctx (root), name (service short name e.g. oai-udm), clusterDNS (bool)
 */}}

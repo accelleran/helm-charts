@@ -33,7 +33,7 @@ spec:
         {{- end }}
       containers:
         - name: udr
-          image: {{ .Values.udr.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.udr.image "tag" .Values.global.pkgVersion)) }}
+          image: {{ .Values.udr.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.udr.image "imageTag" .Values.udr.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             {{- toYaml .Values.udr.command | nindent 12 }}
