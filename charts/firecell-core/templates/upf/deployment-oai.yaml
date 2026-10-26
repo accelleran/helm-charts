@@ -475,7 +475,7 @@ spec:
         {{- end }}
       containers:
         - name: upf
-          image: {{ $.Values.upf.oaiImageOverride | default (include "firecell-5gc.image" (dict "registry" $.Values.global.imageRegistry "image" $.Values.upf.oaiImage "tag" $.Values.global.pkgVersion)) }}
+          image: {{ $.Values.upf.oaiImageOverride | default (include "firecell-5gc.nfImage" (dict "registry" $.Values.global.imageRegistry "image" $.Values.upf.oaiImage "imageTag" $.Values.upf.oaiImageTag "pkgVersion" $.Values.global.pkgVersion)) }}
           imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
           command:
             - /openair-upf/bin/oai_upf

@@ -28,7 +28,7 @@ spec:
       priorityClassName: {{ .Values.nrf.priorityClassName }}
       containers:
         - name: nrf
-          image: {{ .Values.nrf.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.nrf.image "tag" .Values.global.pkgVersion)) }}
+          image: {{ .Values.nrf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.nrf.image "imageTag" .Values.nrf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             {{- toYaml .Values.nrf.command | nindent 12 }}
