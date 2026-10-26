@@ -7,8 +7,10 @@
 global:
   # -- Namespace for every object. Empty uses the release namespace.
   namespace: ""
-  # -- Ocudu runtime image. Required. Components may override it.
-  image: ""
+  # -- Ocudu runtime image. Components may override it. Defaults to the
+  # firecell-dev CI build (acc_ocudu release-image.yml); GHCR is private, so set
+  # imagePullSecrets. edge moves on every merge: pin edge-<sha> for a fixed build.
+  image: ghcr.io/accelleran/ocudu:edge
   # -- Pull policy for the Ocudu image. Use Never for images imported into containerd.
   imagePullPolicy: IfNotPresent
   # -- Image pull secrets for every pod.
