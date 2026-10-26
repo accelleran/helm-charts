@@ -132,8 +132,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | amf.headlessN2.enabled | bool | `false` |  |
 | amf.headlessN2.publishNotReadyAddresses | bool | `true` |  |
 | amf.headlessN2.serviceName | string | `"oai-amf-n2"` |  |
-| amf.image | string | `"oai-amf"` |  |
+| amf.image | string | `"cn5g-amf"` |  |
 | amf.imageOverride | string | `""` |  |
+| amf.imageTag | string | `"20261023-145217-51981a952d51"` |  |
 | amf.ports[0].containerPort | int | `80` |  |
 | amf.ports[0].name | string | `"sbi"` |  |
 | amf.ports[0].protocol | string | `"TCP"` |  |
@@ -165,8 +166,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ausf.fcaps.intentMode | string | `"configmap"` |  |
 | ausf.fcaps.mnsPort | int | `9091` |  |
 | ausf.fcaps.seedConfigPath | string | `"/openair-ausf/etc/config.yaml"` |  |
-| ausf.image | string | `"oai-ausf"` |  |
+| ausf.image | string | `"cn5g-ausf"` |  |
 | ausf.imageOverride | string | `""` |  |
+| ausf.imageTag | string | `"20261023-145814-c57395265ab7"` |  |
 | ausf.ports[0].containerPort | int | `80` |  |
 | ausf.ports[0].name | string | `"sbi"` |  |
 | ausf.ports[0].protocol | string | `"TCP"` |  |
@@ -306,7 +308,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | fcAcsAgent.resources.requests.cpu | string | `"200m"` |  |
 | fcAcsAgent.resources.requests.memory | string | `"256Mi"` |  |
 | fcAcsAgent.serviceType | string | `"LoadBalancer"` |  |
-| global.busyboxImage | string | `""` |  |
+| global.busyboxImage | string | `"docker.io/library/busybox:1.37.0-glibc"` |  |
 | global.imagePullPolicy | string | `"IfNotPresent"` |  |
 | global.imagePullSecrets[0].name | string | `"ghcr-regcred"` |  |
 | global.imageRegistry | string | `"ghcr.io/accelleran"` |  |
@@ -400,8 +402,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | nrf.fcaps.intentMode | string | `"configmap"` |  |
 | nrf.fcaps.mnsPort | int | `9091` |  |
 | nrf.fcaps.seedConfigPath | string | `"/openair-nrf/etc/config.yaml"` |  |
-| nrf.image | string | `"oai-nrf"` |  |
+| nrf.image | string | `"cn5g-nrf"` |  |
 | nrf.imageOverride | string | `""` |  |
+| nrf.imageTag | string | `"20261023-145947-8ffa19a30160"` |  |
 | nrf.ports[0].containerPort | int | `80` |  |
 | nrf.ports[0].name | string | `"sbi"` |  |
 | nrf.ports[0].protocol | string | `"TCP"` |  |
@@ -429,8 +432,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | pcf.fcaps.intentMode | string | `"configmap"` |  |
 | pcf.fcaps.mnsPort | int | `9091` |  |
 | pcf.fcaps.seedConfigPath | string | `"/openair-pcf/etc/config.yaml"` |  |
-| pcf.image | string | `"oai-pcf"` |  |
+| pcf.image | string | `"cn5g-pcf"` |  |
 | pcf.imageOverride | string | `""` |  |
+| pcf.imageTag | string | `"20261023-150020-2c4d980dbe8e"` |  |
 | pcf.ports[0].containerPort | int | `80` |  |
 | pcf.ports[0].name | string | `"sbi"` |  |
 | pcf.ports[0].protocol | string | `"TCP"` |  |
@@ -462,8 +466,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | smf.hostNetwork | bool | `false` |  |
 | smf.hostPfcpIP | string | `""` |  |
 | smf.hostPfcpMacvlan | string | `"smf-n4-mac"` |  |
-| smf.image | string | `"oai-smf"` |  |
+| smf.image | string | `"cn5g-smf"` |  |
 | smf.imageOverride | string | `""` |  |
+| smf.imageTag | string | `"20261023-145035-c61997f2e8be"` |  |
 | smf.mnsInterface | string | `""` |  |
 | smf.multus.cniType | string | `"ipvlan"` |  |
 | smf.multus.enabled | bool | `false` |  |
@@ -507,8 +512,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udm.fcaps.intentMode | string | `"configmap"` |  |
 | udm.fcaps.mnsPort | int | `9091` |  |
 | udm.fcaps.seedConfigPath | string | `"/openair-udm/etc/config.yaml"` |  |
-| udm.image | string | `"oai-udm"` |  |
+| udm.image | string | `"cn5g-udm"` |  |
 | udm.imageOverride | string | `""` |  |
+| udm.imageTag | string | `"20261023-150041-5d27bfb4c0aa"` |  |
 | udm.ports[0].containerPort | int | `80` |  |
 | udm.ports[0].name | string | `"sbi"` |  |
 | udm.ports[0].protocol | string | `"TCP"` |  |
@@ -537,8 +543,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udr.fcaps.intentMode | string | `"configmap"` |  |
 | udr.fcaps.mnsPort | int | `9091` |  |
 | udr.fcaps.seedConfigPath | string | `"/openair-udr/etc/config.yaml"` |  |
-| udr.image | string | `"oai-udr"` |  |
+| udr.image | string | `"cn5g-udr"` |  |
 | udr.imageOverride | string | `""` |  |
+| udr.imageTag | string | `"20261023-150124-ba06a65dc652"` |  |
 | udr.ports[0].containerPort | int | `8080` |  |
 | udr.ports[0].name | string | `"http"` |  |
 | udr.ports[0].protocol | string | `"TCP"` |  |
@@ -560,8 +567,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udsf.fcaps.mnsPort | int | `9091` |  |
 | udsf.healthPath | string | `"/nudsf-data-mgmt/v1/healthz"` |  |
 | udsf.host | string | `"oai-udsf"` |  |
-| udsf.image | string | `"firecell-udsf"` |  |
+| udsf.image | string | `"cn5g-udsf"` |  |
 | udsf.imageOverride | string | `""` |  |
+| udsf.imageTag | string | `"20261023-150143-8446d7937614"` |  |
 | udsf.redis.image | string | `"redis:7-alpine"` |  |
 | udsf.redis.imageOverride | string | `""` |  |
 | udsf.redis.port | int | `6379` |  |
@@ -626,8 +634,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.oaiEnableEthPdu | bool | `false` |  |
 | upf.oaiHostNet.smfN4Interface | string | `""` |  |
 | upf.oaiHostNet.stubInterface | string | `""` |  |
-| upf.oaiImage | string | `"oai-upf"` |  |
+| upf.oaiImage | string | `"cn5g-upf"` |  |
 | upf.oaiImageOverride | string | `""` |  |
+| upf.oaiImageTag | string | `"20261023-150221-9ccff53abf4b"` |  |
 | upf.packetCapture.disableOnMultiInstance | bool | `true` |  |
 | upf.packetCapture.enabled | bool | `true` |  |
 | upf.packetCapture.imageOverride | string | `""` |  |
@@ -658,7 +667,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.sbiInterface | string | `""` |  |
 | upf.serviceType | string | `"LoadBalancer"` |  |
 | upf.sshExemptedIps | string | `"192.168.31.254"` |  |
-| upf.type | string | `"o5gs"` |  |
+| upf.type | string | `"oai"` |  |
 | upf.xdpAttachMode | string | `"auto"` |  |
 
 ## 5. Maintenance & Troubleshooting

@@ -39,7 +39,7 @@ spec:
               echo "Redis is reachable!"
       containers:
         - name: udsf
-          image: {{ .Values.udsf.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.udsf.image "tag" .Values.global.pkgVersion)) }}
+          image: {{ .Values.udsf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.udsf.image "imageTag" .Values.udsf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           env:
             - name: TZ

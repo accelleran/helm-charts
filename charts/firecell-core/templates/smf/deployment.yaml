@@ -86,7 +86,7 @@ spec:
         {{- end }}
       containers:
         - name: smf
-          image: {{ .Values.smf.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.smf.image "tag" .Values.global.pkgVersion)) }}
+          image: {{ .Values.smf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.smf.image "imageTag" .Values.smf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           {{- if and (not (.Values.upf.hostNetwork | default false)) ((.Values.upf.multus).enabled | default false) .Values.upf.n3IP }}
           command:

@@ -9,7 +9,7 @@ global:
   imageRegistry: ghcr.io/accelleran
   # The busybox used by every initContainer in this chart. Composed from
   # imageRegistry when unset; name it in full to pull it from anywhere else.
-  busyboxImage: ""
+  busyboxImage: docker.io/library/busybox:1.37.0-glibc
   imagePullPolicy: IfNotPresent
   imagePullSecrets:
     - name: ghcr-regcred
@@ -95,11 +95,13 @@ mysql:
 # Disabled by default. Enable via environments/values-stateless.yaml (Phase 3 stateless overlay).
 udsf:
   enabled: false
-  image: firecell-udsf
+  image: cn5g-udsf
+  # cn5g-udsf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-150143-8446d7937614"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
-  # e.g. imageOverride: ghcr.io/accelleran/firecell-udsf:v5.1.0.2
+  # e.g. imageOverride: ghcr.io/accelleran/cn5g-udsf:20261023-150143-8446d7937614
   imageOverride: ""
   serviceName: oai-udsf
   host: oai-udsf
@@ -150,7 +152,9 @@ udsf:
 # --- NRF (NF Repository Function) ---
 nrf:
   enabled: true
-  image: oai-nrf
+  image: cn5g-nrf
+  # cn5g-nrf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-145947-8ffa19a30160"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
@@ -197,7 +201,9 @@ nrf:
 # --- UDR (Unified Data Repository) ---
 udr:
   enabled: true
-  image: oai-udr
+  image: cn5g-udr
+  # cn5g-udr master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-150124-ba06a65dc652"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
@@ -247,7 +253,9 @@ udr:
 # --- UDM (Unified Data Management) ---
 udm:
   enabled: true
-  image: oai-udm
+  image: cn5g-udm
+  # cn5g-udm master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-150041-5d27bfb4c0aa"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
@@ -297,7 +305,9 @@ udm:
 # --- AUSF (Authentication Server Function) ---
 ausf:
   enabled: true
-  image: oai-ausf
+  image: cn5g-ausf
+  # cn5g-ausf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-145814-c57395265ab7"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
@@ -344,7 +354,9 @@ ausf:
 # --- AMF (Access and Mobility Management Function) ---
 amf:
   enabled: true
-  image: oai-amf
+  image: cn5g-amf
+  # cn5g-amf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-145217-51981a952d51"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
@@ -419,7 +431,9 @@ amf:
 # --- SMF (Session Management Function) ---
 smf:
   enabled: true
-  image: oai-smf
+  image: cn5g-smf
+  # cn5g-smf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-145035-c61997f2e8be"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
@@ -514,7 +528,9 @@ smf:
 # --- PCF (Policy Control Function) ---
 pcf:
   enabled: true
-  image: oai-pcf
+  image: cn5g-pcf
+  # cn5g-pcf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  imageTag: "20261023-150020-2c4d980dbe8e"
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
@@ -569,12 +585,14 @@ pcf:
 # --- UPF (User Plane Function) ---
 upf:
   enabled: true
-  # "o5gs" for Open5GS UPF (default), "oai" for OAI UPF
-  type: o5gs
+  # "oai" for OAI UPF (default, the cn5g-upf CI image), "o5gs" for Open5GS UPF
+  type: oai
   o5gsImage: o5gs-upf
   # Full reference for the o5gs UPF, like oaiImageOverride for the OAI one.
   o5gsImageOverride: ""
-  oaiImage: oai-upf
+  oaiImage: cn5g-upf
+  # cn5g-upf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
+  oaiImageTag: "20261023-150221-9ccff53abf4b"
   # Full reference for the OAI UPF, like o5gsImageOverride for the o5gs one.
   oaiImageOverride: ""
   # Kubernetes Service type for the GTP-U Service(s).

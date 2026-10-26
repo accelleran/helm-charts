@@ -13,7 +13,7 @@
 {{- end }}
 {{- range $i, $inst := $instances }}
 {{- $appName := printf "o5gs-upf%s" (($inst.suffix | default "" | toString)) }}
-{{- if eq ($.Values.upf.type | default "o5gs") "oai" }}
+{{- if eq ($.Values.upf.type | default "oai") "oai" }}
 {{- $appName = printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
 {{- end }}
 ---
@@ -51,7 +51,7 @@ spec:
       port: 8805
       targetPort: 8805
       protocol: UDP
-    {{- if and (eq ($.Values.upf.type | default "o5gs") "oai") ($.Values.upf.fcaps.enabled | default false) }}
+    {{- if and (eq ($.Values.upf.type | default "oai") "oai") ($.Values.upf.fcaps.enabled | default false) }}
     # The NMS reaches the MnS producer through this port. The UPF Service is
     # already a LoadBalancer for GTP-U; the in-cluster ClusterIP of the same
     # object is what the NMS uses.

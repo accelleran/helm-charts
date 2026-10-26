@@ -293,7 +293,7 @@ spec:
               {{- end }}
               {{- range $inst := $instances }}
               {{- $upfAppName := printf "o5gs-upf%s" (($inst.suffix | default "" | toString)) }}
-              {{- if eq ($.Values.upf.type | default "o5gs") "oai" }}
+              {{- if eq ($.Values.upf.type | default "oai") "oai" }}
               {{- $upfAppName = printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
               {{- end }}
               wait_dns_service "{{ $upfAppName }}" "UPF Service"
@@ -567,7 +567,7 @@ spec:
               # shellcheck disable=SC2086
               grep -qiE ':2265 ' ${UDP_FILES} 2>/dev/null || fail "UPF PFCP port 8805 (0x2265) is not bound in host /proc/net/udp"
               # shellcheck disable=SC2086
-              {{- if not (and (eq ($.Values.upf.type | default "o5gs") "oai") ($.Values.upf.enableBpfDatapath | default false)) }}
+              {{- if not (and (eq ($.Values.upf.type | default "oai") "oai") ($.Values.upf.enableBpfDatapath | default false)) }}
               grep -qiE ':0868 ' ${UDP_FILES} 2>/dev/null || fail "UPF GTP-U port 2152 (0x0868) is not bound in host /proc/net/udp"
               {{- end }}
               echo "[post-flight:datapath]   OK: UPF datapath sockets verified"

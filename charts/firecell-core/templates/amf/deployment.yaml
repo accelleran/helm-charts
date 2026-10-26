@@ -33,7 +33,7 @@ spec:
         {{- end }}
       containers:
         - name: amf
-          image: {{ .Values.amf.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.amf.image "tag" .Values.global.pkgVersion)) }}
+          image: {{ .Values.amf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.amf.image "imageTag" .Values.amf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             {{- toYaml .Values.amf.command | nindent 12 }}
