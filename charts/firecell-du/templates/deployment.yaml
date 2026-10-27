@@ -2,7 +2,11 @@
 {{- $ns := include "firecell-du.namespace" . }}
 {{- $img := include "firecell-du.image" (dict "root" $ "image" $i.image) }}
 {{- $o2Port := dig "o2" "port" 9090 $i.extraConfig }}
+{{- $socket := eq (include "firecell-du.ofhSocket" $i) "true" }}
 {{- $networks := list }}
+{{- if $socket }}
+{{- $networks = append $networks (dict "name" (printf "%s-ofh" $i.name) "namespace" $ns "interface" (toString $i.ofh.interface)) }}
+{{- end }}
 {{- if $i.mplane.enabled }}
 {{- $networks = append $networks (dict "name" (printf "%s-mplane" $i.name) "namespace" $ns "interface" "mplane0") }}
 {{- end }}
@@ -22,7 +26,7 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 2
-  # The VF, hugepages and pinned CPUs are exclusive: never run two pods at once.
+  # The OFH device (VF or host netdev), hugepages and pinned CPUs are exclusive: never run two pods at once.
   strategy:
     type: Recreate
   selector:
@@ -82,6 +86,10 @@ spec:
               value: {{ $i.cpus.pool | toString | quote }}
             - name: O1_ENABLED
               value: {{ $i.o1.enabled | toString | quote }}
+            {{- if $socket }}
+            - name: OFH_INTERFACE
+              value: {{ $i.ofh.interface | toString | quote }}
+            {{- end }}
             {{- if $i.mplane.enabled }}
             - name: MPLANE_SSH_PASSWORD
               valueFrom:
@@ -106,16 +114,23 @@ spec:
           resources:
             {{- $res := $i.resources | default dict }}
             requests:
+              {{- if not $socket }}
               hugepages-2Mi: {{ $i.hugepages2Mi }}
+              {{- end }}
               memory: {{ $i.memory }}
               {{- with $res.requests }}
               {{- toYaml (omit . "hugepages-2Mi" "memory") | nindent 14 }}
               {{- end }}
+            {{- $lim := omit ($res.limits | default dict) "hugepages-2Mi" }}
+            {{- if or (not $socket) $lim }}
             limits:
+              {{- if not $socket }}
               hugepages-2Mi: {{ $i.hugepages2Mi }}
-              {{- with $res.limits }}
-              {{- toYaml (omit . "hugepages-2Mi") | nindent 14 }}
               {{- end }}
+              {{- with $lim }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
+            {{- end }}
           volumeMounts:
             - name: config
               mountPath: /config/du.yml
@@ -124,8 +139,10 @@ spec:
               mountPath: /opt/firecell
             - name: logs
               mountPath: /tmp/logs
+            {{- if not $socket }}
             - name: hugepages
               mountPath: /dev/hugepages
+            {{- end }}
             {{- if $i.o1.enabled }}
             - name: o1-state
               mountPath: /var/lib/ocudu
@@ -163,10 +180,12 @@ spec:
             defaultMode: 0755
         - name: logs
           emptyDir: {}
+        {{- if not $socket }}
         - name: hugepages
           hostPath:
             path: /dev/hugepages
             type: DirectoryOrCreate
+        {{- end }}
         {{- if $i.o1.enabled }}
         - name: o1-state
           hostPath:

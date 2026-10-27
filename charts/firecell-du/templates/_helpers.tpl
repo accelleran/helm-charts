@@ -103,6 +103,13 @@ Expand a CPU list string ("3,4,19-22") to a JSON list of ints.
 {{- end }}
 
 {{/*
+"true" for OFH over a kernel socket on a host netdev moved into the pod (ofh.mode socket). Pass the DU.
+*/}}
+{{- define "firecell-du.ofhSocket" -}}
+{{- if eq (toString (.ofh.mode | default "dpdk")) "socket" }}true{{ end -}}
+{{- end }}
+
+{{/*
 All CPUs the DU uses (timing, txrx, pool) as a comma list, for taskset.
 */}}
 {{- define "firecell-du.allCpus" -}}
@@ -178,7 +185,9 @@ Annotations on the Deployment that let the next DU release check for clashes.
 firecell.io/du-id: {{ toString $i.duId | quote }}
 firecell.io/node: {{ include "firecell-du.nodeKey" . | quote }}
 firecell.io/cpus: {{ include "firecell-du.allCpus" $i | quote }}
-firecell.io/vf: {{ toString $i.ofh.vfPciAddr | quote }}
+{{- $dev := toString $i.ofh.vfPciAddr }}
+{{- if eq (include "firecell-du.ofhSocket" $i) "true" }}{{ $dev = printf "netdev:%s" $i.ofh.interface }}{{ end }}
+firecell.io/vf: {{ $dev | quote }}
 {{- if and $i.mplane.enabled $i.mplane.dhcp.enabled }}
 firecell.io/mplane-dhcp: {{ toString $i.mplane.parentInterface | quote }}
 {{- end }}
@@ -196,10 +205,28 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- fail (printf "name %q is not a DNS-1123 label" $n) }}
 {{- end }}
 {{- if not (include "firecell-du.isSet" $i.duId) }}{{ fail (printf "%s: duId is required" $n) }}{{ end }}
-{{- if not $i.ofh.vfPciAddr }}{{ fail (printf "%s: ofh.vfPciAddr is required" $n) }}{{ end }}
+{{- $mode := toString ($i.ofh.mode | default "dpdk") }}
+{{- if not (has $mode (list "dpdk" "socket")) }}
+{{- fail (printf "%s: ofh.mode must be dpdk or socket (got %q)" $n $mode) }}
+{{- else if eq $mode "dpdk" }}
+{{- if not $i.ofh.vfPciAddr }}{{ fail (printf "%s: ofh.vfPciAddr is required with ofh.mode dpdk" $n) }}{{ end }}
 {{- range (list $i.cpus.timing $i.cpus.txrx $i.cpus.pool $i.cpus.ealLcores) }}
 {{- if not (include "firecell-du.isSet" .) }}
 {{- fail (printf "%s: cpus.timing, cpus.txrx, cpus.pool and cpus.ealLcores are required" $n) }}
+{{- end }}
+{{- end }}
+{{- else }}
+{{- if not $i.ofh.interface }}{{ fail (printf "%s: ofh.interface (host netdev, e.g. veth-du1) is required with ofh.mode socket" $n) }}{{ end }}
+{{- if not (regexMatch "^[A-Za-z0-9_.-]{1,15}$" (toString $i.ofh.interface)) }}
+{{- fail (printf "%s: ofh.interface %q is not a valid netdev name" $n (toString $i.ofh.interface)) }}
+{{- end }}
+{{- if has (toString $i.ofh.interface) (list "eth0" "f1u0" "mplane0") }}
+{{- fail (printf "%s: ofh.interface %q clashes with an interface the chart creates in the pod" $n (toString $i.ofh.interface)) }}
+{{- end }}
+{{- range (list $i.cpus.timing $i.cpus.txrx $i.cpus.pool) }}
+{{- if not (include "firecell-du.isSet" .) }}
+{{- fail (printf "%s: cpus.timing, cpus.txrx and cpus.pool are required" $n) }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- if $i.mplane.enabled }}
@@ -246,7 +273,7 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- $node := get $mine "firecell.io/node" }}
 {{- if and $node (eq (get $a "firecell.io/node" | default "") $node) }}
 {{- if eq (get $a "firecell.io/vf") (get $mine "firecell.io/vf") }}
-{{- fail (printf "%s: VF %s is already used by DU %s" $n (get $mine "firecell.io/vf") $other) }}
+{{- fail (printf "%s: OFH device %s is already used by DU %s" $n (get $mine "firecell.io/vf") $other) }}
 {{- end }}
 {{- $theirs := splitList "," (get $a "firecell.io/cpus" | default "") }}
 {{- range $myCpus }}

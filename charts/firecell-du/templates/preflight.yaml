@@ -35,13 +35,21 @@ spec:
               fail=0
               ok()  { echo "PASS $*"; }
               bad() { echo "FAIL $*"; fail=1; }
+              {{- $socket := eq (include "firecell-du.ofhSocket" $i) "true" }}
+              {{- if not $socket }}
               drv=$(basename "$(readlink /sys/bus/pci/devices/{{ $i.ofh.vfPciAddr }}/driver 2>/dev/null)" 2>/dev/null)
               if [ "$drv" = vfio-pci ]; then ok "VF {{ $i.ofh.vfPciAddr }} on vfio-pci"
               else bad "VF {{ $i.ofh.vfPciAddr }} driver is '${drv:-none}', expected vfio-pci"; fi
+              {{- else if .Release.IsInstall }}
+              {{- /* On upgrade the running DU pod holds the netdev, so the node no longer has it. */}}
+              if [ -e /sys/class/net/{{ $i.ofh.interface }} ]; then ok "OFH netdev {{ $i.ofh.interface }} present"
+              else bad "OFH netdev {{ $i.ofh.interface }} not found on the node (create it before the DU)"; fi
+              {{- end }}
               {{- if $i.mplane.enabled }}
               if [ -e /sys/class/net/{{ $i.mplane.parentInterface }} ]; then ok "M-plane parent {{ $i.mplane.parentInterface }} present"
               else bad "M-plane parent {{ $i.mplane.parentInterface }} not found"; fi
               {{- end }}
+              {{- if not $socket }}
               hp=/sys/kernel/mm/hugepages/hugepages-2048kB
               {{- if .Release.IsInstall }}
               have=$(cat $hp/free_hugepages)
@@ -53,6 +61,7 @@ spec:
               {{- end }}
               if [ "$have" -ge {{ $pages }} ]; then ok "hugepages-2Mi: $have $what >= {{ $pages }} needed"
               else bad "hugepages-2Mi: $have $what < {{ $pages }} needed"; fi
+              {{- end }}
               exit $fail
           volumeMounts:
             - name: sys

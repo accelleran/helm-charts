@@ -1,0 +1,18 @@
+{{- $i := include "firecell-du.inst" . | fromJson }}
+{{- if eq (include "firecell-du.ofhSocket" $i) "true" }}
+{{- $cfg := dict
+  "cniVersion" "0.3.1"
+  "type" "host-device"
+  "device" (toString $i.ofh.interface) }}
+# ofh.mode socket: move the host netdev (e.g. a veth toward an emulated RU) into the DU pod.
+apiVersion: k8s.cni.cncf.io/v1
+kind: NetworkAttachmentDefinition
+metadata:
+  name: {{ $i.name }}-ofh
+  namespace: {{ include "firecell-du.namespace" . }}
+  labels:
+    app: {{ $i.name }}
+    {{- include "firecell-du.labels" . | nindent 4 }}
+spec:
+  config: {{ toJson $cfg | quote }}
+{{- end }}

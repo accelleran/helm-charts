@@ -11,7 +11,8 @@ data:
   du-launcher.sh: |
     #!/bin/bash
     # Inputs (env): POD_IP, DU_BINARY, DU_CPUS (taskset mask for the whole DU),
-    # DU_POOL_CPUS (where non-RU threads end up), MPLANE_SSH_PASSWORD (optional).
+    # DU_POOL_CPUS (where non-RU threads end up), MPLANE_SSH_PASSWORD (optional),
+    # OFH_INTERFACE (ofh.mode socket).
     set -uo pipefail
     # bash 5.2 expands "&" in ${var//pat/rep}; secrets may contain it.
     shopt -u patsub_replacement 2>/dev/null || true
@@ -23,6 +24,11 @@ data:
       cfg=${cfg//__MPLANE_SSH_PASSWORD__/${MPLANE_SSH_PASSWORD:?M-plane password Secret is not mounted}}
     fi
     printf '%s\n' "$cfg" > /run/du.yml
+
+    # ofh.mode socket: host-device keeps the host MTU but may hand the netdev over down.
+    if [[ -n ${OFH_INTERFACE:-} ]]; then
+      ip link set "$OFH_INTERFACE" up || { echo "OFH interface $OFH_INTERFACE is not in the pod" >&2; exit 1; }
+    fi
 
     stdbuf -oL -eL taskset -c "$DU_CPUS" "$DU_BINARY" -c /run/du.yml &
     DU=$!

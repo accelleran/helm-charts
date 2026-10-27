@@ -7,9 +7,10 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
 {{- $v := $root.Values -}}
 {{- $i := .inst -}}
 {{- $ofh := $i.ofh -}}
+{{- $socket := eq (include "firecell-du.ofhSocket" $i) "true" -}}
 
 {{- $cell := dict
-  "network_interface" (toString $ofh.vfPciAddr)
+  "network_interface" (ternary (toString $ofh.interface) (toString $ofh.vfPciAddr) $socket)
   "enable_promiscuous" $ofh.promiscuous
   "du_mac_addr" (toString $ofh.duMac)
   "ru_mac_addr" (toString $ofh.ruMac)
@@ -73,8 +74,11 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
   "gnb_du_id" $i.duId
   "ru_ofh" $ruOfh
   "cell_cfg" $cellCfg
-  "expert_execution" $exec
-  "hal" (dict "eal_args" (printf "--lcores (0-1)@(%v) --proc-type auto --file-prefix %s -a %v" $cpu.ealLcores $i.name $ofh.vfPciAddr)) -}}
+  "expert_execution" $exec -}}
+{{- /* No hal section: Ocudu then sends OFH over a kernel socket instead of DPDK. */ -}}
+{{- if not $socket }}
+{{- $_ := set $base "hal" (dict "eal_args" (printf "--lcores (0-1)@(%v) --proc-type auto --file-prefix %s -a %v" $cpu.ealLcores $i.name $ofh.vfPciAddr)) -}}
+{{- end }}
 
 {{- if $i.mplane.enabled }}
 {{- $mp := dict

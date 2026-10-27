@@ -56,7 +56,7 @@ image: ""
 nodeSelector: {}
 # -- Tolerations override (defaults to global.tolerations).
 tolerations: []
-# -- 2 MiB hugepages for this DU (requests = limits).
+# -- 2 MiB hugepages for this DU (requests = limits). Only used with ofh.mode dpdk.
 hugepages2Mi: 2Gi
 # -- Memory request.
 memory: 1Gi
@@ -67,7 +67,7 @@ cpus:
   txrx: ""
   # -- Main pool CPUs (comma list, ranges allowed). Required. The build reserves 3 CPUs in the mask.
   pool: ""
-  # -- DPDK EAL lcores CPU set (hal.eal_args --lcores (0-1)@(...)). Required.
+  # -- DPDK EAL lcores CPU set (hal.eal_args --lcores (0-1)@(...)). Required with ofh.mode dpdk.
   ealLcores: ""
   # -- Main pool worker threads. Ocudu starts min(nofThreads, len(pool) - 3).
   nofThreads: 3
@@ -81,8 +81,14 @@ cell:
   antennasDl: 4
   antennasUl: 4
 ofh:
-  # -- PCI address of the SR-IOV VF bound to vfio-pci (DPDK). Required.
+  # -- How the DU sends fronthaul: dpdk (SR-IOV VF on vfio-pci, hugepages) or socket (kernel raw socket on a
+  # host netdev that Multus host-device moves into the pod, e.g. a veth toward an emulated RU on the same node).
+  mode: dpdk
+  # -- PCI address of the SR-IOV VF bound to vfio-pci. Required with mode dpdk.
   vfPciAddr: ""
+  # -- Host netdev for mode socket (e.g. veth-du1). It keeps its name inside the pod and goes back to the
+  # host when the pod stops. Set its MTU and offloads on the host. Required with mode socket.
+  interface: ""
   duMac: ""
   ruMac: ""
   # -- C-plane VLAN tag. 0 sends untagged.
