@@ -40,6 +40,10 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}
+            # Fixed, not the pod name: a Deployment pod gets a new name on every
+            # restart, and this AMF runs a single replica.
+            - name: AMF_INSTANCE_NAME
+              value: {{ .Values.amf.instanceName | default (printf "%s/oai-amf" .Values.global.namespace) | quote }}
             {{- if .Values.amf.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.amf.fcaps.datastore.mountPath .Values.amf.fcaps.datastore.file | quote }}

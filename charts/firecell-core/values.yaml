@@ -361,6 +361,13 @@ amf:
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
   imageOverride: ""
+  # Stable NF instance ID. The AMF derives its nfInstanceId as a name-based
+  # UUID of AMF_INSTANCE_NAME, so it keeps the same ID across restarts: its NRF
+  # profile, UDM registration and UDSF records stay its own. Empty:
+  # "<global.namespace>/oai-amf". Give each AMF that shares an NRF its own
+  # name. An AMF image without AMF_INSTANCE_NAME support ignores it and picks a
+  # random ID on every start.
+  instanceName: ""
   # Kubernetes Service type for oai-amf (NGAP must be reachable off-cluster).
   # Empty falls back to network.amfServiceType ("LoadBalancer" by default).
   # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP

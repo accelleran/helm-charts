@@ -135,6 +135,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | amf.image | string | `"cn5g-amf"` |  |
 | amf.imageOverride | string | `""` |  |
 | amf.imageTag | string | `"20261023-145217-51981a952d51"` |  |
+| amf.instanceName | string | `""` |  |
 | amf.ports[0].containerPort | int | `80` |  |
 | amf.ports[0].name | string | `"sbi"` |  |
 | amf.ports[0].protocol | string | `"TCP"` |  |
