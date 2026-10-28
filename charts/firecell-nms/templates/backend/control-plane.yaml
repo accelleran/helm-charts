@@ -57,7 +57,7 @@ spec:
       initContainers:
         {{- include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "check-schema" "untilHead" false) | nindent 8 }}
         - name: migrate
-          image: {{ $be.image | quote }}
+          image: {{ include "firecell-nms.backend.image" . | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-migrate"]
           securityContext:
@@ -69,7 +69,7 @@ spec:
           resources:
             {{- toYaml $be.initResources | nindent 12 }}
         - name: bootstrap
-          image: {{ $be.image | quote }}
+          image: {{ include "firecell-nms.backend.image" . | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-bootstrap"]
           securityContext:
@@ -85,7 +85,7 @@ spec:
             {{- toYaml $be.initResources | nindent 12 }}
       containers:
         - name: control-plane
-          image: {{ $be.image | quote }}
+          image: {{ include "firecell-nms.backend.image" . | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-control-plane"]
           securityContext:

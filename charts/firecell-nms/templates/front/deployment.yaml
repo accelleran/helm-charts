@@ -24,7 +24,7 @@ spec:
       {{- end }}
       containers:
         - name: nginx
-          image: {{ .Values.front.image | quote }}
+          image: {{ include "firecell-nms.image" (dict "global" .Values.global "image" .Values.front.image "name" "front.image") | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - nginx

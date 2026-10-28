@@ -22,7 +22,7 @@ spec:
       {{- end }}
       containers:
         - name: victoria-metrics
-          image: {{ .Values.victoriaMetrics.image | quote }}
+          image: {{ include "firecell-nms.image" (dict "global" .Values.global "image" .Values.victoriaMetrics.image "name" "victoriaMetrics.image") | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           args:
             - --storageDataPath=/victoria-metrics-data

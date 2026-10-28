@@ -93,6 +93,32 @@ capabilities:
 {{- end }}
 
 {{/*
+Build a container image reference.
+Usage: include "firecell-nms.image" (dict "global" .Values.global "image" .Values.front.image "name" "front.image")
+global.imageRegistry replaces image.registry when set. digest, when set,
+replaces the tag: registry/repository@digest.
+*/}}
+{{- define "firecell-nms.image" -}}
+{{- $name := .name | default "image" -}}
+{{- $img := .image | required (printf "firecell-nms: %s is required" $name) -}}
+{{- if kindIs "string" $img -}}
+{{- fail (printf "firecell-nms: %s must be a map with registry, repository and tag, not a full image string" $name) -}}
+{{- end -}}
+{{- $registry := .global.imageRegistry | default $img.registry | required (printf "firecell-nms: set %s.registry or global.imageRegistry" $name) -}}
+{{- $repository := $img.repository | required (printf "firecell-nms: %s.repository is required" $name) -}}
+{{- if $img.digest -}}
+{{- printf "%s/%s@%s" $registry $repository $img.digest -}}
+{{- else -}}
+{{- $tag := $img.tag | required (printf "firecell-nms: %s.tag is required (or set %s.digest)" $name $name) -}}
+{{- printf "%s/%s:%s" $registry $repository $tag -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "firecell-nms.backend.image" -}}
+{{- include "firecell-nms.image" (dict "global" .Values.global "image" .Values.backend.image "name" "backend.image") -}}
+{{- end -}}
+
+{{/*
 Init container that checks the schema against this image's migrations. It
 waits while the database is unreachable and fails when the database is at a
 revision this image does not know: a newer image migrated it, and the backend
@@ -103,7 +129,7 @@ Usage: include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-fo
 */}}
 {{- define "firecell-nms.backend.schemaCheck" -}}
 - name: {{ .name }}
-  image: {{ .root.Values.backend.image | quote }}
+  image: {{ include "firecell-nms.backend.image" .root | quote }}
   imagePullPolicy: {{ .root.Values.global.imagePullPolicy }}
   command:
     - python

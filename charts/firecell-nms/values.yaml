@@ -2,10 +2,13 @@
 # and its MySQL) and VictoriaMetrics. Install one release per namespace:
 # Service names are fixed so other releases can rely on them.
 
-# Every image is one full reference (registry/repository:tag[@digest]) with
-# an exact tag, so a mirror or a digest pin is a single value per image.
+# Each image is registry, repository and tag. Set global.imageRegistry to
+# rewrite the host for a mirror; the repository path and tag stay put.
 
 global:
+  # -- Registry (host[:port][/path]) replacing every image's registry,
+  # keeping its repository path. Empty: each image's own registry.
+  imageRegistry: ""
   # -- Pull policy of every image in the chart.
   imagePullPolicy: IfNotPresent
   # -- Pull secrets of every pod in the chart, e.g. `[{name: ghcr-pull}]`.
@@ -17,9 +20,16 @@ global:
 
 # --- Backend ---
 backend:
-  # -- Backend image (API, worker, control plane, migration and bootstrap),
-  # as a full reference.
-  image: ghcr.io/accelleran/nms-backend:edge-1501118
+  # -- Backend image (API, worker, control plane, migration and bootstrap).
+  image:
+    # -- Image registry host. Replaced by global.imageRegistry when set.
+    registry: ghcr.io
+    # -- Image repository path, including the org (kept when the registry is rewritten).
+    repository: accelleran/nms-backend
+    # -- Until there is a release; then docker.io and X.Y.Z.
+    tag: edge-1501118
+    # -- Optional. When set, used as registry/repository@digest instead of :tag.
+    digest: ""
   # -- Secret with the backend credentials, created before install; the
   # chart never creates it. Required keys: `database-root-password`,
   # `database-password`, `database-url`, `network-name`, `op`,
@@ -74,8 +84,16 @@ backend:
     limits: {cpu: 500m, memory: 512Mi}
 
   database:
-    # -- Backend MySQL image, as a full reference.
-    image: docker.io/library/mysql:8.4.10
+    # -- Backend MySQL image.
+    image:
+      # -- Image registry host. Replaced by global.imageRegistry when set.
+      registry: docker.io
+      # -- Image repository path, including the org (kept when the registry is rewritten).
+      repository: library/mysql
+      # -- MySQL image tag.
+      tag: "8.4.10"
+      # -- Optional. When set, used as registry/repository@digest instead of :tag.
+      digest: ""
     # -- Database the backend uses; `database-url` must name it.
     name: firecell_nms
     # -- MySQL user the backend connects as, with privileges on `name` only;
@@ -165,8 +183,16 @@ networkPolicy:
 # --- Victoria Metrics ---
 # Service nms-victoria-metrics, port 8430: point the Grafana datasource here.
 victoriaMetrics:
-  # -- VictoriaMetrics image, as a full reference.
-  image: docker.io/victoriametrics/victoria-metrics:v1.93.4
+  # -- VictoriaMetrics image.
+  image:
+    # -- Image registry host. Replaced by global.imageRegistry when set.
+    registry: docker.io
+    # -- Image repository path, including the org (kept when the registry is rewritten).
+    repository: victoriametrics/victoria-metrics
+    # -- VictoriaMetrics image tag.
+    tag: v1.93.4
+    # -- Optional. When set, used as registry/repository@digest instead of :tag.
+    digest: ""
   # -- Size of PVC nms-vm-data.
   storage: 20Gi
   retentionPeriod: 7d
@@ -182,9 +208,17 @@ victoriaMetrics:
 
 # --- nginx frontend ---
 front:
-  # -- NMS frontend (nginx) image, as a full reference. Needs a CM-enabled
-  # build that talks to the new backend.
-  image: ghcr.io/accelleran/nms-frontend:edge-db0447e
+  # -- NMS frontend (nginx) image. Needs a CM-enabled build that talks to
+  # the new backend.
+  image:
+    # -- Image registry host. Replaced by global.imageRegistry when set.
+    registry: ghcr.io
+    # -- Image repository path, including the org (kept when the registry is rewritten).
+    repository: accelleran/nms-frontend
+    # -- Until there is a release; then docker.io and X.Y.Z.
+    tag: edge-db0447e
+    # -- Optional. When set, used as registry/repository@digest instead of :tag.
+    digest: ""
   # -- Where nginx sends /api/. Empty: the in-chart nms-api Service.
   backendUrl: ""
   # -- Where nginx sends /nms-cm/ (the CM console). Empty: the backend's

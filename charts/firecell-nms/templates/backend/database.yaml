@@ -54,7 +54,7 @@ spec:
       {{- end }}
       containers:
         - name: mysql
-          image: {{ $db.image | quote }}
+          image: {{ include "firecell-nms.image" (dict "global" .Values.global "image" $db.image "name" "backend.database.image") | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false

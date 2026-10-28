@@ -53,7 +53,7 @@ spec:
         {{- include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-for-schema" "untilHead" true) | nindent 8 }}
       containers:
         - name: api
-          image: {{ $be.image | quote }}
+          image: {{ include "firecell-nms.backend.image" . | quote }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["firecell-nms-ng-api"]
           securityContext:
