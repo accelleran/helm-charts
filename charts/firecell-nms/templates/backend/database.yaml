@@ -82,7 +82,7 @@ spec:
             - {name: mysql, containerPort: 3306}
           volumeMounts:
             - {name: data, mountPath: /var/lib/mysql}
-            - {name: config, mountPath: /etc/mysql/conf.d, readOnly: true}
+            - {name: config, mountPath: /etc/mysql/conf.d/nms.cnf, subPath: nms.cnf, readOnly: true}
             - {name: run, mountPath: /var/run/mysqld}
             - {name: tmp, mountPath: /tmp}
           # No credentials: mysqladmin ping succeeds once the server answers
