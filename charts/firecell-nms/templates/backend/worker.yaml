@@ -1,0 +1,71 @@
+{{- $be := .Values.backend }}
+{{- if lt (int $be.worker.replicas) 1 }}{{ fail "backend.worker.replicas must be at least 1" }}{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nms-worker
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-worker
+    app.kubernetes.io/component: nms-worker
+spec:
+  replicas: {{ $be.worker.replicas }}
+  progressDeadlineSeconds: {{ $be.progressDeadlineSeconds }}
+  # The probes only see a live process, so give it time to fail at startup.
+  minReadySeconds: {{ $be.worker.minReadySeconds }}
+  selector:
+    matchLabels:
+      app: nms-worker
+  template:
+    metadata:
+      labels:
+        app: nms-worker
+        app.kubernetes.io/component: nms-worker
+        app.kubernetes.io/part-of: firecell-nms
+      annotations:
+        {{- include "firecell-nms.backend.checksum" . | nindent 8 }}
+    spec:
+      serviceAccountName: nms
+      securityContext:
+        {{- include "firecell-nms.backend.podSecurityContext" . | nindent 8 }}
+      # Longer than the slowest lifecycle operation (600s), so a worker can
+      # finish its in-flight job after SIGTERM.
+      terminationGracePeriodSeconds: {{ $be.terminationGracePeriodSeconds }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        {{- include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-for-schema" "untilHead" true) | nindent 8 }}
+      containers:
+        - name: worker
+          image: {{ include "firecell-nms.backend.image" . | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["firecell-nms-ng-worker"]
+          securityContext:
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
+          envFrom:
+            - configMapRef: {name: nms-config}
+          env:
+            {{- include "firecell-nms.backend.env" . | nindent 12 }}
+          readinessProbe:
+            exec:
+              command: ["python", "-c", "import os; os.kill(1, 0)"]
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import os; os.kill(1, 0)"]
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            {{- toYaml $be.worker.resources | nindent 12 }}
+          volumeMounts:
+            - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: kubeconfig
+          configMap:
+            name: nms-kubeconfig
+            defaultMode: 0444
+        - {name: tmp, emptyDir: {}}

@@ -1,6 +1,6 @@
 apiVersion: v2
 name: firecell-nms
-description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
+description: Firecell NMS — frontend, backend and VictoriaMetrics
 type: application
 version: 0.1.1
-appVersion: "5.0.1"
+appVersion: "6.0.0"

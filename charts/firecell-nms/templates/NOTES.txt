@@ -2,31 +2,36 @@
 
 Firecell NMS {{ .Chart.Version }} (app {{ .Chart.AppVersion }})
 
-Release {{ .Release.Name }} in namespace {{ .Values.global.namespace }}.
+Release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
 
-Before install, create Secret nms-secrets in that namespace with keys:
-  db-root-password, db-password, mail-username, mail-password
-{{- if .Values.grafana.enabled }}
-  grafana-admin-password
-{{- end }}
+Secret {{ .Values.backend.existingSecret }} must exist in that namespace with keys:
+  database-root-password, database-password, database-url, network-name, op,
+  api-tokens-json, default-admin-user, default-admin-password
+A changed Secret rolls no pod: restart them yourself.
+The core chart (in {{ .Values.rbac.coreNamespace }}) and the CU-CP, CU-UP and DU charts
+must bind ServiceAccount nms to ClusterRole nms-core-{{ .Release.Namespace }} or
+nms-ran-{{ .Release.Namespace }} and grant their own Deployments (see the README).
+Until they do, the backend cannot read their pods or roll them.
 
-{{- if .Values.global.createNamespace }}
+The nms-control-plane pod migrates the schema and bootstraps the
+catalogue in its init containers; the API and worker pods wait for it.
+Give upgrades a timeout of at least backend.progressDeadlineSeconds
+({{ .Values.backend.progressDeadlineSeconds }}s). Rolling the image back across a migration needs a
+manual schema downgrade first (see the README).
 
-The chart creates Namespace {{ .Values.global.namespace }}. Set
-global.createNamespace=false when something else already owns it.
-{{- else }}
+Services (fixed names):
+  nms-front              :80    UI, /api/ -> nms-api, /nms-cm/ -> nms-api /ui/,
+                                /healthz -> nms-api /healthz (no login)
+  nms-api                :8080  API, FCAPS receiver, /api/alarms/webhook
+  nms-db                 :3306  backend MySQL (user {{ .Values.backend.database.user }})
+  nms-victoria-metrics   :8430  VictoriaMetrics (Grafana datasource)
 
-The chart does not create the namespace. Create it first, or pass
---create-namespace.
-{{- end }}
+The chart does not create the namespace, an Ingress or Grafana. Route
+traffic to nms-front (through oauth2-proxy when trusting gateway headers).
+{{- if .Values.backend.config.trustGatewayHeaders }}
 
-{{- if .Values.grafana.enabled }}
-
-Chart Grafana is enabled (grafana.enabled). Set grafana.enabled=false when
-another Grafana owns the dashboards.
-{{- else }}
-
-Chart Grafana is off (grafana.enabled=false).
+The backend trusts X-Forwarded-User / -Groups; NetworkPolicies nms-api and
+nms-front restrict who can send them.
 {{- end }}
 
 ################################################################################

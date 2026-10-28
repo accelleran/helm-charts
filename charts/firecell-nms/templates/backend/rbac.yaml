@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nms
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+automountServiceAccountToken: true
+---
+# Grants nothing until the core chart binds it in coreNamespace, together
+# with its own Role on its Deployments (see the README). The name carries the
+# release namespace, which the binding charts already need for the subject.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nms-core-{{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+rules:
+  # The CM runtime reads pods. Pod names are dynamic, so resourceNames
+  # cannot narrow list/watch.
+  - apiGroups: [""]
+    resources: ["pods", "pods/status"]
+    verbs: ["get", "list", "watch"]
+  # Support bundles read bounded pod logs.
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  # Intent ConfigMap names come from the runtime inventory. Kubernetes does
+  # not permit resourceNames on create, so access stays namespace-scoped.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "create", "update", "patch"]
+---
+# Bound in ranNamespace by every CU-CP, CU-UP and DU chart, each with its own
+# Role on its Deployments. Pods are read so the lifecycle can follow the
+# rollout.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nms-ran-{{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/status"]
+    verbs: ["get", "list", "watch"]

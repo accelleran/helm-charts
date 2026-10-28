@@ -1,0 +1,107 @@
+{{- $be := .Values.backend }}
+{{- if lt (int $be.api.replicas) 2 }}{{ fail "backend.api.replicas must be at least 2" }}{{- end }}
+{{- if le (int $be.progressDeadlineSeconds) (int $be.terminationGracePeriodSeconds) }}{{ fail "backend.progressDeadlineSeconds must exceed backend.terminationGracePeriodSeconds: new pods wait for the old control plane to stop and the migration to finish" }}{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nms-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-api
+    app.kubernetes.io/component: nms-api
+spec:
+  replicas: {{ $be.api.replicas }}
+  progressDeadlineSeconds: {{ $be.progressDeadlineSeconds }}
+  selector:
+    matchLabels:
+      app: nms-api
+  template:
+    metadata:
+      labels:
+        app: nms-api
+        app.kubernetes.io/component: nms-api
+        app.kubernetes.io/part-of: firecell-nms
+      annotations:
+        {{- include "firecell-nms.backend.checksum" . | nindent 8 }}
+    spec:
+      serviceAccountName: nms
+      securityContext:
+        {{- include "firecell-nms.backend.podSecurityContext" . | nindent 8 }}
+      terminationGracePeriodSeconds: {{ $be.terminationGracePeriodSeconds }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: nms-api
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: nms-api
+      initContainers:
+        {{- include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-for-schema" "untilHead" true) | nindent 8 }}
+      containers:
+        - name: api
+          image: {{ include "firecell-nms.backend.image" . | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: ["firecell-nms-ng-api"]
+          securityContext:
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
+          envFrom:
+            - configMapRef: {name: nms-config}
+          env:
+            {{- include "firecell-nms.backend.env" . | nindent 12 }}
+          ports:
+            - {name: http, containerPort: 8080}
+          startupProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /healthz, port: http}
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            {{- toYaml $be.api.resources | nindent 12 }}
+          volumeMounts:
+            - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: kubeconfig
+          configMap:
+            name: nms-kubeconfig
+            defaultMode: 0444
+        - {name: tmp, emptyDir: {}}
+---
+# The API, the FCAPS notification receiver and the Grafana alert webhook
+# (/api/alarms/webhook) all listen here.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nms-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: nms-api
+    app.kubernetes.io/component: nms-api
+spec:
+  type: ClusterIP
+  selector:
+    app: nms-api
+  ports:
+    - {name: http, port: 8080, targetPort: http}
