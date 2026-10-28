@@ -138,6 +138,18 @@ spec:
                 echo "[post-flight:mysql] Applying 02-oai-db-ims-supplement.sql..."
                 mysql --force -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" < /docker-entrypoint-initdb.d/02-oai-db-ims-supplement.sql
               fi
+              # Callback URIs are longer than the varchar(50) of older schemas (an AMF
+              # deregCallbackUri is ~85 characters); widen them in databases created
+              # before oai_db.sql had varchar(255). Only columns still narrower are
+              # altered, so this is a no-op on later upgrades.
+              for tc in Amf3GppAccessRegistration.deregCallbackUri Amf3GppAccessRegistration.pcscfRestorationCallbackUri SdmSubscriptions.callbackReference SmfRegistrations.deregCallbackUri SmfRegistrations.pcscfRestorationCallbackUri; do
+                t="${tc%%.*}"; c="${tc#*.}"
+                COL=$(mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -N -e "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_schema='${MYSQL_DB}' AND table_name='${t}' AND column_name='${c}' AND character_maximum_length < 255;" 2>/dev/null || true)
+                [ -n "${COL}" ] || continue
+                NN=""; [ "${COL}" = "NO" ] && NN=" NOT NULL"
+                echo "[post-flight:mysql] Widening ${t}.${c} to varchar(255)"
+                mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -e "ALTER TABLE \`${t}\` MODIFY \`${c}\` varchar(255)${NN};"
+              done
               echo "[post-flight:mysql] Ensuring Version table is seeded (${DB_VERSION_SEED})..."
               mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -e "
                 CREATE TABLE IF NOT EXISTS Version (version VARCHAR(64) PRIMARY KEY);
