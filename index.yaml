@@ -36228,6 +36228,26 @@ entries:
   firecell-core:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-10-28T20:26:02.537198702Z"
+    description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF,
+      MySQL, IMS Kamailio+Cx (Asterisk optional))
+    digest: 164c4783bfe61209d548a31bcc59c5d3af6b239c981c2c2d5f983900d4258b11
+    keywords:
+    - 5g
+    - core-network
+    - oai
+    - open5gs
+    - firecell
+    maintainers:
+    - email: support@firecell.io
+      name: Firecell
+    name: firecell-core
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-core-0.2.0-rc.1/firecell-core-0.2.0-rc.1.tgz
+    version: 0.2.0-rc.1
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-10-23T15:14:12.819270015Z"
     description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF,
       MySQL)
@@ -36249,6 +36269,24 @@ entries:
   firecell-cu:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-10-28T20:26:02.691652189Z"
+    description: Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service
+      DUs (firecell-du) attach to
+    digest: 76aa9a14bd81c68ec15ce4796de208f70701aa23c5507efd81684ec7a3312ded
+    keywords:
+    - 5g
+    - ran
+    - o-ran
+    - ocudu
+    - cu-cp
+    - cu-up
+    name: firecell-cu
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-cu-0.2.0-rc.1/firecell-cu-0.2.0-rc.1.tgz
+    version: 0.2.0-rc.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-10-23T16:17:30.922307826Z"
     description: Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service
       DUs (firecell-du) attach to
@@ -36266,6 +36304,25 @@ entries:
     - https://github.com/accelleran/helm-charts/releases/download/firecell-cu-0.1.0/firecell-cu-0.1.0.tgz
     version: 0.1.0
   firecell-du:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2026-10-28T20:26:02.830756386Z"
+    description: Firecell RAN on Ocudu - one O-RAN 7.2 O-DU per release, with DPDK
+      fronthaul, O-RU M-plane and O1 NETCONF
+    digest: 37fbe9d16073c638ae4448275d52cf6325ab5e71c850df2fc991c101e1cd9b34
+    keywords:
+    - 5g
+    - ran
+    - o-ran
+    - ocudu
+    - du
+    - dpdk
+    - netconf
+    name: firecell-du
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-du-0.2.0-rc.1/firecell-du-0.2.0-rc.1.tgz
+    version: 0.2.0-rc.1
   - apiVersion: v2
     appVersion: 0.1.0
     created: "2026-10-23T16:17:31.104519953Z"
@@ -39441,4 +39498,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2026-10-28T19:53:35.207069745Z"
+generated: "2026-10-28T20:26:02.832502019Z"
