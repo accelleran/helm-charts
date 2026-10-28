@@ -36287,6 +36287,16 @@ entries:
     version: 0.1.0
   firecell-nms:
   - apiVersion: v2
+    appVersion: 6.0.0
+    created: "2026-10-28T19:53:35.205787581Z"
+    description: Firecell NMS — frontend, backend and VictoriaMetrics
+    digest: 700fb5cf0e149c2f8df00d7013309468675d1eb0d04e86c4d6ab1dac5846a4ed
+    name: firecell-nms
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-nms-0.2.0/firecell-nms-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
     appVersion: 5.0.1
     created: "2026-10-13T10:08:42.842979354Z"
     description: Firecell NMS — Network Management System (Kubernetes-native, Consul-free)
@@ -39431,4 +39441,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2026-10-23T16:17:31.106211754Z"
+generated: "2026-10-28T19:53:35.207069745Z"
