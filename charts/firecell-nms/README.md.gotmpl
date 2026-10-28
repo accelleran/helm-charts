@@ -125,8 +125,10 @@ Until a chart carries these, the NMS sees no pods in that namespace (element rea
 ## 3. Installation
 
 ```sh
-helm install firecell-nms accelleran/firecell-nms --namespace firecell-nms --wait --timeout 20m
+helm install --repo https://accelleran.github.io/helm-charts firecell-nms firecell-nms --namespace firecell-nms --wait --timeout 20m
 ```
+
+From a checkout of this repository, use `helm install firecell-nms ./charts/firecell-nms ...` instead.
 
 The install completes in one pass, with or without `--wait`, which also makes it safe under Flux helm-controller. There are no Helm hooks:
 
