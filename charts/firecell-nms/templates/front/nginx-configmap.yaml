@@ -29,7 +29,7 @@ data:
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
         # API proxy — route all API calls to the backend k8s Service
-        location /api/ {
+        location ^~ /api/ {
             proxy_pass {{ $backendUrl }};
             proxy_http_version 1.1;
             proxy_set_header Host $host;
@@ -47,7 +47,7 @@ data:
             return 302 /nms-cm/;
         }
 
-        location /nms-cm/ {
+        location ^~ /nms-cm/ {
             proxy_pass {{ trimSuffix "/" $cmUrl }}/;
             proxy_http_version 1.1;
             proxy_set_header Host $host;
@@ -58,7 +58,7 @@ data:
 
         # Device Performance charts query VictoriaMetrics PromQL here
         # (/metrics-api/query_range -> /api/v1/query_range).
-        location /metrics-api/ {
+        location ^~ /metrics-api/ {
             proxy_pass {{ trimSuffix "/" $metricsUrl }}/api/v1/;
             proxy_http_version 1.1;
             proxy_set_header Host $host;
@@ -73,7 +73,7 @@ data:
         location = /grafana {
             return 302 {{ trimSuffix "/" .Values.front.grafanaUrl }}/;
         }
-        location /grafana/ {
+        location ^~ /grafana/ {
             rewrite ^/grafana/(.*)$ {{ trimSuffix "/" .Values.front.grafanaUrl }}/$1 redirect;
         }
 {{- end }}
