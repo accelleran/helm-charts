@@ -1,0 +1,3 @@
+name: flux-operator
+repository: oci://ghcr.io/controlplaneio-fluxcd/charts
+version: 0.60.0
