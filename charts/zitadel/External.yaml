@@ -1,0 +1,3 @@
+name: zitadel
+repository: oci://ghcr.io/zitadel/zitadel-charts
+version: 10.0.4
