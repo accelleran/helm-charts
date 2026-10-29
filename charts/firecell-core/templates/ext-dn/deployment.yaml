@@ -14,7 +14,12 @@ spec:
     matchLabels:
       app: oai-ext-dn
   strategy:
+    {{- if (.Values.extDn.n6 | default dict).ip }}
+    # Static N6 address: the old pod must release it before the new one starts.
+    type: Recreate
+    {{- else }}
     type: RollingUpdate
+    {{- end }}
   template:
     metadata:
       labels:
@@ -22,6 +27,10 @@ spec:
         tier: core-network
         firecell.io/role: core-nf
         role: active
+      {{- if (.Values.extDn.n6 | default dict).ip }}
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[{"name":"{{ .Values.extDn.n6.nadName | default "ext-dn-n6" }}","namespace":"{{ .Values.global.namespace }}","interface":"net1"}]'
+      {{- end }}
     spec:
       priorityClassName: {{ .Values.extDn.priorityClassName }}
       containers:
@@ -40,11 +49,14 @@ spec:
               protocol: TCP
           # sleep-infinity debug endpoint: performs no privileged operation itself,
           # so no privileged flag. NET_ADMIN/SYS_ADMIN stay for exec-based
-          # datapath debugging (ip route/iptables/nft from kubectl exec).
+          # datapath debugging (ip route/iptables/nft from kubectl exec), NET_RAW
+          # for ping: the image's ping is file-capability cap_net_raw, which
+          # exec refuses when the bounding set lacks it.
           securityContext:
             capabilities:
               add:
                 - NET_ADMIN
+                - NET_RAW
                 - SYS_ADMIN
               drop:
                 - ALL
