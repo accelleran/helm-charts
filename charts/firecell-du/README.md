@@ -121,6 +121,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | nms.rbac | bool | `true` | Let the NMS read pods here, and restart, stop and start this DU's Deployment. |
 | nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
 | o1.enabled | bool | `false` | Run netopeer2/sysrepo (O1 NETCONF server for the NMS) in the DU container. |
+| o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | o1.port | int | `830` |  |
 | o1.restartOnColdCommit | bool | `false` |  |
 | o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Empty uses /var/lib/firecell/ocudu/<name>. |

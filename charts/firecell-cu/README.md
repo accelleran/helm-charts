@@ -54,6 +54,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuCp.image | string | `""` | Image override (defaults to global.image). |
 | cuCp.nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
 | cuCp.o1.enabled | bool | `false` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
+| cuCp.o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | cuCp.o1.restartOnColdCommit | bool | `false` |  |
 | cuCp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp. |
 | cuCp.o1.ueContext.enabled | bool | `true` | Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty. |
@@ -81,6 +82,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuUp.nodeSelector | object | `{}` |  |
 | cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
 | cuUp.o1.enabled | bool | `false` | NETCONF (netopeer2) on the CU-UP, so the NMS registers and manages it over O1. Needs an image whose ocuup carries the O1 service; renders Service cu-up:830. |
+| cuUp.o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | cuUp.o1.restartOnColdCommit | bool | `false` |  |
 | cuUp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up. |
 | cuUp.o1.yangSearchPath | string | `"/usr/local/yang"` |  |

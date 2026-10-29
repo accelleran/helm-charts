@@ -261,3 +261,14 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+netopeer2 log level for NETCONF_VERBOSITY: error, warning, info, debug or 0-3. Pass the value.
+*/}}
+{{- define "firecell-du.netconfVerbosity" -}}
+{{- $v := toString . | lower -}}
+{{- if not (has $v (list "error" "warning" "info" "debug" "0" "1" "2" "3")) -}}
+{{- fail (printf "netconfVerbosity %q: use error, warning, info, debug or 0-3" $v) -}}
+{{- end -}}
+{{- $v -}}
+{{- end }}
