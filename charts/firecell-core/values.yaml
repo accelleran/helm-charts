@@ -945,6 +945,9 @@ extDn:
   # the UE's answer to its own N6 address, so nothing matches on the way back:
   # a ping or a TCP connection from ext-dn to a UE gets no reply.
   #
+  # ext-dn turns TX checksum offload off on net1 at start, or TCP to a UE
+  # carries checksums nothing completes (the host's br-n6 needs the same).
+  #
   # Not for host-device (the N6 NIC belongs to the UPF pod) or macvlan (a
   # sibling on the same parent bypasses generic XDP, KI-2): rendering fails.
   n6:

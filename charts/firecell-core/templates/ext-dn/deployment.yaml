@@ -40,7 +40,14 @@ spec:
           command:
             - /bin/sh
             - -c
+            {{- if (.Values.extDn.n6 | default dict).ip }}
+            # A veth hands its TCP segments over with the checksum left to the
+            # NIC. The UPF's generic XDP forwards them into GTP-U as they are,
+            # so the UE drops every one and TCP (iperf) never gets through.
+            - ethtool -K net1 tx off >/dev/null && exec sleep infinity
+            {{- else }}
             - exec sleep infinity
+            {{- end }}
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}
