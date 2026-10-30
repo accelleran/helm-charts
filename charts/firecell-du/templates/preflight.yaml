@@ -35,13 +35,39 @@ spec:
               fail=0
               ok()  { echo "PASS $*"; }
               bad() { echo "FAIL $*"; fail=1; }
+              {{- if eq (include "firecell-du.dpdk" $i) "true" }}
               drv=$(basename "$(readlink /sys/bus/pci/devices/{{ $i.ofh.vfPciAddr }}/driver 2>/dev/null)" 2>/dev/null)
               if [ "$drv" = vfio-pci ]; then ok "VF {{ $i.ofh.vfPciAddr }} on vfio-pci"
               else bad "VF {{ $i.ofh.vfPciAddr }} driver is '${drv:-none}', expected vfio-pci"; fi
+              {{- else if eq (include "firecell-du.ruType" $i) "aw2s" }}
+              {{- $a := $i.ru.sdr.aw2s }}
+              if [ -e /host-aw2s/{{ $a.lib }} ]; then ok "{{ $a.lib }} in {{ $a.hostLibDir }}"
+              else bad "{{ $a.lib }} not found in {{ $a.hostLibDir }} (install the Swallow/AW2S host libraries)"; fi
+              {{- if $a.generate }}
+              if [ -w /aw2s-config ]; then ok "Swallow directory {{ $a.configDir }} is writable (the DU writes {{ $a.rfConfigFile }})"
+              else bad "Swallow directory {{ $a.configDir }} is not writable (the DU writes {{ $a.rfConfigFile }} at every start)"; fi
+              {{- else }}
+              if [ -r /aw2s-config/{{ $a.rfConfigFile }} ]; then ok "Swallow config {{ $a.configDir }}/{{ $a.rfConfigFile }}"
+              else bad "Swallow config {{ $a.configDir }}/{{ $a.rfConfigFile }} not found"; fi
+              {{- end }}
+              if [ -S /host-tmp/ratcm.sock ] || ls /host-tmp/*/s >/dev/null 2>&1; then ok "Radio Management Unit socket in /tmp"
+              else bad "no Radio Management Unit socket (/tmp/ratcm.sock or /tmp/*/s): start the host RMU (e.g. swallow.service) before the DU"; fi
+              {{- else if eq (include "firecell-du.sdr" $i) "true" }}
+              ok "split 8 radio {{ include "firecell-du.ruType" $i }}: no fronthaul netdev to check"
+              {{- else if .Release.IsInstall }}
+              if [ -e /sys/class/net/{{ $i.ofh.interface }} ]; then ok "OFH netdev {{ $i.ofh.interface }} present"
+              else bad "OFH netdev {{ $i.ofh.interface }} not found on the node (create it before the DU)"; fi
+              {{- end }}
+              {{- $f1u := dig "network" dict ($i.f1u | default dict) }}
+              {{- if and (dig "enabled" false $f1u) (eq (toString ($f1u.cniType | default "macvlan")) "bridge") }}
+              if [ -d /sys/class/net/{{ $f1u.master }}/bridge ]; then ok "F1-U bridge {{ $f1u.master }} present"
+              else bad "F1-U bridge {{ $f1u.master }} not found on the node"; fi
+              {{- end }}
               {{- if $i.mplane.enabled }}
               if [ -e /sys/class/net/{{ $i.mplane.parentInterface }} ]; then ok "M-plane parent {{ $i.mplane.parentInterface }} present"
               else bad "M-plane parent {{ $i.mplane.parentInterface }} not found"; fi
               {{- end }}
+              {{- if eq (include "firecell-du.dpdk" $i) "true" }}
               hp=/sys/kernel/mm/hugepages/hugepages-2048kB
               {{- if .Release.IsInstall }}
               have=$(cat $hp/free_hugepages)
@@ -53,13 +79,41 @@ spec:
               {{- end }}
               if [ "$have" -ge {{ $pages }} ]; then ok "hugepages-2Mi: $have $what >= {{ $pages }} needed"
               else bad "hugepages-2Mi: $have $what < {{ $pages }} needed"; fi
+              {{- end }}
               exit $fail
           volumeMounts:
             - name: sys
               mountPath: /sys
               readOnly: true
+            {{- if eq (include "firecell-du.ruType" $i) "aw2s" }}
+            - name: aw2s-libs
+              mountPath: /host-aw2s
+              readOnly: true
+            - name: aw2s-config
+              mountPath: /aw2s-config
+              {{- if not $i.ru.sdr.aw2s.generate }}
+              readOnly: true
+              {{- end }}
+            - name: host-tmp
+              mountPath: /host-tmp
+              readOnly: true
+            {{- end }}
       volumes:
         - name: sys
           hostPath:
             path: /sys
+        {{- if eq (include "firecell-du.ruType" $i) "aw2s" }}
+        # Same type as in the DU: a missing path fails the check instead of being created empty.
+        - name: aw2s-libs
+          hostPath:
+            path: {{ $i.ru.sdr.aw2s.hostLibDir }}
+            type: Directory
+        - name: aw2s-config
+          hostPath:
+            path: {{ $i.ru.sdr.aw2s.configDir }}
+            type: Directory
+        - name: host-tmp
+          hostPath:
+            path: /tmp
+        {{- end }}
 {{- end }}
