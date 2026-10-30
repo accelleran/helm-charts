@@ -1,3 +1,0 @@
-name: oauth2-proxy
-repository: oci://ghcr.io/oauth2-proxy/charts
-version: 10.7.0
