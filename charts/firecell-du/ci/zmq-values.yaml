@@ -1,0 +1,15 @@
+# Split 8 without hardware (ZMQ).
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+name: du-zmq
+duId: 7
+cell:
+  pci: 7
+  bandwidthMHz: 20
+cpus:
+  ru: "4,5"
+  pool: "6,7"
+ru:
+  split: "8"
+  vendor: zmq

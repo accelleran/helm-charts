@@ -1,0 +1,28 @@
+# Split 8, AW2S Panther: the DU writes the Swallow file (ru.sdr.aw2s.generate).
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+name: du-aw2s
+duId: 4
+cell:
+  pci: 4
+  bandwidthMHz: 100
+  antennasDl: 2
+  antennasUl: 2
+cpus:
+  ru: "4,5"
+  pool: "6,7"
+ru:
+  split: "8"
+  vendor: aw2s
+  sdr:
+    aw2s:
+      generate: true
+      configDir: /etc/swallow
+      rfConfigFile: du.xml
+      sku: panther
+      antennas:
+        - {id: 0, masterPort: 2, antennaPort: 0}
+        - {id: 1, masterPort: 2, antennaPort: 1}
+txPower:
+  dbm: 30

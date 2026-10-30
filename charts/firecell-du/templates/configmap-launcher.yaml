@@ -11,7 +11,9 @@ data:
   du-launcher.sh: |
     #!/bin/bash
     # Inputs (env): POD_IP, DU_BINARY, DU_CPUS (taskset mask for the whole DU),
-    # DU_POOL_CPUS (where non-RU threads end up), MPLANE_SSH_PASSWORD (optional).
+    # DU_POOL_CPUS (where non-RU threads end up), MPLANE_SSH_PASSWORD (optional),
+    # OFH_INTERFACE (ofh.mode socket), F1U_RPS_CPUS (f1u.network.rpsCpus),
+    # DU_SELF_PIN (ru.split "8": no taskset wrapper, no re-pinning).
     set -uo pipefail
     # bash 5.2 expands "&" in ${var//pat/rep}; secrets may contain it.
     shopt -u patsub_replacement 2>/dev/null || true
@@ -23,6 +25,25 @@ data:
       cfg=${cfg//__MPLANE_SSH_PASSWORD__/${MPLANE_SSH_PASSWORD:?M-plane password Secret is not mounted}}
     fi
     printf '%s\n' "$cfg" > /run/du.yml
+
+    # ofh.mode socket: host-device keeps the host MTU but may hand the netdev over down.
+    if [[ -n ${OFH_INTERFACE:-} ]]; then
+      ip link set "$OFH_INTERFACE" up || { echo "OFH interface $OFH_INTERFACE is not in the pod" >&2; exit 1; }
+    fi
+    # RPS on the F1-U veth: DL GTP-U is received in the softirq of the sending
+    # CU-UP worker unless it is steered to other CPUs.
+    if [[ -n ${F1U_RPS_CPUS:-} ]]; then
+      for q in /sys/class/net/f1u0/queues/rx-*; do
+        if echo "$F1U_RPS_CPUS" 2>/dev/null > "$q/rps_cpus"; then echo "f1u0 ${q##*/} rps_cpus=$F1U_RPS_CPUS"
+        else echo "WARNING: could not set rps_cpus=$F1U_RPS_CPUS on f1u0 ${q##*/}" >&2; fi
+      done
+    fi
+
+    if [[ ${DU_SELF_PIN:-} == true ]]; then
+      # Split 8 (AW2S): the DU pins its radio and pool threads from du.yml and
+      # leaves the rest on the housekeeping CPUs.
+      exec stdbuf -oL -eL "$DU_BINARY" -c /run/du.yml
+    fi
 
     stdbuf -oL -eL taskset -c "$DU_CPUS" "$DU_BINARY" -c /run/du.yml &
     DU=$!

@@ -1,0 +1,19 @@
+# Split 8, AW2S with a Swallow file you manage: the chart renders srate, bw= and nrb_dl=.
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+name: du-aw2s-static
+duId: 5
+cell:
+  pci: 5
+  bandwidthMHz: 100
+cpus:
+  ru: "4,5"
+  pool: "6,7"
+ru:
+  split: "8"
+  vendor: aw2s
+  sdr:
+    aw2s:
+      configDir: /etc/swallow
+      rfConfigFile: du.xml

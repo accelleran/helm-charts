@@ -1,0 +1,20 @@
+# Split 8, Ettus B210 over USB 3.
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+name: du-b210
+duId: 6
+cell:
+  pci: 6
+  bandwidthMHz: 20
+  antennasDl: 2
+  antennasUl: 2
+cpus:
+  ru: "4,5"
+  pool: "6,7"
+ru:
+  split: "8"
+  vendor: b210
+  sdr:
+    b210:
+      serial: 3128EB5
