@@ -82,6 +82,8 @@ spec:
               value: {{ $i.cpus.pool | toString | quote }}
             - name: O1_ENABLED
               value: {{ $i.o1.enabled | toString | quote }}
+            - name: NETCONF_VERBOSITY
+              value: {{ include "firecell-du.netconfVerbosity" $i.o1.netconfVerbosity | quote }}
             {{- if $i.mplane.enabled }}
             - name: MPLANE_SSH_PASSWORD
               valueFrom:

@@ -169,6 +169,8 @@ o1:
   statePath: ""
   yangSearchPath: /usr/local/yang
   restartOnColdCommit: false
+  # -- netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info.
+  netconfVerbosity: warning
   ueMetrics:
     # -- Publish per-UE PM (/ocudu-performance gnb-du-id and ue-metrics) for the NMS UE dashboard. Needs o1.enabled. Turns on scheduler metrics (metrics.layers.enable_sched).
     enabled: true
