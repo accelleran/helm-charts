@@ -424,6 +424,44 @@ spec:
               echo "${UPF_APP}" > "${LEASE_DIR}/${UPF_APP}@${N6_DEV}"
               echo "[datapath-init] ${UPF_APP}: OK"
         {{- end }}
+        {{- $n6gwMultus := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
+        {{- /* Same rule as _oai-basic-nrf-config.tpl: Multus reads upf.multus.enableBpfDatapath (default false).
+             XDP redirects N3<->N6 itself; only simpleswitch sends UE traffic through tun0. */}}
+        {{- $mBpfRaw := dig "enableBpfDatapath" false ($.Values.upf.multus | default dict) }}
+        {{- $mSimpleswitch := or (not $mBpfRaw) (has ($mBpfRaw | toString | lower) (list "false" "no" "0")) }}
+        {{- if and $upfMultus $mSimpleswitch $upfMultusN6.ip $n6gwMultus }}
+        {{- $mRawTable := $upfMultusN6.ip | splitList "." | last | atoi }}
+        {{- $mTable := $mRawTable }}
+        {{- if or (le $mRawTable 0) (ge $mRawTable 250) }}
+        {{- $mTable = add 100 (mod $mRawTable 100) }}
+        {{- end }}
+        {{- $mRuleBase := add 100 (mul $idx 2) }}
+        - name: n6-route-init
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              N6_DEV="{{ $n6if }}"
+              N6_IP="{{ $upfMultusN6.ip }}"
+              N6_GW="{{ $n6gwMultus }}"
+              TABLE="{{ $mTable }}"
+              # eth0 (pod CNI) owns the default route. Without this table, simpleswitch
+              # UE traffic leaving tun0 egresses via eth0 and misses the UPF's
+              # "-o <n6> -j SNAT" rule.
+              ip route replace default via "${N6_GW}" dev "${N6_DEV}" src "${N6_IP}" table "${TABLE}"
+              ip rule del from "${N6_IP}/32" lookup "${TABLE}" 2>/dev/null || true
+              ip rule add from "${N6_IP}/32" lookup "${TABLE}" priority {{ $mRuleBase }}
+              ip rule del iif tun0 lookup "${TABLE}" 2>/dev/null || true
+              ip rule add iif tun0 lookup "${TABLE}" priority {{ add $mRuleBase 1 }}
+              echo "[n6-route-init] {{ $appName }}: table ${TABLE} default via ${N6_GW} dev ${N6_DEV} for ${N6_IP} and tun0"
+        {{- end }}
         {{- if and $pfcpMac $pfcpIP }}
         - name: pfcp-macvlan-init
           image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}

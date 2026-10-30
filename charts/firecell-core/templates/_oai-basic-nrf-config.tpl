@@ -138,6 +138,9 @@ snssais:
 ############## NF-specific configuration
 amf:
   amf_name: {{ $v.coreConfig.amf.name | quote }}
+  {{- with $v.coreConfig.amf.defaultDnn }}
+  default_dnn: {{ . | quote }}
+  {{- end }}
   support_features_options:
     enable_simple_scenario: {{ $v.coreConfig.amf.enableSimpleScenario }}
     enable_nssf: {{ $v.coreConfig.amf.enableNssf }}
@@ -325,7 +328,7 @@ upf:
   {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use
        upf.multus.enableBpfDatapath (default false). hostNetwork uses upf.enableBpfDatapath. */}}
   {{- $upfMultus := and (not ($v.upf.hostNetwork | default false)) (($v.upf.multus).enabled | default false) }}
-  {{- $bpfRaw := ternary (dig "enableBpfDatapath" false ($v.upf.multus | default dict)) ($v.upf.enableBpfDatapath | default true) $upfMultus }}
+  {{- $bpfRaw := ternary (dig "enableBpfDatapath" false ($v.upf.multus | default dict)) (dig "enableBpfDatapath" true $v.upf) $upfMultus }}
   {{- $bpfOn := false }}
   {{- if kindIs "bool" $bpfRaw }}{{ $bpfOn = $bpfRaw }}{{ else if or (eq ($bpfRaw | toString | lower) "false") (eq ($bpfRaw | toString | lower) "no") (eq ($bpfRaw | toString) "0") }}{{ $bpfOn = false }}{{ else }}{{ $bpfOn = true }}{{ end }}
   support_features:

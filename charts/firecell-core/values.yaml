@@ -1107,6 +1107,9 @@ coreConfig:
   # AMF configuration
   amf:
     name: "OAI-AMF"
+    # DNN the AMF selects when the UE requests none. Empty keeps the OAI
+    # built-in "default", which the SMF rejects unless coreConfig.dnns has it.
+    defaultDnn: ""
     relativeCapacity: 30
     statisticsTimerInterval: 20
     emergencySupport: false
