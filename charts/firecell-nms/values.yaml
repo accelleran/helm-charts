@@ -23,11 +23,11 @@ backend:
   # -- Backend image (API, worker, control plane, migration and bootstrap).
   image:
     # -- Image registry host. Replaced by global.imageRegistry when set.
-    registry: ghcr.io
+    registry: docker.io
     # -- Image repository path, including the org (kept when the registry is rewritten).
     repository: accelleran/nms-backend
-    # -- Until there is a release; then docker.io and X.Y.Z.
-    tag: edge-1501118
+    # -- Image tag.
+    tag: "6.0.0"
     # -- Optional. When set, used as registry/repository@digest instead of :tag.
     digest: ""
   # -- Secret with the backend credentials, created before install; the
@@ -212,11 +212,11 @@ front:
   # the new backend.
   image:
     # -- Image registry host. Replaced by global.imageRegistry when set.
-    registry: ghcr.io
+    registry: docker.io
     # -- Image repository path, including the org (kept when the registry is rewritten).
     repository: accelleran/nms-frontend
-    # -- Until there is a release; then docker.io and X.Y.Z.
-    tag: edge-db0447e
+    # -- Image tag.
+    tag: "6.0.0"
     # -- Optional. When set, used as registry/repository@digest instead of :tag.
     digest: ""
   # -- Where nginx sends /api/. Empty: the in-chart nms-api Service.
