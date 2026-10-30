@@ -1,0 +1,13 @@
+name: du-sock
+duId: 3
+cell:
+  pci: 3
+cpus:
+  timing: 7
+  txrx: 8
+  pool: "9,10"
+ofh:
+  mode: socket
+  interface: veth-du1
+  duMac: "02:fc:02:00:00:21"
+  ruMac: "70:b3:d5:e1:51:57"
