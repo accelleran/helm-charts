@@ -18,4 +18,24 @@ spec:
         - podSelector:
             matchLabels:
               app: {{ if eq .Values.upf.type "oai" }}oai-upf{{ else }}o5gs-upf{{ end }}
+    {{- /* A Multus UPF sends UE traffic out of its own N6 interface, not its
+         pod interface, so it reaches ext-dn from outside the cluster and the
+         podSelector above never matches it: from the UPF's N6 address once
+         the UPF NATs it, from the UE pool when it does not. */}}
+    {{- $sources := list }}
+    {{- $upfMultus := .Values.upf.multus | default dict }}
+    {{- $upfN6 := $upfMultus.n6 | default dict }}
+    {{- if and (not .Values.upf.hostNetwork) ($upfMultus.enabled | default false) $upfN6.ip }}
+    {{- $sources = append $sources (printf "%s/32" $upfN6.ip) }}
+    {{- end }}
+    {{- range (.Values.coreConfig | default dict).dnns }}
+    {{- if .ipv4Subnet }}{{ $sources = append $sources .ipv4Subnet }}{{ end }}
+    {{- end }}
+    {{- if $sources }}
+    - from:
+        {{- range $sources | uniq }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+    {{- end }}
 {{- end }}

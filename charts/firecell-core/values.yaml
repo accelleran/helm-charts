@@ -935,6 +935,26 @@ extDn:
     limits:
       memory: 128Mi
       cpu: 200m
+  # Second interface (net1) on the UPF's N6 bridge, for a Multus UPF with
+  # upf.multus.n6.cniType: bridge (Option 1) only. With it, ext-dn reaches the
+  # UEs through the UPF directly: the coreConfig.dnns pools are routed via
+  # upf.multus.n6.ip, and UEs reach ext-dn at this address.
+  #
+  # Without it, ext-dn talks to the UEs over the pod network and the host.
+  # Cilium masquerades that traffic to the host's N6 address, and the UPF NATs
+  # the UE's answer to its own N6 address, so nothing matches on the way back:
+  # a ping or a TCP connection from ext-dn to a UE gets no reply.
+  #
+  # ext-dn turns TX checksum offload off on net1 at start, or TCP to a UE
+  # carries checksums nothing completes (the host's br-n6 needs the same).
+  #
+  # Not for host-device (the N6 NIC belongs to the UPF pod) or macvlan (a
+  # sibling on the same parent bypasses generic XDP, KI-2): rendering fails.
+  n6:
+    # Free address in the UPF's N6 subnet (upf.multus.n6.ip/subnetPrefix),
+    # e.g. 10.10.0.102. Empty: no N6 interface.
+    ip: ""
+    nadName: ext-dn-n6
   sidecar:
     # OFF by default until the image is published to imageRegistry. The
     # composed default below resolves to
