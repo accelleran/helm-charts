@@ -87,7 +87,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuUp.rpsCpus | string | `""` | RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off. |
 | cuUp.resources | object | `{}` |  |
 | cuUp.tolerations | list | `[]` |  |
-| global.image | string | `"ghcr.io/accelleran/ocudu:edge"` | Ocudu runtime image. Components may override it. Defaults to the firecell-dev CI build (acc_ocudu release-image.yml); GHCR is private, so set imagePullSecrets. edge moves on every merge: pin edge-<sha> for a fixed build. |
+| global.image | string | `"docker.io/accelleran/ran:0.1.0"` | Ocudu runtime image. Components may override it. |
 | global.imagePullPolicy | string | `"IfNotPresent"` | Pull policy for the Ocudu image. Use Never for images imported into containerd. |
 | global.imagePullSecrets | list | `[]` | Image pull secrets for every pod. |
 | global.namespace | string | `""` | Namespace for every object. Empty uses the release namespace. |
