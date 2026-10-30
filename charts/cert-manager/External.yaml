@@ -1,3 +1,0 @@
-name: cert-manager
-repository: oci://quay.io/jetstack/charts
-version: v1.20.3
