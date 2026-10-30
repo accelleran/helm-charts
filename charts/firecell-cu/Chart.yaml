@@ -1,8 +1,9 @@
 apiVersion: v2
 name: firecell-cu
-description: Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service DUs (firecell-du) attach to
+description: Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service
+  DUs (firecell-du) attach to
 type: application
-version: 0.2.0-rc.1
+version: 0.2.0
 appVersion: "0.1.0"
 keywords:
   - 5g
