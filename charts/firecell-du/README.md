@@ -87,7 +87,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | f1u.network.cidr | string | `""` | DU F1-U address with prefix. The IP part is the F1-U bind address. |
 | f1u.network.enabled | bool | `false` | Put F1-U (GTP-U toward the CU-UP) on a macvlan of a host NIC instead of the pod network. Use when the CU-UP runs on another node and the pod network between the nodes is slower than the user plane. |
 | f1u.network.master | string | `""` | Host interface the F1-U macvlan sits on (link toward the CU-UP node). |
-| global.image | string | `"ghcr.io/accelleran/ocudu:edge"` | Ocudu runtime image built with -DENABLE_MPLANE=ON and the O1 entrypoint (/usr/local/bin/entrypoint-o1.sh). Defaults to the firecell-dev CI build (acc_ocudu release-image.yml); GHCR is private, so set imagePullSecrets. edge moves on every merge: pin edge-<sha> for a fixed build. |
+| global.image | string | `"docker.io/accelleran/ran:0.1.0"` | Ocudu runtime image built with -DENABLE_MPLANE=ON and the O1 entrypoint (/usr/local/bin/entrypoint-o1.sh). |
 | global.imagePullPolicy | string | `"IfNotPresent"` | Pull policy for the Ocudu image. Use Never for images imported into containerd. |
 | global.imagePullSecrets | list | `[]` | Image pull secrets for every pod. |
 | global.namespace | string | `""` | Namespace for every object. Empty uses the release namespace. |
