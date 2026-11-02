@@ -21,12 +21,19 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
   "prach_port_id" $ofh.prachPorts -}}
 {{- if $ofh.vlanCp }}{{ $_ := set $cell "vlan_tag_cp" $ofh.vlanCp }}{{ end }}
 {{- if $ofh.vlanUp }}{{ $_ := set $cell "vlan_tag_up" $ofh.vlanUp }}{{ end }}
-{{- if $i.mplane.enabled }}
+{{- if or $i.mplane.enabled $ofh.vendorProfile }}
 {{- $_ := set $cell "ru_type" (include "firecell-du.ruVendor" $i) -}}
+{{- end }}
+{{- if $i.mplane.enabled }}
 {{- $_ := set $cell "carrier_admin" "unlocked" -}}
 {{- $_ := set $cell "enabled" true -}}
 {{- end }}
-{{- $ruOfh := include "firecell-du.merge" (dict "dst" $ofh.ruOfh "src" (dict "cells" (list $cell))) | fromJson -}}
+{{- /* The generic timing and compression unless the DU applies the vendor's profile; ofh.ruOfh wins over both. */ -}}
+{{- $ruOfhBase := $ofh.ruOfh -}}
+{{- if not $ofh.vendorProfile }}
+{{- $ruOfhBase = include "firecell-du.merge" (dict "dst" (deepCopy $ofh.genericTiming) "src" $ofh.ruOfh) | fromJson -}}
+{{- end }}
+{{- $ruOfh := include "firecell-du.merge" (dict "dst" $ruOfhBase "src" (dict "cells" (list $cell))) | fromJson -}}
 
 {{- $slicing := list -}}
 {{- range $v.gnb.slices }}

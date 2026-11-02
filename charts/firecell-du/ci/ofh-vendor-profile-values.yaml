@@ -1,0 +1,20 @@
+# Split 7.2 with the DU applying the timing and compression profile of the O-RU type (ofh.vendorProfile).
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+name: du-vvdn
+duId: 8
+cell:
+  pci: 8
+cpus:
+  timing: 7
+  txrx: 8
+  pool: "9,10"
+  ealLcores: "9,10"
+ru:
+  vendor: vvdn
+ofh:
+  vendorProfile: true
+  vfPciAddr: "0000:01:12.0"
+  duMac: "02:fc:02:00:00:12"
+  ruMac: "70:b3:d5:e1:51:58"
