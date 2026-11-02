@@ -293,15 +293,21 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- if not (has $split (list "7.2" "8")) }}
 {{- fail (printf "%s: ru.split must be \"7.2\" or \"8\" (got %q)" $n $split) }}
 {{- end }}
-{{- if and (eq $split "7.2") (not (has $vendor (list "benetel" "comba" "eridan"))) }}
-{{- fail (printf "%s: ru.vendor %q needs ru.split \"8\"; with ru.split \"7.2\" use benetel, comba or eridan" $n $vendor) }}
+{{- if and (eq $split "7.2") (not (has $vendor (list "benetel" "comba" "eridan" "liteon" "vvdn" "mti"))) }}
+{{- fail (printf "%s: ru.vendor %q needs ru.split \"8\"; with ru.split \"7.2\" use benetel, comba, eridan, liteon, vvdn or mti" $n $vendor) }}
 {{- end }}
 {{- if and (eq $split "8") (not (has $vendor (list "aw2s" "b210" "zmq"))) }}
 {{- fail (printf "%s: ru.vendor %q needs ru.split \"7.2\"; with ru.split \"8\" use aw2s, b210 or zmq" $n $vendor) }}
 {{- end }}
 {{- $ruType := include "firecell-du.ruType" $i }}
-{{- if and (eq $ruType "ofh") (dig "ruType" "" ($i.ofh | default dict)) (not (has (toString $i.ofh.ruType) (list "benetel" "comba" "eridan"))) }}
-{{- fail (printf "%s: ofh.ruType must be benetel, comba or eridan (got %q)" $n (toString $i.ofh.ruType)) }}
+{{- if and (eq $ruType "ofh") (dig "ruType" "" ($i.ofh | default dict)) (not (has (toString $i.ofh.ruType) (list "benetel" "comba" "eridan" "liteon" "vvdn" "mti"))) }}
+{{- fail (printf "%s: ofh.ruType must be benetel, comba, eridan, liteon, vvdn or mti (got %q)" $n (toString $i.ofh.ruType)) }}
+{{- end }}
+{{- if and $i.mplane.enabled (eq $ruType "ofh") (not (has (include "firecell-du.ruVendor" $i) (list "benetel" "comba" "eridan"))) }}
+{{- fail (printf "%s: ru.vendor %q has no M-plane profile in the DU: set mplane.enabled false (its timing and compression profile still applies with ofh.vendorProfile)" $n (include "firecell-du.ruVendor" $i)) }}
+{{- end }}
+{{- if and $i.ofh.vendorProfile (ne $ruType "ofh") }}
+{{- fail (printf "%s: ofh.vendorProfile is for ru.split \"7.2\"" $n) }}
 {{- end }}
 {{- $tx := $i.txPower | default dict }}
 {{- if and (kindIs "invalid" (dig "dbm" nil $tx) | not) (ne (include "firecell-du.aw2sGenerate" $i) "true") }}
