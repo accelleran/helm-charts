@@ -278,6 +278,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | extDn.image | string | `"trf-gen-cn5g"` |  |
 | extDn.imageOverride | string | `""` |  |
 | extDn.imageTag | string | `"latest"` |  |
+| extDn.n6.ip | string | `""` |  |
+| extDn.n6.nadName | string | `"ext-dn-n6"` |  |
 | extDn.priorityClassName | string | `"firecell-prio-support"` |  |
 | extDn.resources.limits.cpu | string | `"200m"` |  |
 | extDn.resources.limits.memory | string | `"128Mi"` |  |

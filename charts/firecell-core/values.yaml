@@ -935,6 +935,20 @@ extDn:
     limits:
       memory: 128Mi
       cpu: 200m
+  # Second interface (net1) on the UPF's N6 bridge, for a Multus UPF with
+  # upf.multus.n6.cniType: bridge only. The extdn-probe sidecar needs it to
+  # ping a UE: it routes the UE address via upf.multus.n6.ip on net1 and the
+  # echo enters the UPF like any other downlink packet. Without net1 the echo
+  # leaves through Cilium, which masquerades it, and no UE ever answers.
+  #
+  # Not for host-device (the N6 NIC belongs to the UPF pod), macvlan (a sibling
+  # on the same parent bypasses generic XDP) or a hostNetwork UPF: rendering
+  # fails.
+  n6:
+    # Free address in the UPF's N6 subnet (upf.multus.n6.ip/subnetPrefix),
+    # e.g. 10.10.0.102. Empty: no N6 interface.
+    ip: ""
+    nadName: ext-dn-n6
   sidecar:
     # OFF by default until the image is published to imageRegistry. The
     # composed default below resolves to
