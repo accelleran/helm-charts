@@ -1952,7 +1952,7 @@ loki-deleter:
     period: "20m"
     threshold: 80
 
-    # the names depend on minio.replicas and minio.drivesPerNode
+    # PVC name kept as -minio via silo.nameOverride for upgrade compatibility
     pvcNames:
       - "{{ $.Release.Name }}-minio"
 
@@ -1973,23 +1973,34 @@ loki-deleter:
           key: loki-deleter-logs
 
 
-minio:
+# Silo (https://github.com/pgsty/silo) replaces MinIO for Loki object storage.
+# nameOverride/serviceAccount keep existing Kubernetes identities so upgrades
+# reuse the previous Service, Secret, and PVC names (…-minio / minio-sa).
+silo:
   # enabled: true
 
+  nameOverride: minio
+  serviceAccount:
+    name: minio-sa
+
+  image:
+    repository: pgsty/silo
+    tag: RELEASE.2026-10-26T00-00-00Z
+    pullPolicy: IfNotPresent
+  mcImage:
+    repository: pgsty/mc
+    tag: RELEASE.2026-10-26T00-00-00Z
+    pullPolicy: IfNotPresent
+
   replicas: 1
-  # Minio requires 2 to 16 drives for erasure code (drivesPerNode * replicas)
-  # https://docs.min.io/docs/minio-erasure-code-quickstart-guide
-  # Since we only have 1 replica, that means 2 drives must be used.
-  # But for now we want to limit the amount of storage used, so 1 drive.
+  # Silo inherits MinIO erasure-code drive rules (drivesPerNode * replicas).
+  # With 1 replica we would normally need 2 drives; keep 1 drive to limit storage.
   drivesPerNode: 1
   rootUser: ""
   rootPassword: ""
 
   # With 1 replica and 1 drive we need to run in standalone mode
   mode: standalone
-
-  # Allow the address used by Loki to refer to Minio to be overridden
-  address: null
 
   buckets:
     - name: chunks
@@ -2010,7 +2021,7 @@ minio:
     size: 5Gi
     annotations: {}
 
-minioPostJob:
+siloPostJob:
   enabled: false
 
 

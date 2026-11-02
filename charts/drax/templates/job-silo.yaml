@@ -1,19 +1,19 @@
-{{- if $.Values.minioPostJob.enabled -}}
+{{- if $.Values.siloPostJob.enabled -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ $.Release.Name }}-minio-post-job
+  name: {{ $.Release.Name }}-silo-post-job
 spec:
   template:
     metadata:
     spec:
-      restartPolicy: OnFailure      
+      restartPolicy: OnFailure
       volumes:
         - name: etc-path
           emptyDir: {}
         - name: tmp
           emptyDir: {}
-        - name: minio-configuration
+        - name: silo-configuration
           projected:
             sources:
               - configMap:
@@ -22,9 +22,9 @@ spec:
                   name: {{ $.Release.Name }}-minio
       serviceAccountName: minio-sa
       containers:
-        - name: minio-make-bucket
-          image: "quay.io/minio/mc:RELEASE.2024-04-18T16-45-29Z"
-          imagePullPolicy: IfNotPresent
+        - name: silo-make-bucket
+          image: "{{ $.Values.silo.mcImage.repository }}:{{ $.Values.silo.mcImage.tag }}"
+          imagePullPolicy: {{ $.Values.silo.mcImage.pullPolicy | default "IfNotPresent" }}
           command: [ "/bin/sh", "/config/initialize" ]
           env:
             - name: MINIO_ENDPOINT
@@ -33,17 +33,17 @@ spec:
               value: "9000"
           volumeMounts:
             - name: etc-path
-              mountPath: /etc/minio/mc
+              mountPath: /etc/silo/mc
             - name: tmp
               mountPath: /tmp
-            - name: minio-configuration
+            - name: silo-configuration
               mountPath: /config
           resources:
             requests:
               memory: 128Mi
-        - name: minio-make-user
-          image: "quay.io/minio/mc:RELEASE.2024-04-18T16-45-29Z"
-          imagePullPolicy: IfNotPresent
+        - name: silo-make-user
+          image: "{{ $.Values.silo.mcImage.repository }}:{{ $.Values.silo.mcImage.tag }}"
+          imagePullPolicy: {{ $.Values.silo.mcImage.pullPolicy | default "IfNotPresent" }}
           command: [ "/bin/sh", "/config/add-user" ]
           env:
             - name: MINIO_ENDPOINT
@@ -52,10 +52,10 @@ spec:
               value: "9000"
           volumeMounts:
             - name: etc-path
-              mountPath: /etc/minio/mc
+              mountPath: /etc/silo/mc
             - name: tmp
               mountPath: /tmp
-            - name: minio-configuration
+            - name: silo-configuration
               mountPath: /config
           resources:
             requests:

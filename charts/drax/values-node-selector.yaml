@@ -89,7 +89,7 @@ loki:
     nodeSelector:
       drax.accelleran.com/schedule: "true"
 
-minio:
+silo:
   nodeSelector:
     drax.accelleran.com/schedule: "true"
   postJob:
