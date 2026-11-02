@@ -93,7 +93,7 @@ ru:
   # -- Pod shape. "7.2": O-RAN 7.2 O-RU over the `ofh` block (production: DPDK VF; lab: kernel socket to the
   # Amarisoft emulator). "8": split 8 radio through ru_sdr (AW2S Swallow RRH, USB B210 or ZMQ).
   split: "7.2"
-  # -- Radio of the cell, checked against `split`. 7.2: benetel, comba or eridan (the M-plane profile). 8: aw2s
+  # -- Radio of the cell, checked against `split`. 7.2: benetel, comba or eridan (M-plane profile and timing profile), liteon, vvdn or mti (timing profile only). 8: aw2s
   # (Swallow card, host network namespace), b210 (USB 3 through UHD) or zmq (no hardware).
   vendor: benetel
   sdr:
@@ -181,9 +181,13 @@ ofh:
   promiscuous: false
   # -- Deprecated: use ru.vendor. When set (benetel | comba | eridan) it wins over ru.vendor for the M-plane profile.
   ruType: ""
-  # -- Raw ru_ofh keys (timing windows, compression) merged into ru_ofh.
-  ruOfh:
-    ru_bandwidth_MHz: 100
+  # -- true: the DU applies the Open Fronthaul timing windows and IQ compression of the O-RU type (ru.vendor: benetel, comba,
+  # eridan, liteon, vvdn or mti; the DU's table) to every key that is not set in ofh.ruOfh. The chart then renders
+  # the vendor in the cell and none of ofh.genericTiming. false (default): the generic set below, as before.
+  vendorProfile: false
+  # -- The generic timing windows and compression every OFH DU got before the per-vendor profiles. Rendered unless
+  # vendorProfile is true. Keys set in ofh.ruOfh win.
+  genericTiming:
     t1a_max_cp_dl: 336
     t1a_min_cp_dl: 285
     t1a_max_cp_ul: 336
@@ -192,13 +196,16 @@ ofh:
     t1a_min_up: 80
     ta4_max: 500
     ta4_min: 50
-    is_prach_cp_enabled: true
     compr_method_ul: bfp
     compr_bitwidth_ul: 9
     compr_method_dl: bfp
     compr_bitwidth_dl: 9
     compr_method_prach: bfp
     compr_bitwidth_prach: 9
+  # -- Raw ru_ofh keys merged into ru_ofh. A timing or compression key set here wins over both the generic set and the vendor profile.
+  ruOfh:
+    ru_bandwidth_MHz: 100
+    is_prach_cp_enabled: true
     enable_ul_static_compr_hdr: true
     enable_dl_static_compr_hdr: true
     iq_scaling: 1.0

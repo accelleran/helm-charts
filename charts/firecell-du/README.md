@@ -16,6 +16,8 @@ Install one release per DU; each attaches over F1 to the CU-CP of a [`firecell-c
 | `"8"` / `b210` | Ettus B210 over USB 3 through UHD | dynamic `odu` (split 8, `ru_sdr`) | `ru.sdr.b210.usb` mounts `/dev/bus/usb`; 20 and 40 MHz |
 | `"8"` / `zmq` | no hardware | dynamic `odu` (split 8, `ru_sdr`) | ZMQ ports in `ru.sdr.zmq.args` |
 
+**Timing and compression per O-RU type.** The DU holds the Open Fronthaul timing windows and IQ compression of benetel, comba, eridan, liteon, vvdn and mti (a generic set for any other type). With `ofh.vendorProfile: true` the chart names `ru.vendor` in the cell and stops rendering the generic set, so the DU applies the vendor's profile to every key not set in `ofh.ruOfh`; a key set there wins. The default (`false`) keeps the generic set every OFH DU got before, so upgrading the chart does not change a running DU. liteon, vvdn and mti have a timing profile only: no M-plane profile, so `mplane.enabled` must stay false for them.
+
 Everything under `ru` and `txPower` is the **boot default**: a value the NMS sets over O1 (ru-type, radio-unit/sdr, tx-power) is persisted by the DU and overrides it at the next start. A radio the NMS selects that needs another attachment than the one this DU was installed with is refused and raised as the alarm `ru-attachment-mismatch`.
 
 ### 1.1 Components
@@ -152,16 +154,18 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | ofh.dlPorts[2] | int | `2` |  |
 | ofh.dlPorts[3] | int | `3` |  |
 | ofh.duMac | string | `""` |  |
+| ofh.genericTiming | object | `{"compr_bitwidth_dl":9,"compr_bitwidth_prach":9,"compr_bitwidth_ul":9,"compr_method_dl":"bfp","compr_method_prach":"bfp","compr_method_ul":"bfp","t1a_max_cp_dl":336,"t1a_max_cp_ul":336,"t1a_max_up":300,"t1a_min_cp_dl":285,"t1a_min_cp_ul":285,"t1a_min_up":80,"ta4_max":500,"ta4_min":50}` | The generic timing windows and compression every OFH DU got before the per-vendor profiles. Rendered unless vendorProfile is true. Keys set in ofh.ruOfh win. |
 | ofh.interface | string | `""` | Host netdev for mode socket (e.g. veth-du1). It keeps its name inside the pod and goes back to the host when the pod stops. Set its MTU and offloads on the host. Required with mode socket. |
 | ofh.mode | string | `"dpdk"` | How the DU sends fronthaul: dpdk (SR-IOV VF on vfio-pci, hugepages) or socket (kernel raw socket on a host netdev that Multus host-device moves into the pod, e.g. a veth toward an emulated RU on the same node). |
 | ofh.prachPorts[0] | int | `4` |  |
 | ofh.prachPorts[1] | int | `5` |  |
 | ofh.promiscuous | bool | `false` |  |
 | ofh.ruMac | string | `""` |  |
-| ofh.ruOfh | object | `{"compr_bitwidth_dl":9,"compr_bitwidth_prach":9,"compr_bitwidth_ul":9,"compr_method_dl":"bfp","compr_method_prach":"bfp","compr_method_ul":"bfp","enable_dl_static_compr_hdr":true,"enable_ul_static_compr_hdr":true,"iq_scaling":1,"is_prach_cp_enabled":true,"ru_bandwidth_MHz":100,"t1a_max_cp_dl":336,"t1a_max_cp_ul":336,"t1a_max_up":300,"t1a_min_cp_dl":285,"t1a_min_cp_ul":285,"t1a_min_up":80,"ta4_max":500,"ta4_min":50}` | Raw ru_ofh keys (timing windows, compression) merged into ru_ofh. |
+| ofh.ruOfh | object | `{"enable_dl_static_compr_hdr":true,"enable_ul_static_compr_hdr":true,"iq_scaling":1,"is_prach_cp_enabled":true,"ru_bandwidth_MHz":100}` | Raw ru_ofh keys merged into ru_ofh. A timing or compression key set here wins over both the generic set and the vendor profile. |
 | ofh.ruType | string | `""` | Deprecated: use ru.vendor. When set (benetel | comba | eridan) it wins over ru.vendor for the M-plane profile. |
 | ofh.ulPorts[0] | int | `0` |  |
 | ofh.ulPorts[1] | int | `1` |  |
+| ofh.vendorProfile | bool | `false` | true: the DU applies the Open Fronthaul timing windows and IQ compression of the O-RU type (ru.vendor: benetel, comba, eridan, liteon, vvdn or mti; the DU's table) to every key that is not set in ofh.ruOfh. The chart then renders the vendor in the cell and none of ofh.genericTiming. false (default): the generic set below, as before. |
 | ofh.vfPciAddr | string | `""` | PCI address of the SR-IOV VF bound to vfio-pci. Required with mode dpdk. |
 | ofh.vlanCp | int | `0` | C-plane VLAN tag. 0 sends untagged. |
 | ofh.vlanUp | int | `0` | U-plane VLAN tag. 0 sends untagged. |
@@ -200,7 +204,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | ru.sdr.zmq.srateMHz | float | `23.04` | Sample rate in MHz. |
 | ru.sdr.zmq.txGain | int | `50` |  |
 | ru.split | string | `"7.2"` | Pod shape. "7.2": O-RAN 7.2 O-RU over the `ofh` block (production: DPDK VF; lab: kernel socket to the Amarisoft emulator). "8": split 8 radio through ru_sdr (AW2S Swallow RRH, USB B210 or ZMQ). |
-| ru.vendor | string | `"benetel"` | Radio of the cell, checked against `split`. 7.2: benetel, comba or eridan (the M-plane profile). 8: aw2s (Swallow card, host network namespace), b210 (USB 3 through UHD) or zmq (no hardware). |
+| ru.vendor | string | `"benetel"` | Radio of the cell, checked against `split`. 7.2: benetel, comba or eridan (M-plane profile and timing profile), liteon, vvdn or mti (timing profile only). 8: aw2s (Swallow card, host network namespace), b210 (USB 3 through UHD) or zmq (no hardware). |
 | terminationGracePeriodSeconds | int | `150` | Seconds Kubernetes waits after SIGTERM before SIGKILL. An M-plane DU switches the O-RU carriers off at stop and needs up to the carrier ready timeout + 10 s for that (Benetel and Eridan default 90 s -> 100 s, Comba 30 s -> 40 s); 150 adds margin. A DU that is killed first leaves the O-RU radiating. With CBRS the stop takes longer: max(gate_close_timeout_ms, carrier ready timeout + 5 s) + 25 s + 1 s per cell, about 120 s + 1 s per cell with the Eridan default; raise this then. The chart checks only the M-plane bound, without CBRS. |
 | tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |
 | txPower.dbm | string | `nil` | Boot default of the NMS leaf tx-power/tx-power-dbm, per antenna port, in dBm. Only with ru.sdr.aw2s.generate (the DU writes it into the Swallow file and refuses a value above the RRH model's maximum). Unset: the DU's default. |

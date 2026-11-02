@@ -17,6 +17,8 @@ Install one release per DU; each attaches over F1 to the CU-CP of a [`firecell-c
 | `"8"` / `b210` | Ettus B210 over USB 3 through UHD | dynamic `odu` (split 8, `ru_sdr`) | `ru.sdr.b210.usb` mounts `/dev/bus/usb`; 20 and 40 MHz |
 | `"8"` / `zmq` | no hardware | dynamic `odu` (split 8, `ru_sdr`) | ZMQ ports in `ru.sdr.zmq.args` |
 
+**Timing and compression per O-RU type.** The DU holds the Open Fronthaul timing windows and IQ compression of benetel, comba, eridan, liteon, vvdn and mti (a generic set for any other type). With `ofh.vendorProfile: true` the chart names `ru.vendor` in the cell and stops rendering the generic set, so the DU applies the vendor's profile to every key not set in `ofh.ruOfh`; a key set there wins. The default (`false`) keeps the generic set every OFH DU got before, so upgrading the chart does not change a running DU. liteon, vvdn and mti have a timing profile only: no M-plane profile, so `mplane.enabled` must stay false for them.
+
 Everything under `ru` and `txPower` is the **boot default**: a value the NMS sets over O1 (ru-type, radio-unit/sdr, tx-power) is persisted by the DU and overrides it at the next start. A radio the NMS selects that needs another attachment than the one this DU was installed with is refused and raised as the alarm `ru-attachment-mismatch`.
 
 ### 1.1 Components
