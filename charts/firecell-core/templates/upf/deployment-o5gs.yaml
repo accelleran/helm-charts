@@ -19,19 +19,8 @@
     "sessions"        ""
 ) }}
 {{- end }}
-{{- $multiHostNet := and .Values.upf.hostNetwork (gt (len $instances) 1) }}
-{{- $pcapDefaults := .Values.upf.packetCapture | default dict }}
 {{- range $idx, $inst := $instances }}
-{{- $capturePort := add 8095 $idx }}
 {{- $n3if := coalesce $inst.n3Interface $.Values.upf.n3Interface "eth0" }}
-{{- $n6if := coalesce $inst.n6Interface $.Values.upf.n6Interface $n3if }}
-{{- $captureSidecar := $pcapDefaults.enabled | default true }}
-{{- if and (hasKey $inst "packetCapture") (hasKey $inst.packetCapture "enabled") }}
-{{- $captureSidecar = $inst.packetCapture.enabled }}
-{{- end }}
-{{- if and $multiHostNet ($pcapDefaults.disableOnMultiInstance | default true) }}
-{{- $captureSidecar = false }}
-{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -61,7 +50,6 @@ spec:
         app: o5gs-upf{{ ($inst.suffix | default "" | toString) }}
         tier: core-network
         firecell.io/role: core-nf
-        firecell.io/packet-capture: upf
         role: active
       annotations:
         checksum/upf-config: {{ include (print $.Template.BasePath "/upf/configmap.yaml") $ | sha256sum }}
@@ -250,71 +238,6 @@ spec:
             periodSeconds: 20
             failureThreshold: 10
             timeoutSeconds: 5
-        {{- if $captureSidecar }}
-        - name: fc-packet-capture
-          image: {{ ($.Values.upf.packetCapture | default dict).imageOverride | default (include "firecell-5gc.image" (dict "registry" $.Values.global.imageRegistry "image" "fc-packet-capture" "tag" (($.Values.upf.packetCapture | default dict).imageTag | default $.Values.global.pkgVersion))) }}
-          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
-          workingDir: /agent
-          env:
-            - name: FC_REST_PORT
-              value: {{ $capturePort | quote }}
-            - name: FC_CAPTURE_N3_INTERFACE
-              value: {{ $n3if | quote }}
-            {{- if ne $n6if $n3if }}
-            - name: FC_CAPTURE_N6_INTERFACE
-              value: {{ $n6if | quote }}
-            {{- end }}
-          command:
-            - /agent/fc_packet_capture
-          {{- if not $multiHostNet }}
-          ports:
-            - containerPort: {{ $capturePort }}
-              protocol: TCP
-          {{- end }}
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-                - NET_RAW
-          livenessProbe:
-            exec:
-              command:
-                - "true"
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-          readinessProbe:
-            exec:
-              command:
-                - "true"
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            failureThreshold: 3
-            timeoutSeconds: 3
-          resources:
-            requests:
-              memory: 512Mi
-              cpu: 500m
-            limits:
-              memory: 1Gi
-              cpu: 2000m
-        {{- end }}
-        {{- if $.Values.upf.dnnDataplane.enabled | default false }}
-        {{- /*
-          Open5GS rebuilds ogstun and its NAT from its own config on every
-          start, so this helper has nothing to add here and reports
-          NOT_APPLICABLE. It is still deployed so support reads the same answer
-          shape from every UPF: no helper at all is indistinguishable from a
-          helper that is broken. No config mount — the mode is not inferred.
-        */}}
-        {{- include "firecell-5gc.dnnDataplaneSidecar" (dict
-            "Values" $.Values
-            "port" (add ($.Values.upf.dnnDataplane.basePort | default 8196 | int) $idx)
-            "mode" "o5gs"
-            "omitContainerPort" $multiHostNet
-        ) | nindent 8 }}
-        {{- end }}
       volumes:
         - name: upf-config-template
           configMap:

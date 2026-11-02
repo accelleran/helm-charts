@@ -677,48 +677,6 @@ upf:
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
   oaiEnableEthPdu: false
-  # fc-packet-capture sidecar (REST on FC_REST_PORT). See docs/operations/upf-packet-capture.md.
-  packetCapture:
-    enabled: true
-    # Multiple hostNetwork UPF pods: one REST port per pod, cn-agent has a single n3_interface_name.
-    disableOnMultiInstance: true
-    # fc-packet-capture is a Firecell agent-family image on the NMS release line (like cnAgent/
-    # fcAcsAgent), NOT the OAI 5GC core line. It has no global.pkgVersion (e.g. v5.1.0) build, so
-    # pin it to the NMS tag. Empty => falls back to global.pkgVersion.
-    imageTag: "5.0.1.0"
-    imageOverride: ""
-  # fc-dnn-dataplane sidecar. The NMS calls it once, after an operator
-  # Start/Restart, to add the routes and SNAT rules a newly added DNN needs.
-  # It has no loop of its own and never deletes a rule it did not expect.
-  #
-  # Off by default: it is only useful with the CM DNN feature enabled on the
-  # NMS side (NMS_DNN_DATAPLANE_ENABLED), and it is only load-bearing for the
-  # userspace datapath. With enableBpfDatapath: true it reports NOT_APPLICABLE
-  # on every call, because XDP programs the pool in eBPF and there is no
-  # per-DNN Linux route to check.
-  #
-  # See cm-poc/docs/dnn-dataplane.md.
-  dnnDataplane:
-    enabled: false
-    image: fc-dnn-dataplane
-    # Firecell agent-family image on the NMS release line, like packetCapture:
-    # it has no global.pkgVersion build. Empty => falls back to pkgVersion.
-    imageTag: "5.0.1.0"
-    # Full image ref (skips registry + :vTAG), for a locally imported lab build
-    # that helm must still name, or the next upgrade silently reverts it.
-    # e.g. imageOverride: "fc-dnn-dataplane:route-fix"
-    imageOverride: ""
-    # One port per pod: N hostNetwork UPFs on one host would otherwise collide.
-    # Offset from 8095 (packetCapture) far enough that the two ranges cannot
-    # overlap however many instances are declared.
-    basePort: 8196
-    resources:
-      requests:
-        memory: 64Mi
-        cpu: 50m
-      limits:
-        memory: 256Mi
-        cpu: 500m
   # Optional overrides for hostnet ConfigMap (see docs/developer/oai-upf-ebpf-hostnet.md)
   oaiHostNet:
     stubInterface: ""            # Else sbiInterface, else eno8303
@@ -971,70 +929,6 @@ extDn:
         memory: 128Mi
         cpu: 200m
 
-# --- CN Agent (Firecell Core Network Agent) ---
-# Kubernetes health uses cn-agent CoreServiceK8sHandler label selector app=<nf>,role=active.
-# All core NF pod templates set role: active so /cn_agent_health can pass without manual kubectl label.
-cnAgent:
-  enabled: true
-  image: cn-agent
-  # Full image reference, winning over the registry + image + tag composition.
-  # Every NF already has this; the agents did not, so an agent published
-  # anywhere but imageRegistry could not be named at all.
-  imageOverride: ""
-  # cn-agent/fc-acs-agent ship on the NMS release line (v5.0.1.0), independent of
-  # the 5GC global.pkgVersion. Unset imageTag falls back to global.pkgVersion.
-  imageTag: "5.0.1.0"
-  # DB migration target for cn_version env (must match cn-agent migration registry).
-  dbVersion: "5.0.1"
-  priorityClassName: firecell-prio-normal
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 500m
-    limits:
-      memory: 2Gi
-      cpu: 2000m
-  # Agent-specific configuration
-  config:
-    logLevel: debug
-    qosEnabled: true
-    deployment: kubernetes    # docker-compose | kubernetes
-    n3InterfaceName: eno8303  # later make it bond0
-
-    # Platform-agnostic health check settings
-    healthCheck:
-      sbiCheck: true          # set false for infra-only health (no NF REST API probes)
-      sbiProbeTimeoutS: 3     # per-NF SBI HTTP probe timeout in seconds
-    # Packet capture client settings
-    packetCapture:
-      connectTimeoutS: 1.0
-      readTimeoutS: 2.0
-      retryCount: 1
-      retryBackoffS: 0.2
-      k8sServiceName: upf-packet-capture
-      servicePort: 8095
-
-    # Required when deployment: kubernetes
-    kubernetes:
-      namespace: ""           # leave empty to inherit global.namespace
-      coreNfLabelSelector: "firecell.io/role=core-nf"
-      podSelection: any       # any | active  (active requires role=active label on pods)
-      execContainer: null     # null = K8s default container (single-container pods, k3s)
-      # minHealthy: 1         # minimum ready pods per component
-      # kubeconfigPath: ""    # leave unset when running inside the cluster
-      components: {}          # per-component overrides, e.g:
-                              #   oai-upf:
-                              #     minHealthy: 2
-                              #   oai-ausf:
-                              #     podSelection: any
-  backendIp: "nms-api.firecell-nms.svc.cluster.local"
-  # Headless service used for packet-capture endpoint discovery across all UPF pods.
-  packetCaptureAddress: "upf-packet-capture:8095"
-  apiVictoriaMetricsUrl: "http://nms-api-victoria-metrics-dev.firecell-nms.svc.cluster.local:8430"
-  redisCacheHost: "redis-cache.firecell-nms.svc.cluster.local"
-  redisCachePort: 6799
-  redisCacheDb: 0
-
 # --- FC ACS Agent (TR-069 ACS endpoint) ---
 fcAcsAgent:
   enabled: true
@@ -1043,7 +937,7 @@ fcAcsAgent:
   # Every NF already has this; the agents did not, so an agent published
   # anywhere but imageRegistry could not be named at all.
   imageOverride: ""
-  imageTag: "5.0.1.0"   # NMS release line; see cnAgent.imageTag
+  imageTag: "5.0.1.0"   # NMS release line, independent of global.pkgVersion
   # Kubernetes Service type for fc-acs-agent (TR-069 must be reachable off-cluster).
   # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP
   # annotation on a ClusterIP Service is dead config — and network.acsExternalIP
@@ -1218,7 +1112,7 @@ coreConfig:
 # --- Network Policies ---
 networkPolicies:
   enabled: true
-  # Whether to allow ingress from nms.namespace (defaults to true when cnAgent/fcAcsAgent enabled)
+  # Whether to allow ingress from nms.namespace (defaults to true when fcAcsAgent enabled)
   allowNmsNamespace: true
   allowedNamespaces: []
   # CIDRs allowed to reach core NFs from outside the cluster (RAN, gNB, test hosts)

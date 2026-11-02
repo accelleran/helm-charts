@@ -99,7 +99,7 @@ spec:
             - name: MYSQL_DB
               value: {{ .Values.mysql.database | default "oai_db" | quote }}
             - name: DB_VERSION_SEED
-              value: {{ .Values.cnAgent.dbVersion | default "5.0.1" | quote }}
+              value: "5.0.1"
           volumeMounts:
             - name: init-scripts
               mountPath: /docker-entrypoint-initdb.d

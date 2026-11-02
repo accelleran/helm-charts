@@ -60,17 +60,6 @@ spec:
       targetPort: {{ $.Values.upf.fcaps.mnsPort }}
       protocol: TCP
     {{- end }}
-    {{- if $.Values.upf.dnnDataplane.enabled | default false }}
-    {{- $dnnDpPort := add ($.Values.upf.dnnDataplane.basePort | default 8196 | int) $i }}
-    # This is the address that belongs in nf_endpoint kind DNN_DP for this NE.
-    # Per instance, not shared: the helper can only reach the namespace of the
-    # pod it runs in, so a Service spanning several UPFs would answer for the
-    # wrong one.
-    - name: dnn-dataplane
-      port: {{ $dnnDpPort }}
-      targetPort: {{ $dnnDpPort }}
-      protocol: TCP
-    {{- end }}
   selector:
     app: {{ $appName }}
 {{- if and (not $.Values.upf.hostNetwork) ($.Values.upf.multus.enabled | default false) }}
@@ -98,32 +87,4 @@ spec:
     app: {{ $appName }}
 {{- end }}
 {{- end }}
-{{- end }}
-{{- $pcapSvcEnabled := and .Values.upf.enabled (.Values.upf.packetCapture.enabled | default true) }}
-{{- $instList := .Values.upf.instances | default list }}
-{{- if not $instList }}
-{{- $instList = list (dict "suffix" "") }}
-{{- end }}
-{{- $multiUpf := gt (len $instList) 1 }}
-{{- if and $pcapSvcEnabled (or (not $multiUpf) (not (.Values.upf.packetCapture.disableOnMultiInstance | default true))) }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: upf-packet-capture
-  namespace: {{ .Values.global.namespace }}
-  labels:
-    {{- include "firecell-5gc.labels" . | nindent 4 }}
-    app: upf-packet-capture
-    component: packet-capture
-    tier: core-network
-spec:
-  clusterIP: None
-  ports:
-    - name: packet-capture
-      port: 8095
-      targetPort: 8095
-      protocol: TCP
-  selector:
-    firecell.io/packet-capture: upf
 {{- end }}

@@ -23,7 +23,6 @@ The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network sta
 - **Persistence & Storage:**
   - **MySQL Database** (`mysql`): StatefulSet storing 3GPP subscriber credentials, PCF policies, and provisioning records. Initialized automatically via SQL scripts in `sql/`.
 - **Support & Agents:**
-  - **CN-Agent** (`cn-agent`): Core network local agent for metric collection and status reporting.
   - **FC-ACS-Agent** (`fc-acs-agent`): Auto-Configuration Server agent for TR-069 management.
   - **UDSF** (`udsf`): Unstructured Data Storage Function with Redis backend.
   - **IMS**: Kamailio P/I/S-CSCF + Cx-on-UDR by default (`ims.engine=kamailio`, `ims.cxGateway.cxSot=udr`). Asterisk-only opt-in: `examples/values-ims-asterisk.yaml`.
