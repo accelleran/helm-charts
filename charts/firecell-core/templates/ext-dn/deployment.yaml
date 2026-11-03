@@ -14,7 +14,12 @@ spec:
     matchLabels:
       app: oai-ext-dn
   strategy:
+    {{- if (.Values.extDn.n6 | default dict).ip }}
+    # Static N6 address: the old pod must release it before the new one starts.
+    type: Recreate
+    {{- else }}
     type: RollingUpdate
+    {{- end }}
   template:
     metadata:
       labels:
@@ -22,6 +27,10 @@ spec:
         tier: core-network
         firecell.io/role: core-nf
         role: active
+      {{- if (.Values.extDn.n6 | default dict).ip }}
+      annotations:
+        k8s.v1.cni.cncf.io/networks: '[{"name":"{{ .Values.extDn.n6.nadName | default "ext-dn-n6" }}","namespace":"{{ .Values.global.namespace }}","interface":"net1"}]'
+      {{- end }}
     spec:
       priorityClassName: {{ .Values.extDn.priorityClassName }}
       containers:
@@ -79,6 +88,14 @@ spec:
           env:
             - name: EXTDN_PING_BIN
               value: /usr/bin/ping
+            {{- if (.Values.extDn.n6 | default dict).ip }}
+            # The probe routes each UE address via the UPF's N6 address on
+            # net1 before it pings, so a DNN added later needs no route here.
+            - name: EXTDN_N6_INTERFACE
+              value: net1
+            - name: EXTDN_N6_GATEWAY
+              value: {{ ((.Values.upf.multus | default dict).n6 | default dict).ip | quote }}
+            {{- end }}
           securityContext:
             capabilities:
               add:

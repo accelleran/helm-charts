@@ -15,12 +15,12 @@ spec:
     # Allow traffic from within the firecell-core namespace (including Helm verification hooks)
     - from:
         - podSelector: {}
-    {{- $allowNms := or .Values.cnAgent.enabled .Values.fcAcsAgent.enabled }}
+    {{- $allowNms := .Values.fcAcsAgent.enabled }}
     {{- if hasKey (.Values.networkPolicies | default dict) "allowNmsNamespace" }}
     {{- $allowNms = .Values.networkPolicies.allowNmsNamespace }}
     {{- end }}
     {{- if $allowNms }}
-    # Allow traffic from firecell-nms namespace (CN agent / NMS -> core)
+    # Allow traffic from firecell-nms namespace (NMS -> core)
     - from:
         - namespaceSelector:
             matchLabels:

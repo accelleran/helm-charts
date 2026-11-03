@@ -22,7 +22,6 @@ The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network sta
 - **Persistence & Storage:**
   - **MySQL Database** (`mysql`): StatefulSet storing 3GPP subscriber credentials, PCF policies, and provisioning records. Initialized automatically via SQL scripts in `sql/`.
 - **Support & Agents:**
-  - **CN-Agent** (`cn-agent`): Core network local agent for metric collection and status reporting.
   - **FC-ACS-Agent** (`fc-acs-agent`): Auto-Configuration Server agent for TR-069 management.
   - **UDSF** (`udsf`): Unstructured Data Storage Function with Redis backend.
   - **IMS**: Kamailio P/I/S-CSCF + Cx-on-UDR by default (`ims.engine=kamailio`, `ims.cxGateway.cxSot=udr`). Asterisk-only opt-in: `examples/values-ims-asterisk.yaml`.
@@ -180,39 +179,6 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ausf.resources.limits.memory | string | `"2Gi"` |  |
 | ausf.resources.requests.cpu | string | `"500m"` |  |
 | ausf.resources.requests.memory | string | `"512Mi"` |  |
-| cnAgent.apiVictoriaMetricsUrl | string | `"http://nms-api-victoria-metrics-dev.firecell-nms.svc.cluster.local:8430"` |  |
-| cnAgent.backendIp | string | `"nms-api.firecell-nms.svc.cluster.local"` |  |
-| cnAgent.config.deployment | string | `"kubernetes"` |  |
-| cnAgent.config.healthCheck.sbiCheck | bool | `true` |  |
-| cnAgent.config.healthCheck.sbiProbeTimeoutS | int | `3` |  |
-| cnAgent.config.kubernetes.components | object | `{}` |  |
-| cnAgent.config.kubernetes.coreNfLabelSelector | string | `"firecell.io/role=core-nf"` |  |
-| cnAgent.config.kubernetes.execContainer | string | `nil` |  |
-| cnAgent.config.kubernetes.namespace | string | `""` |  |
-| cnAgent.config.kubernetes.podSelection | string | `"any"` |  |
-| cnAgent.config.logLevel | string | `"debug"` |  |
-| cnAgent.config.n3InterfaceName | string | `"eno8303"` |  |
-| cnAgent.config.packetCapture.connectTimeoutS | float | `1` |  |
-| cnAgent.config.packetCapture.k8sServiceName | string | `"upf-packet-capture"` |  |
-| cnAgent.config.packetCapture.readTimeoutS | float | `2` |  |
-| cnAgent.config.packetCapture.retryBackoffS | float | `0.2` |  |
-| cnAgent.config.packetCapture.retryCount | int | `1` |  |
-| cnAgent.config.packetCapture.servicePort | int | `8095` |  |
-| cnAgent.config.qosEnabled | bool | `true` |  |
-| cnAgent.dbVersion | string | `"5.0.1"` |  |
-| cnAgent.enabled | bool | `true` |  |
-| cnAgent.image | string | `"cn-agent"` |  |
-| cnAgent.imageOverride | string | `""` |  |
-| cnAgent.imageTag | string | `"5.0.1.0"` |  |
-| cnAgent.packetCaptureAddress | string | `"upf-packet-capture:8095"` |  |
-| cnAgent.priorityClassName | string | `"firecell-prio-normal"` |  |
-| cnAgent.redisCacheDb | int | `0` |  |
-| cnAgent.redisCacheHost | string | `"redis-cache.firecell-nms.svc.cluster.local"` |  |
-| cnAgent.redisCachePort | int | `6799` |  |
-| cnAgent.resources.limits.cpu | string | `"2000m"` |  |
-| cnAgent.resources.limits.memory | string | `"2Gi"` |  |
-| cnAgent.resources.requests.cpu | string | `"500m"` |  |
-| cnAgent.resources.requests.memory | string | `"1Gi"` |  |
 | coreConfig.amf.amfPointer | string | `"01"` |  |
 | coreConfig.amf.amfRegionId | string | `"01"` |  |
 | coreConfig.amf.amfSetId | string | `"001"` |  |
@@ -278,6 +244,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | extDn.image | string | `"trf-gen-cn5g"` |  |
 | extDn.imageOverride | string | `""` |  |
 | extDn.imageTag | string | `"latest"` |  |
+| extDn.n6.ip | string | `""` |  |
+| extDn.n6.nadName | string | `"ext-dn-n6"` |  |
 | extDn.priorityClassName | string | `"firecell-prio-support"` |  |
 | extDn.resources.limits.cpu | string | `"200m"` |  |
 | extDn.resources.limits.memory | string | `"128Mi"` |  |
@@ -589,15 +557,6 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.datapathInit.n6GatewayArpIntervalSec | int | `5` |  |
 | upf.datapathInit.n6GatewayArpRetries | int | `60` |  |
 | upf.disableNat | string | `"FALSE"` |  |
-| upf.dnnDataplane.basePort | int | `8196` |  |
-| upf.dnnDataplane.enabled | bool | `false` |  |
-| upf.dnnDataplane.image | string | `"fc-dnn-dataplane"` |  |
-| upf.dnnDataplane.imageOverride | string | `""` |  |
-| upf.dnnDataplane.imageTag | string | `"5.0.1.0"` |  |
-| upf.dnnDataplane.resources.limits.cpu | string | `"500m"` |  |
-| upf.dnnDataplane.resources.limits.memory | string | `"256Mi"` |  |
-| upf.dnnDataplane.resources.requests.cpu | string | `"50m"` |  |
-| upf.dnnDataplane.resources.requests.memory | string | `"64Mi"` |  |
 | upf.dnsSearchDomains[0] | string | `"firecell-core.svc.cluster.local"` |  |
 | upf.dnsSearchDomains[1] | string | `"svc.cluster.local"` |  |
 | upf.dnsSearchDomains[2] | string | `"cluster.local"` |  |
@@ -637,10 +596,6 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.oaiImage | string | `"cn5g-upf"` |  |
 | upf.oaiImageOverride | string | `""` |  |
 | upf.oaiImageTag | string | `"20261023-150221-9ccff53abf4b"` |  |
-| upf.packetCapture.disableOnMultiInstance | bool | `true` |  |
-| upf.packetCapture.enabled | bool | `true` |  |
-| upf.packetCapture.imageOverride | string | `""` |  |
-| upf.packetCapture.imageTag | string | `"5.0.1.0"` |  |
 | upf.performance.conntrackMax | int | `524288` |  |
 | upf.performance.conntrackUdpStreamTimeout | int | `3600` |  |
 | upf.performance.conntrackUdpTimeout | int | `120` |  |
