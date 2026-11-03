@@ -148,6 +148,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | preflight.image | string | `""` | Image for the check (needs bash). Empty uses the DU image. |
 | preflight.timeoutSeconds | int | `120` |  |
 | resources | object | `{}` |  |
+| terminationGracePeriodSeconds | int | `150` | Seconds Kubernetes waits after SIGTERM before SIGKILL. An M-plane DU switches the O-RU carriers off at stop and needs up to the carrier ready timeout + 10 s for that (Benetel and Eridan default 90 s -> 100 s, Comba 30 s -> 40 s); 150 adds margin. A DU that is killed first leaves the O-RU radiating. With CBRS the stop takes longer: max(gate_close_timeout_ms, carrier ready timeout + 5 s) + 25 s + 1 s per cell, about 120 s + 1 s per cell with the Eridan default; raise this then. The chart checks only the M-plane bound, without CBRS. |
 | tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |
 
 ## 5. Maintenance & Troubleshooting
