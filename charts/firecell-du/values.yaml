@@ -58,6 +58,13 @@ tolerations: []
 hugepages2Mi: 2Gi
 # -- Memory request.
 memory: 1Gi
+# -- Seconds Kubernetes waits after SIGTERM before SIGKILL. An M-plane DU switches the O-RU
+# carriers off at stop and needs up to the carrier ready timeout + 10 s for that (Benetel and
+# Eridan default 90 s -> 100 s, Comba 30 s -> 40 s); 150 adds margin. A DU that is killed first
+# leaves the O-RU radiating. With CBRS the stop takes
+# longer: max(gate_close_timeout_ms, carrier ready timeout + 5 s) + 25 s + 1 s per cell, about 120 s + 1 s
+# per cell with the Eridan default; raise this then. The chart checks only the M-plane bound, without CBRS.
+terminationGracePeriodSeconds: 150
 cpus:
   # -- OFH timing thread CPU. Required.
   timing: ""
