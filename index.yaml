@@ -36248,6 +36248,26 @@ entries:
     version: 0.2.0-rc.1
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-11-03T11:27:44.93591036Z"
+    description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF,
+      MySQL, IMS Kamailio+Cx (Asterisk optional))
+    digest: 8ee6c601ef59b849b8a63703fa3b403b190fc58bf81a7409f31080bb6db1ecc0
+    keywords:
+    - 5g
+    - core-network
+    - oai
+    - open5gs
+    - firecell
+    maintainers:
+    - email: support@firecell.io
+      name: Firecell
+    name: firecell-core
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-core-0.2.0-rc.1/firecell-core-0.2.0-rc.1.tgz
+    version: 0.2.0-rc.1
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-10-23T15:14:12.819270015Z"
     description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF,
       MySQL)
@@ -39572,4 +39592,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2026-10-30T12:56:32.340675145Z"
+generated: "2026-11-03T11:27:44.937588278Z"
