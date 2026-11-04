@@ -1,0 +1,6 @@
+name: cert-manager
+repository: oci://quay.io/jetstack/charts
+version: v1.20.3
+notes:
+  github: cert-manager/cert-manager
+  tag: "{{ version }}"
