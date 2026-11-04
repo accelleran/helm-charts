@@ -59,6 +59,9 @@ Create a directory under `charts` that contains only `External.yaml`:
 name: example-chart
 repository: oci://ghcr.io/example/charts
 version: 0.1.0
+notes:
+  github: example/example
+  tag: "v{{ version }}"
 ```
 
 The version must be exact (ranges such as `0.1` are not supported).
@@ -71,6 +74,21 @@ upstream name and version.
 
 `alias` is not supported: renaming a chart requires rewriting `Chart.yaml`
 and would produce a new tarball.
+
+### Release notes
+
+`notes:` copies the body of a GitHub Release onto the republished chart.
+That is the only remote source. `notes.tag` is expanded against the
+pulled chart's `Chart.yaml`:
+
+| Placeholder | Value |
+| --- | --- |
+| `{{ name }}` | chart name |
+| `{{ version }}` | chart version |
+| `{{ appVersion }}` | chart `appVersion` |
+
+If `notes:` is omitted, the GitHub release body stays as the upstream
+`description` that chart-releaser already uses.
 
 ## New charts
 

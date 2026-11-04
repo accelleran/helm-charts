@@ -264,6 +264,11 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Apply external chart release notes
+        run: ./bin/apply-external-release-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate repo html index
         if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
         run: |-
