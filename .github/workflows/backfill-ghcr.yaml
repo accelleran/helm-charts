@@ -30,8 +30,20 @@ jobs:
       - name: Login to GHCR
         run: helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-      - name: Push latest charts
+      - name: Install oras
+        uses: oras-project/setup-oras@v1.2.4
+
+      - name: Login to GHCR (oras)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
+
+      - name: Push latest first-party charts
         env:
           CHARTS: ${{ inputs.charts }}
           REGISTRY: oci://ghcr.io/${{ github.repository_owner }}/charts
         run: ./bin/push-charts-to-ghcr
+
+      - name: Copy external charts
+        env:
+          CHARTS: ${{ inputs.charts }}
+          DEST_REGISTRY: ghcr.io/${{ github.repository_owner }}/charts
+        run: ./bin/copy-external-charts-to-oci

@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+# Copy each External.yaml chart's upstream OCI artifact to our GHCR, preserving
+# the upstream manifest digest. Does not create GitHub releases or rewrite
+# the .tgz.
+#
+# CHARTS         comma-separated names; empty means every External.yaml
+# DEST_REGISTRY  host/path without oci://, default ghcr.io/accelleran/charts
+#
+# Requires oras, yq (mikefarah), and `oras login` for the destination.
+
+set -eu -o pipefail
+shopt -s nullglob globstar
+
+GIT_ROOT="$(realpath "$(dirname "$0")/..")"
+CHARTS_ROOT="${GIT_ROOT}/charts"
+DEST_REGISTRY="${DEST_REGISTRY:-ghcr.io/${GITHUB_REPOSITORY_OWNER:-accelleran}/charts}"
+DEST_REGISTRY="${DEST_REGISTRY#oci://}"
+CHARTS="${CHARTS:-}"
+
+function fatal() {
+    echo "${1}" 1>&2
+    exit 1
+}
+
+if ! command -v oras >/dev/null ; then
+    fatal "oras is required (https://oras.land)"
+fi
+
+if [[ ! "$(yq --version)" =~ .*mikefarah/yq.* ]]; then
+    fatal "Make sure to install mikefarah/yq"
+fi
+
+wanted=()
+if [[ -n "${CHARTS}" ]] ; then
+    IFS=',' read -r -a wanted <<< "${CHARTS}"
+    for i in "${!wanted[@]}" ; do
+        wanted[i]="${wanted[i]// /}"
+    done
+fi
+
+wanted_name() {
+    local name="$1" want
+    if [[ ${#wanted[@]} -eq 0 ]] ; then
+        return 0
+    fi
+    for want in "${wanted[@]}" ; do
+        if [[ "${name}" == "${want}" ]] ; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+digest_of() {
+    local desc
+    if desc=$(oras manifest fetch --descriptor -- "$1" 2>/dev/null) ; then
+        printf '%s' "${desc}" | yq -r '.digest // ""'
+    fi
+}
+
+failed=0
+
+for ext in "${CHARTS_ROOT}"/**/External.yaml ; do
+    name=$(yq -r '.name' "${ext}")
+    alias=$(yq -r '.alias // ""' "${ext}")
+    repository=$(yq -r '.repository' "${ext}")
+    version=$(yq -r '.version' "${ext}")
+
+    if ! wanted_name "${name}" ; then
+        continue
+    fi
+
+    if [[ -n "${alias}" ]] ; then
+        echo "alias is not supported for external charts (would require re-packaging): ${ext}" 1>&2
+        failed=1
+        continue
+    fi
+
+    if [[ "${repository}" != oci://* ]] ; then
+        echo "Only OCI repositories are supported for external charts: ${ext}" 1>&2
+        failed=1
+        continue
+    fi
+
+    tag="${version//+/_}"
+    src="${repository#oci://}/${name}:${tag}"
+    dst="${DEST_REGISTRY}/${name}:${tag}"
+
+    src_digest=$(digest_of "${src}")
+    if [[ -z "${src_digest}" ]] ; then
+        echo "Failed to read manifest ${src}"
+        failed=1
+        continue
+    fi
+
+    dst_digest=$(digest_of "${dst}")
+    if [[ "${src_digest}" == "${dst_digest}" ]] ; then
+        echo "Skipping ${name}:${tag}, ${dst} already has ${src_digest}"
+        continue
+    fi
+
+    echo "Copying ${src} (${src_digest}) -> ${dst}"
+    if ! oras copy -- "${src}" "${dst}" ; then
+        echo "Failed to copy ${src} to ${dst}"
+        failed=1
+        continue
+    fi
+done
+
+exit "${failed}"

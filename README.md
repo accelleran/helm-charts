@@ -68,9 +68,10 @@ The version must be exact (ranges such as `0.1` are not supported).
 Renovate bumps `version` when a newer chart is published upstream.
 
 On release, the original `.tgz` is pulled into `.cr-release-packages` and
-chart-releaser uploads it as a GitHub release, merges it into `index.yaml`,
-and pushes it to `oci://ghcr.io/accelleran/charts`. The chart keeps its
-upstream name and version.
+chart-releaser uploads it as a GitHub release and merges it into
+`index.yaml`. The upstream OCI artifact is copied to
+`oci://ghcr.io/accelleran/charts` so the GHCR digest matches upstream. The
+chart keeps its upstream name and version.
 
 `alias` is not supported: renaming a chart requires rewriting `Chart.yaml`
 and would produce a new tarball.

@@ -238,6 +238,12 @@ jobs:
       - name: Login to GHCR
         run: helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
+      - name: Install oras
+        uses: oras-project/setup-oras@v1.2.4
+
+      - name: Login to GHCR (oras)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
+
       - name: Generate release notes
         run: ./bin/generate-release-notes
 
@@ -260,9 +266,13 @@ jobs:
           config: etc/cr.yaml
           skip_packaging: true
           skip_existing: true
-          oci_registry_url: oci://ghcr.io/${{ github.repository_owner }}/charts
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Copy external charts to GHCR
+        run: ./bin/copy-external-charts-to-oci
+        env:
+          DEST_REGISTRY: ghcr.io/${{ github.repository_owner }}/charts
 
       - name: Apply external chart release notes
         run: ./bin/apply-external-release-notes
