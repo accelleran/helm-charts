@@ -50,24 +50,27 @@ This is for example handy during development on the `common` library chart.
 
 ## External charts
 
-It is possible to pull in an external chart.
+It is possible to republish an upstream OCI chart into this repository's Helm
+repo and GHCR without unpacking or re-packaging it.
 
-To do this, in the `charts` directory a new chart directory should be created.
-This directory should then contain the file `External.yaml`.
-A format similar to an entry in `dependencies` in a `Chart.yaml` file can be provided in there.
+Create a directory under `charts` that contains only `External.yaml`:
 
 ```yaml
 name: example-chart
-alias: example
-repository: oci://ghcr.io/accelleran
+repository: oci://ghcr.io/example/charts
 version: 0.1.0
 ```
 
-`alias` is an optional field here, in case we want to use a different name as the original chart.
+The version must be exact (ranges such as `0.1` are not supported).
+Renovate bumps `version` when a newer chart is published upstream.
 
-Also note that the version should be specific.
-So a version expressing a range like `0.1` is not supported.
-Renovate will bump the version automatically to always release the latest version of an external chart.
+On release, the original `.tgz` is pulled into `.cr-release-packages` and
+chart-releaser uploads it as a GitHub release, merges it into `index.yaml`,
+and pushes it to `oci://ghcr.io/accelleran/charts`. The chart keeps its
+upstream name and version.
+
+`alias` is not supported: renaming a chart requires rewriting `Chart.yaml`
+and would produce a new tarball.
 
 ## New charts
 
