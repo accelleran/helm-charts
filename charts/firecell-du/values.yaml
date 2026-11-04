@@ -93,7 +93,7 @@ ru:
   # -- Pod shape. "7.2": O-RAN 7.2 O-RU over the `ofh` block (production: DPDK VF; lab: kernel socket to the
   # Amarisoft emulator). "8": split 8 radio through ru_sdr (AW2S Swallow RRH, USB B210 or ZMQ).
   split: "7.2"
-  # -- Radio of the cell, checked against `split`. 7.2: benetel, comba or eridan (M-plane profile and timing profile), liteon, vvdn or mti (timing profile only). 8: aw2s
+  # -- Radio of the cell, checked against `split`. 7.2: benetel, comba or eridan (M-plane profile and timing profile), liteon, vvdn or mti (timing profile only), simulator (an O-RU simulator such as the Amarisoft one: no M-plane, no identity, the generic timing and compression; the DU is told its type). 8: aw2s
   # (Swallow card, host network namespace), b210 (USB 3 through UHD) or zmq (no hardware).
   vendor: benetel
   sdr:
