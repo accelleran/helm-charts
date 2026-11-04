@@ -210,6 +210,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -244,9 +245,11 @@ jobs:
         run: ./bin/generate-release-notes
 
       - name: Run chart releaser
-        uses: helm/chart-releaser-action@v1.7.0
+        uses: helm/chart-releaser-action@v1.9.0
         with:
           config: etc/cr.yaml
+          skip_existing: true
+          oci_registry_url: oci://ghcr.io/${{ github.repository_owner }}/charts
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
