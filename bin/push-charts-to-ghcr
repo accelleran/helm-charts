@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+# Pull chart tarballs from the GitHub Pages Helm repo and push them to GHCR.
+# Does not create GitHub releases or update index.yaml.
+#
+# CHARTS   comma-separated names; empty means the latest version of every chart
+# REGISTRY destination, default oci://ghcr.io/accelleran/charts
+#
+# Requires helm, jq, and an existing `helm registry login` for GHCR.
+
+set -eu -o pipefail
+shopt -s nullglob
+
+PAGES_REPO_NAME="${PAGES_REPO_NAME:-accelleran}"
+PAGES_REPO_URL="${PAGES_REPO_URL:-https://accelleran.github.io/helm-charts}"
+REGISTRY="${REGISTRY:-oci://ghcr.io/accelleran/charts}"
+CHARTS="${CHARTS:-}"
+
+if ! command -v helm >/dev/null ; then
+    echo "helm is required"
+    exit 1
+fi
+
+if ! command -v jq >/dev/null ; then
+    echo "jq is required"
+    exit 1
+fi
+
+helm repo add "${PAGES_REPO_NAME}" "${PAGES_REPO_URL}" --force-update
+helm repo update "${PAGES_REPO_NAME}"
+
+catalog=$(helm search repo "${PAGES_REPO_NAME}/" --devel -o json)
+if [[ "$(printf '%s' "${catalog}" | jq 'length')" -eq 0 ]] ; then
+    echo "No charts found in ${PAGES_REPO_URL}"
+    exit 1
+fi
+
+wanted=()
+if [[ -n "${CHARTS}" ]] ; then
+    IFS=',' read -r -a wanted <<< "${CHARTS}"
+    for i in "${!wanted[@]}" ; do
+        wanted[i]="${wanted[i]// /}"
+    done
+fi
+
+tmp=$(mktemp -d)
+trap 'rm -rf "${tmp}"' EXIT
+
+failed=0
+found=()
+
+while read -r name version ; do
+    if [[ ${#wanted[@]} -gt 0 ]] ; then
+        keep=0
+        for want in "${wanted[@]}" ; do
+            if [[ "${name}" == "${want}" ]] ; then
+                keep=1
+                break
+            fi
+        done
+        if [[ "${keep}" -eq 0 ]] ; then
+            continue
+        fi
+        found+=("${name}")
+    fi
+
+    ref="${REGISTRY}/${name}"
+    echo "${name}:${version}"
+    if helm show chart "${ref}" --version "${version}" >/dev/null 2>&1 ; then
+        echo "Skipping ${name}:${version}, already on GHCR"
+        continue
+    fi
+
+    if ! helm pull "${PAGES_REPO_NAME}/${name}" --version "${version}" --destination "${tmp}" ; then
+        echo "Failed to pull ${name}:${version} from Pages"
+        failed=1
+        continue
+    fi
+
+    pkg="${tmp}/${name}-${version}.tgz"
+    if [[ ! -f "${pkg}" ]] ; then
+        echo "Expected package ${pkg} after helm pull"
+        failed=1
+        continue
+    fi
+
+    if ! helm push "${pkg}" "${REGISTRY}" ; then
+        echo "Failed to push ${name}:${version} to ${REGISTRY}"
+        failed=1
+    fi
+    rm -f "${pkg}"
+done < <(printf '%s' "${catalog}" | jq -r '.[] | (.name | split("/")[-1]) + " " + .version')
+
+if [[ ${#wanted[@]} -gt 0 ]] ; then
+    for want in "${wanted[@]}" ; do
+        [[ -z "${want}" ]] && continue
+        seen=0
+        for name in "${found[@]}" ; do
+            if [[ "${name}" == "${want}" ]] ; then
+                seen=1
+                break
+            fi
+        done
+        if [[ "${seen}" -eq 0 ]] ; then
+            echo "Chart ${want} is not in ${PAGES_REPO_URL}"
+            failed=1
+        fi
+    done
+fi
+
+exit "${failed}"
