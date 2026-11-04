@@ -21,7 +21,7 @@ __POD_IP__ and __MPLANE_SSH_PASSWORD__ are filled in by du-launcher.sh.
   "prach_port_id" $ofh.prachPorts -}}
 {{- if $ofh.vlanCp }}{{ $_ := set $cell "vlan_tag_cp" $ofh.vlanCp }}{{ end }}
 {{- if $ofh.vlanUp }}{{ $_ := set $cell "vlan_tag_up" $ofh.vlanUp }}{{ end }}
-{{- if or $i.mplane.enabled $ofh.vendorProfile }}
+{{- if or $i.mplane.enabled $ofh.vendorProfile (eq (include "firecell-du.ruVendor" $i) "simulator") }}
 {{- $_ := set $cell "ru_type" (include "firecell-du.ruVendor" $i) -}}
 {{- end }}
 {{- if $i.mplane.enabled }}

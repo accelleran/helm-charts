@@ -1,0 +1,19 @@
+# Split 7.2 against an O-RU simulator (Amarisoft): the DU is told its type, there is no M-plane.
+global:
+  image: docker.io/library/ocudu-runtime:ci
+
+name: du-sim
+duId: 9
+cell:
+  pci: 9
+cpus:
+  timing: 7
+  txrx: 8
+  pool: "9,10"
+  ealLcores: "9,10"
+ru:
+  vendor: simulator
+ofh:
+  vfPciAddr: "0000:01:13.0"
+  duMac: "02:fc:02:00:00:13"
+  ruMac: "02:fc:02:00:00:14"
