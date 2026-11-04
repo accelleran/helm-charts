@@ -8917,6 +8917,174 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/cell-wrapper-config-0.1.0/cell-wrapper-config-0.1.0.tgz
     version: 0.1.0
+  cert-manager:
+  - annotations:
+      artifacthub.io/category: security
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/prerelease: "false"
+      artifacthub.io/signKey: |
+        fingerprint: 1020CF3C033D4F35BAE1C19E1226061C665DF13E
+        url: https://cert-manager.io/public-keys/cert-manager-keyring-2021-09-20-1020CF3C033D4F35BAE1C19E1226061C665DF13E.gpg
+    apiVersion: v2
+    appVersion: v1.20.3
+    created: "2026-11-04T19:05:17.910509841Z"
+    description: A Helm chart for cert-manager
+    digest: ef5d707f5afbb2c3ce9892f5ff3fca0dec6864db8830a1c454b3d4822c485843
+    home: https://cert-manager.io
+    icon: https://raw.githubusercontent.com/cert-manager/community/4d35a69437d21b76322157e6284be4cd64e6d2b7/logo/logo-small.png
+    keywords:
+    - cert-manager
+    - kube-lego
+    - letsencrypt
+    - tls
+    kubeVersion: '>= 1.22.0-0'
+    maintainers:
+    - email: cert-manager-maintainers@googlegroups.com
+      name: cert-manager-maintainers
+      url: https://cert-manager.io
+    name: cert-manager
+    sources:
+    - https://github.com/cert-manager/cert-manager
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cert-manager-v1.20.3/cert-manager-v1.20.3.tgz
+    version: v1.20.3
+  cilium:
+  - annotations:
+      artifacthub.io/crds: "- kind: CiliumNetworkPolicy\n  version: v2\n  name: ciliumnetworkpolicies.cilium.io\n
+        \ displayName: Cilium Network Policy\n  description: |\n    Cilium Network
+        Policies provide additional functionality beyond what\n    is provided by
+        standard Kubernetes NetworkPolicy such as the ability\n    to allow traffic
+        based on FQDNs, or to filter at Layer 7.\n- kind: CiliumClusterwideNetworkPolicy\n
+        \ version: v2\n  name: ciliumclusterwidenetworkpolicies.cilium.io\n  displayName:
+        Cilium Clusterwide Network Policy\n  description: |\n    Cilium Clusterwide
+        Network Policies support configuring network traffic\n    policiies across
+        the entire cluster, including applying node firewalls.\n- kind: CiliumLocalRedirectPolicy\n
+        \ version: v2\n  name: ciliumlocalredirectpolicies.cilium.io\n  displayName:
+        Cilium Local Redirect Policy\n  description: |\n    Cilium Local Redirect
+        Policy allows local redirects to be configured\n    within a node to support
+        use cases like Node-Local DNS.\n- kind: CiliumNode\n  version: v2\n  name:
+        ciliumnodes.cilium.io\n  displayName: Cilium Node\n  description: |\n    Cilium
+        Node represents a node managed by Cilium. It contains a\n    specification
+        to control various node specific configuration aspects\n    and a status section
+        to represent the status of the node.\n- kind: CiliumIdentity\n  version: v2\n
+        \ name: ciliumidentities.cilium.io\n  displayName: Cilium Identity\n  description:
+        |\n    Cilium Identity allows introspection into security identities that\n
+        \   Cilium allocates which identify sets of labels that are assigned to\n
+        \   individual endpoints in the cluster.\n- kind: CiliumEndpoint\n  version:
+        v2\n  name: ciliumendpoints.cilium.io\n  displayName: Cilium Endpoint\n  description:
+        |\n    Cilium Endpoint represents the status of individual pods or nodes in\n
+        \   the cluster which are managed by Cilium, including enforcement status,\n
+        \   IP addressing and whether the networking is successfully operational.\n-
+        kind: CiliumEndpointSlice\n  version: v2alpha1\n  name: ciliumendpointslices.cilium.io\n
+        \ displayName: Cilium Endpoint Slice\n  description: |\n    Cilium Endpoint
+        Slice represents the status of groups of pods or nodes\n    in the cluster
+        which are managed by Cilium, including enforcement status,\n    IP addressing
+        and whether the networking is successfully operational.\n- kind: CiliumEgressGatewayPolicy\n
+        \ version: v2\n  name: ciliumegressgatewaypolicies.cilium.io\n  displayName:
+        Cilium Egress Gateway Policy\n  description: |\n    Cilium Egress Gateway
+        Policy provides control over the way that traffic\n    leaves the cluster
+        and which source addresses to use for that traffic.\n- kind: CiliumClusterwideEnvoyConfig\n
+        \ version: v2\n  name: ciliumclusterwideenvoyconfigs.cilium.io\n  displayName:
+        Cilium Clusterwide Envoy Config\n  description: |\n    Cilium Clusterwide
+        Envoy Config specifies Envoy resources and K8s service mappings\n    to be
+        provisioned into Cilium host proxy instances in cluster context.\n- kind:
+        CiliumEnvoyConfig\n  version: v2\n  name: ciliumenvoyconfigs.cilium.io\n  displayName:
+        Cilium Envoy Config\n  description: |\n    Cilium Envoy Config specifies Envoy
+        resources and K8s service mappings\n    to be provisioned into Cilium host
+        proxy instances in namespace context.\n- kind: CiliumNodeConfig\n  version:
+        v2\n  name: ciliumnodeconfigs.cilium.io\n  displayName: Cilium Node Configuration\n
+        \ description: |\n    CiliumNodeConfig is a list of configuration key-value
+        pairs. It is applied to\n    nodes indicated by a label selector.\n- kind:
+        CiliumBGPClusterConfig\n  version: v2alpha1\n  name: ciliumbgpclusterconfigs.cilium.io\n
+        \ displayName: Cilium BGP Cluster Config\n  description: |\n    Cilium BGP
+        Cluster Config instructs Cilium operator to create specific BGP cluster\n
+        \   configurations.\n- kind: CiliumBGPPeerConfig\n  version: v2alpha1\n  name:
+        ciliumbgppeerconfigs.cilium.io\n  displayName: Cilium BGP Peer Config\n  description:
+        |\n    CiliumBGPPeerConfig is a common set of BGP peer configurations. It
+        can be referenced \n    by multiple peers from CiliumBGPClusterConfig.\n-
+        kind: CiliumBGPAdvertisement\n  version: v2alpha1\n  name: ciliumbgpadvertisements.cilium.io\n
+        \ displayName: Cilium BGP Advertisement\n  description: |\n    CiliumBGPAdvertisement
+        is used to define source of BGP advertisement as well as BGP attributes \n
+        \   to be advertised with those prefixes.\n- kind: CiliumBGPNodeConfig\n  version:
+        v2alpha1\n  name: ciliumbgpnodeconfigs.cilium.io\n  displayName: Cilium BGP
+        Node Config\n  description: |\n    CiliumBGPNodeConfig is read only node specific
+        BGP configuration. It is constructed by Cilium operator.\n    It will also
+        contain node local BGP state information.\n- kind: CiliumBGPNodeConfigOverride\n
+        \ version: v2alpha1\n  name: ciliumbgpnodeconfigoverrides.cilium.io\n  displayName:
+        Cilium BGP Node Config Override\n  description: |\n    CiliumBGPNodeConfigOverride
+        can be used to override node specific BGP configuration.\n- kind: CiliumLoadBalancerIPPool\n
+        \ version: v2\n  name: ciliumloadbalancerippools.cilium.io\n  displayName:
+        Cilium Load Balancer IP Pool\n  description: |\n    Defining a Cilium Load
+        Balancer IP Pool instructs Cilium to assign IPs to LoadBalancer Services.\n-
+        kind: CiliumCIDRGroup\n  version: v2alpha1\n  name: ciliumcidrgroups.cilium.io\n
+        \ displayName: Cilium CIDR Group\n  description: |\n    CiliumCIDRGroup is
+        a list of CIDRs that can be referenced as a single entity from CiliumNetworkPolicies.\n-
+        kind: CiliumL2AnnouncementPolicy\n  version: v2alpha1\n  name: ciliuml2announcementpolicies.cilium.io\n
+        \ displayName: Cilium L2 Announcement Policy\n  description: |\n    CiliumL2AnnouncementPolicy
+        is a policy which determines which service IPs will be announced to\n    the
+        local area network, by which nodes, and via which interfaces.\n- kind: CiliumPodIPPool\n
+        \ version: v2alpha1\n  name: ciliumpodippools.cilium.io\n  displayName: Cilium
+        Pod IP Pool\n  description: |\n    CiliumPodIPPool defines an IP pool that
+        can be used for pooled IPAM (i.e. the multi-pool IPAM mode).\n- kind: CiliumGatewayClassConfig\n
+        \ version: v2alpha1\n  name: ciliumgatewayclassconfigs.cilium.io\n  displayName:
+        Cilium Gateway Class Config\n  description: |\n    CiliumGatewayClassConfig
+        defines a configuration for Gateway API GatewayClass.\n- kind: CiliumDatapathPlugin\n
+        \ version: v2alpha1\n  name: ciliumdatapathplugins.cilium.io\n  displayName:
+        Cilium Datapath Plugin\n  description: |\n    CiliumDatapathPlugin is a plugin
+        that extends datapath functionality.\n"
+    apiVersion: v2
+    appVersion: 1.20.2
+    created: "2026-11-04T19:05:18.209808301Z"
+    description: eBPF-based Networking, Security, and Observability
+    digest: b2afd87b7f75f875f92a14559f14f59b7babbb479d968e3fd625a20bf30ec20e
+    home: https://cilium.io/
+    icon: https://cdn.jsdelivr.net/gh/cilium/cilium@main/Documentation/images/logo-solo.svg
+    keywords:
+    - BPF
+    - eBPF
+    - Kubernetes
+    - Networking
+    - Security
+    - Observability
+    - Troubleshooting
+    kubeVersion: '>= 1.21.0-0'
+    name: cilium
+    sources:
+    - https://github.com/cilium/cilium
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cilium-1.20.2/cilium-1.20.2.tgz
+    version: 1.20.2
+  cloudnative-pg:
+  - apiVersion: v2
+    appVersion: 1.30.0
+    created: "2026-11-04T19:05:18.475509777Z"
+    dependencies:
+    - alias: monitoring
+      condition: monitoring.grafanaDashboard.create
+      name: cluster
+      repository: https://cloudnative-pg.github.io/grafana-dashboards
+      version: "0.0"
+    description: CloudNativePG Operator Helm Chart
+    digest: 668e065ff53508d58238788fd35b355a925060843629a951df0e6a9362e6d32f
+    home: https://cloudnative-pg.io
+    icon: https://raw.githubusercontent.com/cloudnative-pg/artwork/main/cloudnativepg-logo.svg
+    keywords:
+    - operator
+    - controller
+    - postgresql
+    - postgres
+    - database
+    kubeVersion: '>=1.29.0-0'
+    maintainers:
+    - email: p.scorsolini@gmail.com
+      name: phisco
+    name: cloudnative-pg
+    sources:
+    - https://github.com/cloudnative-pg/charts
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cloudnative-pg-0.29.0/cloudnative-pg-0.29.0.tgz
+    version: 0.29.0
   common:
   - apiVersion: v2
     created: "2025-03-21T08:33:41.775628278Z"
@@ -36261,6 +36429,31 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/du-metrics-server-0.1.0/du-metrics-server-0.1.0.tgz
     version: 0.1.0
+  external-secrets:
+  - apiVersion: v2
+    appVersion: v2.11.0
+    created: "2026-11-04T19:05:18.951784209Z"
+    dependencies:
+    - condition: bitwarden-sdk-server.enabled
+      name: bitwarden-sdk-server
+      repository: oci://ghcr.io/external-secrets/charts
+      version: v0.6.0
+    description: External secrets management for Kubernetes
+    digest: 8199b42fe80b871c6a86233a80bb14f599fd6e1e6462c1216d836577f845e161
+    home: https://github.com/external-secrets/external-secrets
+    icon: https://raw.githubusercontent.com/external-secrets/external-secrets/main/assets/eso-logo-large.png
+    keywords:
+    - kubernetes-external-secrets
+    - secrets
+    kubeVersion: '>= 1.19.0-0'
+    maintainers:
+    - email: kellinmcavoy@gmail.com
+      name: mcavoyk
+    name: external-secrets
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/external-secrets-2.11.0/external-secrets-2.11.0.tgz
+    version: 2.11.0
   firecell-core:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -36543,6 +36736,55 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/firecell-nms-0.1.0/firecell-nms-0.1.0.tgz
     version: 0.1.0
+  flux-operator:
+  - annotations:
+      artifacthub.io/license: AGPL-3.0
+      artifacthub.io/links: |
+        - name: Documentation
+          url: https://fluxoperator.dev/docs
+        - name: Chart Source
+          url: https://github.com/controlplaneio-fluxcd/charts
+        - name: Upstream Project
+          url: https://github.com/controlplaneio-fluxcd/flux-operator
+    apiVersion: v2
+    appVersion: v0.60.0
+    created: "2026-11-04T19:05:19.570046673Z"
+    description: 'A Helm chart for deploying the Flux Operator. '
+    digest: 1caf941d8ef243bc5d048e221269ed9a5795ffcf18c577a8d60b66e2d8a2f425
+    home: https://fluxoperator.dev
+    icon: https://raw.githubusercontent.com/cncf/artwork/main/projects/flux/icon/color/flux-icon-color.png
+    keywords:
+    - flux
+    - fluxcd
+    - gitops
+    kubeVersion: '>=1.22.0-0'
+    maintainers:
+    - email: flux-enterprise@control-plane.io
+      name: ControlPlane Flux Team
+    name: flux-operator
+    sources:
+    - https://github.com/controlplaneio-fluxcd/flux-operator
+    - https://github.com/controlplaneio-fluxcd/charts
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/flux-operator-0.60.0/flux-operator-0.60.0.tgz
+    version: 0.60.0
+  grafana-operator:
+  - apiVersion: v2
+    appVersion: v5.25.0
+    created: "2026-11-04T19:05:19.849449212Z"
+    dependencies:
+    - condition: crds.immutable
+      name: crds
+      repository: ""
+      version: 0.0.*
+    description: Helm chart for the Grafana Operator
+    digest: 4a5319f9796a4460b8b7adfc13f2b5a077c01cea3668a920ffa4094e756c9d48
+    name: grafana-operator
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/grafana-operator-5.25.0/grafana-operator-5.25.0.tgz
+    version: 5.25.0
   loki-deleter:
   - apiVersion: v2
     appVersion: 0.1.11
@@ -36978,6 +37220,54 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/nmock-0.3.0/nmock-0.3.0.tgz
     version: 0.3.0
+  oauth2-proxy:
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: added
+          description: Add alpha-config.source and alpha-config.name helpers for centralized alpha config resolution
+          links:
+            - name: GitHub PR
+              url: https://github.com/oauth2-proxy/manifests/pull/405
+        - kind: added
+          description: Add deprecation guards for invalid alphaConfig combinations
+          links:
+            - name: GitHub PR
+              url: https://github.com/oauth2-proxy/manifests/pull/405
+    apiVersion: v2
+    appVersion: 7.15.3
+    created: "2026-11-04T19:05:20.245780051Z"
+    dependencies:
+    - condition: redis-ha.enabled
+      name: redis-ha
+      repository: https://dandydeveloper.github.io/charts
+      version: 4.35.10
+    description: A reverse proxy that provides authentication with Google, Github
+      or other providers
+    digest: 47b44c66fdfc42677d307cf8891f3de29863414bf265f6bef2020c273ff7e839
+    home: https://oauth2-proxy.github.io/oauth2-proxy/
+    keywords:
+    - kubernetes
+    - oauth
+    - oauth2
+    - authentication
+    - google
+    - github
+    - redis
+    kubeVersion: '>=1.16.0-0'
+    maintainers:
+    - email: pierluigi.lenoci@gmail.com
+      name: pierluigilenoci
+    - email: jan@larwig.com
+      name: tuunit
+    - email: joel.speed@hotmail.co.uk
+      name: JoelSpeed
+    name: oauth2-proxy
+    sources:
+    - https://github.com/oauth2-proxy/oauth2-proxy
+    - https://github.com/oauth2-proxy/manifests
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/oauth2-proxy-10.7.0/oauth2-proxy-10.7.0.tgz
+    version: 10.7.0
   promtail:
   - apiVersion: v2
     appVersion: 3.1.1
@@ -39668,4 +39958,38 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/xapp-hello-world-1.0.0/xapp-hello-world-1.0.0.tgz
     version: 1.0.0
-generated: "2026-11-03T14:22:48.894637256Z"
+  zitadel:
+  - apiVersion: v2
+    appVersion: v4.15.3
+    created: "2026-11-04T19:05:20.495838612Z"
+    dependencies:
+    - condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: '>=16.0.0'
+    description: A Helm chart for ZITADEL
+    digest: 7e3762f4f0120f0505b5ecfaca60e406cbe26dc1fea529faa3e4065daac3bbcb
+    home: https://zitadel.com
+    icon: https://zitadel.com/zitadel-logo-dark.svg
+    keywords:
+    - identity
+    - oidc
+    - oauth
+    - auth
+    - saml
+    - iam
+    - sso
+    - idp
+    kubeVersion: '>= 1.30.0-0'
+    maintainers:
+    - email: support@zitadel.com
+      name: zitadel
+      url: https://zitadel.com
+    name: zitadel
+    sources:
+    - https://github.com/zitadel/zitadel
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/zitadel-10.0.4/zitadel-10.0.4.tgz
+    version: 10.0.4
+generated: "2026-11-04T19:05:20.497844518Z"
