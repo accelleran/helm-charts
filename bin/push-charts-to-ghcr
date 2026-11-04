@@ -1,6 +1,8 @@
 #!/bin/bash
 #
-# Pull chart tarballs from the GitHub Pages Helm repo and push them to GHCR.
+# Pull first-party chart tarballs from the GitHub Pages Helm repo and push
+# them to GHCR. Charts with External.yaml are skipped; copy those with
+# bin/copy-external-charts-to-oci so the upstream OCI digest is preserved.
 # Does not create GitHub releases or update index.yaml.
 #
 # CHARTS   comma-separated names; empty means the latest version of every chart
@@ -9,7 +11,7 @@
 # Requires helm, jq, and an existing `helm registry login` for GHCR.
 
 set -eu -o pipefail
-shopt -s nullglob
+shopt -s nullglob globstar
 
 PAGES_REPO_NAME="${PAGES_REPO_NAME:-accelleran}"
 PAGES_REPO_URL="${PAGES_REPO_URL:-https://accelleran.github.io/helm-charts}"
@@ -34,6 +36,16 @@ if [[ "$(printf '%s' "${catalog}" | jq 'length')" -eq 0 ]] ; then
     echo "No charts found in ${PAGES_REPO_URL}"
     exit 1
 fi
+
+is_external() {
+    local name="$1" ext
+    for ext in charts/**/External.yaml ; do
+        if [[ "$(basename "$(dirname "${ext}")")" == "${name}" ]] ; then
+            return 0
+        fi
+    done
+    return 1
+}
 
 wanted=()
 if [[ -n "${CHARTS}" ]] ; then
@@ -66,6 +78,10 @@ while read -r name version ; do
 
     ref="${REGISTRY}/${name}"
     echo "${name}:${version}"
+    if is_external "${name}" ; then
+        echo "Skipping ${name}:${version}, External.yaml (copied with oras, not helm push)"
+        continue
+    fi
     if helm show chart "${ref}" --version "${version}" >/dev/null 2>&1 ; then
         echo "Skipping ${name}:${version}, already on GHCR"
         continue
