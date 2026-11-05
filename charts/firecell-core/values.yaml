@@ -986,7 +986,7 @@ coreConfig:
     enableSmfSelection: "no"
     releaseAllPduSessions: "no"
     enableIms: "yes"
-    enableUdsf: "no"
+    enableUdsf: "yes"
     amfRegionId: "01"
     amfSetId: "001"
     amfPointer: "01"
@@ -1028,7 +1028,7 @@ coreConfig:
     useLocalSubscriptionInfo: "no"
     useLocalPccRules: "no"
     enableQer: "yes"
-    enableUdsf: "no"
+    enableUdsf: "yes"
     enableUsageReporting: "no"
     # OAI key: enable_dl_pdr_in_pfcp_session_establishment (per-UPF under smf.upfs[].config)
     enableDlPdrInPfcpSessionEstablishment: "yes"

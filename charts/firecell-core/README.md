@@ -187,7 +187,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.enableNssf | string | `"no"` |  |
 | coreConfig.amf.enableSimpleScenario | string | `"no"` |  |
 | coreConfig.amf.enableSmfSelection | string | `"no"` |  |
-| coreConfig.amf.enableUdsf | string | `"no"` |  |
+| coreConfig.amf.enableUdsf | string | `"yes"` |  |
 | coreConfig.amf.name | string | `"OAI-AMF"` |  |
 | coreConfig.amf.relativeCapacity | int | `30` |  |
 | coreConfig.amf.releaseAllPduSessions | string | `"no"` |  |
@@ -226,7 +226,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.registerNf | string | `"yes"` |  |
 | coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | string | `"yes"` |  |
 | coreConfig.smf.enableQer | string | `"yes"` |  |
-| coreConfig.smf.enableUdsf | string | `"no"` |  |
+| coreConfig.smf.enableUdsf | string | `"yes"` |  |
 | coreConfig.smf.enableUpfWoNfDiscovery | string | `"yes"` |  |
 | coreConfig.smf.enableUsageReporting | string | `"no"` |  |
 | coreConfig.smf.ueMtu | int | `1452` |  |
