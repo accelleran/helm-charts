@@ -3,7 +3,7 @@
 {{- $upfMultus := .Values.upf.multus | default dict }}
 {{- $upfN6 := $upfMultus.n6 | default dict }}
 {{- $upfN6dev := coalesce $upfN6.device $upfN6.bridge $upfN6.masterInterface "" }}
-{{- $onBridge := and .Values.upf.enabled (eq .Values.upf.type "oai") (not .Values.upf.hostNetwork) ($upfMultus.enabled | default false) (eq ($upfN6.cniType | default "macvlan") "bridge") $upfN6dev $upfN6.ip }}
+{{- $onBridge := and .Values.upf.enabled (not .Values.upf.hostNetwork) ($upfMultus.enabled | default false) (eq ($upfN6.cniType | default "macvlan") "bridge") $upfN6dev $upfN6.ip }}
 {{- if not $onBridge }}
 {{- fail "extDn.n6.ip needs an OAI UPF on Multus with upf.multus.n6.cniType: bridge, its bridge and upf.multus.n6.ip set. With host-device the N6 NIC belongs to the UPF pod, and a macvlan sibling bypasses generic XDP." }}
 {{- end }}

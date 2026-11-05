@@ -17,7 +17,7 @@ The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network sta
   - **AUSF** (`oai-ausf`): Authentication Server Function executing 5G-AKA authentication.
   - **PCF** (`oai-pcf`): Policy Control Function managing QoS rules and policy decisions.
 - **User Plane (UP):**
-  - **UPF** (`oai-upf` / `open5gs-upf`): User Plane Function handling GTP-U packet forwarding (UDP 2152) and DNN routing.
+  - **UPF** (`oai-upf`): User Plane Function handling GTP-U packet forwarding (UDP 2152) and DNN routing.
   - **Ext-DN** (`ext-dn`): External Data Network simulation container providing uplink routing and Internet connectivity.
 - **Persistence & Storage:**
   - **MySQL Database** (`mysql`): StatefulSet storing 3GPP subscriber credentials, PCF policies, and provisioning records. Initialized automatically via SQL scripts in `sql/`.
@@ -103,7 +103,7 @@ helm uninstall firecell-core --namespace firecell-core
 With `nms.rbac` (the default), the chart grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` (default `firecell-nms`) what the NMS needs in this namespace:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-core-<nms namespace>`: pod reads and logs, and intent ConfigMaps.
-- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` or `o5gs-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.
 
 The NMS and the core can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
 
@@ -236,10 +236,6 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.udm.suciKeyFile | string | `"/openair-udm/etc/a.key"` |  |
 | coreConfig.udm.suciProfileId | int | `1` |  |
 | coreConfig.udm.suciScheme | int | `1` |  |
-| coreConfig.upfSessions[0].gateway | string | `"12.1.1.1"` |  |
-| coreConfig.upfSessions[0].subnet | string | `"12.1.1.0/24"` |  |
-| coreConfig.upfSessions[1].gateway | string | `"14.1.1.1"` |  |
-| coreConfig.upfSessions[1].subnet | string | `"14.1.1.0/24"` |  |
 | extDn.enabled | bool | `true` |  |
 | extDn.image | string | `"trf-gen-cn5g"` |  |
 | extDn.imageOverride | string | `""` |  |
@@ -552,11 +548,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udsf.sbiPort | int | `8080` |  |
 | udsf.serviceName | string | `"oai-udsf"` |  |
 | upf.autoCreateN3Macvlan | bool | `false` |  |
-| upf.blockSshAccess | string | `"FALSE"` |  |
 | upf.configSchema | string | `"mr97"` |  |
 | upf.datapathInit.n6GatewayArpIntervalSec | int | `5` |  |
 | upf.datapathInit.n6GatewayArpRetries | int | `60` |  |
-| upf.disableNat | string | `"FALSE"` |  |
 | upf.dnsSearchDomains[0] | string | `"firecell-core.svc.cluster.local"` |  |
 | upf.dnsSearchDomains[1] | string | `"svc.cluster.local"` |  |
 | upf.dnsSearchDomains[2] | string | `"cluster.local"` |  |
@@ -580,7 +574,6 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.hostPfcpMacvlan | string | `""` |  |
 | upf.injectCiliumPodRoute | bool | `true` |  |
 | upf.instances | list | `[]` |  |
-| upf.maxSessions | int | `1024` |  |
 | upf.multus.rpsCpus | string | `""` | RPS CPU mask, quoted hex (e.g. `"3c003c"` = CPUs 2-5,18-21), written to every rx queue of the N3/N6 interfaces at pod start; spreads generic-XDP softirq per flow. Applied to bridge (veth) and host-device interfaces only; macvlan/ipvlan receive in the parent NIC's softirq (pin its IRQs on the host). Empty leaves RPS off. |
 | upf.n3IP | string | `"198.51.100.101"` |  |
 | upf.n3Interface | string | `"eth1"` |  |
@@ -588,32 +581,14 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.n6Cidr | string | `""` |  |
 | upf.n6Interface | string | `""` |  |
 | upf.n9Interface | string | `""` |  |
-| upf.o5gsImage | string | `"o5gs-upf"` |  |
-| upf.o5gsImageOverride | string | `""` |  |
 | upf.oaiEnableEthPdu | bool | `false` |  |
 | upf.oaiHostNet.smfN4Interface | string | `""` |  |
 | upf.oaiHostNet.stubInterface | string | `""` |  |
 | upf.oaiImage | string | `"cn5g-upf"` |  |
 | upf.oaiImageOverride | string | `""` |  |
 | upf.oaiImageTag | string | `"20261023-150221-9ccff53abf4b"` |  |
-| upf.performance.conntrackMax | int | `524288` |  |
-| upf.performance.conntrackUdpStreamTimeout | int | `3600` |  |
-| upf.performance.conntrackUdpTimeout | int | `120` |  |
-| upf.performance.cpuAffinity | string | `""` |  |
-| upf.performance.disableLRO | bool | `true` |  |
-| upf.performance.enableBBR | bool | `true` |  |
-| upf.performance.enabled | bool | `false` |  |
-| upf.performance.mtu | int | `1420` |  |
-| upf.performance.netdevBudget | int | `600` |  |
-| upf.performance.netdevBudgetUsecs | int | `8000` |  |
-| upf.performance.socketRmemMax | int | `26214400` |  |
-| upf.performance.socketWmemMax | int | `26214400` |  |
-| upf.performance.tcpMssClamp | bool | `true` |  |
-| upf.performance.tunQdisc | string | `"pfifo_fast"` |  |
-| upf.performance.txQueueLen | int | `10000` |  |
 | upf.pfcpHost | string | `""` |  |
 | upf.privileged | bool | `true` |  |
-| upf.protectedSshNetworks | string | `"10.0.0.0/8,192.168.31.0/24,172.17.5.0/24"` |  |
 | upf.remoteN6Gw | string | `""` |  |
 | upf.resources.limits.cpu | string | `"1000m"` |  |
 | upf.resources.limits.memory | string | `"1Gi"` |  |
@@ -621,8 +596,6 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.resources.requests.memory | string | `"512Mi"` |  |
 | upf.sbiInterface | string | `""` |  |
 | upf.serviceType | string | `"LoadBalancer"` |  |
-| upf.sshExemptedIps | string | `"192.168.31.254"` |  |
-| upf.type | string | `"oai"` |  |
 | upf.xdpAttachMode | string | `"auto"` |  |
 
 ## 5. Maintenance & Troubleshooting

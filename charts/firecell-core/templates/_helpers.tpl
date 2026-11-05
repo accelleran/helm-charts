@@ -403,10 +403,9 @@ conditions of the NF Deployment templates.
 {{- if .Values.udsf.enabled -}}
 {{- $names = append $names .Values.udsf.serviceName -}}
 {{- end -}}
-{{- if and .Values.upf.enabled (has .Values.upf.type (list "oai" "o5gs")) -}}
-{{- $prefix := ternary "oai-upf" "o5gs-upf" (eq .Values.upf.type "oai") -}}
+{{- if .Values.upf.enabled -}}
 {{- range (.Values.upf.instances | default (list (dict))) -}}
-{{- $names = append $names (printf "%s%s" $prefix (.suffix | default "" | toString)) -}}
+{{- $names = append $names (printf "oai-upf%s" (.suffix | default "" | toString)) -}}
 {{- end -}}
 {{- end -}}
 {{- toJson $names -}}

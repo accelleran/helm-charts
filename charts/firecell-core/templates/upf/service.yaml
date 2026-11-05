@@ -1,6 +1,6 @@
 {{- if .Values.upf.enabled }}
 {{- /*
-  Build effective instance list — mirrors deployment-o5gs.yaml pattern.
+  Build effective instance list — mirrors deployment-oai.yaml pattern.
   Single-UPF (legacy) mode: one Service, VIP = network.upfExternalIP.
   Multi-UPF mode: one Service per instance, each VIP = inst.n3IP.
 */}}
@@ -12,10 +12,7 @@
 ) }}
 {{- end }}
 {{- range $i, $inst := $instances }}
-{{- $appName := printf "o5gs-upf%s" (($inst.suffix | default "" | toString)) }}
-{{- if eq ($.Values.upf.type | default "oai") "oai" }}
-{{- $appName = printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
-{{- end }}
+{{- $appName := printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
 ---
 apiVersion: v1
 kind: Service
@@ -51,7 +48,7 @@ spec:
       port: 8805
       targetPort: 8805
       protocol: UDP
-    {{- if and (eq ($.Values.upf.type | default "oai") "oai") ($.Values.upf.fcaps.enabled | default false) }}
+    {{- if ($.Values.upf.fcaps.enabled | default false) }}
     # The NMS reaches the MnS producer through this port. The UPF Service is
     # already a LoadBalancer for GTP-U; the in-cluster ClusterIP of the same
     # object is what the NMS uses.
