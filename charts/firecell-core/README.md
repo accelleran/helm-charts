@@ -236,7 +236,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.udm.suciKeyFile | string | `"/openair-udm/etc/a.key"` |  |
 | coreConfig.udm.suciProfileId | int | `1` |  |
 | coreConfig.udm.suciScheme | int | `1` |  |
-| extDn.enabled | bool | `true` |  |
+| extDn.enabled | bool | `false` |  |
 | extDn.image | string | `"trf-gen-cn5g"` |  |
 | extDn.imageOverride | string | `""` |  |
 | extDn.imageTag | string | `"latest"` |  |

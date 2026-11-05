@@ -839,8 +839,9 @@ ims:
         cpu: 500m
 
 # --- External Data Network ---
+# Off by default; lab/examples enable it when a traffic generator is needed.
 extDn:
-  enabled: true
+  enabled: false
   image: trf-gen-cn5g
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
