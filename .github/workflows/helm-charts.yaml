@@ -213,7 +213,8 @@ jobs:
 
   release-charts:
     name: Release Charts
-    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' && !cancelled() && !failure() }}
+    # !failure() must apply on main too: a job `if` replaces implicit success().
+    if: ${{ !cancelled() && !failure() && (needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true') }}
     needs:
       - vars
       - check-chart-names
