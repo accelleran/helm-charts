@@ -5,17 +5,17 @@ global:
   # Namespace for all resources
   namespace: firecell-core
 
-  # GHCR — pre-create ghcr-regcred secret before helm install
-  imageRegistry: ghcr.io/accelleran
+  # Docker Hub — pre-create a docker-registry pull secret before helm install
+  imageRegistry: docker.io/accelleran
   # The busybox used by every initContainer in this chart. Composed from
   # imageRegistry when unset; name it in full to pull it from anywhere else.
   busyboxImage: docker.io/library/busybox:1.37.0-glibc
   imagePullPolicy: IfNotPresent
   imagePullSecrets:
-    - name: ghcr-regcred
+    - name: dockerhub-regcred
 
-  # Package version — used as the image tag suffix (images tagged as v<pkgVersion>)
-  pkgVersion: "1.0.0"
+  # Package version — default image tag when an NF imageTag is empty
+  pkgVersion: "6.0.0"
 
   # Timezone for all NF containers
   timezone: Europe/Paris
@@ -64,17 +64,17 @@ network:
   acsExternalIP: "192.0.2.102"
   upfExternalIP: "198.51.100.101"
 
-# --- Database (MySQL 8.0 single-node) ---
+# --- Database (MySQL 8.3 single-node) ---
 # For production, consider switching to Percona XtraDB Cluster operator.
 # Credentials: set via --set / site overlay. Lab-only insecure defaults:
 #   environments/values-lab-insecure-defaults.yaml
 mysql:
   enabled: true
   image: mysql:8.3
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  imageOverride: ""
+  # Full image reference, winning over registry + image composition.
+  # image is "mysql:8.3" (includes a tag); without this override the chart
+  # would ask Hub for accelleran/mysql:8.3.
+  imageOverride: "docker.io/library/mysql:8.3"
   rootPassword: ""            # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
   database: oai_db
   user: ""                    # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
@@ -95,12 +95,9 @@ mysql:
 udsf:
   enabled: true
   image: cn5g-udsf
-  # cn5g-udsf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150143-8446d7937614"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  # e.g. imageOverride: ghcr.io/accelleran/cn5g-udsf:20261023-150143-8446d7937614
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   serviceName: oai-udsf
   host: oai-udsf
@@ -152,11 +149,9 @@ udsf:
 nrf:
   enabled: true
   image: cn5g-nrf
-  # cn5g-nrf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145947-8ffa19a30160"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-crit
   command:
@@ -201,11 +196,9 @@ nrf:
 udr:
   enabled: true
   image: cn5g-udr
-  # cn5g-udr master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150124-ba06a65dc652"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-crit
   command:
@@ -253,11 +246,9 @@ udr:
 udm:
   enabled: true
   image: cn5g-udm
-  # cn5g-udm master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150041-5d27bfb4c0aa"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
   command:
@@ -305,11 +296,9 @@ udm:
 ausf:
   enabled: true
   image: cn5g-ausf
-  # cn5g-ausf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145814-c57395265ab7"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
   command:
@@ -354,11 +343,9 @@ ausf:
 amf:
   enabled: true
   image: cn5g-amf
-  # cn5g-amf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145217-51981a952d51"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   # Kubernetes Service type for oai-amf (NGAP must be reachable off-cluster).
   # Empty falls back to network.amfServiceType ("LoadBalancer" by default).
@@ -431,11 +418,9 @@ amf:
 smf:
   enabled: true
   image: cn5g-smf
-  # cn5g-smf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145035-c61997f2e8be"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-high
   command:
@@ -528,11 +513,9 @@ smf:
 pcf:
   enabled: true
   image: cn5g-pcf
-  # cn5g-pcf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150020-2c4d980dbe8e"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
   command:
@@ -585,8 +568,8 @@ pcf:
 upf:
   enabled: true
   oaiImage: cn5g-upf
-  # cn5g-upf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  oaiImageTag: "20261023-150221-9ccff53abf4b"
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  oaiImageTag: ""
   # Full reference for the OAI UPF, winning over registry + oaiImage + oaiImageTag.
   oaiImageOverride: ""
   # Kubernetes Service type for the GTP-U Service(s).
@@ -1111,8 +1094,8 @@ hooks:
     timeoutSeconds: 90
 
 # --- Image Pull Secret ---
-# Pre-create before helm install:
-#   kubectl create secret docker-registry ghcr-regcred \
-#     --docker-server=ghcr.io \
+# Pre-create before helm install (Docker Hub):
+#   kubectl create secret docker-registry dockerhub-regcred \
+#     --docker-server=https://index.docker.io/v1/ \
 #     --docker-username=<user> --docker-password=<token> \
 #     -n firecell-core

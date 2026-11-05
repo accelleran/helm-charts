@@ -55,13 +55,12 @@ MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when
 2. Pre-create the container registry secret in the target namespace (e.g. `firecell-core`):
    ```bash
    kubectl create namespace firecell-core
-   kubectl create secret docker-registry ghcr-regcred \
-     --docker-server=ghcr.io \
+   kubectl create secret docker-registry dockerhub-regcred \
+     --docker-server=https://index.docker.io/v1/ \
      --docker-username=<USERNAME> \
      --docker-password=<TOKEN> \
      --namespace firecell-core
    ```
-
 ### 3.2 Atomic Installation
 Deploy the chart with `--atomic` and an appropriate timeout:
 ```bash

@@ -19,7 +19,7 @@ The chart does not create the namespace. Create it first, or pass
 --create-namespace.
 {{- end }}
 
-Ensure Secret ghcr-regcred (or your configured imagePullSecrets) is pre-created
+Ensure Secret dockerhub-regcred (or your configured imagePullSecrets) is pre-created
 in namespace {{ .Values.global.namespace }} before installation.
 
 {{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "asterisk") }}
