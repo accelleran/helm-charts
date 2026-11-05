@@ -317,7 +317,10 @@ jobs:
 
   release-please:
     name: Release
-    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' && !cancelled() && !failure() }}
+    # !failure() must apply on main too: a job `if` replaces implicit success().
+    # Otherwise Please runs when release-charts is skipped/failed (no tag yet) and
+    # opens a duplicate release PR — see #1862.
+    if: ${{ !cancelled() && !failure() && (needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true') }}
     # Run after release-charts so that the tag exists in case of release commits.
     # Otherwise release please will create a new PR
     # as it doesn't yet have the release to compare changes with.
