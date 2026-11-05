@@ -96,7 +96,6 @@ nfs:
       port: 8080
       api_version: v1
       interface_name: {{ if $hostNet }}{{ $stub }}{{ else }}eth0{{ end }}
-  {{- if eq $v.upf.type "oai" }}
   upf:
     host: {{ include "firecell-5gc.oaiSbiHost" (dict "ctx" $ctx "name" "oai-upf" "clusterDNS" (and $useClusterDNS (not $hostNet))) }}
     sbi:
@@ -114,7 +113,6 @@ nfs:
     n9:
       interface_name: {{ coalesce $v.upf.n9Interface $v.upf.n3Interface "eth0" }}
       port: 2152
-  {{- end }}
 
 #### Common for UDR and AMF
 database:
@@ -207,7 +205,7 @@ smf:
   {{- end }}
   {{- end }}
   {{- else }}
-    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else if eq $v.upf.type "oai" }}oai-upf{{ else }}o5gs-upf{{ end }}
+    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else }}oai-upf{{ end }}
       port: 8805
       state: "ACTIVE"
       n3_interface: {{ $v.upf.n3Interface | default "eth0" | quote }}
@@ -258,7 +256,7 @@ smf:
   {{- end }}
   {{- end }}
   {{- else }}
-    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else if eq $v.upf.type "oai" }}oai-upf{{ else }}o5gs-upf{{ end }}
+    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else }}oai-upf{{ end }}
       port: 8805
       config:
         enable_upf_wo_nf_discovery: {{ $v.coreConfig.smf.enableUpfWoNfDiscovery | default "yes" }}
@@ -321,7 +319,6 @@ pcf:
   enable_policy_provisioning_api: {{ $v.coreConfig.pcf.enablePolicyProvisioningApi }}
 
 upf:
-  {{- if eq $v.upf.type "oai" }}
   {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use
        upf.multus.enableBpfDatapath (default false). hostNetwork uses upf.enableBpfDatapath. */}}
   {{- $upfMultus := and (not ($v.upf.hostNetwork | default false)) (($v.upf.multus).enabled | default false) }}
@@ -333,7 +330,6 @@ upf:
     enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
-  {{- end }}
   upf_info:
     sNssaiUpfInfoList:
     {{- range $v.coreConfig.nssai }}

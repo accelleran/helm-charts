@@ -18,7 +18,7 @@ The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network sta
   - **AUSF** (`oai-ausf`): Authentication Server Function executing 5G-AKA authentication.
   - **PCF** (`oai-pcf`): Policy Control Function managing QoS rules and policy decisions.
 - **User Plane (UP):**
-  - **UPF** (`oai-upf` / `open5gs-upf`): User Plane Function handling GTP-U packet forwarding (UDP 2152) and DNN routing.
+  - **UPF** (`oai-upf`): User Plane Function handling GTP-U packet forwarding (UDP 2152) and DNN routing.
   - **Ext-DN** (`ext-dn`): External Data Network simulation container providing uplink routing and Internet connectivity.
 - **Persistence & Storage:**
   - **MySQL Database** (`mysql`): StatefulSet storing 3GPP subscriber credentials, PCF policies, and provisioning records. Initialized automatically via SQL scripts in `sql/`.
@@ -104,7 +104,7 @@ helm uninstall firecell-core --namespace firecell-core
 With `nms.rbac` (the default), the chart grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` (default `firecell-nms`) what the NMS needs in this namespace:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-core-<nms namespace>`: pod reads and logs, and intent ConfigMaps.
-- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` or `o5gs-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.
 
 The NMS and the core can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
 

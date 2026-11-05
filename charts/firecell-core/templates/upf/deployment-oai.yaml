@@ -1,4 +1,4 @@
-{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") }}
+{{- if .Values.upf.enabled }}
 {{- /* Validate configSchema when explicitly set — catches copy-paste of develop overlays onto release images */}}
 {{- if and .Values.upf.hostNetwork (.Values.upf.configSchema | ne "") }}
 {{- $validSchemas := list "legacy" "mr97" }}

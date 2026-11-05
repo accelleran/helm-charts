@@ -585,15 +585,10 @@ pcf:
 # --- UPF (User Plane Function) ---
 upf:
   enabled: true
-  # "oai" for OAI UPF (default, the cn5g-upf CI image), "o5gs" for Open5GS UPF
-  type: oai
-  o5gsImage: o5gs-upf
-  # Full reference for the o5gs UPF, like oaiImageOverride for the OAI one.
-  o5gsImageOverride: ""
   oaiImage: cn5g-upf
   # cn5g-upf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
   oaiImageTag: "20261023-150221-9ccff53abf4b"
-  # Full reference for the OAI UPF, like o5gsImageOverride for the o5gs one.
+  # Full reference for the OAI UPF, winning over registry + oaiImage + oaiImageTag.
   oaiImageOverride: ""
   # Kubernetes Service type for the GTP-U Service(s).
   # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP
@@ -729,43 +724,13 @@ upf:
     measPeriodSec: 5
     # Alarm dispatch interval (FCAPS_NOTIFY_INTERVAL_SEC). UPF default 30 s.
     notifyIntervalSec: 5
-  # UPF-specific env vars (o5gs)
-  disableNat: "FALSE"
-  blockSshAccess: "FALSE"
-  protectedSshNetworks: "10.0.0.0/8,192.168.31.0/24,172.17.5.0/24"
-  sshExemptedIps: "192.168.31.254"
-
-  # open5gs-upfd global.max.ue — max concurrent PDU sessions (not UE count;
-  # each UE may have multiple sessions). Memory ≈ 1–2 KB per session.
-  maxSessions: 1024
-
-  # Userplane performance tuning — all gated on performance.enabled.
-  # Safe to leave disabled (default). Enable per environment in values-<env>.yaml.
-  performance:
-    enabled: false
-    mtu: 1420             # ogstun MTU; also used as session MTU in upf.yaml
-                          # 1420 = safe default (GTP-U overhead 36B + 44B headroom)
-                          # 1380 = conservative (use on known-good single-hop LAN)
-    tcpMssClamp: true     # iptables mangle TCPMSS --clamp-mss-to-pmtu on ogstun
-    socketRmemMax: 26214400   # net.core.rmem_max (25 MB) — absorbs ~17ms of 10Gbps burst
-    socketWmemMax: 26214400   # net.core.wmem_max
-    conntrackMax: 524288      # net.netfilter.nf_conntrack_max
-    conntrackUdpTimeout: 120        # seconds; default 30 causes flow stall when iperf report-back is lost
-    conntrackUdpStreamTimeout: 3600  # seconds after first bidirectional UDP exchange
-    enableBBR: true           # load tcp_bbr2 / tcp_bbr kernel module
-    txQueueLen: 10000         # ogstun txqueuelen (default 500 is too small for bursts)
-    disableLRO: true          # ethtool lro off on N3 NIC (LRO corrupts GTP inner checksums)
-    tunQdisc: "pfifo_fast"    # TUN qdisc; pfifo_fast has lower overhead than fq_codel for bulk forwarding
-    netdevBudget: 600         # packets processed per NAPI cycle (default 300 throttles high-PPS)
-    netdevBudgetUsecs: 8000   # CPU time budget per NAPI cycle in µs (default 2000)
-    cpuAffinity: ""           # taskset core list for open5gs-upfd (e.g. "8-15"); empty = no pinning
 
   # Multi-UPF instance list. When non-empty, replaces legacy single-UPF config.
   # Each entry produces one independent Deployment + Service (type: upf.serviceType).
   # Leave empty for single-UPF operation (backward compatible).
   instances: []
   # instances:
-  #   - suffix: ""           # Deployment name suffix: "o5gs-upf" when empty
+  #   - suffix: ""           # Deployment name suffix: "oai-upf" when empty
   #     n3IP: "10.x.x.x"    # MetalLB VIP for GTP-U (must be in up.poolRange)
   #     n3Interface: eno1
   #     n6Interface: eno1
@@ -773,11 +738,9 @@ upf:
   #     inSmfPool: true                   # include this UPF in SMF upf_pool/upfs
   #     poolState: ACTIVE                 # ACTIVE|DRAINING (rendered to SMF config)
   #     dnns: ["oai"]                     # per-UPF DNN steering (e.g. oai/oai2)
-  #     tunDev: "ogstun"                   # TUN device name — MUST be unique per instance on same host
   #     hostPfcpMacvlan: "smf-pfcp-mac"   # unique per instance
   #     hostPfcpIP: "10.x.x.y"            # PFCP source IP (not in any MetalLB pool)
   #     pfcpHost: "10.x.x.y"
-  #     sessions: "12.1.1.0/24"           # comma-separated UE subnets for this instance
 
 # --- IMS (Kamailio + Cx-on-UDR default; Asterisk via examples/values-ims-asterisk.yaml) ---
 ims:
@@ -1101,13 +1064,6 @@ coreConfig:
     name: oai_db
     generateRandom: true
     connectionTimeout: 10
-
-  # UPF session subnets (used in o5gs-upf config templates)
-  upfSessions:
-    - subnet: "12.1.1.0/24"
-      gateway: "12.1.1.1"
-    - subnet: "14.1.1.0/24"
-      gateway: "14.1.1.1"
 
 # --- Network Policies ---
 networkPolicies:
