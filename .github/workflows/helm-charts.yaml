@@ -56,6 +56,16 @@ jobs:
           echo "charts_to_test=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --list --delimiter=, --path test)" | tee -a $GITHUB_OUTPUT
           echo "charts_to_test_matrix=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --matrix test)" | tee -a $GITHUB_OUTPUT
 
+  check-chart-names:
+    name: Check chart names
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Check published chart names are unique
+        run: ./bin/check-chart-name-collisions
+
   lint-charts:
     name: Lint Charts
     needs:
@@ -188,6 +198,7 @@ jobs:
     name: Status Charts
     needs:
       - vars
+      - check-chart-names
       - lint-charts
       - test-charts
     if: ${{ needs.vars.outputs.is_pull_request == 'true' && !cancelled() }}
@@ -205,6 +216,7 @@ jobs:
     if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' && !cancelled() && !failure() }}
     needs:
       - vars
+      - check-chart-names
       - lint-charts
       - test-charts
     runs-on: ubuntu-24.04
