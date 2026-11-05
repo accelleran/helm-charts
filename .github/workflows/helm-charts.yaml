@@ -319,3 +319,15 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/release-please.yaml
     secrets: inherit
+
+  report-private-ghcr-packages:
+    name: Report private GHCR packages
+    if: ${{ !cancelled() && !failure() && needs.vars.outputs.is_main_branch == 'true' }}
+    needs:
+      - vars
+      - release-charts
+    permissions:
+      contents: read
+      issues: write
+      packages: read
+    uses: ./.github/workflows/ghcr-package-visibility.yaml
