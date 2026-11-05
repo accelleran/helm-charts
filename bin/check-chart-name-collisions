@@ -1,0 +1,60 @@
+#!/bin/bash
+#
+# Fail if two sources would publish the same Helm chart name: top-level
+# charts/*/Chart.yaml and any External.yaml. Collisions are not supported.
+
+set -eu -o pipefail
+shopt -s nullglob globstar
+
+GIT_ROOT="$(realpath "$(dirname "$0")/..")"
+CHARTS_ROOT="${GIT_ROOT}/charts"
+
+yaml_name() {
+    awk '
+        /^name:[[:space:]]*/ {
+            val = $0
+            sub(/^name:[[:space:]]*/, "", val)
+            gsub(/[\r\n]/, "", val)
+            gsub(/^["'\'']|["'\'']$/, "", val)
+            print val
+            exit
+        }
+    ' "$1"
+}
+
+failed=0
+names=()
+sources=()
+
+record() {
+    local name="$1" src="$2" i
+    if [[ -z "${name}" ]] ; then
+        echo "No name: in ${src}" 1>&2
+        failed=1
+        return
+    fi
+    for i in "${!names[@]}" ; do
+        if [[ "${names[$i]}" == "${name}" ]] ; then
+            echo "Chart name '${name}' would be published by both:" 1>&2
+            echo "  ${sources[$i]}" 1>&2
+            echo "  ${src}" 1>&2
+            failed=1
+            return
+        fi
+    done
+    names+=("${name}")
+    sources+=("${src}")
+}
+
+for chart in "${CHARTS_ROOT}"/*/Chart.yaml ; do
+    record "$(yaml_name "${chart}")" "${chart#"${GIT_ROOT}/"}"
+done
+
+for ext in "${CHARTS_ROOT}"/**/External.yaml ; do
+    record "$(yaml_name "${ext}")" "${ext#"${GIT_ROOT}/"}"
+done
+
+if [[ "${failed}" -ne 0 ]] ; then
+    echo "Published chart names must be unique; renaming via alias is not supported." 1>&2
+    exit 1
+fi
