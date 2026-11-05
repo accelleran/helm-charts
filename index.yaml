@@ -36457,6 +36457,25 @@ entries:
   firecell-core:
   - apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-11-05T20:49:54.898886927Z"
+    description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF,
+      MySQL, IMS Kamailio+Cx (Asterisk optional))
+    digest: 03e6805afed1f7a32f4a5ca69cdd76271c86583981f21e31dc38cf49bc111734
+    keywords:
+    - 5g
+    - core-network
+    - oai
+    - firecell
+    maintainers:
+    - email: support@firecell.io
+      name: Firecell
+    name: firecell-core
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-core-0.2.0/firecell-core-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-10-28T20:26:02.537198702Z"
     description: Firecell 5G Core Network (AMF, SMF, UPF, NRF, UDR, UDM, AUSF, PCF,
       MySQL, IMS Kamailio+Cx (Asterisk optional))
@@ -40020,4 +40039,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/zitadel-10.0.4/zitadel-10.0.4.tgz
     version: 10.0.4
-generated: "2026-11-05T20:10:09.265642261Z"
+generated: "2026-11-05T20:49:54.90008343Z"
