@@ -28,7 +28,7 @@ jobs:
       helm_version: 3.22.1
       # renovate: github_repository=halkeye/helm-repo-html versioning=semver
       helm_repo_html_version: v0.2.1
-    timeout-minutes: 1
+    timeout-minutes: 2
     steps:
       - name: Expose variables
         run: echo "Exposing variables for proper usage"
