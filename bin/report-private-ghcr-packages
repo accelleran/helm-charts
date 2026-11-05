@@ -4,9 +4,13 @@
 # Close that issue if the package is later public. A closed issue is left
 # alone so "should stay private" is just closing it.
 #
+# Packages are fetched one-by-one. Listing org container packages with
+# GITHUB_TOKEN returns HTTP 400 Invalid argument.
+#
 # DRY_RUN=1 prints actions without creating or closing issues.
 
 set -eu -o pipefail
+shopt -s nullglob globstar
 
 if ! command -v gh >/dev/null ; then
     echo "gh is required" 1>&2
@@ -18,10 +22,35 @@ if ! command -v jq >/dev/null ; then
     exit 1
 fi
 
+GIT_ROOT="$(realpath "$(dirname "$0")/..")"
+CHARTS_ROOT="${GIT_ROOT}/charts"
 REPO="${GITHUB_REPOSITORY:-accelleran/helm-charts}"
 ORG="${REPO%%/*}"
 LABEL="${GHCR_VISIBILITY_LABEL:-ghcr-visibility}"
 DRY_RUN="${DRY_RUN:-}"
+
+yaml_name() {
+    awk '
+        /^name:[[:space:]]*/ {
+            val = $0
+            sub(/^name:[[:space:]]*/, "", val)
+            gsub(/[\r\n]/, "", val)
+            gsub(/^["'\'']|["'\'']$/, "", val)
+            print val
+            exit
+        }
+    ' "$1"
+}
+
+chart_package_names() {
+    local f name
+    for f in "${CHARTS_ROOT}"/*/Chart.yaml "${CHARTS_ROOT}"/**/External.yaml ; do
+        name=$(yaml_name "${f}")
+        if [[ -n "${name}" ]] ; then
+            printf 'charts/%s\n' "${name}"
+        fi
+    done | sort -u
+}
 
 issue_title() {
     printf 'GHCR package %s is private' "$1"
@@ -44,19 +73,22 @@ load_issues() {
         --json number,state,title
 }
 
-packages=$(gh api --paginate "orgs/${ORG}/packages?package_type=container&per_page=100" \
-    | jq -c --arg repo "${REPO}" '
-        .[]
-        | select(.package_type == "container")
-        | select(.name | startswith("charts/"))
-        | select(.repository.full_name == $repo)
-        | {name, visibility, html_url}
-    ')
-
-if [[ -z "${packages}" ]] ; then
-    echo "No GHCR packages named charts/* linked to ${REPO}"
-    exit 0
-fi
+# GET a package by name. Prints JSON on success. Returns 2 on 404.
+get_package() {
+    local encoded="$1" err
+    err=$(mktemp)
+    if gh api "orgs/${ORG}/packages/container/${encoded}" 2>"${err}" ; then
+        rm -f "${err}"
+        return 0
+    fi
+    if grep -q '(HTTP 404)' "${err}" ; then
+        rm -f "${err}"
+        return 2
+    fi
+    cat "${err}" 1>&2
+    rm -f "${err}"
+    return 1
+}
 
 ensure_label
 
@@ -65,13 +97,27 @@ issues_json=$(load_issues)
 created=0
 closed=0
 skipped=0
+missing=0
 
-while IFS= read -r pkg ; do
-    [[ -z "${pkg}" ]] && continue
-    name=$(printf '%s' "${pkg}" | jq -r .name)
+while IFS= read -r name ; do
+    [[ -z "${name}" ]] && continue
+    encoded=${name//\//%2F}
+    set +e
+    pkg=$(get_package "${encoded}")
+    rc=$?
+    set -e
+    if [[ "${rc}" -eq 2 ]] ; then
+        echo "Not published: ${name}"
+        missing=$((missing + 1))
+        continue
+    fi
+    if [[ "${rc}" -ne 0 ]] ; then
+        exit "${rc}"
+    fi
+
     visibility=$(printf '%s' "${pkg}" | jq -r .visibility)
     html_url=$(printf '%s' "${pkg}" | jq -r .html_url)
-    settings_url="https://github.com/orgs/${ORG}/packages/container/${name//\//%2F}/settings#:~:text=Change%20package%20visibility"
+    settings_url="https://github.com/orgs/${ORG}/packages/container/${encoded}/settings#:~:text=Change%20package%20visibility"
     title=$(issue_title "${name}")
     open_number=$(printf '%s' "${issues_json}" | jq -r --arg title "${title}" '[.[] | select(.title == $title and .state == "OPEN") | .number] | first // empty')
     any_number=$(printf '%s' "${issues_json}" | jq -r --arg title "${title}" '[.[] | select(.title == $title) | .number] | first // empty')
@@ -118,6 +164,6 @@ EOF
 )"
     fi
     created=$((created + 1))
-done < <(printf '%s\n' "${packages}")
+done < <(chart_package_names)
 
-echo "Created ${created}, closed ${closed}, skipped ${skipped}"
+echo "Created ${created}, closed ${closed}, skipped ${skipped}, not published ${missing}"
