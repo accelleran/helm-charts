@@ -3,8 +3,6 @@ name: GHCR package visibility
 on:
   workflow_dispatch:
   workflow_call:
-  schedule:
-    - cron: '17 8 * * 1'
 
 permissions:
   contents: read
