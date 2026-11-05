@@ -47,3 +47,13 @@ jobs:
           CHARTS: ${{ inputs.charts }}
           DEST_REGISTRY: ghcr.io/${{ github.repository_owner }}/charts
         run: ./bin/copy-external-charts-to-oci
+
+  report-private-ghcr-packages:
+    name: Report private GHCR packages
+    if: ${{ !cancelled() && !failure() }}
+    needs: push
+    permissions:
+      contents: read
+      issues: write
+      packages: read
+    uses: ./.github/workflows/ghcr-package-visibility.yaml
