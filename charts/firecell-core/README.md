@@ -260,7 +260,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | fcAcsAgent.database.name | string | `"firecell_ran_tr069"` |  |
 | fcAcsAgent.database.port | int | `3306` |  |
 | fcAcsAgent.database.user | string | `"root"` |  |
-| fcAcsAgent.enabled | bool | `true` |  |
+| fcAcsAgent.enabled | bool | `false` |  |
 | fcAcsAgent.image | string | `"fc-acs-agent"` |  |
 | fcAcsAgent.imageOverride | string | `""` |  |
 | fcAcsAgent.imageTag | string | `"5.0.1.0"` |  |
@@ -519,7 +519,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udr.resources.requests.cpu | string | `"500m"` |  |
 | udr.resources.requests.memory | string | `"512Mi"` |  |
 | udr.waitForMysql | bool | `true` |  |
-| udsf.enabled | bool | `false` |  |
+| udsf.enabled | bool | `true` |  |
 | udsf.fcaps.datastore.file | string | `"cm.json"` |  |
 | udsf.fcaps.datastore.mountPath | string | `"/var/lib/firecell/cm"` |  |
 | udsf.fcaps.datastore.size | string | `"128Mi"` |  |

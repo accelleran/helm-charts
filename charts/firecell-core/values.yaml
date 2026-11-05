@@ -92,9 +92,8 @@ mysql:
       cpu: 1000m
 
 # --- UDSF (Unstructured Data Storage Function) + Redis backing store ---
-# Disabled by default. Enable via environments/values-stateless.yaml (Phase 3 stateless overlay).
 udsf:
-  enabled: false
+  enabled: true
   image: cn5g-udsf
   # cn5g-udsf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
   imageTag: "20261023-150143-8446d7937614"
@@ -893,8 +892,9 @@ extDn:
         cpu: 200m
 
 # --- FC ACS Agent (TR-069 ACS endpoint) ---
+# Off by default (CloudRAN / ACS installs enable it explicitly).
 fcAcsAgent:
-  enabled: true
+  enabled: false
   image: fc-acs-agent
   # Full image reference, winning over the registry + image + tag composition.
   # Every NF already has this; the agents did not, so an agent published
