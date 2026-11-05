@@ -51,13 +51,12 @@ app: {{ .nfName }}
 Build a full image reference: registry/image:tag
 */}}
 {{- define "firecell-5gc.image" -}}
-{{- printf "%s/%s:v%s" .registry .image .tag }}
+{{- printf "%s/%s:%s" .registry .image .tag }}
 {{- end }}
 
 {{/*
-Image reference for a cn5g NF: registry/image:imageTag, used as-is (the CI tags
-are <UTC build time>-<sha12>, with no "v"). Empty imageTag falls back to
-registry/image:v<pkgVersion>.
+Image reference for a cn5g NF: registry/image:imageTag, used as-is. Empty
+imageTag falls back to registry/image:<pkgVersion>.
 dict: registry, image, imageTag, pkgVersion
 */}}
 {{- define "firecell-5gc.nfImage" -}}
