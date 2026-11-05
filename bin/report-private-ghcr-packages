@@ -71,6 +71,7 @@ while IFS= read -r pkg ; do
     name=$(printf '%s' "${pkg}" | jq -r .name)
     visibility=$(printf '%s' "${pkg}" | jq -r .visibility)
     html_url=$(printf '%s' "${pkg}" | jq -r .html_url)
+    settings_url="https://github.com/orgs/${ORG}/packages/container/${name//\//%2F}/settings#:~:text=Change%20package%20visibility"
     title=$(issue_title "${name}")
     open_number=$(printf '%s' "${issues_json}" | jq -r --arg title "${title}" '[.[] | select(.title == $title and .state == "OPEN") | .number] | first // empty')
     any_number=$(printf '%s' "${issues_json}" | jq -r --arg title "${title}" '[.[] | select(.title == $title) | .number] | first // empty')
@@ -110,7 +111,7 @@ The GHCR package [\`${name}\`](${html_url}) is **${visibility}**.
 
 GitHub does not provide an API to change package visibility. Either:
 
-- Make it public: [package settings](${html_url}/settings) → Change visibility → Public
+- Make it public: [Change package visibility](${settings_url})
 - Leave it private: close this issue. Later runs will not open a new one unless you reopen it.
 
 EOF
