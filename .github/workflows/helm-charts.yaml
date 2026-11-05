@@ -269,6 +269,16 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+      # First-party CR leaves .tgz files in .cr-release-packages and pushes
+      # gh-pages without updating origin/gh-pages in this checkout. The
+      # external CR would then index those leftover packages against a stale
+      # index.yaml and fail: local changes would be overwritten by merge.
+      - name: Reset packages and fetch gh-pages
+        run: |
+          rm -rf .cr-release-packages
+          mkdir -p .cr-release-packages
+          git fetch origin gh-pages
+
       - name: Pull external helm charts
         run: ./bin/pull-external-charts
 
