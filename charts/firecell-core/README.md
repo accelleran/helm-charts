@@ -60,6 +60,19 @@ MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when
      --docker-password=<TOKEN> \
      --namespace firecell-core
    ```
+3. To try a cn5g **PR build from GHCR** instead of the Hub defaults, layer
+   [`examples/values-images-ghcr.yaml`](examples/values-images-ghcr.yaml) and set
+   `global.pkgVersion` to the PR tag (`pr-<NUMBER>`):
+   ```bash
+   helm upgrade --install firecell-core ./charts/firecell-core \
+     --namespace firecell-core \
+     -f examples/values-images-ghcr.yaml \
+     --set global.pkgVersion=pr-<NUMBER> \
+     --atomic --timeout 15m
+   ```
+   That overlay points `imageRegistry` at `ghcr.io/accelleran` and expects a
+   `ghcr-regcred` pull secret (`--docker-server=ghcr.io`).
+
 ### 3.2 Atomic Installation
 Deploy the chart with `--atomic` and an appropriate timeout:
 ```bash

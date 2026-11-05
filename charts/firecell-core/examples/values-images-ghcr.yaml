@@ -1,0 +1,23 @@
+# Pull cn5g NF images from GHCR instead of the Docker Hub defaults.
+#
+# cn5g CI publishes GHCR tags pr-<NUMBER> / pr-<NUMBER>-<sha> on pull requests,
+# and edge on master. Empty NF imageTags fall back to global.pkgVersion — set
+# that to the tag you want when layering this file:
+#
+#   helm upgrade --install firecell-core ./charts/firecell-core \
+#     -n firecell-core \
+#     -f examples/values-images-ghcr.yaml \
+#     --set global.pkgVersion=pr-<NUMBER>
+#
+# Pre-create a GHCR pull secret in the release namespace:
+#   kubectl create secret docker-registry ghcr-regcred \
+#     --docker-server=ghcr.io \
+#     --docker-username=<user> --docker-password=<PAT> \
+#     -n firecell-core
+
+global:
+  imageRegistry: ghcr.io/accelleran
+  imagePullSecrets:
+    - name: ghcr-regcred
+  # Override at install time, e.g. --set global.pkgVersion=pr-<NUMBER>
+  # pkgVersion: pr-<NUMBER>
