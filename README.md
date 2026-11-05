@@ -74,7 +74,8 @@ chart-releaser uploads it as a GitHub release and merges it into
 chart keeps its upstream name and version.
 
 `alias` is not supported: renaming a chart requires rewriting `Chart.yaml`
-and would produce a new tarball.
+and would produce a new tarball. Published names must be unique across
+first-party `Chart.yaml` and `External.yaml`; CI fails on a collision.
 
 ### Release notes
 
