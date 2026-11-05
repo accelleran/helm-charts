@@ -8,6 +8,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Serialize pushes to main/releases so Please cannot run while another push
+# still owes a chart-releaser tag (see #1862 / #1866). PRs stay per-PR and
+# may cancel older runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
 
   vars:
