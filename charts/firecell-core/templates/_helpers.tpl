@@ -370,11 +370,19 @@ Kamailio CSCF common env (UDR MySQL).
   value: {{ .root.Values.coreConfig.mnc | default "01" | quote }}
 - name: MYSQL_HOST
   value: {{ .root.Values.ims.mysqlHost | default (printf "mysql.%s.svc.cluster.local" .root.Values.global.namespace) | quote }}
-- name: MYSQL_ROOT_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: mysql-secrets
-      key: root-password
+# The root password is used at start only (schema + account), then unset by the
+# init; the runtime account password comes from the IMS credentials Secret.
+# File form only: the Kamailio init lets a *_FILE win over the variable.
+- name: MYSQL_ROOT_PASSWORD_FILE
+  value: /run/secrets/ims/root-password
+- name: KAMAILIO_DB_PASSWORD_FILE
+  value: /run/secrets/ims/kamailio-db-password
+{{- with .root.Values.ims.dbAccountHost }}
+- name: KAMAILIO_DB_USER_HOST
+  value: {{ . | quote }}
+{{- end }}
+- name: FIRECELL_STRICT_SECRETS
+  value: {{ ternary "true" "false" (.root.Values.ims.strictSecrets | default false) | quote }}
 - name: REGISTRATION_EXPIRES
   value: {{ .root.Values.ims.registrationExpires | default "3600" | quote }}
 - name: IMS_DOMAIN

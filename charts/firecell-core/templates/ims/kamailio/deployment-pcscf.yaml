@@ -39,7 +39,6 @@ spec:
           args:
             - |
               mkdir -p /var/run/kamailio_pcscf
-              sed -i "s|@127.0.0.1/pcscf|@${MYSQL_HOST}/pcscf|g; s|@MYSQL_IP/pcscf|@${MYSQL_HOST}/pcscf|g" /opt/firecell/config/pcscf/pcscf.cfg
               exec /firecell-entrypoint.sh
           securityContext:
             privileged: {{ .Values.ims.pcscf.privileged | default true }}
@@ -61,6 +60,10 @@ spec:
               value: {{ .Values.ims.ueImsSubnet | quote }}
             - name: RTPENGINE_IP
               value: {{ .Values.ims.rtpengine.ip | default "127.0.0.1" | quote }}
+          volumeMounts:
+            - name: ims-secrets
+              mountPath: /run/secrets/ims
+              readOnly: true
           ports:
             - name: sip-tcp
               containerPort: {{ .Values.ims.pcscf.bindPort | default 5060 }}
@@ -92,6 +95,8 @@ spec:
                 - pgrep -x kamailio > /dev/null
             initialDelaySeconds: 90
             periodSeconds: 20
+      volumes:
+        {{- include "firecell-5gc.imsSecretVolume" (dict "root" . "name" "ims-secrets" "withRoot" true "keys" (list "kamailio-db-password")) | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
