@@ -1,5 +1,12 @@
 # Changelog
 
+## [12.0.9](https://github.com/accelleran/helm-charts/compare/cu-cp-12.0.8...cu-cp-12.0.9) (2026-11-06)
+
+
+### Bug Fixes
+
+* **deps:** Update accelleran/cu-cp docker tag to v9.0.6 ([#1870](https://github.com/accelleran/helm-charts/issues/1870)) ([7760d6d](https://github.com/accelleran/helm-charts/commit/7760d6d74cc84164cdd96061a7f4eecf017c2264))
+
 ## [12.0.8](https://github.com/accelleran/helm-charts/compare/cu-cp-12.0.7...cu-cp-12.0.8) (2026-11-03)
 
 
