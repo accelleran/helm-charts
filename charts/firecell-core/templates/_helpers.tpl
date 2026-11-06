@@ -382,6 +382,42 @@ Kamailio CSCF common env (UDR MySQL).
 {{- end }}
 
 {{/*
+Cx gateway env shared by its provision init container and its runtime container.
+Call with (dict "root" $ "mode" "provision|serve|all" "imsDomain" <domain>).
+*/}}
+{{- define "firecell-5gc.cxGatewayEnv" -}}
+{{- $v := .root.Values -}}
+- name: CX_MODE
+  value: {{ .mode | quote }}
+- name: MYSQL_HOST
+  value: {{ $v.ims.mysqlHost | default (printf "mysql.%s.svc.cluster.local" $v.global.namespace) | quote }}
+- name: CX_DB_PASSWORD_FILE
+  value: /run/secrets/ims/cx-db-password
+{{- with $v.ims.dbAccountHost }}
+- name: CX_DB_ACCOUNT_HOST
+  value: {{ . | quote }}
+{{- end }}
+{{- with $v.ims.cxGateway.allowedPeers }}
+- name: CX_DIAMETER_ALLOWED_PEERS
+  value: {{ . | quote }}
+{{- end }}
+- name: CX_STRICT_SECURITY
+  value: {{ ternary "1" "0" ($v.ims.strictSecrets | default false) | quote }}
+- name: CX_GATEWAY_IP
+  value: {{ $v.ims.cxGateway.ip | quote }}
+- name: CX_GATEWAY_PORT
+  value: {{ $v.ims.cxGateway.port | default "3868" | quote }}
+- name: MCC
+  value: {{ $v.coreConfig.mcc | default "001" | quote }}
+- name: MNC
+  value: {{ $v.coreConfig.mnc | default "01" | quote }}
+- name: IMS_DOMAIN
+  value: {{ .imsDomain | quote }}
+- name: CX_SOT
+  value: {{ $v.ims.cxGateway.cxSot | default "udr" | quote }}
+{{- end }}
+
+{{/*
 Name of the Secret with the IMS MySQL account passwords (keys cx-db-password,
 kamailio-db-password): ims.credentials.existingSecret, else the chart's own.
 */}}
