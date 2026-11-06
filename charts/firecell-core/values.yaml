@@ -1016,6 +1016,10 @@ coreConfig:
     enableUsageReporting: "no"
     # OAI key: enable_dl_pdr_in_pfcp_session_establishment (per-UPF under smf.upfs[].config)
     enableDlPdrInPfcpSessionEstablishment: "yes"
+    # Per-UPF OAI key: enable_session_ambr_qer. "yes" => the SMF sends a session
+    # QER (MBR = Session-AMBR) and links it to every non-GBR PDR, so the UPF
+    # enforces Session-AMBR. Needs a UPF that reads several QERs per PDR.
+    enableSessionAmbrQer: "no"
     # Per-UPF OAI key: enable_upf_wo_nf_discovery. "yes" => static upf_pool (skip NRF).
     # "no" => SMF discovers UPFs via NRF (dynamic UPF selection). Requires UPFs to register
     # to NRF successfully (SBI on cni0 for hostNetwork UPFs).

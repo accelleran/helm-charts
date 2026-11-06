@@ -222,6 +222,7 @@ smf:
         enable_upf_wo_nf_discovery: {{ $v.coreConfig.smf.enableUpfWoNfDiscovery | default "yes" }}
         enable_usage_reporting: {{ $v.coreConfig.smf.enableUsageReporting }}
         enable_dl_pdr_in_pfcp_session_establishment: {{ $v.coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | default "yes" }}
+        enable_session_ambr_qer: {{ $v.coreConfig.smf.enableSessionAmbrQer | default "no" }}
         {{- if $upfInst.n3IP }}
         n3_local_ipv4: {{ $upfInst.n3IP }}
         {{- end }}
@@ -262,6 +263,7 @@ smf:
         enable_upf_wo_nf_discovery: {{ $v.coreConfig.smf.enableUpfWoNfDiscovery | default "yes" }}
         enable_usage_reporting: {{ $v.coreConfig.smf.enableUsageReporting }}
         enable_dl_pdr_in_pfcp_session_establishment: {{ $v.coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | default "yes" }}
+        enable_session_ambr_qer: {{ $v.coreConfig.smf.enableSessionAmbrQer | default "no" }}
         {{- if $v.upf.n3IP }}
         n3_local_ipv4: {{ $v.upf.n3IP }}
         {{- end }}

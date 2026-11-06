@@ -111,6 +111,7 @@ spec:
                     print "        enable_upf_wo_nf_discovery: yes"
                     print "        enable_usage_reporting: no"
                     print "        enable_dl_pdr_in_pfcp_session_establishment: yes"
+                    print "        enable_session_ambr_qer: {{ .Values.coreConfig.smf.enableSessionAmbrQer | default "no" }}"
                     print "        n3_local_ipv4: " n3
                     done = 1
                   }
