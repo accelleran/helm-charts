@@ -43,6 +43,14 @@ spec:
               value: {{ $icscfIp | quote }}
             - name: SCSCF_IP
               value: {{ $scscfIp | quote }}
+            {{- if .Values.ims.cxGateway.enabled }}
+            # Cx peer for UAR/LIR. Without it the I-CSCF resolves hss.<IMS domain>
+            # through DNS and Cx fails quietly when that name does not exist.
+            - name: CX_GATEWAY_IP
+              value: {{ .Values.ims.cxGateway.ip | quote }}
+            - name: CX_GATEWAY_PORT
+              value: {{ .Values.ims.cxGateway.port | default "3868" | quote }}
+            {{- end }}
           volumeMounts:
             - name: ims-secrets
               mountPath: /run/secrets/ims
