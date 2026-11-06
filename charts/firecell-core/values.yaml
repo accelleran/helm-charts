@@ -273,6 +273,20 @@ udm:
       cpu: 2000m
   # SUCI decryption private key — REQUIRED via overlay (see values-lab-insecure-defaults.yaml for lab demo key)
   suciKey: ""
+  # -- More SUCI home network profiles, next to the one from coreConfig.udm.suci* (TS 33.501 Annex C.3).
+  # Each entry: `id` = the home network public key ID the UE sends (the UDM has no fallback when it
+  # matches no profile), `scheme` = 1 (Profile A, X25519) or 2 (Profile B, P-256), `key` = PKCS#8 PEM
+  # private key. Each key is stored in ConfigMap oai-udm-config as suci-<id>.pem (like suciKey) and
+  # mounted at /openair-udm/etc/suci-<id>.pem. Empty (default): only the single profile, as before.
+  # Example:
+  #   extraSuciProfiles:
+  #     - id: 11
+  #       scheme: 1
+  #       key: |
+  #         -----BEGIN PRIVATE KEY-----
+  #         ...
+  #         -----END PRIVATE KEY-----
+  extraSuciProfiles: []
   fcaps:
     enabled: false
     mnsPort: 9091
