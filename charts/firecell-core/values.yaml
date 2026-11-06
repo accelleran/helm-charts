@@ -782,6 +782,16 @@ ims:
       limits:
         memory: 128Mi
         cpu: 200m
+  # MySQL accounts of the IMS (Kamailio CSCFs and Cx gateway; cn5g-ims rc-02
+  # images, which create and re-password their accounts on every start).
+  credentials:
+    # Name of an existing Secret with keys cx-db-password and
+    # kamailio-db-password. Empty: the chart creates ims-db-credentials.
+    existingSecret: ""
+    # Empty: 32 random alphanumerics, generated once and kept on upgrade.
+    # The Kamailio password must match [A-Za-z0-9._~-]{1,64}.
+    cxDbPassword: ""
+    kamailioDbPassword: ""
   # Kamailio CSCFs — hostNetwork IPs must exist on the node before Ready.
   ueImsSubnet: "14.1.1.0/25"
   upfN6Gateway: ""

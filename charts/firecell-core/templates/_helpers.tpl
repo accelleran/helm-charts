@@ -382,6 +382,60 @@ Kamailio CSCF common env (UDR MySQL).
 {{- end }}
 
 {{/*
+Name of the Secret with the IMS MySQL account passwords (keys cx-db-password,
+kamailio-db-password): ims.credentials.existingSecret, else the chart's own.
+*/}}
+{{- define "firecell-5gc.imsCredentialsSecret" -}}
+{{- .Values.ims.credentials.existingSecret | default "ims-db-credentials" -}}
+{{- end }}
+
+{{/*
+One IMS account password: explicit value, else the live chart Secret (lookup,
+so an upgrade keeps it), else 32 random alphanumerics. Alphanumerics fit both
+the gateway charset and the narrower Kamailio one ([A-Za-z0-9._~-]{1,64}).
+Call with (dict "root" $ "key" "cx-db-password" "value" <explicit>).
+*/}}
+{{- define "firecell-5gc.imsCredential" -}}
+{{- if .value -}}
+{{- .value -}}
+{{- else -}}
+{{- $existing := lookup "v1" "Secret" .root.Values.global.namespace "ims-db-credentials" -}}
+{{- if and $existing $existing.data (hasKey $existing.data .key) -}}
+{{- index $existing.data .key | b64dec -}}
+{{- else -}}
+{{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Projected volume /run/secrets/ims for the IMS containers: the MySQL root
+password (mysql-secrets) and the account passwords named in .keys.
+Mode 0440 with the pod's fsGroup lets the gateway (uid 10001) read them.
+Call with (dict "root" $ "name" <volume> "withRoot" bool "keys" (list ...)).
+*/}}
+{{- define "firecell-5gc.imsSecretVolume" -}}
+- name: {{ .name }}
+  projected:
+    defaultMode: 0440
+    sources:
+      {{- if .withRoot }}
+      - secret:
+          name: mysql-secrets
+          items:
+            - key: root-password
+              path: root-password
+      {{- end }}
+      - secret:
+          name: {{ include "firecell-5gc.imsCredentialsSecret" .root }}
+          items:
+            {{- range .keys }}
+            - key: {{ . }}
+              path: {{ . }}
+            {{- end }}
+{{- end }}
+
+{{/*
 Namespace of the firecell-nms release.
 */}}
 {{- define "firecell-5gc.nmsNamespace" -}}
