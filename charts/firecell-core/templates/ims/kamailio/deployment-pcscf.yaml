@@ -60,6 +60,9 @@ spec:
               value: {{ .Values.ims.ueImsSubnet | quote }}
             - name: RTPENGINE_IP
               value: {{ .Values.ims.rtpengine.ip | default "127.0.0.1" | quote }}
+            # false drops FORCE_RTPRELAY (the image default is true).
+            - name: RTPENGINE_ENABLED
+              value: {{ ternary "true" "false" (.Values.ims.rtpengine.enabled | default false) | quote }}
           volumeMounts:
             - name: ims-secrets
               mountPath: /run/secrets/ims
