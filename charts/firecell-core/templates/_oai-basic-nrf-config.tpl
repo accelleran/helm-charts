@@ -363,4 +363,9 @@ udm:
     - id: {{ $v.coreConfig.udm.suciProfileId }}
       key_file: {{ $v.coreConfig.udm.suciKeyFile }}
       scheme: {{ $v.coreConfig.udm.suciScheme }}
+  {{- range $v.udm.extraSuciProfiles }}
+    - id: {{ required "udm.extraSuciProfiles[].id is required" .id }}
+      key_file: /openair-udm/etc/suci-{{ .id }}.pem
+      scheme: {{ required "udm.extraSuciProfiles[].scheme is required" .scheme }}
+  {{- end }}
 {{- end }}
