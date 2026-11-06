@@ -36,7 +36,6 @@ spec:
           args:
             - |
               mkdir -p /var/run/kamailio_icscf
-              sed -i "s|@localhost/icscf|@${MYSQL_HOST}/icscf|g; s|@127.0.0.1/icscf|@${MYSQL_HOST}/icscf|g; s|@MYSQL_IP/icscf|@${MYSQL_HOST}/icscf|g" /opt/firecell/config/icscf/icscf.cfg
               exec /firecell-entrypoint.sh
           env:
             {{- include "firecell-5gc.kamailioCommonEnv" (dict "root" . "component" "icscf") | nindent 12 }}
@@ -44,6 +43,10 @@ spec:
               value: {{ $icscfIp | quote }}
             - name: SCSCF_IP
               value: {{ $scscfIp | quote }}
+          volumeMounts:
+            - name: ims-secrets
+              mountPath: /run/secrets/ims
+              readOnly: true
           ports:
             - name: sip-tcp
               containerPort: {{ .Values.ims.icscf.bindPort | default 4060 }}
@@ -58,6 +61,8 @@ spec:
               command: ["/bin/sh", "-c", "pgrep -x kamailio > /dev/null"]
             initialDelaySeconds: 30
             periodSeconds: 10
+      volumes:
+        {{- include "firecell-5gc.imsSecretVolume" (dict "root" . "name" "ims-secrets" "withRoot" true "keys" (list "kamailio-db-password")) | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
