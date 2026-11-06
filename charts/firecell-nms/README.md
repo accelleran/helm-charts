@@ -189,8 +189,8 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.config.qosReconcileIntervalSeconds | int | `30` | How often the operator's PCC rules are re-asserted on the PCF. 0 disables it. |
 | backend.config.reconcileTimeoutSeconds | int | `15` |  |
 | backend.config.retentionIntervalSeconds | int | `3600` |  |
-| backend.config.seedDnnsJson | string | `""` | Level-1 "Data network" instances the bootstrap seeds on an EMPTY catalogue. Pass the DNNs the 5GC chart runs, e.g. `[{"dnn":"oai","ipv4Subnet":"12.1.1.0/25","pduSessionType":"IPV4"}]`. Empty keeps the built-in seed (a DNN called "default"). |
-| backend.config.seedSliceJson | string | `""` | The first slice the bootstrap seeds, e.g. `{"sst":1,"sd":"000001"}`. |
+| backend.config.seedDnnsJson | string | `"[{\"dnn\":\"oai\",\"ipv4Subnet\":\"12.1.1.0/25\",\"pduSessionType\":\"IPV4\"},{\"dnn\":\"ims\",\"ipv4Subnet\":\"14.1.1.0/25\",\"pduSessionType\":\"IPV4V6\"}]"` | Level-1 "Data network" instances the bootstrap seeds on an EMPTY catalogue, in the order of firecell-core `coreConfig.dnns` (the order numbers the instances, and the SMF and UPF number their DNNs the same way). The default is firecell-core's default. Change both together. Empty keeps the backend's built-in seed (a DNN called "default"). |
+| backend.config.seedSliceJson | string | `"{\"sst\":1,\"sd\":\"000001\"}"` | The first slice the bootstrap seeds: firecell-core's default `coreConfig.nssai[0]` and the RAN charts' `gnb.slices[0]`. |
 | backend.config.southboundTimeoutSeconds | int | `6` |  |
 | backend.config.trustGatewayHeaders | bool | `false` | Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires networkPolicy.enabled: the backend does not check tokens on this path. |
 | backend.controlPlane.minReadySeconds | int | `20` | Seconds the control plane must stay up before it counts as available (its probes only check that the process lives). |
