@@ -10,7 +10,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: {{ if eq .Values.upf.type "oai" }}oai-upf{{ else }}o5gs-upf{{ end }}
+      app: oai-upf
   policyTypes:
     - Ingress
   ingress:

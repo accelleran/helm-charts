@@ -18,12 +18,11 @@ The **Firecell Core** Helm chart deploys the 3GPP Release 16 5G Core Network sta
   - **AUSF** (`oai-ausf`): Authentication Server Function executing 5G-AKA authentication.
   - **PCF** (`oai-pcf`): Policy Control Function managing QoS rules and policy decisions.
 - **User Plane (UP):**
-  - **UPF** (`oai-upf` / `open5gs-upf`): User Plane Function handling GTP-U packet forwarding (UDP 2152) and DNN routing.
+  - **UPF** (`oai-upf`): User Plane Function handling GTP-U packet forwarding (UDP 2152) and DNN routing.
   - **Ext-DN** (`ext-dn`): External Data Network simulation container providing uplink routing and Internet connectivity.
 - **Persistence & Storage:**
   - **MySQL Database** (`mysql`): StatefulSet storing 3GPP subscriber credentials, PCF policies, and provisioning records. Initialized automatically via SQL scripts in `sql/`.
 - **Support & Agents:**
-  - **CN-Agent** (`cn-agent`): Core network local agent for metric collection and status reporting.
   - **FC-ACS-Agent** (`fc-acs-agent`): Auto-Configuration Server agent for TR-069 management.
   - **UDSF** (`udsf`): Unstructured Data Storage Function with Redis backend.
   - **IMS**: Kamailio P/I/S-CSCF + Cx-on-UDR by default (`ims.engine=kamailio`, `ims.cxGateway.cxSot=udr`). Asterisk-only opt-in: `examples/values-ims-asterisk.yaml`.
@@ -56,12 +55,24 @@ MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when
 2. Pre-create the container registry secret in the target namespace (e.g. `firecell-core`):
    ```bash
    kubectl create namespace firecell-core
-   kubectl create secret docker-registry ghcr-regcred \
-     --docker-server=ghcr.io \
+   kubectl create secret docker-registry dockerhub-regcred \
+     --docker-server=https://index.docker.io/v1/ \
      --docker-username=<USERNAME> \
      --docker-password=<TOKEN> \
      --namespace firecell-core
    ```
+3. To try a cn5g **PR build from GHCR** instead of the Hub defaults, layer
+   [`examples/values-images-ghcr.yaml`](examples/values-images-ghcr.yaml) and set
+   `global.pkgVersion` to the PR tag (`pr-<NUMBER>`):
+   ```bash
+   helm upgrade --install firecell-core ./charts/firecell-core \
+     --namespace firecell-core \
+     -f examples/values-images-ghcr.yaml \
+     --set global.pkgVersion=pr-<NUMBER> \
+     --atomic --timeout 15m
+   ```
+   That overlay points `imageRegistry` at `ghcr.io/accelleran` and expects a
+   `ghcr-regcred` pull secret (`--docker-server=ghcr.io`).
 
 ### 3.2 Atomic Installation
 Deploy the chart with `--atomic` and an appropriate timeout:
@@ -105,7 +116,7 @@ helm uninstall firecell-core --namespace firecell-core
 With `nms.rbac` (the default), the chart grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` (default `firecell-nms`) what the NMS needs in this namespace:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-core-<nms namespace>`: pod reads and logs, and intent ConfigMaps.
-- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` or `o5gs-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.
 
 The NMS and the core can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
 

@@ -80,9 +80,6 @@ extDn:
   enabled: true
   imageOverride: ghcr.io/accelleran/trf-gen-cn5g:latest
 
-cnAgent:
-  enabled: false
-
 fcAcsAgent:
   enabled: false
 
@@ -125,8 +122,3 @@ upf:
   n6Cidr: 10.10.0.101/24
   remoteN6Gw: 10.10.0.2
   enableBpfDatapath: true
-  packetCapture:
-    enabled: false
-  dnnDataplane:
-    enabled: false
-    imageOverride: ghcr.io/accelleran/fc-dnn-dataplane:route-fix

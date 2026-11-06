@@ -113,13 +113,13 @@ dependencies:
       - logs
     version: 0.1.11
     repository: https://accelleran.github.io/helm-charts/
-  - name: minio
-    condition: minio.enabled
+  - name: silo
+    condition: silo.enabled
     tags:
       - logs
       - events
-    version: 5.4.0
-    repository: https://charts.min.io/
+    version: 7.0.3
+    repository: file://charts/silo
   - name: promtail
     alias: promtail-logs
     condition: promtail-logs.enabled

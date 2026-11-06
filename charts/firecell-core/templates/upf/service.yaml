@@ -1,6 +1,6 @@
 {{- if .Values.upf.enabled }}
 {{- /*
-  Build effective instance list — mirrors deployment-o5gs.yaml pattern.
+  Build effective instance list — mirrors deployment-oai.yaml pattern.
   Single-UPF (legacy) mode: one Service, VIP = network.upfExternalIP.
   Multi-UPF mode: one Service per instance, each VIP = inst.n3IP.
 */}}
@@ -12,10 +12,7 @@
 ) }}
 {{- end }}
 {{- range $i, $inst := $instances }}
-{{- $appName := printf "o5gs-upf%s" (($inst.suffix | default "" | toString)) }}
-{{- if eq ($.Values.upf.type | default "oai") "oai" }}
-{{- $appName = printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
-{{- end }}
+{{- $appName := printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
 ---
 apiVersion: v1
 kind: Service
@@ -51,24 +48,13 @@ spec:
       port: 8805
       targetPort: 8805
       protocol: UDP
-    {{- if and (eq ($.Values.upf.type | default "oai") "oai") ($.Values.upf.fcaps.enabled | default false) }}
+    {{- if ($.Values.upf.fcaps.enabled | default false) }}
     # The NMS reaches the MnS producer through this port. The UPF Service is
     # already a LoadBalancer for GTP-U; the in-cluster ClusterIP of the same
     # object is what the NMS uses.
     - name: mns
       port: {{ $.Values.upf.fcaps.mnsPort }}
       targetPort: {{ $.Values.upf.fcaps.mnsPort }}
-      protocol: TCP
-    {{- end }}
-    {{- if $.Values.upf.dnnDataplane.enabled | default false }}
-    {{- $dnnDpPort := add ($.Values.upf.dnnDataplane.basePort | default 8196 | int) $i }}
-    # This is the address that belongs in nf_endpoint kind DNN_DP for this NE.
-    # Per instance, not shared: the helper can only reach the namespace of the
-    # pod it runs in, so a Service spanning several UPFs would answer for the
-    # wrong one.
-    - name: dnn-dataplane
-      port: {{ $dnnDpPort }}
-      targetPort: {{ $dnnDpPort }}
       protocol: TCP
     {{- end }}
   selector:
@@ -98,32 +84,4 @@ spec:
     app: {{ $appName }}
 {{- end }}
 {{- end }}
-{{- end }}
-{{- $pcapSvcEnabled := and .Values.upf.enabled (.Values.upf.packetCapture.enabled | default true) }}
-{{- $instList := .Values.upf.instances | default list }}
-{{- if not $instList }}
-{{- $instList = list (dict "suffix" "") }}
-{{- end }}
-{{- $multiUpf := gt (len $instList) 1 }}
-{{- if and $pcapSvcEnabled (or (not $multiUpf) (not (.Values.upf.packetCapture.disableOnMultiInstance | default true))) }}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: upf-packet-capture
-  namespace: {{ .Values.global.namespace }}
-  labels:
-    {{- include "firecell-5gc.labels" . | nindent 4 }}
-    app: upf-packet-capture
-    component: packet-capture
-    tier: core-network
-spec:
-  clusterIP: None
-  ports:
-    - name: packet-capture
-      port: 8095
-      targetPort: 8095
-      protocol: TCP
-  selector:
-    firecell.io/packet-capture: upf
 {{- end }}

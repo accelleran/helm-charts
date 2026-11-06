@@ -1,0 +1,169 @@
+#!/bin/bash
+#
+# Open a GitHub issue for each private ghcr.io/<org>/charts/<name> package.
+# Close that issue if the package is later public. A closed issue is left
+# alone so "should stay private" is just closing it.
+#
+# Packages are fetched one-by-one. Listing org container packages with
+# GITHUB_TOKEN returns HTTP 400 Invalid argument.
+#
+# DRY_RUN=1 prints actions without creating or closing issues.
+
+set -eu -o pipefail
+shopt -s nullglob globstar
+
+if ! command -v gh >/dev/null ; then
+    echo "gh is required" 1>&2
+    exit 1
+fi
+
+if ! command -v jq >/dev/null ; then
+    echo "jq is required" 1>&2
+    exit 1
+fi
+
+GIT_ROOT="$(realpath "$(dirname "$0")/..")"
+CHARTS_ROOT="${GIT_ROOT}/charts"
+REPO="${GITHUB_REPOSITORY:-accelleran/helm-charts}"
+ORG="${REPO%%/*}"
+LABEL="${GHCR_VISIBILITY_LABEL:-ghcr-visibility}"
+DRY_RUN="${DRY_RUN:-}"
+
+yaml_name() {
+    awk '
+        /^name:[[:space:]]*/ {
+            val = $0
+            sub(/^name:[[:space:]]*/, "", val)
+            gsub(/[\r\n]/, "", val)
+            gsub(/^["'\'']|["'\'']$/, "", val)
+            print val
+            exit
+        }
+    ' "$1"
+}
+
+chart_package_names() {
+    local f name
+    for f in "${CHARTS_ROOT}"/*/Chart.yaml "${CHARTS_ROOT}"/**/External.yaml ; do
+        name=$(yaml_name "${f}")
+        if [[ -n "${name}" ]] ; then
+            printf 'charts/%s\n' "${name}"
+        fi
+    done | sort -u
+}
+
+issue_title() {
+    printf 'GHCR package %s is private' "$1"
+}
+
+ensure_label() {
+    if gh api "repos/${REPO}/labels/${LABEL}" >/dev/null 2>&1 ; then
+        return
+    fi
+    if [[ -n "${DRY_RUN}" ]] ; then
+        echo "Would create label ${LABEL}"
+        return
+    fi
+    gh label create "${LABEL}" --repo "${REPO}" --description "GHCR chart package is private" --color D4C5F9
+}
+
+load_issues() {
+    gh issue list --repo "${REPO}" --state all --limit 1000 \
+        --search 'is:issue in:title "GHCR package"' \
+        --json number,state,title
+}
+
+# GET a package by name. Prints JSON on success. Returns 2 on 404.
+get_package() {
+    local encoded="$1" err
+    err=$(mktemp)
+    if gh api "orgs/${ORG}/packages/container/${encoded}" 2>"${err}" ; then
+        rm -f "${err}"
+        return 0
+    fi
+    if grep -q '(HTTP 404)' "${err}" ; then
+        rm -f "${err}"
+        return 2
+    fi
+    cat "${err}" 1>&2
+    rm -f "${err}"
+    return 1
+}
+
+ensure_label
+
+issues_json=$(load_issues)
+
+created=0
+closed=0
+skipped=0
+missing=0
+
+while IFS= read -r name ; do
+    [[ -z "${name}" ]] && continue
+    encoded=${name//\//%2F}
+    set +e
+    pkg=$(get_package "${encoded}")
+    rc=$?
+    set -e
+    if [[ "${rc}" -eq 2 ]] ; then
+        echo "Not published: ${name}"
+        missing=$((missing + 1))
+        continue
+    fi
+    if [[ "${rc}" -ne 0 ]] ; then
+        exit "${rc}"
+    fi
+
+    visibility=$(printf '%s' "${pkg}" | jq -r .visibility)
+    html_url=$(printf '%s' "${pkg}" | jq -r .html_url)
+    settings_url="https://github.com/orgs/${ORG}/packages/container/${encoded}/settings#:~:text=Change%20package%20visibility"
+    title=$(issue_title "${name}")
+    open_number=$(printf '%s' "${issues_json}" | jq -r --arg title "${title}" '[.[] | select(.title == $title and .state == "OPEN") | .number] | first // empty')
+    any_number=$(printf '%s' "${issues_json}" | jq -r --arg title "${title}" '[.[] | select(.title == $title) | .number] | first // empty')
+
+    if [[ "${visibility}" == "public" ]] ; then
+        if [[ -n "${open_number}" ]] ; then
+            echo "Closing #${open_number}: ${name} is public"
+            if [[ -z "${DRY_RUN}" ]] ; then
+                gh issue close "${open_number}" --repo "${REPO}" --comment "This package is now public."
+            fi
+            closed=$((closed + 1))
+        fi
+        continue
+    fi
+
+    if [[ "${visibility}" != "private" && "${visibility}" != "internal" ]] ; then
+        echo "Skipping ${name}: unexpected visibility ${visibility}"
+        continue
+    fi
+
+    if [[ -n "${open_number}" ]] ; then
+        echo "Already tracking ${name} in #${open_number}"
+        skipped=$((skipped + 1))
+        continue
+    fi
+
+    if [[ -n "${any_number}" ]] ; then
+        echo "Skipping ${name}: #${any_number} was closed (leave private or reopen)"
+        skipped=$((skipped + 1))
+        continue
+    fi
+
+    echo "Opening issue for ${name} (${visibility})"
+    if [[ -z "${DRY_RUN}" ]] ; then
+        gh issue create --repo "${REPO}" --label "${LABEL}" --title "${title}" --body "$(cat <<EOF
+The GHCR package [\`${name}\`](${html_url}) is **${visibility}**.
+
+GitHub does not provide an API to change package visibility. Either:
+
+- Make it public: [Change package visibility](${settings_url})
+- Leave it private: close this issue. Later runs will not open a new one unless you reopen it.
+
+EOF
+)"
+    fi
+    created=$((created + 1))
+done < <(chart_package_names)
+
+echo "Created ${created}, closed ${closed}, skipped ${skipped}, not published ${missing}"

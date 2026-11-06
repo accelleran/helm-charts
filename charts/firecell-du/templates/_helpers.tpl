@@ -216,6 +216,18 @@ they run on install/upgrade against a cluster and are skipped by helm template.
 {{- fail (printf "%s: mplane.dhcp needs mplane.dhcp.ruIp and ofh.ruMac" $n) }}
 {{- end }}
 {{- end }}
+{{- $grace := $i.terminationGracePeriodSeconds }}
+{{- if or (not (kindIs "float64" $grace)) (lt $grace 0.0) (ne (floor $grace) $grace) }}
+{{- fail (printf "%s: terminationGracePeriodSeconds must be a whole number of seconds >= 0 (got %v)" $n $grace) }}
+{{- end }}
+{{- /* The carrier ready timeout is only known to the chart when it is set; extraConfig.mplane wins over mplane.extra. */}}
+{{- $crt := dig "mplane" "carrier_ready_timeout_ms" (dig "carrier_ready_timeout_ms" nil ($i.mplane.extra | default dict)) ($i.extraConfig | default dict) }}
+{{- if and $i.mplane.enabled $crt }}
+{{- $stopS := add (divf ($crt | float64) 1000 | ceil | int) 10 }}
+{{- if le ($grace | int) $stopS }}
+{{- fail (printf "%s: terminationGracePeriodSeconds %v must exceed %v s (carrier_ready_timeout_ms + 10 s to switch the carriers off at stop, without CBRS; with CBRS the stop takes longer)" $n $grace $stopS) }}
+{{- end }}
+{{- end }}
 {{- $f1uNet := dig "network" dict ($i.f1u | default dict) }}
 {{- if dig "enabled" false $f1uNet }}
 {{- if or (not $f1uNet.master) (not (contains "/" (toString $f1uNet.cidr))) }}

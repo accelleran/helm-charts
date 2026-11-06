@@ -50,24 +50,47 @@ This is for example handy during development on the `common` library chart.
 
 ## External charts
 
-It is possible to pull in an external chart.
+It is possible to republish an upstream OCI chart into this repository's Helm
+repo and GHCR without unpacking or re-packaging it.
 
-To do this, in the `charts` directory a new chart directory should be created.
-This directory should then contain the file `External.yaml`.
-A format similar to an entry in `dependencies` in a `Chart.yaml` file can be provided in there.
+Create a directory under `charts` that contains only `External.yaml`:
 
 ```yaml
 name: example-chart
-alias: example
-repository: oci://ghcr.io/accelleran
+repository: oci://ghcr.io/example/charts
 version: 0.1.0
+notes:
+  github: example/example
+  tag: "v{{ version }}"
 ```
 
-`alias` is an optional field here, in case we want to use a different name as the original chart.
+The version must be exact (ranges such as `0.1` are not supported).
+Renovate bumps `version` when a newer chart is published upstream.
 
-Also note that the version should be specific.
-So a version expressing a range like `0.1` is not supported.
-Renovate will bump the version automatically to always release the latest version of an external chart.
+On release, the original `.tgz` is pulled into `.cr-release-packages` and
+chart-releaser uploads it as a GitHub release and merges it into
+`index.yaml`. The upstream OCI artifact is copied to
+`oci://ghcr.io/accelleran/charts` so the GHCR digest matches upstream. The
+chart keeps its upstream name and version.
+
+`alias` is not supported: renaming a chart requires rewriting `Chart.yaml`
+and would produce a new tarball. Published names must be unique across
+first-party `Chart.yaml` and `External.yaml`; CI fails on a collision.
+
+### Release notes
+
+`notes:` copies the body of a GitHub Release onto the republished chart.
+That is the only remote source. `notes.tag` is expanded against the
+pulled chart's `Chart.yaml`:
+
+| Placeholder | Value |
+| --- | --- |
+| `{{ name }}` | chart name |
+| `{{ version }}` | chart version |
+| `{{ appVersion }}` | chart `appVersion` |
+
+If `notes:` is omitted, the GitHub release body stays as the upstream
+`description` that chart-releaser already uses.
 
 ## New charts
 

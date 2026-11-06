@@ -8,6 +8,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Serialize pushes to main/releases so Please cannot run while another push
+# still owes a chart-releaser tag (see #1862 / #1866). PRs stay per-PR and
+# may cancel older runs.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
 
   vars:
@@ -28,7 +35,7 @@ jobs:
       helm_version: 3.22.1
       # renovate: github_repository=halkeye/helm-repo-html versioning=semver
       helm_repo_html_version: v0.2.1
-    timeout-minutes: 1
+    timeout-minutes: 2
     steps:
       - name: Expose variables
         run: echo "Exposing variables for proper usage"
@@ -55,6 +62,16 @@ jobs:
           echo "charts_to_lint=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --list --delimiter=, --path lint)" | tee -a $GITHUB_OUTPUT
           echo "charts_to_test=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --list --delimiter=, --path test)" | tee -a $GITHUB_OUTPUT
           echo "charts_to_test_matrix=$(./bin/list-charts ${{ github.event_name == 'pull_request' && format('--changed-only --target-branch={0}', github.base_ref) || '' }} --matrix test)" | tee -a $GITHUB_OUTPUT
+
+  check-chart-names:
+    name: Check chart names
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Check published chart names are unique
+        run: ./bin/check-chart-name-collisions
 
   lint-charts:
     name: Lint Charts
@@ -188,6 +205,7 @@ jobs:
     name: Status Charts
     needs:
       - vars
+      - check-chart-names
       - lint-charts
       - test-charts
     if: ${{ needs.vars.outputs.is_pull_request == 'true' && !cancelled() }}
@@ -202,14 +220,17 @@ jobs:
 
   release-charts:
     name: Release Charts
-    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' && !cancelled() && !failure() }}
+    # !failure() must apply on main too: a job `if` replaces implicit success().
+    if: ${{ !cancelled() && !failure() && (needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true') }}
     needs:
       - vars
+      - check-chart-names
       - lint-charts
       - test-charts
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
@@ -237,18 +258,56 @@ jobs:
       - name: Login to GHCR
         run: helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
-      - name: Pull external helm charts
-        run: ./bin/pull-external-charts
+      - name: Install oras
+        uses: oras-project/setup-oras@v1.2.4
+
+      - name: Login to GHCR (oras)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
 
       - name: Generate release notes
         run: ./bin/generate-release-notes
 
       - name: Run chart releaser
-        uses: helm/chart-releaser-action@v1.7.0
+        uses: helm/chart-releaser-action@v1.9.0
         with:
           config: etc/cr.yaml
+          skip_existing: true
+          oci_registry_url: oci://ghcr.io/${{ github.repository_owner }}/charts
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      # First-party CR leaves .tgz files in .cr-release-packages and pushes
+      # gh-pages without updating origin/gh-pages in this checkout. The
+      # external CR would then index those leftover packages against a stale
+      # index.yaml and fail: local changes would be overwritten by merge.
+      - name: Reset packages and fetch gh-pages
+        run: |
+          rm -rf .cr-release-packages
+          mkdir -p .cr-release-packages
+          git fetch origin gh-pages
+
+      - name: Pull external helm charts
+        run: ./bin/pull-external-charts
+
+      - name: Publish external charts
+        if: hashFiles('charts/*/External.yaml') != ''
+        uses: helm/chart-releaser-action@v1.9.0
+        with:
+          config: etc/cr.yaml
+          skip_packaging: true
+          skip_existing: true
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Copy external charts to GHCR
+        run: ./bin/copy-external-charts-to-oci
+        env:
+          DEST_REGISTRY: ghcr.io/${{ github.repository_owner }}/charts
+
+      - name: Apply external chart release notes
+        run: ./bin/apply-external-release-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate repo html index
         if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
@@ -265,7 +324,10 @@ jobs:
 
   release-please:
     name: Release
-    if: ${{ needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true' && !cancelled() && !failure() }}
+    # !failure() must apply on main too: a job `if` replaces implicit success().
+    # Otherwise Please runs when release-charts is skipped/failed (no tag yet) and
+    # opens a duplicate release PR — see #1862.
+    if: ${{ !cancelled() && !failure() && (needs.vars.outputs.is_main_branch == 'true' || needs.vars.outputs.is_release_branch == 'true') }}
     # Run after release-charts so that the tag exists in case of release commits.
     # Otherwise release please will create a new PR
     # as it doesn't yet have the release to compare changes with.
@@ -277,3 +339,15 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/release-please.yaml
     secrets: inherit
+
+  report-private-ghcr-packages:
+    name: Report private GHCR packages
+    if: ${{ !cancelled() && !failure() && needs.vars.outputs.is_main_branch == 'true' }}
+    needs:
+      - vars
+      - release-charts
+    permissions:
+      contents: read
+      issues: write
+      packages: read
+    uses: ./.github/workflows/ghcr-package-visibility.yaml

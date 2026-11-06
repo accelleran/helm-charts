@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# After chart-releaser has created GitHub releases for pulled external
+# charts, replace the default Chart.yaml description with upstream notes.
+#
+# The only remote source we fetch is a GitHub Release, pointed at by
+# notes.github + notes.tag in External.yaml. Placeholders in notes.tag:
+#   {{ name }}       Chart.yaml name
+#   {{ version }}    Chart.yaml version
+#   {{ appVersion }} Chart.yaml appVersion
+#
+# Charts without a notes: section are left as chart-releaser wrote them.
+
+set -eu -o pipefail
+shopt -s nullglob globstar
+
+PACKAGE_PATH="${CR_PACKAGE_PATH:-.cr-release-packages}"
+
+if ! command -v yq >/dev/null ; then
+    echo "yq is required (https://github.com/mikefarah/yq)"
+    exit 1
+fi
+
+if ! command -v helm >/dev/null ; then
+    echo "helm is required"
+    exit 1
+fi
+
+if ! command -v gh >/dev/null ; then
+    echo "gh is required (https://cli.github.com)"
+    exit 1
+fi
+
+substitute_tag() {
+    local tag="$1" name="$2" version="$3" app_version="$4"
+    tag="${tag//\{\{ name \}\}/${name}}"
+    tag="${tag//\{\{name\}\}/${name}}"
+    tag="${tag//\{\{ version \}\}/${version}}"
+    tag="${tag//\{\{version\}\}/${version}}"
+    tag="${tag//\{\{ appVersion \}\}/${app_version}}"
+    tag="${tag//\{\{appVersion\}\}/${app_version}}"
+    printf '%s' "${tag}"
+}
+
+failed=0
+
+for ext in charts/**/External.yaml ; do
+    name=$(yq -r '.name' "${ext}")
+    repository=$(yq -r '.repository' "${ext}")
+    version=$(yq -r '.version' "${ext}")
+    notes_github=$(yq -r '.notes.github // ""' "${ext}")
+    notes_tag=$(yq -r '.notes.tag // ""' "${ext}")
+
+    if [[ -z "${notes_github}" ]] ; then
+        echo "No notes.github for ${name} (${ext}); leaving chart-releaser notes"
+        continue
+    fi
+
+    if [[ -z "${notes_tag}" ]] ; then
+        echo "notes.github is set on ${ext} but notes.tag is empty"
+        failed=1
+        continue
+    fi
+
+    pkg="${PACKAGE_PATH}/${name}-${version}.tgz"
+    if [[ ! -f "${pkg}" ]] ; then
+        echo "Missing package ${pkg} (run pull-external-charts first)"
+        failed=1
+        continue
+    fi
+
+    chart_yaml=$(helm show chart "${pkg}")
+    chart_name=$(printf '%s\n' "${chart_yaml}" | yq -r '.name')
+    chart_version=$(printf '%s\n' "${chart_yaml}" | yq -r '.version')
+    app_version=$(printf '%s\n' "${chart_yaml}" | yq -r '.appVersion // ""')
+
+    tag=$(substitute_tag "${notes_tag}" "${chart_name}" "${chart_version}" "${app_version}")
+    if [[ "${tag}" == *'{{'* ]] ; then
+        echo "Unexpanded placeholder in notes.tag for ${name}: ${tag}"
+        echo "Known placeholders: {{ name }}, {{ version }}, {{ appVersion }}"
+        failed=1
+        continue
+    fi
+    if [[ "${notes_tag}" == *'appVersion'* && -z "${app_version}" ]] ; then
+        echo "${pkg} has no appVersion; cannot expand notes.tag ${notes_tag}"
+        failed=1
+        continue
+    fi
+
+    echo "Fetching GitHub release ${notes_github}@${tag} for ${chart_name}-${chart_version}"
+    if ! json=$(gh api "repos/${notes_github}/releases/tags/${tag}") ; then
+        echo "No GitHub release ${notes_github}@${tag}"
+        failed=1
+        continue
+    fi
+
+    html_url=$(printf '%s\n' "${json}" | yq -r '.html_url')
+    body=$(printf '%s\n' "${json}" | yq -r '.body // ""')
+
+    notes_file=$(mktemp)
+    {
+        printf 'Republished from %s/%s:%s\n\n' "${repository}" "${name}" "${version}"
+        printf 'Upstream: %s\n' "${html_url}"
+        if [[ -n "${body}" ]] ; then
+            printf '\n%s\n' "${body}"
+        else
+            printf '\nNo release notes on the upstream GitHub release.\n'
+        fi
+    } > "${notes_file}"
+
+    release_tag="${chart_name}-${chart_version}"
+    if ! gh release edit "${release_tag}" --notes-file "${notes_file}" ; then
+        echo "Failed to update GitHub release ${release_tag}"
+        failed=1
+    fi
+    rm -f "${notes_file}"
+done
+
+exit "${failed}"

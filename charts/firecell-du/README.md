@@ -87,7 +87,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | f1u.network.cidr | string | `""` | DU F1-U address with prefix. The IP part is the F1-U bind address. |
 | f1u.network.enabled | bool | `false` | Put F1-U (GTP-U toward the CU-UP) on a macvlan of a host NIC instead of the pod network. Use when the CU-UP runs on another node and the pod network between the nodes is slower than the user plane. |
 | f1u.network.master | string | `""` | Host interface the F1-U macvlan sits on (link toward the CU-UP node). |
-| global.image | string | `"ghcr.io/accelleran/ocudu:edge"` | Ocudu runtime image built with -DENABLE_MPLANE=ON and the O1 entrypoint (/usr/local/bin/entrypoint-o1.sh). Defaults to the firecell-dev CI build (acc_ocudu release-image.yml); GHCR is private, so set imagePullSecrets. edge moves on every merge: pin edge-<sha> for a fixed build. |
+| global.image | string | `"docker.io/accelleran/ran:0.1.0"` | Ocudu runtime image built with -DENABLE_MPLANE=ON and the O1 entrypoint (/usr/local/bin/entrypoint-o1.sh). |
 | global.imagePullPolicy | string | `"IfNotPresent"` | Pull policy for the Ocudu image. Use Never for images imported into containerd. |
 | global.imagePullSecrets | list | `[]` | Image pull secrets for every pod. |
 | global.namespace | string | `""` | Namespace for every object. Empty uses the release namespace. |
@@ -149,6 +149,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | preflight.image | string | `""` | Image for the check (needs bash). Empty uses the DU image. |
 | preflight.timeoutSeconds | int | `120` |  |
 | resources | object | `{}` |  |
+| terminationGracePeriodSeconds | int | `150` | Seconds Kubernetes waits after SIGTERM before SIGKILL. An M-plane DU switches the O-RU carriers off at stop and needs up to the carrier ready timeout + 10 s for that (Benetel and Eridan default 90 s -> 100 s, Comba 30 s -> 40 s); 150 adds margin. A DU that is killed first leaves the O-RU radiating. With CBRS the stop takes longer: max(gate_close_timeout_ms, carrier ready timeout + 5 s) + 25 s + 1 s per cell, about 120 s + 1 s per cell with the Eridan default; raise this then. The chart checks only the M-plane bound, without CBRS. |
 | tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |
 
 ## 5. Maintenance & Troubleshooting

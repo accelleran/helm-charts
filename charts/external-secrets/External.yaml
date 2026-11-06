@@ -1,0 +1,6 @@
+name: external-secrets
+repository: oci://ghcr.io/external-secrets/charts
+version: 2.11.0
+notes:
+  github: external-secrets/external-secrets
+  tag: "v{{ version }}"

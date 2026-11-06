@@ -43,6 +43,7 @@ spec:
         k8s.v1.cni.cncf.io/networks: {{ toJson . | quote }}
         {{- end }}
     spec:
+      terminationGracePeriodSeconds: {{ $i.terminationGracePeriodSeconds | int }}
       {{- include "firecell-du.scheduling" (dict "root" $ "nodeSelector" $i.nodeSelector "tolerations" $i.tolerations) | trim | nindent 6 }}
       initContainers:
         - name: wait-cu-cp-f1
