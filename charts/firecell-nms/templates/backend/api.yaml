@@ -1,4 +1,7 @@
 {{- $be := .Values.backend }}
+{{- $pc := $be.passwordCheck }}
+{{- if and $pc.zitadelUrl (not $pc.patSecret) }}{{ fail "backend.passwordCheck.patSecret is required when backend.passwordCheck.zitadelUrl is set" }}{{- end }}
+{{- if and $pc.patSecret (not $pc.zitadelUrl) }}{{ fail "backend.passwordCheck.zitadelUrl is required when backend.passwordCheck.patSecret is set" }}{{- end }}
 {{- if lt (int $be.api.replicas) 2 }}{{ fail "backend.api.replicas must be at least 2" }}{{- end }}
 {{- if le (int $be.progressDeadlineSeconds) (int $be.terminationGracePeriodSeconds) }}{{ fail "backend.progressDeadlineSeconds must exceed backend.terminationGracePeriodSeconds: new pods wait for the old control plane to stop and the migration to finish" }}{{- end }}
 apiVersion: apps/v1
@@ -62,6 +65,13 @@ spec:
             - configMapRef: {name: nms-config}
           env:
             {{- include "firecell-nms.backend.env" . | nindent 12 }}
+            {{- if $pc.zitadelUrl }}
+            - {name: FIRECELL_NMS_NG_ZITADEL_URL, value: {{ $pc.zitadelUrl | quote }}}
+            - {name: FIRECELL_NMS_NG_ZITADEL_SESSION_PAT_FILE, value: /etc/firecell-nms/zitadel/pat}
+            {{- if $pc.caSecret }}
+            - {name: FIRECELL_NMS_NG_ZITADEL_CA_FILE, value: /etc/firecell-nms/zitadel-ca/ca.crt}
+            {{- end }}
+            {{- end }}
           ports:
             - {name: http, containerPort: 8080}
           startupProbe:
@@ -81,12 +91,37 @@ spec:
           volumeMounts:
             - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
+            {{- if $pc.zitadelUrl }}
+            - {name: zitadel-pat, mountPath: /etc/firecell-nms/zitadel, readOnly: true}
+            {{- if $pc.caSecret }}
+            - {name: zitadel-ca, mountPath: /etc/firecell-nms/zitadel-ca, readOnly: true}
+            {{- end }}
+            {{- end }}
       volumes:
         - name: kubeconfig
           configMap:
             name: nms-kubeconfig
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}
+        {{- if $pc.zitadelUrl }}
+        # A mounted Secret (not an env var) follows rotation without a restart.
+        - name: zitadel-pat
+          secret:
+            secretName: {{ $pc.patSecret | quote }}
+            optional: true
+            defaultMode: 0440
+            items:
+              - {key: {{ $pc.patKey | quote }}, path: pat}
+        {{- if $pc.caSecret }}
+        - name: zitadel-ca
+          secret:
+            secretName: {{ $pc.caSecret | quote }}
+            optional: true
+            defaultMode: 0444
+            items:
+              - {key: {{ $pc.caKey | quote }}, path: ca.crt}
+        {{- end }}
+        {{- end }}
 ---
 # The API, the FCAPS notification receiver and the Grafana alert webhook
 # (/api/alarms/webhook) all listen here.
