@@ -9,7 +9,7 @@ global:
   imageRegistry: docker.io/accelleran
   # The busybox used by every initContainer in this chart. Composed from
   # imageRegistry when unset; name it in full to pull it from anywhere else.
-  busyboxImage: docker.io/library/busybox:1.37.0-glibc
+  busyboxImage: docker.io/library/busybox:1.38.0-glibc
   imagePullPolicy: IfNotPresent
   imagePullSecrets:
     - name: dockerhub-regcred
