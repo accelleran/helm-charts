@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/accelleran/helm-charts/compare/firecell-du-0.2.0...firecell-du-0.2.1) (2026-11-07)
+
+
+### Features
+
+* **firecell-cu,firecell-du:** NetconfVerbosity sets the netopeer2 log level ([d201997](https://github.com/accelleran/helm-charts/commit/d201997506b9e103238440581ee851905c3c74c7))
+
+
+### Bug Fixes
+
+* **firecell-du:** Set terminationGracePeriodSeconds so the DU can switch the RU off at stop ([33236a3](https://github.com/accelleran/helm-charts/commit/33236a38c2cfbba7fd19024c351773bb596a4224))
+
 ## [0.2.0](https://github.com/accelleran/helm-charts/compare/firecell-du-0.1.0...firecell-du-0.2.0) (2026-10-30)
 
 
