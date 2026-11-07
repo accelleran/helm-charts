@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/accelleran/helm-charts/compare/firecell-cu-0.2.0...firecell-cu-0.2.1) (2026-11-07)
+
+
+### Features
+
+* **firecell-cu,firecell-du:** NetconfVerbosity sets the netopeer2 log level ([d201997](https://github.com/accelleran/helm-charts/commit/d201997506b9e103238440581ee851905c3c74c7))
+
 ## [0.2.0](https://github.com/accelleran/helm-charts/compare/firecell-cu-0.1.0...firecell-cu-0.2.0) (2026-11-05)
 
 
