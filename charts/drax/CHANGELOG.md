@@ -1,5 +1,15 @@
 # Changelog
 
+## [14.2.3](https://github.com/accelleran/helm-charts/compare/drax-14.2.2...drax-14.2.3) (2026-11-07)
+
+
+### Bug Fixes
+
+* **deps:** Update helm release kminion to v0.15.4 ([#1792](https://github.com/accelleran/helm-charts/issues/1792)) ([8c12aa0](https://github.com/accelleran/helm-charts/commit/8c12aa06cd971ba38998cabb244800d44030bc8a))
+* **deps:** Update helm release kminion to v0.16.0 ([#1882](https://github.com/accelleran/helm-charts/issues/1882)) ([2d78da7](https://github.com/accelleran/helm-charts/commit/2d78da7cd6800cf920a46a77c43962bd98d4e97f))
+* **deps:** Update helm release oauth2-proxy to v10.7.1 ([#1793](https://github.com/accelleran/helm-charts/issues/1793)) ([71c1920](https://github.com/accelleran/helm-charts/commit/71c1920764c87c291df6b9ace7c0efc593ce0ed3))
+* **drax:** Replace MinIO with Silo for Loki object storage ([b2fa4ba](https://github.com/accelleran/helm-charts/commit/b2fa4ba7edf0daf86a7f6e215ed0d458216a9a95))
+
 ## [14.2.2](https://github.com/accelleran/helm-charts/compare/drax-14.2.1...drax-14.2.2) (2026-08-31)
 
 
