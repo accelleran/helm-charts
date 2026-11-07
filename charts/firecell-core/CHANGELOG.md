@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/accelleran/helm-charts/compare/firecell-core-0.2.0...firecell-core-0.2.1) (2026-11-07)
+
+
+### Bug Fixes
+
+* **deps:** Update docker.io/library/busybox docker tag to v1.38.0 ([#1881](https://github.com/accelleran/helm-charts/issues/1881)) ([a75b0ef](https://github.com/accelleran/helm-charts/commit/a75b0ef609eb327a019854717b70e04c67387f7a))
+
 ## [0.2.0](https://github.com/accelleran/helm-charts/compare/firecell-core-0.1.0...firecell-core-0.2.0) (2026-11-05)
 
 
