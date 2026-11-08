@@ -37,8 +37,16 @@ fi
 chart="${1}"; shift
 version="${1}"; shift
 
-if [ ! -f "${GIT_ROOT}/charts/${chart}/Chart.yaml" ]; then
-    error "${chart} is not a valid chart"
+chart_path=""
+for root in charts deprecated ; do
+    if [ -f "${GIT_ROOT}/${root}/${chart}/Chart.yaml" ]; then
+        chart_path="${root}/${chart}"
+        break
+    fi
+done
+
+if [ -z "${chart_path}" ]; then
+    error "${chart} is not a valid chart (looked in charts/ and deprecated/)"
 fi
 
 if [[ ! "${version}" =~ ^[[:digit:]]+\.[[:digit:]]+$ ]]; then

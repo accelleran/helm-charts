@@ -2,6 +2,36 @@
 
 This repository contains accelleran's helm charts.
 
+## Chart lifecycle
+
+Charts live in one of three top-level directories:
+
+| Directory | Renovate | Lint | Install tests | Releases |
+| --- | --- | --- | --- | --- |
+| `charts/` | All updates | Yes | Yes (unless `.ct-install-ignore`) | Yes |
+| `deprecated/` | First-party images only (`accelleran/`, `firecell/`) | Yes | No | Yes |
+| `archived/` | None | No | No | No |
+
+Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when a chart moves between tiers.
+
+### Deprecate a chart
+
+1. `git mv charts/<name> deprecated/<name>`
+2. Rename the package key in `etc/release-please-config.json` and `etc/.release-please-manifest.json` from `charts/<name>` to `deprecated/<name>` (keep `component` / `package-name` the same so release tags stay continuous)
+3. In `Chart.yaml`, set `deprecated: true` and prefix `description` with `DEPRECATED`
+4. Add a `DEPRECATED` banner to `templates/NOTES.txt` that names the successor chart
+5. Merge and let chart-releaser publish the deprecation release
+
+### Archive a chart
+
+1. `git mv deprecated/<name> archived/<name>` (or from `charts/` if skipping deprecation)
+2. Remove the chart from `etc/release-please-config.json` and `etc/.release-please-manifest.json`
+3. Leave published releases and GHCR packages alone
+
+To un-archive, reverse the steps and restore the release-please entries.
+
+External charts (`charts/*/External.yaml`) are not deprecated in place: stop republishing by deleting the `External.yaml` directory.
+
 ## Releases
 
 Depending on the type of release (an official release or release candidate), a different approach should be taken.

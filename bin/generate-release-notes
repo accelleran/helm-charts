@@ -2,10 +2,17 @@
 
 GIT_ROOT="$(realpath "$(dirname "$0")/..")"
 CHARTS_ROOT="${GIT_ROOT}/charts"
+DEPRECATED_ROOT="${GIT_ROOT}/deprecated"
 
 printf "Generating release notes\n"
 
-for chart in "${CHARTS_ROOT}"/*/ "${CHARTS_ROOT}"/drax/charts/*/ ; do
+shopt -s nullglob
+
+for chart in \
+    "${CHARTS_ROOT}"/*/ \
+    "${CHARTS_ROOT}"/drax/charts/*/ \
+    "${DEPRECATED_ROOT}"/*/ \
+; do
     if [[ ! -f "$chart/CHANGELOG.md" ]] ; then
         printf "\nNo changelog - Skip generating release notes for %s\n\n" "$chart"
     else

@@ -8,6 +8,9 @@ import subprocess
 import yaml
 
 
+CHART_ROOTS = ["charts", "deprecated"]
+
+
 @dataclass
 class Chart:
     name: str
@@ -97,12 +100,19 @@ def get_args():
 
 
 def get_charts(type: str, changed_only: bool, target_branch: str) -> list[Chart]:
+    git_root = get_git_root_path()
     if changed_only:
-        charts = get_changed_charts(
-            os.path.join(get_git_root_path(), "charts"), target_branch
-        )
+        charts: list[Chart] = []
+        for root in CHART_ROOTS:
+            root_path = os.path.join(git_root, root)
+            if os.path.isdir(root_path):
+                charts += get_changed_charts(root_path, target_branch)
     else:
-        charts = get_all_charts(get_git_root_path())
+        charts = []
+        for root in CHART_ROOTS:
+            root_path = os.path.join(git_root, root)
+            if os.path.isdir(root_path):
+                charts += get_all_charts(root_path)
 
     filters = {
         "all": lambda _: True,
@@ -201,8 +211,18 @@ def is_chart_to_lint(chart: Chart) -> bool:
     return True
 
 
+def is_deprecated_chart(chart: Chart) -> bool:
+    git_root = get_git_root_path()
+    rel_path = os.path.relpath(chart.path, git_root)
+    return rel_path.split(os.sep)[0] == "deprecated"
+
+
 def is_chart_to_test(chart: Chart) -> bool:
-    return is_app_chart(chart) and not is_ignored_chart_for_test(chart)
+    return (
+        is_app_chart(chart)
+        and not is_ignored_chart_for_test(chart)
+        and not is_deprecated_chart(chart)
+    )
 
 
 def is_app_chart(chart: Chart) -> bool:
