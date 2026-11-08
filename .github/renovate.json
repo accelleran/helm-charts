@@ -3,10 +3,22 @@
   "extends": [
     "local>accelleran/renovate-config",
     ":semanticCommitTypeAll(fix)",
-    ":automergeMinor"
+    ":automergeMinor",
+    ":ignoreModulesAndTests"
   ],
   "reviewers": [
     "team:dRAX"
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/__fixtures__/**",
+    "archived/**"
   ],
   "customManagers": [
     {
@@ -99,6 +111,28 @@
         "accelleran/acc-generic-img"
       ],
       "versioning": "loose"
+    },
+    {
+      "description": "Deprecated charts: no automatic updates",
+      "matchFileNames": [
+        "deprecated/**"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Deprecated charts: still bump first-party images",
+      "matchFileNames": [
+        "deprecated/**"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "/^accelleran\\//",
+        "/^firecell\\//",
+        "/^ghcr\\.io\\/(accelleran|firecell)\\//"
+      ],
+      "enabled": true
     }
   ]
 }
