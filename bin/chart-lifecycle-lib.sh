@@ -22,8 +22,8 @@ function warn() {
 
 function require_tools() {
     command -v jq >/dev/null 2>&1 || error "jq is required"
-    command -v python3 >/dev/null 2>&1 || error "python3 is required"
     command -v git >/dev/null 2>&1 || error "git is required"
+    command -v awk >/dev/null 2>&1 || error "awk is required"
     git -C "${GIT_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1 || error "not a git checkout: ${GIT_ROOT}"
 }
 
@@ -56,21 +56,21 @@ function refuse_external_chart() {
 
 function read_chart_name() {
     local chart_yaml="${1}"
-    python3 - "${chart_yaml}" <<'PY'
-import sys
-
-path = sys.argv[1]
-name = None
-with open(path, encoding="utf-8") as handle:
-    for line in handle:
-        if line.startswith("name:"):
-            name = line.split(":", 1)[1].strip().strip('"').strip("'")
-            break
-if not name:
-    sys.stderr.write(f"No top-level name: in {path}\n")
-    sys.exit(1)
-print(name)
-PY
+    local name
+    name="$(awk '
+        /^name:[[:space:]]*/ {
+            val = $0
+            sub(/^name:[[:space:]]*/, "", val)
+            gsub(/[\r\n]/, "", val)
+            gsub(/^["'\'']|["'\'']$/, "", val)
+            print val
+            exit
+        }
+    ' "${chart_yaml}")"
+    if [[ -z "${name}" ]]; then
+        error "No top-level name: in ${chart_yaml}"
+    fi
+    printf '%s\n' "${name}"
 }
 
 function require_directory_matches_chart_name() {
@@ -166,6 +166,7 @@ function remove_release_please_entry() {
 function mark_chart_yaml_deprecated() {
     local chart_yaml="${1}"
     local chart_name="${2}"
+    command -v python3 >/dev/null 2>&1 || error "python3 is required to update Chart.yaml"
     python3 - "${chart_yaml}" "${chart_name}" <<'PY'
 import io
 import re
