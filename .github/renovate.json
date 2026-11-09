@@ -3,21 +3,13 @@
   "extends": [
     "local>accelleran/renovate-config",
     ":semanticCommitTypeAll(fix)",
-    ":automergeMinor",
-    ":ignoreModulesAndTests"
+    ":automergeMinor"
   ],
   "reviewers": [
     "team:dRAX"
   ],
   "ignorePaths": [
-    "**/node_modules/**",
-    "**/bower_components/**",
-    "**/vendor/**",
     "**/examples/**",
-    "**/__tests__/**",
-    "**/test/**",
-    "**/tests/**",
-    "**/__fixtures__/**",
     "archived/**"
   ],
   "customManagers": [
