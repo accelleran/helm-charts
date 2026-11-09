@@ -133,6 +133,19 @@
         "/^ghcr\\.io\\/(accelleran|firecell)\\//"
       ],
       "enabled": true
+    },
+    {
+      "description": "Deprecated charts: still bump dependencies from our chart repository",
+      "matchFileNames": [
+        "deprecated/**"
+      ],
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchRegistryUrls": [
+        "/^https://accelleran\\.github\\.io/helm-charts/?$/"
+      ],
+      "enabled": true
     }
   ]
 }
