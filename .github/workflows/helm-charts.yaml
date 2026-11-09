@@ -286,7 +286,7 @@ jobs:
           mkdir -p .cr-release-packages
           git fetch origin gh-pages
 
-      - name: Run chart releaser (deprecated)
+      - name: Run chart releaser for deprecated charts
         if: hashFiles('deprecated/*/Chart.yaml') != ''
         uses: helm/chart-releaser-action@v1.9.0
         with:
@@ -297,7 +297,7 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Reset packages and fetch gh-pages after deprecated
+      - name: Reset packages and fetch gh-pages after deprecated charts
         if: hashFiles('deprecated/*/Chart.yaml') != ''
         run: |
           rm -rf .cr-release-packages
