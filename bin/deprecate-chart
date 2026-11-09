@@ -10,20 +10,25 @@ source "$(dirname "$(realpath "$0")")/chart-lifecycle-lib.sh"
 
 function usage() {
     cat <<'EOF'
-Usage: deprecate-chart [-n] [-s successor] <chart>
+Usage: deprecate-chart [-n] [--no-metadata] [-s successor] <chart>
 
-Move charts/<chart> to deprecated/<chart> and mark the chart deprecated.
+Move charts/<chart> to deprecated/<chart>.
 
 The release-please package key is renamed from charts/<chart> to
 deprecated/<chart>. component and package-name are left unchanged, so
 release tags stay continuous.
 
-Chart.yaml gets deprecated: true and a description prefix of "DEPRECATED -".
-templates/NOTES.txt gains a DEPRECATED banner. -s names the successor in
-that banner.
+By default Chart.yaml gets deprecated: true and a description prefix of
+"DEPRECATED -". templates/NOTES.txt gains a DEPRECATED banner. -s names
+the successor in that banner.
+
+--no-metadata leaves Chart.yaml and NOTES.txt unchanged. The chart is
+deprecated in this repo only: Renovate, lint, and install tests follow
+deprecated/, and installs still show the existing description and notes.
 
 Options:
   -n, --dry-run           Show what would change and do not touch the tree
+  --no-metadata           Skip Chart.yaml and NOTES.txt updates
   -s, --successor <name>  Successor chart named in templates/NOTES.txt
   -h, --help              Show this help
 
@@ -32,6 +37,7 @@ EOF
 }
 
 dry_run=0
+no_metadata=0
 successor=""
 chart=""
 
@@ -43,6 +49,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -n|--dry-run)
             dry_run=1
+            shift
+            ;;
+        --no-metadata)
+            no_metadata=1
             shift
             ;;
         -s|--successor)
@@ -82,6 +92,9 @@ fi
 require_tools
 validate_chart_name "${chart}"
 if [[ -n "${successor}" ]]; then
+    if [[ "${no_metadata}" -eq 1 ]]; then
+        error "--successor writes templates/NOTES.txt; omit it with --no-metadata"
+    fi
     validate_chart_name "${successor}"
     if [[ "${successor}" == "${chart}" ]]; then
         error "successor must be a different chart"
@@ -119,7 +132,9 @@ to_key="deprecated/${chart}"
 
 echo "move ${from_key} -> ${to_key}"
 echo "release-please $(release_please_summary "${from_key}")"
-if [[ -n "${successor}" ]]; then
+if [[ "${no_metadata}" -eq 1 ]]; then
+    echo "Chart.yaml and NOTES.txt: unchanged"
+elif [[ -n "${successor}" ]]; then
     echo "NOTES.txt successor: ${successor}"
 else
     echo "NOTES.txt successor: none"
@@ -130,9 +145,11 @@ if [[ "${dry_run}" -eq 1 ]]; then
     exit 0
 fi
 
-mark_chart_yaml_deprecated "${GIT_ROOT}/charts/${chart}/Chart.yaml" "${chart}"
-echo "Chart.yaml: set deprecated: true and prefixed description with DEPRECATED -"
-write_notes_banner "${GIT_ROOT}/charts/${chart}/templates/NOTES.txt" "${successor}"
+if [[ "${no_metadata}" -eq 0 ]]; then
+    mark_chart_yaml_deprecated "${GIT_ROOT}/charts/${chart}/Chart.yaml" "${chart}"
+    echo "Chart.yaml: set deprecated: true and prefixed description with DEPRECATED -"
+    write_notes_banner "${GIT_ROOT}/charts/${chart}/templates/NOTES.txt" "${successor}"
+fi
 
 git -C "${GIT_ROOT}" mv "charts/${chart}" "deprecated/${chart}"
 rename_release_please_entry "${from_key}" "${to_key}"

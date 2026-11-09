@@ -26,7 +26,7 @@ Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when
 - sets `deprecated: true` in `Chart.yaml` and prefixes `description` with `DEPRECATED -`
 - adds a `DEPRECATED` banner to `templates/NOTES.txt`, naming the successor when `-s` is set
 
-`-s` is optional. Pass `-n` to print the plan without changing files. The script stages its changes and leaves the commit to you. Merge, and chart-releaser publishes the deprecation release.
+`-s` is optional. Pass `--no-metadata` to leave `Chart.yaml` and `templates/NOTES.txt` unchanged. The chart still moves to `deprecated/`, so Renovate, lint, and install tests follow that tier, while installs keep the existing description and notes. Pass `-n` to show the move and release-please change without writing files. The script stages its changes and leaves the commit to you. Merge, and chart-releaser publishes the deprecation release.
 
 ### Archive a chart
 
