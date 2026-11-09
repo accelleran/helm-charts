@@ -1,0 +1,112 @@
+#!/bin/bash
+#
+# Move a chart to archived/<name> and drop it from release-please.
+# Published GitHub releases, index.yaml entries, and GHCR packages stay.
+
+set -eu -o pipefail
+
+# shellcheck source=bin/chart-lifecycle-lib.sh
+source "$(dirname "$(realpath "$0")")/chart-lifecycle-lib.sh"
+
+function usage() {
+    cat <<'EOF'
+Usage: archive-chart [-n] <chart>
+
+Move deprecated/<chart>, or charts/<chart>, to archived/<chart> and remove
+its release-please config and manifest entries.
+
+Published releases are left alone. The chart name stays reserved:
+bin/check-chart-name-collisions still scans archived/.
+
+Options:
+  -n, --dry-run   Show what would change and do not touch the tree
+  -h, --help      Show this help
+
+Changes are staged and left uncommitted.
+EOF
+}
+
+dry_run=0
+chart=""
+
+while [[ $# -gt 0 ]]; do
+    case "${1}" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -n|--dry-run)
+            dry_run=1
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        -*)
+            error "unknown option: ${1}"
+            ;;
+        *)
+            [[ -z "${chart}" ]] || error "unexpected argument: ${1}"
+            chart="${1}"
+            shift
+            ;;
+    esac
+done
+
+if [[ $# -gt 0 ]]; then
+    [[ -z "${chart}" ]] || error "unexpected argument: ${1}"
+    chart="${1}"
+    shift
+    [[ $# -eq 0 ]] || error "unexpected argument: ${1}"
+fi
+
+[[ -n "${chart}" ]] || error "chart name is required (see --help)"
+
+require_tools
+validate_chart_name "${chart}"
+
+location="$(chart_location "${chart}")"
+case "${location}" in
+    charts|deprecated)
+        ;;
+    archived)
+        error "${chart} is already in archived/"
+        ;;
+    external)
+        refuse_external_chart "${chart}"
+        ;;
+    *)
+        error "${chart} was not found in charts/, deprecated/, or archived/"
+        ;;
+esac
+
+require_directory_matches_chart_name "${chart}" "${location}"
+require_release_please_entry "${location}/${chart}"
+if [[ -e "${GIT_ROOT}/archived/${chart}" ]]; then
+    error "archived/${chart} already exists"
+fi
+
+from_key="${location}/${chart}"
+to_key="archived/${chart}"
+
+echo "move ${from_key} -> ${to_key}"
+echo "release-please remove $(release_please_summary "${from_key}")"
+if [[ "${location}" == "charts" ]]; then
+    echo "skipping deprecated/: no deprecation release will be published"
+fi
+
+if [[ "${dry_run}" -eq 1 ]]; then
+    echo "Dry run: no files were changed."
+    exit 0
+fi
+
+git -C "${GIT_ROOT}" mv "${location}/${chart}" "archived/${chart}"
+remove_release_please_entry "${from_key}"
+git -C "${GIT_ROOT}" add -- \
+    "etc/release-please-config.json" \
+    "etc/.release-please-manifest.json" \
+    "archived/${chart}"
+
+verify_archived_chart "${chart}"
+show_staged_status "${chart}"

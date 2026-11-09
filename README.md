@@ -16,17 +16,25 @@ Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when
 
 ### Deprecate a chart
 
-1. `git mv charts/<name> deprecated/<name>`
-2. Rename the package key in `etc/release-please-config.json` and `etc/.release-please-manifest.json` from `charts/<name>` to `deprecated/<name>` (keep `component` / `package-name` the same so release tags stay continuous)
-3. In `Chart.yaml`, set `deprecated: true` and prefix `description` with `DEPRECATED`
-4. Add a `DEPRECATED` banner to `templates/NOTES.txt` that names the successor chart
-5. Merge and let chart-releaser publish the deprecation release
+```sh
+./bin/deprecate-chart -s <successor> <name>
+```
+
+`bin/deprecate-chart` moves `charts/<name>` to `deprecated/<name>` and:
+
+- renames the package key in `etc/release-please-config.json` and `etc/.release-please-manifest.json` from `charts/<name>` to `deprecated/<name>` (`component` and `package-name` stay the same, so release tags stay continuous)
+- sets `deprecated: true` in `Chart.yaml` and prefixes `description` with `DEPRECATED -`
+- adds a `DEPRECATED` banner to `templates/NOTES.txt`, naming the successor when `-s` is set
+
+`-s` is optional. Pass `-n` to print the plan without changing files. The script stages its changes and leaves the commit to you. Merge, and chart-releaser publishes the deprecation release.
 
 ### Archive a chart
 
-1. `git mv deprecated/<name> archived/<name>` (or from `charts/` if skipping deprecation)
-2. Remove the chart from `etc/release-please-config.json` and `etc/.release-please-manifest.json`
-3. Leave published releases and GHCR packages alone
+```sh
+./bin/archive-chart <name>
+```
+
+`bin/archive-chart` moves `deprecated/<name>` (or `charts/<name>`, which skips the deprecation release) to `archived/<name>` and removes that chart from the release-please config and manifest. Published releases and GHCR packages are left alone. Pass `-n` to print the plan without changing files.
 
 To un-archive, reverse the steps and restore the release-please entries.
 
