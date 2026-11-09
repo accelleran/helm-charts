@@ -6,4 +6,4 @@ Charts in this directory are end-of-life but still releasable.
 - CI still lints them; `ct install` is skipped
 - release-please and chart-releaser still publish new versions
 
-Move a chart here with `bin/deprecate-chart`. See [Chart lifecycle](../README.md#chart-lifecycle).
+Move a chart here with `bin/deprecate-chart`. Pass `--no-metadata` to leave `Chart.yaml` and `NOTES.txt` unchanged. See [Chart lifecycle](../README.md#chart-lifecycle).
