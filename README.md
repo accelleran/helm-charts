@@ -9,7 +9,7 @@ Charts live in one of three top-level directories:
 | Directory | Renovate | Lint | Install tests | Releases |
 | --- | --- | --- | --- | --- |
 | `charts/` | All updates | Yes | Yes (unless `.ct-install-ignore`) | Yes |
-| `deprecated/` | First-party images only (`accelleran/`, `firecell/`) | Yes | No | Yes |
+| `deprecated/` | First-party images (`accelleran/`, `firecell/`) and dependencies from `accelleran.github.io/helm-charts` | Yes | No | Yes |
 | `archived/` | None | No | No | No |
 
 Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when a chart moves between tiers.
