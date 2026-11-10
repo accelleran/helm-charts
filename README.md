@@ -2,6 +2,44 @@
 
 This repository contains accelleran's helm charts.
 
+## Chart lifecycle
+
+Charts live in one of three top-level directories:
+
+| Directory | Renovate | Lint | Install tests | Releases |
+| --- | --- | --- | --- | --- |
+| `charts/` | All updates | Yes | Yes (unless `.ct-install-ignore`) | Yes |
+| `deprecated/` | First-party images (`accelleran/`, `firecell/`) and dependencies from `accelleran.github.io/helm-charts` | Yes | No | Yes |
+| `archived/` | None | No | No | No |
+
+Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when a chart moves between tiers.
+
+### Deprecate a chart
+
+```sh
+./bin/deprecate-chart -s <successor> <name>
+```
+
+`bin/deprecate-chart` moves `charts/<name>` to `deprecated/<name>` and:
+
+- renames the package key in `etc/release-please-config.json` and `etc/.release-please-manifest.json` from `charts/<name>` to `deprecated/<name>` (`component` and `package-name` stay the same, so release tags stay continuous)
+- sets `deprecated: true` in `Chart.yaml` and prefixes `description` with `DEPRECATED -`
+- adds a `DEPRECATED` banner to `templates/NOTES.txt`, naming the successor when `-s` is set
+
+`-s` is optional. Pass `--no-metadata` to leave `Chart.yaml` and `templates/NOTES.txt` unchanged. The chart still moves to `deprecated/`, so Renovate, lint, and install tests follow that tier, while installs keep the existing description and notes. Pass `-n` to show the move and release-please change without writing files. The script stages its changes and leaves the commit to you. Merge, and chart-releaser publishes the deprecation release.
+
+### Archive a chart
+
+```sh
+./bin/archive-chart <name>
+```
+
+`bin/archive-chart` moves `deprecated/<name>` (or `charts/<name>`, which skips the deprecation release) to `archived/<name>` and removes that chart from the release-please config and manifest. Published releases and GHCR packages are left alone. Pass `-n` to print the plan without changing files.
+
+To un-archive, reverse the steps and restore the release-please entries.
+
+External charts (`charts/*/External.yaml`) are not deprecated in place: stop republishing by deleting the `External.yaml` directory.
+
 ## Releases
 
 Depending on the type of release (an official release or release candidate), a different approach should be taken.

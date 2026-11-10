@@ -8,6 +8,10 @@
   "reviewers": [
     "team:dRAX"
   ],
+  "ignorePaths": [
+    "**/examples/**",
+    "archived/**"
+  ],
   "customManagers": [
     {
       "customType": "regex",
@@ -99,6 +103,41 @@
         "accelleran/acc-generic-img"
       ],
       "versioning": "loose"
+    },
+    {
+      "description": "Deprecated charts: no automatic updates",
+      "matchFileNames": [
+        "deprecated/**"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Deprecated charts: still bump first-party images",
+      "matchFileNames": [
+        "deprecated/**"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "/^accelleran\\//",
+        "/^firecell\\//",
+        "/^ghcr\\.io\\/(accelleran|firecell)\\//"
+      ],
+      "enabled": true
+    },
+    {
+      "description": "Deprecated charts: still bump dependencies from our chart repository",
+      "matchFileNames": [
+        "deprecated/**"
+      ],
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchRegistryUrls": [
+        "/^https://accelleran\\.github\\.io/helm-charts/?$/"
+      ],
+      "enabled": true
     }
   ]
 }

@@ -24,6 +24,7 @@ fi
 
 GIT_ROOT="$(realpath "$(dirname "$0")/..")"
 CHARTS_ROOT="${GIT_ROOT}/charts"
+DEPRECATED_ROOT="${GIT_ROOT}/deprecated"
 REPO="${GITHUB_REPOSITORY:-accelleran/helm-charts}"
 ORG="${REPO%%/*}"
 LABEL="${GHCR_VISIBILITY_LABEL:-ghcr-visibility}"
@@ -44,7 +45,11 @@ yaml_name() {
 
 chart_package_names() {
     local f name
-    for f in "${CHARTS_ROOT}"/*/Chart.yaml "${CHARTS_ROOT}"/**/External.yaml ; do
+    for f in \
+        "${CHARTS_ROOT}"/*/Chart.yaml \
+        "${DEPRECATED_ROOT}"/*/Chart.yaml \
+        "${CHARTS_ROOT}"/**/External.yaml \
+    ; do
         name=$(yaml_name "${f}")
         if [[ -n "${name}" ]] ; then
             printf 'charts/%s\n' "${name}"
