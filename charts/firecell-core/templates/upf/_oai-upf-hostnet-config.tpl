@@ -88,6 +88,7 @@ snssais:
 ue_dns:
   primary_ipv4: {{ $v.coreConfig.dns.primaryIpv4 | quote }}
   secondary_ipv4: {{ $v.coreConfig.dns.secondaryIpv4 | quote }}
+  {{- include "firecell-5gc.optionalKeys" (dict "indent" 2 "pairs" (list (list "primary_ipv6" $v.coreConfig.dns.primaryIpv6) (list "secondary_ipv6" $v.coreConfig.dns.secondaryIpv6))) }}
 
 ims:
   pcscf_ipv4: {{ $v.coreConfig.ims.pcscfIpv4 | quote }}
@@ -98,6 +99,7 @@ dnns:
   - dnn: {{ .dnn | quote }}
     pdu_session_type: {{ .pduSessionType | quote }}
     ipv4_subnet: {{ .ipv4Subnet | quote }}
+    {{- include "firecell-5gc.dnnIpv6Keys" . }}
 {{- end }}
 
 upf:
