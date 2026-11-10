@@ -42,6 +42,7 @@
 {{- $upfMultus := and (not $.Values.upf.hostNetwork) ($.Values.upf.multus.enabled | default false) }}
 {{- $upfMultusN3 := $.Values.upf.multus.n3 | default dict }}
 {{- $upfMultusN6 := $.Values.upf.multus.n6 | default dict }}
+{{- include "firecell-5gc.upfN4N3Check" (dict "ctx" $ "inst" $inst "appName" $appName) }}
 ---
 apiVersion: apps/v1
 kind: Deployment

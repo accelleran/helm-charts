@@ -480,3 +480,43 @@ single UPF).
 {{- if $serves -}}true{{- end -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+N4 != N3 (user decision Q7, 9 Nov 2026: N4 and N3 shall not share an IP address).
+Mirrors cn5g-upf cp_relay_config_error (P23-e): with enable_cp_relay on, the UPF
+opens its N4-u GTP-U endpoint (UDP 2152) on the N4 IPv4 address and refuses to
+load when that is the N3 or the N9 address. The chart fails earlier, from what it
+knows: the interface names the UPF config gets (same coalesce chains as the two
+config templates), and the N3/N4 addresses when both are set in the values. Two
+different interfaces that carry the same address are left to the UPF check. N9 is
+not checked: the UPF compares N4 with N9 only with n9.enabled, which the chart
+never writes.
+dict keys: ctx, inst, appName.
+*/}}
+{{- define "firecell-5gc.upfN4N3Check" -}}
+{{- $v := .ctx.Values -}}
+{{- $inst := .inst -}}
+{{- if include "firecell-5gc.upfCpRelay" (dict "ctx" .ctx "inst" $inst) -}}
+{{- $n3 := "" -}}{{- $n4 := "" -}}
+{{- if $v.upf.hostNetwork -}}
+{{- $n3 = coalesce $inst.n3Interface $v.upf.n3Interface "eth0" -}}
+{{- $n4 = coalesce $inst.hostPfcpMacvlan $inst.n4Interface $v.upf.hostPfcpMacvlan $v.upf.n4Interface "eno1" -}}
+{{- else -}}
+{{- $n3 = $v.upf.n3Interface | default "eth0" -}}
+{{- $n4 = $v.upf.hostPfcpMacvlan | default "eth0" -}}
+{{- end -}}
+{{- $why := "the IPv6 CP relay (enable_cp_relay, on because a DNN has an IPv6 pool) opens the UPF N4-u GTP-U endpoint, UDP 2152 on the N4 IPv4 address, which must not be the N3 address (N4 and N3 shall not share an IP address): give N4 its own interface and address (upf.hostPfcpMacvlan + upf.hostPfcpIP, or upf.n4Interface)" -}}
+{{- if eq $n4 $n3 -}}
+{{- fail (printf "%s: N4 interface %q is the N3 interface; %s" .appName $n4 $why) -}}
+{{- end -}}
+{{- /* coalesce of only empty values is nil, and nil | toString is "<nil>" */ -}}
+{{- $n3ip := (coalesce $inst.n3IP $v.upf.n3IP | default "") | toString -}}
+{{- $n4ip := "" -}}
+{{- if coalesce $inst.hostPfcpMacvlan $v.upf.hostPfcpMacvlan -}}
+{{- $n4ip = (coalesce $inst.hostPfcpIP $v.upf.hostPfcpIP | default "") | toString -}}
+{{- end -}}
+{{- if and $n3ip $n4ip (eq $n3ip $n4ip) -}}
+{{- fail (printf "%s: the N4 address %s is the N3 address; %s" .appName $n4ip $why) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
