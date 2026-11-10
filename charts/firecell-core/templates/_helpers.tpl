@@ -520,3 +520,23 @@ dict keys: ctx, inst, appName.
 {{- end -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+The SMF N4-u GTP-U port (cn5g-smf smf.ipv6.n4u.port, default 2152).
+*/}}
+{{- define "firecell-5gc.smfN4uPort" -}}
+{{- (((.Values.coreConfig.smf.ipv6 | default dict).n4u | default dict).port | default 2152) -}}
+{{- end }}
+
+{{/*
+"true" when the SMF N4-u address survives an SMF pod replacement (D-1b): the SMF
+binds ipv6.n4u.address, default its N4 address, and puts it in the UPF's
+"to CP function" FAR. Stable: a hostNetwork SMF on its PFCP macvlan
+(smf.hostPfcpIP / smf.n4IP), a Multus SMF with smf.n4IP, or an explicit
+coreConfig.smf.ipv6.n4u.address. Otherwise it is the pod IP.
+*/}}
+{{- define "firecell-5gc.smfN4uStable" -}}
+{{- $s := .Values.smf -}}
+{{- $n4u := ((.Values.coreConfig.smf.ipv6 | default dict).n4u | default dict) -}}
+{{- if or $n4u.address (and $s.hostNetwork (coalesce $s.hostPfcpIP $s.n4IP "")) (and (not $s.hostNetwork) ($s.multus).enabled $s.n4IP) -}}true{{- end -}}
+{{- end }}

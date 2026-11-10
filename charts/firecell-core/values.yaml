@@ -1042,7 +1042,10 @@ coreConfig:
       smfLinkLocal: ""         # smf_link_local, fe80::/64 source of the RAs [fe80::1]
       n4u:
         # n4u.address: the SMF's N4-u GTP-U endpoint (IPv4). The SMF binds it, and the
-        # UPF's CP-relay FAR sends the UE's RS/NS to it. [the SMF N4 address]
+        # UPF's CP-relay FAR sends the UE's RS/NS to it, so it must be an address of the
+        # SMF itself (never a ClusterIP). [the SMF N4 address] For an address that
+        # survives an SMF pod replacement (D-1b) use smf.multus.enabled + smf.n4IP, or
+        # smf.hostNetwork + smf.hostPfcpIP; with the pod IP, NOTES prints a warning.
         address: ""
         port: ""               # n4u.port [2152]
       ra:                      # Router Advertisements (TS 29.061 11.2.1.3.4 defaults)

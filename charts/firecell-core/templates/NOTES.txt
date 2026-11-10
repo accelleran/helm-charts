@@ -32,4 +32,19 @@ Ensure hostNetwork IPs (.205–.208) and kamailio-ims / ims-cx-gateway images ar
 Asterisk-only: layer examples/values-ims-asterisk.yaml.
 {{- end }}
 
+{{- if include "firecell-5gc.ipv6UserPlane" . }}
+
+IPv6 user plane: on (a DNN in coreConfig.dnns has an IPv6 pool).
+  - The SMF and every UPF that serves an IPv6 DNN run the CP relay (RS/RA over
+    N4-u, UDP {{ include "firecell-5gc.smfN4uPort" . }}); N4 and N3 use different addresses.
+{{- if not (include "firecell-5gc.smfN4uStable" .) }}
+  - WARNING: the SMF N4-u address is the SMF pod IP, which changes when the pod
+    is replaced. Sessions the UPF keeps across an SMF restart then send the
+    UE's Router/Neighbor Solicitations to the old address (the UE keeps its
+    prefix and data flows; RS/NS go unanswered until the session is
+    re-established). Give the SMF a stable N4 address: smf.multus.enabled with
+    smf.n4IP, or smf.hostNetwork with smf.hostPfcpIP.
+{{- end }}
+{{- end }}
+
 ################################################################################
