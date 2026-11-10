@@ -4,7 +4,7 @@
 # charts, replace the default Chart.yaml description with upstream notes.
 #
 # The only remote source we fetch is a GitHub Release, pointed at by
-# notes.github + notes.tag in External.yaml. Placeholders in notes.tag:
+# notes.github + notes.tag in the external definition. Placeholders in notes.tag:
 #   {{ name }}       Chart.yaml name
 #   {{ version }}    Chart.yaml version
 #   {{ appVersion }} Chart.yaml appVersion
@@ -12,7 +12,9 @@
 # Charts without a notes: section are left as chart-releaser wrote them.
 
 set -eu -o pipefail
-shopt -s nullglob globstar
+
+# shellcheck source=bin/external-charts-lib.sh
+source "$(dirname "$(realpath "$0")")/external-charts-lib.sh"
 
 PACKAGE_PATH="${CR_PACKAGE_PATH:-.cr-release-packages}"
 
@@ -44,7 +46,7 @@ substitute_tag() {
 
 failed=0
 
-for ext in charts/**/External.yaml ; do
+while IFS= read -r ext; do
     name=$(yq -r '.name' "${ext}")
     repository=$(yq -r '.repository' "${ext}")
     version=$(yq -r '.version' "${ext}")
@@ -114,6 +116,6 @@ for ext in charts/**/External.yaml ; do
         failed=1
     fi
     rm -f "${notes_file}"
-done
+done < <(list_external_chart_files)
 
 exit "${failed}"

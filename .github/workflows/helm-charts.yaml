@@ -308,7 +308,7 @@ jobs:
         run: ./bin/pull-external-charts
 
       - name: Publish external charts
-        if: hashFiles('charts/*/External.yaml') != ''
+        if: hashFiles('external/*.yaml') != '' || hashFiles('external/*/External.yaml') != ''
         uses: helm/chart-releaser-action@v1.9.0
         with:
           config: etc/cr.yaml
