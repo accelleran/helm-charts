@@ -659,6 +659,12 @@ upf:
   configSchema: mr97
   # Runtime XDP attach (cn5g-upf UPF_XDP_ATTACH_MODE): auto | native | generic
   xdpAttachMode: auto
+  # cn5g-upf support_features.delete_sessions_on_smf_restart. Empty: not written, the UPF
+  # default (yes): when an SMF Heartbeat carries a larger Recovery Time Stamp (the SMF
+  # restarted), the UPF deletes that SMF's PFCP sessions (TS 23.527 4.4.2.1). Set "no" while
+  # an SMF older than v6.0 rc-02 P20 (a new Recovery Time Stamp in every Heartbeat) talks to
+  # this UPF, e.g. during a mixed-version upgrade or an SMF rollback.
+  deleteSessionsOnSmfRestart: ""
   # OAI UPF only: Layer-2 Ethernet PDU sessions (cn5g-upf support_features.enable_eth_pdu).
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).

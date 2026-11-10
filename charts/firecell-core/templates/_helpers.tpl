@@ -540,3 +540,19 @@ coreConfig.smf.ipv6.n4u.address. Otherwise it is the pod IP.
 {{- $n4u := ((.Values.coreConfig.smf.ipv6 | default dict).n4u | default dict) -}}
 {{- if or $n4u.address (and $s.hostNetwork (coalesce $s.hostPfcpIP $s.n4IP "")) (and (not $s.hostNetwork) ($s.multus).enabled $s.n4IP) -}}true{{- end -}}
 {{- end }}
+
+{{/*
+cn5g-upf support_features.delete_sessions_on_smf_restart (P20-upf), written only
+when upf.deleteSessionsOnSmfRestart is set, as "yes"/"no" (true/false accepted).
+Context: .Values.upf.
+*/}}
+{{- define "firecell-5gc.upfDeleteSessionsOnSmfRestart" -}}
+{{- $d := .deleteSessionsOnSmfRestart -}}
+{{- if not (or (kindIs "invalid" $d) (eq (toString $d) "")) }}
+{{- $s := toString $d | lower }}
+{{- if not (has $s (list "yes" "no" "true" "false")) }}
+{{- fail (printf "upf.deleteSessionsOnSmfRestart must be yes or no (got %q)" (toString $d)) }}
+{{- end }}
+    delete_sessions_on_smf_restart: {{ if has $s (list "yes" "true") }}yes{{ else }}no{{ end }}
+{{- end }}
+{{- end }}

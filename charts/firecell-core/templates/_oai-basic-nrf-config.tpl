@@ -364,6 +364,7 @@ upf:
     {{- if $ipv6On }}
     enable_cp_relay: yes
     {{- end }}
+    {{- include "firecell-5gc.upfDeleteSessionsOnSmfRestart" $v.upf }}
   upf_info:
     sNssaiUpfInfoList:
     {{- range $v.coreConfig.nssai }}
