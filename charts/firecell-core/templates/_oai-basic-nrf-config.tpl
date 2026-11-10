@@ -226,6 +226,9 @@ smf:
         {{- if $upfInst.n3IP }}
         n3_local_ipv4: {{ $upfInst.n3IP }}
         {{- end }}
+        {{- if $ipv6On }}
+        enable_cp_relay: {{ if include "firecell-5gc.upfCpRelay" (dict "ctx" $ctx "inst" $upfInst) }}yes{{ else }}no{{ end }}
+        {{- end }}
       {{- /* Per-UPF dnnUpfInfoList on static pool entry (OAI-SMF DNN match; top-level nssai breaks fcdevelop). */}}
       {{- if $upfInst.dnns }}
       upf_info:
@@ -265,6 +268,9 @@ smf:
         enable_dl_pdr_in_pfcp_session_establishment: {{ $v.coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | default "yes" }}
         {{- if $v.upf.n3IP }}
         n3_local_ipv4: {{ $v.upf.n3IP }}
+        {{- end }}
+        {{- if $ipv6On }}
+        enable_cp_relay: yes
         {{- end }}
   {{- end }}
   ue_dns:
@@ -355,6 +361,9 @@ upf:
     enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
+    {{- if $ipv6On }}
+    enable_cp_relay: yes
+    {{- end }}
   upf_info:
     sNssaiUpfInfoList:
     {{- range $v.coreConfig.nssai }}

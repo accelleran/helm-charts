@@ -453,3 +453,30 @@ the UPF read the same pool. Context: the DNN entry.
 {{- end }}
 {{- include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "ipv6_prefix" .ipv6Prefix) (list "ip_allocation_mode" .ipAllocationMode))) }}
 {{- end }}
+
+{{/*
+CP relay (cn5g-upf support_features.enable_cp_relay, cn5g-smf
+upfs[].config.enable_cp_relay; P23-c/P23-e, D-1c) for one UPF instance: "true"
+when the IPv6 user plane is on and the instance serves an IPv6 DNN (no "dnns"
+list = all DNNs). Both sides must agree: the SMF defaults to yes and the UPF to
+no, and with that pairing RS/RA never flow and SLAAC does not complete.
+dict keys: ctx (root context), inst (upf.instances entry, or an empty dict for the
+single UPF).
+*/}}
+{{- define "firecell-5gc.upfCpRelay" -}}
+{{- $v := .ctx.Values -}}
+{{- if include "firecell-5gc.ipv6UserPlane" .ctx -}}
+{{- $v6dnns := list -}}
+{{- range $v.coreConfig.dnns -}}
+{{- $type := .pduSessionType | default "" | toString | upper -}}
+{{- if or .ipv6Prefix (and (eq (.ipAllocationMode | default "" | toString) "dhcp") (has $type (list "IPV6" "IPV4V6"))) -}}
+{{- $v6dnns = append $v6dnns (.dnn | toString) -}}
+{{- end -}}
+{{- end -}}
+{{- $serves := not .inst.dnns -}}
+{{- range (.inst.dnns | default list) -}}
+{{- if has (. | toString) $v6dnns -}}{{- $serves = true -}}{{- end -}}
+{{- end -}}
+{{- if $serves -}}true{{- end -}}
+{{- end -}}
+{{- end }}

@@ -112,6 +112,11 @@ upf:
     enable_snat: {{ if ($inst.enableSnat | default $v.upf.enableSnat | default true) }}yes{{ else }}no{{ end }}
     enable_fr: no
     enable_eth_pdu: {{ if $v.upf.oaiEnableEthPdu }}yes{{ else }}no{{ end }}
+{{- if include "firecell-5gc.ipv6UserPlane" $root }}
+    # IPv6 RS/NS and RA/NA relayed between the UE and the SMF over N4-u (UDP 2152 on
+    # the N4 address, which must differ from N3 and N9).
+    enable_cp_relay: {{ if include "firecell-5gc.upfCpRelay" (dict "ctx" $root "inst" $inst) }}yes{{ else }}no{{ end }}
+{{- end }}
     # cn5g-upf v5.1.0.x sizes m_arp_table from support_features (not datapath_configuration).
     max_arp_entries: 256
 {{- if eq $schema "legacy" }}
