@@ -408,8 +408,11 @@ spec:
               echo "${UPF_APP}" > "${LEASE_DIR}/${UPF_APP}@${N6_DEV}"
               echo "[datapath-init] ${UPF_APP}: OK"
         {{- end }}
-        {{- if and $.Values.upf.hostNetwork (include "firecell-5gc.upfCpRelay" (dict "ctx" $ "inst" $inst)) }}
+        {{- if and (or $.Values.upf.hostNetwork $upfMultus) (include "firecell-5gc.upfCpRelay" (dict "ctx" $ "inst" $inst)) }}
         {{- /* IPv6 user plane (P23-k k4): N6 IPv6 for a UPF that serves an IPv6 DNN.
+               hostNetwork: in the node's network namespace. Multus: in the pod's own
+               one; the N6 address then comes from the n6 NetworkAttachment (static
+               IPAM, upf.n6Ipv6Cidr), so it is not added here.
                No NAT66: the UE keeps its own source address, so the UL policy rule
                matches the DNN pools (the IPv4 rule matches the N6 address because
                IPv4 is SNATed). The UL next hop is the kernel FIB (eBPF:
@@ -417,6 +420,7 @@ spec:
                IPv6 forwarding on and a neighbour for the gateway. */}}
         {{- /* coalesce of only empty values is nil, and nil | toString is "<nil>" */}}
         {{- $n6v6 := (coalesce $inst.n6Ipv6Cidr $.Values.upf.n6Ipv6Cidr | default "") | toString | trim }}
+        {{- if $upfMultus }}{{ $n6v6 = "" }}{{ end }}
         {{- $n6gw6 := (coalesce $inst.remoteN6GwIpv6 $.Values.upf.remoteN6GwIpv6 | default "") | toString | trim }}
         {{- $v6pools := list }}
         {{- range $.Values.coreConfig.dnns }}
@@ -449,8 +453,13 @@ spec:
               TABLE="{{ $v6table }}"
               RULE_PRIO="{{ add 101 (mul $idx 2) }}"
               echo "[n6-ipv6-init] {{ $appName }}: N6=${N6_DEV} addr=${N6_CIDR6:-none} gw=${N6_GW6:-none} table ${TABLE}"
+              {{- if $upfMultus }}
+              # IPv6 forwarding in the UPF pod's network namespace (Multus); the N6
+              # address is on {{ $n6if }} from the NetworkAttachment.
+              {{- else }}
               # Node-wide (hostNetwork): IPv6 forwarding. Interfaces with accept_ra=1
               # stop accepting Router Advertisements once forwarding is on.
+              {{- end }}
               sysctl -w net.ipv6.conf.all.forwarding=1
               ip link set "${N6_DEV}" up
               if [ -n "${N6_CIDR6}" ]; then

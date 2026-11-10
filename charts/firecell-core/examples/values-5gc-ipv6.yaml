@@ -49,6 +49,7 @@ upf:
   hostPfcpMacvlan: upf-n4-mac
   hostPfcpIP: "192.0.2.21"
   pfcpHost: "192.0.2.21"
-  # N6 IPv6 address and next hop (hostNetwork UPF).
+  # N6 IPv6 address and next hop: on n6Interface for a hostNetwork UPF; for a Multus UPF the
+  # address goes into the n6 NetworkAttachment next to multus.n6.ip.
   n6Ipv6Cidr: "2001:db8:6::2/64"
   remoteN6GwIpv6: "2001:db8:6::1"
