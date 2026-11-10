@@ -13,7 +13,7 @@ Charts live in one of three top-level directories:
 | `archived/` | None | No | No | No |
 | `external/` | Upstream OCI chart version | No | No | Yes (republish) |
 
-Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when a chart moves between tiers.
+Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when a chart moves between tiers. `bin/report-private-ghcr-packages` only opens private-package issues for `charts/` and `external/`; moving a chart to `deprecated/` or `archived/` closes its open issue.
 
 ### Deprecate a chart
 
