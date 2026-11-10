@@ -21,4 +21,51 @@ spec:
       ports:
         - protocol: UDP
           port: 8805
+        {{- if include "firecell-5gc.ipv6UserPlane" . }}
+        # IPv6 user plane: RA/NA from the SMF N4-u endpoint to the UPF N4-u endpoint
+        # (GTP-U, UDP 2152 on the UPF N4 address; P23-c/P23-e CP relay).
+        - protocol: UDP
+          port: 2152
+        {{- end }}
+{{- if include "firecell-5gc.ipv6UserPlane" . }}
+---
+# IPv6 user plane: UPF -> SMF N4-u (the UE's RS/NS relayed by the UPF's
+# "to CP function" FAR, GTP-U to smf.ipv6.n4u). A hostNetwork UPF sends from a
+# node address, which a podSelector does not match; its N4 address is listed
+# when the values give it (hostPfcpIP).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: upf-to-smf-n4u
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: oai-smf
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  {{- range (.Values.upf.instances | default (list (dict))) }}
+                  - {{ printf "oai-upf%s" (.suffix | default "" | toString) | quote }}
+                  {{- end }}
+        {{- $n4ips := list }}
+        {{- range (.Values.upf.instances | default (list (dict "hostPfcpMacvlan" .Values.upf.hostPfcpMacvlan "hostPfcpIP" .Values.upf.hostPfcpIP))) }}
+        {{- if and .hostPfcpMacvlan .hostPfcpIP }}{{ $n4ips = append $n4ips (.hostPfcpIP | toString) }}{{ end }}
+        {{- end }}
+        {{- range ($n4ips | uniq) }}
+        - ipBlock:
+            cidr: {{ printf "%s/32" . }}
+        {{- end }}
+      ports:
+        - protocol: UDP
+          port: {{ include "firecell-5gc.smfN4uPort" . }}
+{{- end }}
 {{- end }}
