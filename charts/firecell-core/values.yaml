@@ -1067,6 +1067,14 @@ coreConfig:
         # SMF itself (never a ClusterIP). [the SMF N4 address] For an address that
         # survives an SMF pod replacement (D-1b) use smf.multus.enabled + smf.n4IP, or
         # smf.hostNetwork + smf.hostPfcpIP; with the pod IP, NOTES prints a warning.
+        # FIXME(TS 29.244 V18.10.0 clause 5.3.1; D-1b, user decision 2026-11-10): there
+        # is no N4-u Service. The SMF binds n4u.address itself (cn5g-smf smf_n4u.cpp:99-100)
+        # and puts it in the UPF's "CP function side" FAR, which forwards "to a GTP-u
+        # F-TEID uniquely assigned in the CP function per PFCP session and PDR"; a
+        # ClusterIP is neither bindable by the SMF nor a CP-function F-TEID. On the pod
+        # network the address changes with the pod: the SMF's N4 restore rebuilds the FAR
+        # with the new address (P23-c set_restore_rules), but a session the UPF keeps
+        # without that restore still sends the UE's RS/NS to the old address (HLD R-3).
         address: ""
         port: ""               # n4u.port [2152]
       ra:                      # Router Advertisements (TS 29.061 11.2.1.3.4 defaults)
