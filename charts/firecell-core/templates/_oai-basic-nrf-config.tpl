@@ -290,8 +290,9 @@ smf:
   {{- $n4uKeys := include "firecell-5gc.optionalKeys" (dict "indent" 6 "pairs" (list (list "address" $n4u.address) (list "port" $n4u.port))) }}
   {{- $raKeys := include "firecell-5gc.optionalKeys" (dict "indent" 6 "pairs" (list (list "max_rtr_adv_interval_s" $ra.maxRtrAdvIntervalS) (list "router_lifetime_s" $ra.routerLifetimeS) (list "initial_count" $ra.initialCount) (list "initial_interval_s" $ra.initialIntervalS) (list "mtu" $ra.mtu) (list "rdnss" $ra.rdnss))) }}
   {{- $d6Keys := include "firecell-5gc.optionalKeys" (dict "indent" 6 "pairs" (list (list "primary_server" $d6.primaryServer) (list "secondary_server" $d6.secondaryServer) (list "link_address" $d6.linkAddress) (list "allocate_timeout_s" $d6.allocateTimeoutS) (list "send_release" $d6.sendRelease))) }}
-  ipv6:
-    {{- include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "smf_link_local" $i6.smfLinkLocal))) }}
+  {{- $llKeys := include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "smf_link_local" $i6.smfLinkLocal))) }}
+  {{- if or $llKeys $n4uKeys $raKeys $d6Keys }}
+  ipv6:{{ $llKeys }}
     {{- if $n4uKeys }}
     n4u:{{ $n4uKeys }}
     {{- end }}
@@ -301,6 +302,7 @@ smf:
     {{- if $d6Keys }}
     dhcpv6:{{ $d6Keys }}
     {{- end }}
+  {{- end }}
   {{- end }}
   smf_info:
     sNssaiSmfInfoList:
