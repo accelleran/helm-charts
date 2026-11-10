@@ -420,7 +420,7 @@ spec:
         {{- $n6gw6 := (coalesce $inst.remoteN6GwIpv6 $.Values.upf.remoteN6GwIpv6 | default "") | toString | trim }}
         {{- $v6pools := list }}
         {{- range $.Values.coreConfig.dnns }}
-        {{- if and .ipv6Prefix (or (not $inst.dnns) (has (.dnn | toString) $inst.dnns)) }}
+        {{- if and .ipv6Prefix (include "firecell-5gc.isIpv6Dnn" .) (ne (.ipAllocationMode | default "" | toString) "dhcp") (or (not $inst.dnns) (has (.dnn | toString) $inst.dnns)) }}
         {{- $v6pools = append $v6pools (.ipv6Prefix | toString) }}
         {{- end }}
         {{- end }}

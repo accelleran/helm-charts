@@ -411,17 +411,25 @@ conditions of the NF Deployment templates.
 {{- end }}
 
 {{/*
-IPv6 user plane (P23) on: "true" when a coreConfig.dnns entry has ipv6Prefix, or
-ipAllocationMode dhcp on an IPV6/IPV4V6 DNN (the /64 then comes from DHCPv6).
-Empty otherwise. Every IPv6 item of the chart is behind this one test, so the
-default values (the "ims" DNN is IPV4V6 without ipv6Prefix) render as before.
+IPv6 DNN: "true" for a coreConfig.dnns entry of type IPV6 or IPV4V6 that has an
+IPv6 pool: ipv6Prefix, or ipAllocationMode dhcp (the /64 then comes from DHCPv6).
+The NFs read ipv6_prefix only for those two types (common-src dnn_config::validate),
+and an IPV4V6 DNN without a pool is IPv4-only. Context: the DNN entry.
+*/}}
+{{- define "firecell-5gc.isIpv6Dnn" -}}
+{{- if and (has (.pduSessionType | default "" | toString | upper) (list "IPV6" "IPV4V6")) (or .ipv6Prefix (eq (.ipAllocationMode | default "" | toString) "dhcp")) -}}true{{- end -}}
+{{- end }}
+
+{{/*
+IPv6 user plane (P23) on: "true" when coreConfig.dnns has an IPv6 DNN
+(firecell-5gc.isIpv6Dnn). Empty otherwise. Every IPv6 item of the chart is behind
+this one test, so the default values (the "ims" DNN is IPV4V6 without an IPv6
+pool) render as before.
 */}}
 {{- define "firecell-5gc.ipv6UserPlane" -}}
 {{- $on := false -}}
 {{- range .Values.coreConfig.dnns -}}
-{{- $type := .pduSessionType | default "" | toString | upper -}}
-{{- if .ipv6Prefix -}}{{- $on = true -}}{{- end -}}
-{{- if and (eq (.ipAllocationMode | default "" | toString) "dhcp") (has $type (list "IPV6" "IPV4V6")) -}}{{- $on = true -}}{{- end -}}
+{{- if include "firecell-5gc.isIpv6Dnn" . -}}{{- $on = true -}}{{- end -}}
 {{- end -}}
 {{- if $on -}}true{{- end -}}
 {{- end }}
@@ -468,8 +476,7 @@ single UPF).
 {{- if include "firecell-5gc.ipv6UserPlane" .ctx -}}
 {{- $v6dnns := list -}}
 {{- range $v.coreConfig.dnns -}}
-{{- $type := .pduSessionType | default "" | toString | upper -}}
-{{- if or .ipv6Prefix (and (eq (.ipAllocationMode | default "" | toString) "dhcp") (has $type (list "IPV6" "IPV4V6"))) -}}
+{{- if include "firecell-5gc.isIpv6Dnn" . -}}
 {{- $v6dnns = append $v6dnns (.dnn | toString) -}}
 {{- end -}}
 {{- end -}}

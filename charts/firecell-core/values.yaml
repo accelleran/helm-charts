@@ -1010,8 +1010,8 @@ coreConfig:
   #     dhcp on an IPV6/IPV4V6 DNN takes the /64 from an external DHCPv6 server and
   #     needs coreConfig.smf.ipv6.dhcpv6 (primaryServer, linkAddress): without them
   #     every IPv6 PDU session of that DNN is rejected with 5GSM cause #26.
-  # A DNN with ipv6Prefix, or with ipAllocationMode dhcp on an IPV6/IPV4V6 DNN, turns
-  # the IPv6 user plane on for the whole release: the smf ipv6 block, the CP relay
+  # An IPV6 or IPV4V6 DNN with ipv6Prefix or ipAllocationMode dhcp turns the IPv6 user
+  # plane on for the whole release (ipv6Prefix on an IPV4 DNN is ignored, as by the NFs): the smf ipv6 block, the CP relay
   # on the SMF and every UPF (N4 must then differ from N3), the SMF N4-u port, the
   # NetworkPolicy for UDP 2152 and the UPF N6 IPv6 setup. An IPV4V6 DNN without
   # either (like "ims" below) stays IPv4-only, as before.
