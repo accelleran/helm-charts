@@ -63,6 +63,8 @@ spec:
             {{- if $o1.enabled }}
             - name: O1_ENABLED
               value: "true"
+            - name: NETCONF_VERBOSITY
+              value: {{ include "firecell-cu.netconfVerbosity" $o1.netconfVerbosity | quote }}
             {{- end }}
           command:
             {{- if $o1.enabled }}

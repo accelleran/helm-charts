@@ -2,6 +2,7 @@
 
 GIT_ROOT="$(realpath "$(dirname "$0")/..")"
 CHARTS_ROOT="${GIT_ROOT}/charts"
+DEPRECATED_ROOT="${GIT_ROOT}/deprecated"
 
 function usage() {
     echo "Usage:"
@@ -27,7 +28,12 @@ function update_remote_deps() {
     printf "Updating local repo cache...\n\n"
     helm repo update
 
-    for chart in "${CHARTS_ROOT}"/*/ "${CHARTS_ROOT}"/drax/charts/*/ ; do
+    shopt -s nullglob
+    for chart in \
+        "${CHARTS_ROOT}"/*/ \
+        "${CHARTS_ROOT}"/drax/charts/*/ \
+        "${DEPRECATED_ROOT}"/*/ \
+    ; do
         printf "\nUpdating remote dependencies of %s...\n\n" "$chart"
         helm dependency update "$chart" --skip-refresh
     done

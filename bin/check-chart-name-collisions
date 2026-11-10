@@ -1,13 +1,18 @@
 #!/bin/bash
 #
 # Fail if two sources would publish the same Helm chart name: top-level
-# charts/*/Chart.yaml and any External.yaml. Collisions are not supported.
+# charts/*/Chart.yaml, deprecated/*/Chart.yaml, and any External.yaml.
+# archived/*/Chart.yaml is included too: archived charts keep their published
+# releases, index.yaml entries and GHCR packages, so their names stay reserved.
+# Collisions are not supported.
 
 set -eu -o pipefail
 shopt -s nullglob globstar
 
 GIT_ROOT="$(realpath "$(dirname "$0")/..")"
 CHARTS_ROOT="${GIT_ROOT}/charts"
+DEPRECATED_ROOT="${GIT_ROOT}/deprecated"
+ARCHIVED_ROOT="${GIT_ROOT}/archived"
 
 yaml_name() {
     awk '
@@ -46,7 +51,7 @@ record() {
     sources+=("${src}")
 }
 
-for chart in "${CHARTS_ROOT}"/*/Chart.yaml ; do
+for chart in "${CHARTS_ROOT}"/*/Chart.yaml "${DEPRECATED_ROOT}"/*/Chart.yaml "${ARCHIVED_ROOT}"/*/Chart.yaml ; do
     record "$(yaml_name "${chart}")" "${chart#"${GIT_ROOT}/"}"
 done
 

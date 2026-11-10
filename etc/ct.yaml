@@ -1,5 +1,6 @@
 chart-dirs:
   - charts
+  - deprecated
 check-version-increment: false
 validate-yaml: true
 lint-conf: "etc/lintconf.yaml"

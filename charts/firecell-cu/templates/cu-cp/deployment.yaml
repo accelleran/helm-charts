@@ -46,6 +46,8 @@ spec:
           env:
             - name: O1_ENABLED
               value: "true"
+            - name: NETCONF_VERBOSITY
+              value: {{ include "firecell-cu.netconfVerbosity" $c.o1.netconfVerbosity | quote }}
           {{- end }}
           securityContext:
             privileged: true
