@@ -11,6 +11,7 @@ Charts live in one of three top-level directories:
 | `charts/` | All updates | Yes | Yes (unless `.ct-install-ignore`) | Yes |
 | `deprecated/` | First-party images (`accelleran/`, `firecell/`) and dependencies from `accelleran.github.io/helm-charts` | Yes | No | Yes |
 | `archived/` | None | No | No | No |
+| `external/` | Upstream OCI chart version | No | No | Yes (republish) |
 
 Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when a chart moves between tiers.
 
@@ -38,7 +39,7 @@ Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when
 
 To un-archive, reverse the steps and restore the release-please entries.
 
-External charts (`charts/*/External.yaml`) are not deprecated in place: stop republishing by deleting the `External.yaml` directory.
+External charts under `external/` are not deprecated or archived in place: stop republishing by deleting the yaml file.
 
 ## Releases
 
@@ -91,7 +92,7 @@ This is for example handy during development on the `common` library chart.
 It is possible to republish an upstream OCI chart into this repository's Helm
 repo and GHCR without unpacking or re-packaging it.
 
-Create a directory under `charts` that contains only `External.yaml`:
+Create `external/<name>.yaml` (or `external/<name>/External.yaml`):
 
 ```yaml
 name: example-chart
@@ -101,6 +102,8 @@ notes:
   github: example/example
   tag: "v{{ version }}"
 ```
+
+Stop republishing by deleting that file.
 
 The version must be exact (ranges such as `0.1` are not supported).
 Renovate bumps `version` when a newer chart is published upstream.
@@ -113,7 +116,8 @@ chart keeps its upstream name and version.
 
 `alias` is not supported: renaming a chart requires rewriting `Chart.yaml`
 and would produce a new tarball. Published names must be unique across
-first-party `Chart.yaml` and `External.yaml`; CI fails on a collision.
+first-party `Chart.yaml` and definitions under `external/`; CI fails on a
+collision.
 
 ### Release notes
 
