@@ -631,12 +631,15 @@ upf:
   n6Cidr: ""
   # N6 default gateway toward DN (set in site overlay, e.g. values-dataplane-*.yaml / host_vars). Required when n6Cidr is set.
   remoteN6Gw: ""
-  # IPv6 user plane (P23), hostNetwork UPF only, used when the UPF serves a DNN with an IPv6
-  # pool (coreConfig.dnns[].ipv6Prefix). The n6-ipv6-init container then sets
-  # net.ipv6.conf.all.forwarding=1 (node-wide: interfaces with accept_ra=1 stop accepting
-  # RAs), adds n6Ipv6Cidr on the N6 interface, and routes the DNN IPv6 pools (source rule,
-  # no NAT66) to a per-UPF table whose default route is remoteN6GwIpv6. Per instance:
-  # upf.instances[].n6Ipv6Cidr / remoteN6GwIpv6.
+  # IPv6 user plane (P23), hostNetwork or Multus UPF, used when the UPF serves an IPv6 DNN
+  # (coreConfig.dnns). The n6-ipv6-init container then sets net.ipv6.conf.all.forwarding=1,
+  # puts n6Ipv6Cidr on the N6 interface, and routes the DNN IPv6 pools (source rule, no
+  # NAT66) to a per-UPF table whose default route is remoteN6GwIpv6.
+  # - hostNetwork: all in the node's namespace, so forwarding is node-wide (interfaces with
+  #   accept_ra=1 stop accepting RAs). Per instance: upf.instances[].n6Ipv6Cidr /
+  #   remoteN6GwIpv6.
+  # - Multus: in the pod's own namespace; n6Ipv6Cidr is added to the n6 NetworkAttachment
+  #   (static IPAM, next to multus.n6.ip).
   # The DN router must route each UE IPv6 pool to n6Ipv6Cidr's address (no NAT66).
   n6Ipv6Cidr: ""                 # e.g. 2001:db8:6::2/64
   remoteN6GwIpv6: ""             # e.g. 2001:db8:6::1
