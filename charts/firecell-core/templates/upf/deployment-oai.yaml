@@ -454,10 +454,15 @@ spec:
               sysctl -w net.ipv6.conf.all.forwarding=1
               ip link set "${N6_DEV}" up
               if [ -n "${N6_CIDR6}" ]; then
-                if ip -6 -o addr show dev "${N6_DEV}" | awk '{print $4}' | grep -qx "${N6_CIDR6}"; then
-                  echo "[n6-ipv6-init] ${N6_CIDR6} already on ${N6_DEV}"
-                else
-                  ip -6 addr add "${N6_CIDR6}" dev "${N6_DEV}"
+                # Restart-safe: the address may already be there (from a previous start,
+                # possibly written differently or with another length): EEXIST is fine.
+                if ! ip -6 addr add "${N6_CIDR6}" dev "${N6_DEV}" 2>/tmp/n6-ipv6-addr.err; then
+                  if grep -q "File exists" /tmp/n6-ipv6-addr.err; then
+                    echo "[n6-ipv6-init] ${N6_CIDR6%/*} already on ${N6_DEV}"
+                  else
+                    cat /tmp/n6-ipv6-addr.err >&2
+                    exit 1
+                  fi
                 fi
               fi
               if [ -n "${N6_GW6}" ]; then
@@ -467,7 +472,10 @@ spec:
                 ip -6 rule add from "{{ $p }}" lookup "${TABLE}" priority "${RULE_PRIO}"
                 {{- end }}
                 _try=0
-                while [ "${_try}" -lt {{ $di6.n6GatewayArpRetries | default 60 | int }} ]; do
+                # Not fatal (the eBPF uplink falls back to the IPv4 N6 next hop, and IPv4
+                # must not stop for IPv6), so the wait is short: a restart without the
+                # neighbour costs n6GatewayNdRetries x n6GatewayArpIntervalSec.
+                while [ "${_try}" -lt {{ $di6.n6GatewayNdRetries | default 12 | int }} ]; do
                   ping -6 -c 1 -W 2 -I "${N6_DEV}" "${N6_GW6}" >/dev/null 2>&1 || true
                   if ip -6 neigh show dev "${N6_DEV}" to "${N6_GW6}" 2>/dev/null | grep -q lladdr; then
                     echo "[n6-ipv6-init] {{ $appName }}: N6 IPv6 gateway neighbour OK"

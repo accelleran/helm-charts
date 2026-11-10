@@ -644,6 +644,9 @@ upf:
   datapathInit:
     n6GatewayArpRetries: 60
     n6GatewayArpIntervalSec: 5
+    # n6-ipv6-init (IPv6 user plane): tries for the remoteN6GwIpv6 neighbour, same interval.
+    # Not fatal: the UPF starts with a WARNING when the neighbour is still missing.
+    n6GatewayNdRetries: 12
   # When true, n3-ip-init automatically creates n3Interface (e.g. upf-n3) as a
   # bridge-mode macvlan on n4Interface and adds an on-link route to remoteN6Gw.
   autoCreateN3Macvlan: false
