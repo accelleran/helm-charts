@@ -51,14 +51,14 @@ IPv6 user plane: on (a DNN in coreConfig.dnns has an IPv6 pool).
 {{- if include "firecell-5gc.upfCpRelay" (dict "ctx" $ "inst" $inst) }}
 {{- $n6v6 := (coalesce $inst.n6Ipv6Cidr $.Values.upf.n6Ipv6Cidr | default "") | toString | regexFind "[^/]+" }}
 {{- range $.Values.coreConfig.dnns }}
-{{- if and .ipv6Prefix (or (not $inst.dnns) (has (.dnn | toString) $inst.dnns)) }}
+{{- if and .ipv6Prefix (include "firecell-5gc.isIpv6Dnn" .) (ne (.ipAllocationMode | default "" | toString) "dhcp") (or (not $inst.dnns) (has (.dnn | toString) $inst.dnns)) }}
       ip -6 route add {{ .ipv6Prefix }} via {{ $n6v6 | default "<upf.n6Ipv6Cidr address, not set>" }}    # DNN {{ .dnn }}, oai-upf{{ $inst.suffix | default "" }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- range .Values.coreConfig.dnns }}
-{{- if and (eq (.ipAllocationMode | default "" | toString) "dhcp") (has (.pduSessionType | default "" | toString | upper) (list "IPV6" "IPV4V6")) }}
+{{- if and (include "firecell-5gc.isIpv6Dnn" .) (eq (.ipAllocationMode | default "" | toString) "dhcp") }}
       DNN {{ .dnn }}: /64s from the DHCPv6 server (ipAllocationMode dhcp); route the
       server's delegated-prefix pool the same way.
 {{- end }}
