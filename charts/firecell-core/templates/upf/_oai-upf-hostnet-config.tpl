@@ -117,6 +117,7 @@ upf:
     # the N4 address, which must differ from N3 and N9).
     enable_cp_relay: {{ if include "firecell-5gc.upfCpRelay" (dict "ctx" $root "inst" $inst) }}yes{{ else }}no{{ end }}
 {{- end }}
+    {{- include "firecell-5gc.upfDeleteSessionsOnSmfRestart" $v.upf }}
     # cn5g-upf v5.1.0.x sizes m_arp_table from support_features (not datapath_configuration).
     max_arp_entries: 256
 {{- if eq $schema "legacy" }}
