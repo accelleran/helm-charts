@@ -409,3 +409,47 @@ conditions of the NF Deployment templates.
 {{- end -}}
 {{- toJson $names -}}
 {{- end }}
+
+{{/*
+IPv6 user plane (P23) on: "true" when a coreConfig.dnns entry has ipv6Prefix, or
+ipAllocationMode dhcp on an IPV6/IPV4V6 DNN (the /64 then comes from DHCPv6).
+Empty otherwise. Every IPv6 item of the chart is behind this one test, so the
+default values (the "ims" DNN is IPV4V6 without ipv6Prefix) render as before.
+*/}}
+{{- define "firecell-5gc.ipv6UserPlane" -}}
+{{- $on := false -}}
+{{- range .Values.coreConfig.dnns -}}
+{{- $type := .pduSessionType | default "" | toString | upper -}}
+{{- if .ipv6Prefix -}}{{- $on = true -}}{{- end -}}
+{{- if and (eq (.ipAllocationMode | default "" | toString) "dhcp") (has $type (list "IPV6" "IPV4V6")) -}}{{- $on = true -}}{{- end -}}
+{{- end -}}
+{{- if $on -}}true{{- end -}}
+{{- end }}
+
+{{/*
+"key: value" lines, one per pair (list "<NF yaml key>" <value>) whose value is
+set; an unset ("" or absent) value is left out so the NF keeps its own default.
+dict keys: pairs (list of pairs), indent (int).
+*/}}
+{{- define "firecell-5gc.optionalKeys" -}}
+{{- range .pairs }}
+{{- $v := index . 1 }}
+{{- if not (or (kindIs "invalid" $v) (eq (toString $v) "")) }}
+{{ printf "%s: %s" (index . 0) (ternary (quote $v) (toString $v) (kindIs "string" $v)) | indent $.indent }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+The IPv6 keys of one coreConfig.dnns entry (common-src dnn_config, P23-a/P23-g),
+for both DNN lists (common config and the hostNetwork UPF config), so the SMF and
+the UPF read the same pool. Context: the DNN entry.
+*/}}
+{{- define "firecell-5gc.dnnIpv6Keys" -}}
+{{- with .ipAllocationMode }}
+{{- if not (has (toString .) (list "static" "dhcp")) }}
+{{- fail (printf "coreConfig.dnns[].ipAllocationMode must be static or dhcp (got %q)" (toString .)) }}
+{{- end }}
+{{- end }}
+{{- include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "ipv6_prefix" .ipv6Prefix) (list "ip_allocation_mode" .ipAllocationMode))) }}
+{{- end }}

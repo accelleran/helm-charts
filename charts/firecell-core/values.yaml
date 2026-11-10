@@ -987,6 +987,19 @@ coreConfig:
       sd: "000001"
 
   # DNN configuration
+  # IPv6 / IPv4v6 PDU sessions (P23), optional keys per DNN, written to the SMF and
+  # UPF DNN lists only when set:
+  #   ipv6Prefix: "2001:db8:1::/48"  -> ipv6_prefix. The UE /64 pool, length 0..64;
+  #                                     each PDU session gets its own /64 from it.
+  #   ipAllocationMode: dhcp         -> ip_allocation_mode, static (NF default) | dhcp.
+  #     dhcp on an IPV6/IPV4V6 DNN takes the /64 from an external DHCPv6 server and
+  #     needs coreConfig.smf.ipv6.dhcpv6 (primaryServer, linkAddress): without them
+  #     every IPv6 PDU session of that DNN is rejected with 5GSM cause #26.
+  # A DNN with ipv6Prefix, or with ipAllocationMode dhcp on an IPV6/IPV4V6 DNN, turns
+  # the IPv6 user plane on for the whole release: the smf ipv6 block, the CP relay
+  # on the SMF and every UPF (N4 must then differ from N3), the SMF N4-u port, the
+  # NetworkPolicy for UDP 2152 and the UPF N6 IPv6 setup. An IPV4V6 DNN without
+  # either (like "ims" below) stays IPv4-only, as before.
   dnns:
     - dnn: "oai"
       pduSessionType: "IPV4"
@@ -996,6 +1009,8 @@ coreConfig:
       ipv4Subnet: "14.1.1.0/25"
 
   # DNS servers for UE
+  # primaryIpv6 / secondaryIpv6 (optional): ue_dns primary_ipv6 / secondary_ipv6, the
+  # IPv6 DNS the SMF gives the UE (ePCO and the RDNSS option of its RAs).
   dns:
     primaryIpv4: "8.8.8.8"
     secondaryIpv4: "8.8.8.8"
@@ -1020,6 +1035,34 @@ coreConfig:
     # "no" => SMF discovers UPFs via NRF (dynamic UPF selection). Requires UPFs to register
     # to NRF successfully (SBI on cni0 for hostNetwork UPFs).
     enableUpfWoNfDiscovery: "yes"
+    # IPv6 user plane (P23-c, P23-g): the cn5g-smf "smf: ipv6:" block, written only when
+    # the IPv6 user plane is on (see dnns above). An empty value is left out, and the SMF
+    # uses its own default (in brackets).
+    ipv6:
+      smfLinkLocal: ""         # smf_link_local, fe80::/64 source of the RAs [fe80::1]
+      n4u:
+        # n4u.address: the SMF's N4-u GTP-U endpoint (IPv4). The SMF binds it, and the
+        # UPF's CP-relay FAR sends the UE's RS/NS to it. [the SMF N4 address]
+        address: ""
+        port: ""               # n4u.port [2152]
+      ra:                      # Router Advertisements (TS 29.061 11.2.1.3.4 defaults)
+        maxRtrAdvIntervalS: ""  # max_rtr_adv_interval_s, 4..65535 [21600]
+        routerLifetimeS: ""    # router_lifetime_s, 0 or >= maxRtrAdvIntervalS [65535]
+        initialCount: ""       # initial_count, 0..10 [3]
+        initialIntervalS: ""   # initial_interval_s, 1..3600 [10]
+        mtu: ""                # mtu, 0 (= ueMtu) or >= 1280 [0]
+        rdnss: ""              # rdnss, "yes"/"no": DNS option in the RA [yes]
+      # DHCPv6 client for DNNs with ipAllocationMode dhcp (TS 29.561 10.2.3). One server
+      # set and link-address for all DNNs. The SMF needs an IPv6 path to the server and
+      # must be able to bind UDP 547; the server's subnet must contain linkAddress, with
+      # a pd-pool of delegated length 64. A secondaryServer must share lease state with
+      # the primary (Kea HA or a shared lease database).
+      dhcpv6:
+        primaryServer: ""      # primary_server, global or ULA IPv6
+        secondaryServer: ""    # secondary_server
+        linkAddress: ""        # link_address, selects the server's prefix pool
+        allocateTimeoutS: ""   # allocate_timeout_s, 1..30 [2]
+        sendRelease: ""        # send_release, "yes"/"no" [yes]
 
   # SBI HTTP client timeout (ms) — default OAI is 3000; raise on busy labs to avoid NRF heartbeat false failures
   httpRequestTimeoutMs: 10000
