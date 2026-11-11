@@ -59,6 +59,11 @@ spec:
             - name: udm-suci-key
               mountPath: /openair-udm/etc/a.key
               subPath: a.key
+            {{- range .Values.udm.extraSuciProfiles }}
+            - name: udm-suci-key
+              mountPath: /openair-udm/etc/suci-{{ .id }}.pem
+              subPath: suci-{{ .id }}.pem
+            {{- end }}
             {{- if .Values.udm.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.udm.fcaps.datastore.mountPath }}
@@ -123,4 +128,8 @@ data:
     MC4CAQAwBQYDK2VuBCIEIKDMPgJYPmCobTpdYVvSkcHQ0hufGZ4A6ZOMpTzKIBRQ
     -----END PRIVATE KEY-----
     {{- end }}
+  {{- range .Values.udm.extraSuciProfiles }}
+  suci-{{ .id }}.pem: |
+    {{- required "udm.extraSuciProfiles[].key is required" .key | trimSuffix "\n" | nindent 4 }}
+  {{- end }}
 {{- end }}
