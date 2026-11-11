@@ -1024,10 +1024,13 @@ coreConfig:
     amfPointer: "01"
     supportedIntegrityAlgorithms:
       - "NIA2"
+    # The AMF selects the first algorithm in this list that the UE supports, so the
+    # order is the preference. NEA0 (null ciphering) last: it is chosen only for a UE
+    # that supports nothing else.
     supportedEncryptionAlgorithms:
-      - "NEA0"
-      - "NEA1"
       - "NEA2"
+      - "NEA1"
+      - "NEA0"
 
   # NSSAI / Slices
   nssai:
