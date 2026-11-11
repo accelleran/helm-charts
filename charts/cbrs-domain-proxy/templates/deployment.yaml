@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cbrs-domain-proxy.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  # The store lock lets one process run: never two pods at once, not even in a rollout.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      # Selector labels only: a chart version bump must not restart the pod.
+      labels:
+        {{- include "cbrs-domain-proxy.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include "cbrs-domain-proxy.config" . | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+        fsGroup: 65532
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: cbrs-dp
+          image: {{ .Values.image | default (printf "docker.io/accelleran/cbrs-domain-proxy:%s" .Chart.AppVersion) }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          args: ["-config", "/etc/cbrs-dp/config/config.yaml"]
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.grpc.port }}
+            - name: metrics
+              containerPort: {{ .Values.metrics.port }}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/cbrs-dp/config
+            - name: allowlist
+              mountPath: /etc/cbrs-dp/allowlist
+            - name: sas
+              mountPath: /etc/cbrs-dp/sas
+              readOnly: true
+            - name: cbsd
+              mountPath: /etc/cbrs-dp/cbsd
+              readOnly: true
+            - name: store
+              mountPath: /var/lib/cbrs-dp
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-config
+        - name: allowlist
+          configMap:
+            name: {{ .Release.Name }}-allowlist
+        - name: sas
+          secret:
+            secretName: {{ .Values.sas.secret | default (printf "%s-sas" .Release.Name) }}
+            defaultMode: 0440
+        - name: cbsd
+          secret:
+            secretName: {{ .Values.grpc.secret | default (printf "%s-cbsd" .Release.Name) }}
+            defaultMode: 0440
+        - name: store
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-store

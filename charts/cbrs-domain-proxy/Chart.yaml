@@ -1,0 +1,13 @@
+apiVersion: v2
+name: cbrs-domain-proxy
+description: CBRS Domain Proxy - the CBSD-facing gRPC front for the SAS, one per site
+type: application
+version: 0.1.0
+# renovate: image=accelleran/cbrs-domain-proxy
+appVersion: "0.5.0"
+keywords:
+  - cbrs
+  - sas
+  - domain-proxy
+sources:
+  - https://github.com/accelleran/cbrs-domain-proxy

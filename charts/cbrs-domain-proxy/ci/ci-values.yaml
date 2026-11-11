@@ -1,0 +1,6 @@
+sas:
+  url: https://sas.example.invalid/v1.2
+  userId: ci-sas-user
+allowlist:
+  - fcc_id: ci-fcc-id
+    serial_number: ci-serial

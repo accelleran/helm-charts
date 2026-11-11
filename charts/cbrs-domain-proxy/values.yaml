@@ -1,0 +1,47 @@
+# -- Image reference. Empty uses `docker.io/accelleran/cbrs-domain-proxy:<appVersion>`. Development builds are
+# on `ghcr.io/accelleran/cbrs-domain-proxy` (`edge-<sha>`, `pr-<n>`).
+image: ""
+# -- Image pull policy.
+imagePullPolicy: IfNotPresent
+# -- Image pull secrets for the pod.
+imagePullSecrets: []
+# -- Node selector for the pod.
+nodeSelector: {}
+# -- Tolerations for the pod.
+tolerations: []
+
+sas:
+  # -- SAS URL (https). Required. Pinned in the store: changing it later needs a fresh store.
+  url: ""
+  # -- SAS user ID. Required. Pinned in the store like the URL.
+  userId: ""
+  # -- Secret with tls.crt, tls.key and ca.crt for the SAS-facing mTLS client.
+  # Empty uses `<release>-sas`. Replace the files and restart to rotate.
+  secret: ""
+
+grpc:
+  # -- CBSD-facing gRPC port (container and Service).
+  port: 50051
+  # -- Secret with tls.crt, tls.key and ca.crt (the CBSD client CA) for the
+  # CBSD-facing mTLS server. Empty uses `<release>-cbsd`.
+  secret: ""
+
+metrics:
+  # -- Port of the Prometheus endpoint (plain HTTP, `/metrics`), on the container and the Service. The NMS raises
+  # the Domain Proxy alarms from it.
+  port: 9464
+
+store:
+  # -- Size of the PVC holding the registration and Grant store.
+  size: 100Mi
+  # -- Storage class of the PVC. Empty uses the cluster default.
+  storageClass: ""
+
+# -- CBSDs (`fcc_id`, `serial_number`) written to `<release>-allowlist` at first install. See "Allowlist" in the README.
+allowlist: []
+
+nms:
+  # -- Let the NMS restart this Deployment and patch the allowlist ConfigMap (get and patch, both by name).
+  rbac: true
+  # -- Namespace of the firecell-nms release.
+  namespace: firecell-nms
