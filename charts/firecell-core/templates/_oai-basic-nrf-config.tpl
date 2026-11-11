@@ -333,6 +333,7 @@ upf:
     enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
+    enable_fr: {{ if ($v.upf.enableFramedRouting | default false) }}yes{{ else }}no{{ end }}
   upf_info:
     sNssaiUpfInfoList:
     {{- range $v.coreConfig.nssai }}

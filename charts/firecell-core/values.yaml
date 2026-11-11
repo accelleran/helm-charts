@@ -668,6 +668,10 @@ upf:
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
   oaiEnableEthPdu: false
+  # OAI UPF: framed routing (cn5g-upf support_features.enable_fr). When true the UPF
+  # matches downlink traffic to the Framed-Route prefixes the SMF signals for a PDU
+  # session (TS 29.244 Framed-Route IE). Default off.
+  enableFramedRouting: false
   # Optional overrides for hostnet ConfigMap (see docs/developer/oai-upf-ebpf-hostnet.md)
   oaiHostNet:
     stubInterface: ""            # Else sbiInterface, else eno8303
