@@ -1,4 +1,4 @@
-{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") }}
+{{- if .Values.upf.enabled }}
 {{- /* Validate configSchema when explicitly set — catches copy-paste of develop overlays onto release images */}}
 {{- if and .Values.upf.hostNetwork (.Values.upf.configSchema | ne "") }}
 {{- $validSchemas := list "legacy" "mr97" }}
@@ -19,13 +19,10 @@
     "pfcpHost"        .Values.upf.pfcpHost
 ) }}
 {{- end }}
-{{- $multiHostNet := and .Values.upf.hostNetwork (gt (len $instances) 1) }}
 {{- $omitKubePorts := .Values.upf.hostNetwork }}
-{{- $pcapDefaults := .Values.upf.packetCapture | default dict }}
 {{- range $idx, $inst := $instances }}
 {{- $suffix := ($inst.suffix | default "" | toString) }}
 {{- $healthPort := add 9090 $idx }}
-{{- $capturePort := add 8095 $idx }}
 {{- $appName := printf "oai-upf%s" $suffix }}
 {{- $cmName := printf "firecell-oai-upf%s-hostnet" $suffix }}
 {{- $fcaps := $.Values.upf.fcaps | default dict }}
@@ -39,19 +36,6 @@
 {{- $n3ip := coalesce $inst.n3IP $.Values.upf.n3IP "" }}
 {{- $n3cidr := coalesce $inst.n3Cidr $.Values.upf.n3Cidr "" }}
 {{- $n6cidr := coalesce $inst.n6Cidr $.Values.upf.n6Cidr "" }}
-{{- $captureSidecar := true }}
-{{- if hasKey $pcapDefaults "enabled" }}
-{{- $captureSidecar = $pcapDefaults.enabled }}
-{{- end }}
-{{- if and (hasKey $inst "packetCapture") (hasKey $inst.packetCapture "enabled") }}
-{{- $captureSidecar = $inst.packetCapture.enabled }}
-{{- end }}
-{{- if and $multiHostNet ($pcapDefaults.disableOnMultiInstance | default true) }}
-{{- $captureSidecar = false }}
-{{- end }}
-{{- $dnnDp := $.Values.upf.dnnDataplane | default dict }}
-{{- $dnnDpOn := $dnnDp.enabled | default false }}
-{{- $dnnDpPort := add ($dnnDp.basePort | default 8196 | int) $idx }}
 {{- $pfcpMac := coalesce $inst.hostPfcpMacvlan $.Values.upf.hostPfcpMacvlan "" }}
 {{- $pfcpIP := coalesce $inst.hostPfcpIP $.Values.upf.hostPfcpIP "" }}
 {{- $n4parent := coalesce $inst.n4Interface $.Values.upf.n4Interface "eno1" }}
@@ -94,7 +78,6 @@ spec:
         app: {{ $appName }}
         tier: core-network
         firecell.io/role: core-nf
-        firecell.io/packet-capture: upf
         firecell.io/upf-instance: {{ $appName }}
         firecell.io/upf-n3-dev: {{ $n3if | quote }}
         firecell.io/upf-n6-dev: {{ $n6if | quote }}
@@ -641,70 +624,6 @@ spec:
             failureThreshold: 10
             timeoutSeconds: 5
           {{- end }}
-        {{- if $captureSidecar }}
-        - name: fc-packet-capture
-          image: {{ ($.Values.upf.packetCapture | default dict).imageOverride | default (include "firecell-5gc.image" (dict "registry" $.Values.global.imageRegistry "image" "fc-packet-capture" "tag" (($.Values.upf.packetCapture | default dict).imageTag | default $.Values.global.pkgVersion))) }}
-          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
-          workingDir: /agent
-          env:
-            # hostNetwork: each UPF pod needs a unique REST port (binary defaults to 8095).
-            - name: FC_REST_PORT
-              value: {{ $capturePort | quote }}
-            # cn-agent POST /create_capture uses interface_name; must match this pod's N3 netdev.
-            - name: FC_CAPTURE_N3_INTERFACE
-              value: {{ $n3if | quote }}
-            {{- if ne $n6if $n3if }}
-            - name: FC_CAPTURE_N6_INTERFACE
-              value: {{ $n6if | quote }}
-            {{- end }}
-          command:
-            - /agent/fc_packet_capture
-          {{- if not $omitKubePorts }}
-          ports:
-            - containerPort: {{ $capturePort }}
-              protocol: TCP
-          {{- end }}
-          securityContext:
-            capabilities:
-              add:
-                - NET_ADMIN
-                - NET_RAW
-          livenessProbe:
-            exec:
-              command:
-                - "true"
-            initialDelaySeconds: 30
-            periodSeconds: 30
-            timeoutSeconds: 10
-            failureThreshold: 3
-          readinessProbe:
-            exec:
-              command:
-                - "true"
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            failureThreshold: 3
-            timeoutSeconds: 3
-          resources:
-            requests:
-              memory: 512Mi
-              cpu: 500m
-            limits:
-              memory: 1Gi
-              cpu: 2000m
-        {{- end }}
-        {{- if $dnnDpOn }}
-        {{- include "firecell-5gc.dnnDataplaneSidecar" (dict
-            "Values" $.Values
-            "global" $.Values.global
-            "port" $dnnDpPort
-            "mode" "auto"
-            "configVolume" (ternary "oai-upf-hostnet-config" "common-config" $.Values.upf.hostNetwork)
-            "configSubPath" (ternary "basic_nrf_config_ebpf_oai_upf_hostnet.yaml" "config.yaml" $.Values.upf.hostNetwork)
-            "intentVolume" (ternary "cm-state" "" $fcapsOn)
-            "omitContainerPort" $omitKubePorts
-        ) | nindent 8 }}
-        {{- end }}
         {{- include "firecell-5gc.healthzSidecar" (dict "Values" $.Values "nfName" "upf" "healthPath" "/nupf-access/v1/health" "healthPort" $healthPort "omitContainerPort" $omitKubePorts) | nindent 8 }}
       volumes:
         {{- if $.Values.upf.hostNetwork }}

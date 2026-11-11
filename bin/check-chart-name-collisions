@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# Fail if two sources would publish the same Helm chart name: top-level
+# charts/*/Chart.yaml, deprecated/*/Chart.yaml, and external/ definitions
+# (external/<name>.yaml or external/<name>/External.yaml).
+# archived/*/Chart.yaml is included too: archived charts keep their published
+# releases, index.yaml entries and GHCR packages, so their names stay reserved.
+# Collisions are not supported.
+
+set -eu -o pipefail
+
+# shellcheck source=bin/external-charts-lib.sh
+source "$(dirname "$(realpath "$0")")/external-charts-lib.sh"
+
+CHARTS_ROOT="${GIT_ROOT}/charts"
+DEPRECATED_ROOT="${GIT_ROOT}/deprecated"
+ARCHIVED_ROOT="${GIT_ROOT}/archived"
+
+failed=0
+names=()
+sources=()
+
+record() {
+    local name="$1" src="$2" i
+    if [[ -z "${name}" ]] ; then
+        echo "No name: in ${src}" 1>&2
+        failed=1
+        return
+    fi
+    for i in "${!names[@]}" ; do
+        if [[ "${names[$i]}" == "${name}" ]] ; then
+            echo "Chart name '${name}' would be published by both:" 1>&2
+            echo "  ${sources[$i]}" 1>&2
+            echo "  ${src}" 1>&2
+            failed=1
+            return
+        fi
+    done
+    names+=("${name}")
+    sources+=("${src}")
+}
+
+for chart in "${CHARTS_ROOT}"/*/Chart.yaml "${DEPRECATED_ROOT}"/*/Chart.yaml "${ARCHIVED_ROOT}"/*/Chart.yaml ; do
+    record "$(yaml_name "${chart}")" "${chart#"${GIT_ROOT}/"}"
+done
+
+while IFS= read -r ext; do
+    if ! external_chart_name_matches_path "${ext}"; then
+        failed=1
+        continue
+    fi
+    record "$(yaml_name "${ext}")" "${ext#"${GIT_ROOT}/"}"
+done < <(list_external_chart_files)
+
+if [[ "${failed}" -ne 0 ]] ; then
+    echo "Published chart names must be unique; renaming via alias is not supported." 1>&2
+    exit 1
+fi

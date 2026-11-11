@@ -92,6 +92,8 @@ CU-UP Ocudu config (YAML). __POD_IP__ is filled in at container start.
 {{- $f1uBind = include "firecell-cu.ip" $v.cuUp.f1u.network.cidr -}}
 {{- end }}
 {{- $base := dict
+  "gnb_id" $v.gnb.gnbId
+  "gnb_id_bit_length" $v.gnb.gnbIdBitLength
   "cu_up" (dict
     "e1ap" (dict "addrs" (include "firecell-cu.cuCpAddress" .) "bind_addrs" "0.0.0.0")
     "ngu" (dict "socket" (list (dict "bind_addr" $nguBind)))

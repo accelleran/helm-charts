@@ -1,4 +1,4 @@
-{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") .Values.upf.hostNetwork }}
+{{- if and .Values.upf.enabled .Values.upf.hostNetwork }}
 {{- $instances := .Values.upf.instances }}
 {{- if not $instances }}
 {{- $instances = list (dict

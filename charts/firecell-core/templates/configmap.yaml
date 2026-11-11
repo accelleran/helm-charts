@@ -15,7 +15,7 @@ data:
   basic_nrf_config_ebpf_smf_hostnet.yaml: |
 {{ include "firecell-5gc.basicNrfConfigEbpfQos" (dict "ctx" . "hostNet" false "smfPodConfig" true) | nindent 4 }}
 {{- end }}
-{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") .Values.upf.hostNetwork }}
+{{- if and .Values.upf.enabled .Values.upf.hostNetwork }}
   basic_nrf_config_ebpf_oai_upf_hostnet.yaml: |
 {{ include "firecell-5gc.basicNrfConfigEbpfQos" (dict "ctx" . "hostNet" true "smfPodConfig" false) | nindent 4 }}
 {{- end }}

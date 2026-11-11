@@ -2,6 +2,45 @@
 
 This repository contains accelleran's helm charts.
 
+## Chart lifecycle
+
+Charts live in one of three top-level directories:
+
+| Directory | Renovate | Lint | Install tests | Releases |
+| --- | --- | --- | --- | --- |
+| `charts/` | All updates | Yes | Yes (unless `.ct-install-ignore`) | Yes |
+| `deprecated/` | First-party images (`accelleran/`, `firecell/`) and dependencies from `accelleran.github.io/helm-charts` | Yes | No | Yes |
+| `archived/` | None | No | No | No |
+| `external/` | Upstream OCI chart version | No | No | Yes (republish) |
+
+Published artifacts (GitHub Releases, `index.yaml`, GHCR) are never deleted when a chart moves between tiers. `bin/report-private-ghcr-packages` only opens private-package issues for `charts/` and `external/`; moving a chart to `deprecated/` or `archived/` closes its open issue.
+
+### Deprecate a chart
+
+```sh
+./bin/deprecate-chart -s <successor> <name>
+```
+
+`bin/deprecate-chart` moves `charts/<name>` to `deprecated/<name>` and:
+
+- renames the package key in `etc/release-please-config.json` and `etc/.release-please-manifest.json` from `charts/<name>` to `deprecated/<name>` (`component` and `package-name` stay the same, so release tags stay continuous)
+- sets `deprecated: true` in `Chart.yaml` and prefixes `description` with `DEPRECATED -`
+- adds a `DEPRECATED` banner to `templates/NOTES.txt`, naming the successor when `-s` is set
+
+`-s` is optional. Pass `--no-metadata` to leave `Chart.yaml` and `templates/NOTES.txt` unchanged. The chart still moves to `deprecated/`, so Renovate, lint, and install tests follow that tier, while installs keep the existing description and notes. Pass `-n` to show the move and release-please change without writing files. The script stages its changes and leaves the commit to you. Merge, and chart-releaser publishes the deprecation release.
+
+### Archive a chart
+
+```sh
+./bin/archive-chart <name>
+```
+
+`bin/archive-chart` moves `deprecated/<name>` (or `charts/<name>`, which skips the deprecation release) to `archived/<name>` and removes that chart from the release-please config and manifest. Published releases and GHCR packages are left alone. Pass `-n` to print the plan without changing files.
+
+To un-archive, reverse the steps and restore the release-please entries.
+
+External charts under `external/` are not deprecated or archived in place: stop republishing by deleting the yaml file.
+
 ## Releases
 
 Depending on the type of release (an official release or release candidate), a different approach should be taken.
@@ -50,24 +89,50 @@ This is for example handy during development on the `common` library chart.
 
 ## External charts
 
-It is possible to pull in an external chart.
+It is possible to republish an upstream OCI chart into this repository's Helm
+repo and GHCR without unpacking or re-packaging it.
 
-To do this, in the `charts` directory a new chart directory should be created.
-This directory should then contain the file `External.yaml`.
-A format similar to an entry in `dependencies` in a `Chart.yaml` file can be provided in there.
+Create `external/<name>.yaml` (or `external/<name>/External.yaml`):
 
 ```yaml
 name: example-chart
-alias: example
-repository: oci://ghcr.io/accelleran
+repository: oci://ghcr.io/example/charts
 version: 0.1.0
+notes:
+  github: example/example
+  tag: "v{{ version }}"
 ```
 
-`alias` is an optional field here, in case we want to use a different name as the original chart.
+Stop republishing by deleting that file.
 
-Also note that the version should be specific.
-So a version expressing a range like `0.1` is not supported.
-Renovate will bump the version automatically to always release the latest version of an external chart.
+The version must be exact (ranges such as `0.1` are not supported).
+Renovate bumps `version` when a newer chart is published upstream.
+
+On release, the original `.tgz` is pulled into `.cr-release-packages` and
+chart-releaser uploads it as a GitHub release and merges it into
+`index.yaml`. The upstream OCI artifact is copied to
+`oci://ghcr.io/accelleran/charts` so the GHCR digest matches upstream. The
+chart keeps its upstream name and version.
+
+`alias` is not supported: renaming a chart requires rewriting `Chart.yaml`
+and would produce a new tarball. Published names must be unique across
+first-party `Chart.yaml` and definitions under `external/`; CI fails on a
+collision.
+
+### Release notes
+
+`notes:` copies the body of a GitHub Release onto the republished chart.
+That is the only remote source. `notes.tag` is expanded against the
+pulled chart's `Chart.yaml`:
+
+| Placeholder | Value |
+| --- | --- |
+| `{{ name }}` | chart name |
+| `{{ version }}` | chart version |
+| `{{ appVersion }}` | chart `appVersion` |
+
+If `notes:` is omitted, the GitHub release body stays as the upstream
+`description` that chart-releaser already uses.
 
 ## New charts
 

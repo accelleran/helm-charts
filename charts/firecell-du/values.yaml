@@ -46,26 +46,35 @@ cuCpAddress: ""
 name: ""
 # -- gNB-DU ID (gnb_du_id). Required; unique among the DUs of one CU.
 duId: ""
-# -- Binary started by the launcher.
-binary: odu_split_7_2
+# -- Binary started by the launcher. Empty: odu_split_7_2 (ru.split "7.2") or the dynamic odu (ru.split "8").
+binary: ""
 # -- Image override (defaults to global.image).
 image: ""
 # -- nodeSelector override (defaults to global.nodeSelector).
 nodeSelector: {}
 # -- Tolerations override (defaults to global.tolerations).
 tolerations: []
-# -- 2 MiB hugepages for this DU (requests = limits).
+# -- 2 MiB hugepages for this DU (requests = limits). Only used with ofh.mode dpdk.
 hugepages2Mi: 2Gi
 # -- Memory request.
 memory: 1Gi
+# -- Seconds Kubernetes waits after SIGTERM before SIGKILL. An M-plane DU switches the O-RU
+# carriers off at stop and needs up to the carrier ready timeout + 10 s for that (Benetel and
+# Eridan default 90 s -> 100 s, Comba 30 s -> 40 s); 150 adds margin. A DU that is killed first
+# leaves the O-RU radiating. With CBRS the stop takes
+# longer: max(gate_close_timeout_ms, carrier ready timeout + 5 s) + 25 s + 1 s per cell, about 120 s + 1 s
+# per cell with the Eridan default; raise this then. The chart checks only the M-plane bound, without CBRS.
+terminationGracePeriodSeconds: 150
 cpus:
-  # -- OFH timing thread CPU. Required.
+  # -- OFH timing thread CPU. Required with ru.split "7.2".
   timing: ""
-  # -- OFH TX/RX thread CPU(s), comma list. Required.
+  # -- OFH TX/RX thread CPU(s), comma list. Required with ru.split "7.2".
   txrx: ""
+  # -- Radio (lower PHY) thread CPUs, comma list (cell_affinities ru_cpus). Required with ru.split "8".
+  ru: ""
   # -- Main pool CPUs (comma list, ranges allowed). Required. The build reserves 3 CPUs in the mask.
   pool: ""
-  # -- DPDK EAL lcores CPU set (hal.eal_args --lcores (0-1)@(...)). Required.
+  # -- DPDK EAL lcores CPU set (hal.eal_args --lcores (0-1)@(...)). Required with ofh.mode dpdk.
   ealLcores: ""
   # -- Main pool worker threads. Ocudu starts min(nofThreads, len(pool) - 3).
   nofThreads: 3
@@ -78,9 +87,88 @@ cell:
   commonScs: 30
   antennasDl: 4
   antennasUl: 4
+# Radio unit. These are the boot defaults: a value the NMS sets over O1 (ru-type, radio-unit/sdr, tx-power) is
+# persisted by the DU and overrides them at the next start.
+ru:
+  # -- Pod shape. "7.2": O-RAN 7.2 O-RU over the `ofh` block (production: DPDK VF; lab: kernel socket to the
+  # Amarisoft emulator). "8": split 8 radio through ru_sdr (AW2S Swallow RRH, USB B210 or ZMQ).
+  split: "7.2"
+  # -- Radio of the cell, checked against `split`. 7.2: benetel, comba or eridan (M-plane profile and timing profile), liteon, vvdn or mti (timing profile only), simulator (an O-RU simulator such as the Amarisoft one: no M-plane, no identity, the generic timing and compression; the DU is told its type). 8: aw2s
+  # (Swallow card, host network namespace), b210 (USB 3 through UHD) or zmq (no hardware).
+  vendor: benetel
+  sdr:
+    aw2s:
+      # -- true: the DU writes the Swallow file (rf_config) at every start from the cell and these values, and the
+      # chart renders no srate, bw=, nrb_dl= or oversampling. false: static-file mode, the file in configDir is
+      # yours and the chart renders srate, bw= and nrb_dl= from the values below.
+      generate: false
+      # -- Device library loaded by the aw2s driver (device_args lib=).
+      lib: liboai_device.so
+      # -- Host directory with the Swallow libraries the image does not carry (libswallow.so, libratcm.so), mounted read-only. The device library (lib) is taken from the image first; a copy here is only a fallback.
+      hostLibDir: /usr/local/lib
+      # -- Host directory with the Swallow RU XML. The DU hands the file to the vendor library (device_args rf_config). With generate it is mounted
+      # read-write and the DU overwrites the file.
+      configDir: ""
+      # -- Swallow RU XML in configDir (device_args rf_config=).
+      rfConfigFile: ""
+      # -- RRH model for generate: panther (33 dBm), jaguar (40 dBm) or neo (37 dBm). Sets the sample rate and the
+      # power limit.
+      sku: panther
+      # -- Antennas for generate: {id, masterPort, antennaPort} per antenna of the cell. Master ports 0 to 3 are
+      # the CPRI ports of the Swallow card; antenna ports restart at 0 on each RRH.
+      antennas: []
+      # -- IQ TX shift (device_args iq_txshift): IQ amplitude divided by 2^n.
+      iqTxShift: 4
+      # -- IQ compression for generate: none or large.
+      iqCompression: none
+      # -- Swallow time offset in microseconds (generate).
+      timeOffsetUs: 0
+      # -- Sample rate in MHz (ru_sdr srate), static-file mode only. 122.88 for 100 MHz, 61.44 for 40-50 MHz, 30.72 for 20 MHz.
+      srateMHz: 122.88
+      # -- DL PRBs (device_args nrb_dl), static-file mode only. Empty: max for cell.bandwidthMHz at 30 kHz SCS (273 for 100 MHz).
+      nrbDl: ""
+      txGain: 0
+      rxGain: 75
+      # -- Clock and sync sources (ru_sdr clock/sync), e.g. internal, external, gpsdo. Empty: DU default.
+      clock: ""
+      sync: ""
+      # -- Extra comma-separated device_args, appended in static-file mode and with generate.
+      extraArgs: ""
+      # -- Lower PHY execution profile (expert_execution.threads.lower_phy.execution_profile).
+      lowerPhyProfile: triple
+    b210:
+      # -- Serial of the B210 (device_args serial=). Empty: the first device UHD finds.
+      serial: ""
+      # -- Sample rate in MHz: 23.04 for 20 MHz, 46.08 for 40 MHz.
+      srateMHz: 23.04
+      txGain: 50
+      rxGain: 60
+      # -- Mount /dev/bus/usb from the node into the pod.
+      usb: true
+      # -- Extra comma-separated device_args.
+      extraArgs: ""
+      lowerPhyProfile: dual
+    zmq:
+      # -- Sample rate in MHz.
+      srateMHz: 23.04
+      txGain: 50
+      rxGain: 60
+      # -- device_args, e.g. tx_port=tcp://*:2000,rx_port=tcp://localhost:2001.
+      args: "tx_port=tcp://*:2000,rx_port=tcp://localhost:2001"
+      lowerPhyProfile: blocking
+txPower:
+  # -- Boot default of the NMS leaf tx-power/tx-power-dbm, per antenna port, in dBm. Only with ru.sdr.aw2s.generate
+  # (the DU writes it into the Swallow file and refuses a value above the RRH model's maximum). Unset: the DU's default.
+  dbm: null
 ofh:
-  # -- PCI address of the SR-IOV VF bound to vfio-pci (DPDK). Required.
+  # -- How the DU sends fronthaul: dpdk (SR-IOV VF on vfio-pci, hugepages) or socket (kernel raw socket on a
+  # host netdev that Multus host-device moves into the pod, e.g. a veth toward an emulated RU on the same node).
+  mode: dpdk
+  # -- PCI address of the SR-IOV VF bound to vfio-pci. Required with mode dpdk.
   vfPciAddr: ""
+  # -- Host netdev for mode socket (e.g. veth-du1). It keeps its name inside the pod and goes back to the
+  # host when the pod stops. Set its MTU and offloads on the host. Required with mode socket.
+  interface: ""
   duMac: ""
   ruMac: ""
   # -- C-plane VLAN tag. 0 sends untagged.
@@ -91,11 +179,15 @@ ofh:
   ulPorts: [0, 1]
   prachPorts: [4, 5]
   promiscuous: false
-  # -- O-RU vendor profile for M-plane (benetel | comba | eridan).
-  ruType: benetel
-  # -- Raw ru_ofh keys (timing windows, compression) merged into ru_ofh.
-  ruOfh:
-    ru_bandwidth_MHz: 100
+  # -- Deprecated: use ru.vendor. When set (benetel | comba | eridan) it wins over ru.vendor for the M-plane profile.
+  ruType: ""
+  # -- true: the DU applies the Open Fronthaul timing windows and IQ compression of the O-RU type (ru.vendor: benetel, comba,
+  # eridan, liteon, vvdn or mti; the DU's table) to every key that is not set in ofh.ruOfh. The chart then renders
+  # the vendor in the cell and none of ofh.genericTiming. false (default): the generic set below, as before.
+  vendorProfile: false
+  # -- The generic timing windows and compression every OFH DU got before the per-vendor profiles. Rendered unless
+  # vendorProfile is true. Keys set in ofh.ruOfh win.
+  genericTiming:
     t1a_max_cp_dl: 336
     t1a_min_cp_dl: 285
     t1a_max_cp_ul: 336
@@ -104,13 +196,16 @@ ofh:
     t1a_min_up: 80
     ta4_max: 500
     ta4_min: 50
-    is_prach_cp_enabled: true
     compr_method_ul: bfp
     compr_bitwidth_ul: 9
     compr_method_dl: bfp
     compr_bitwidth_dl: 9
     compr_method_prach: bfp
     compr_bitwidth_prach: 9
+  # -- Raw ru_ofh keys merged into ru_ofh. A timing or compression key set here wins over both the generic set and the vendor profile.
+  ruOfh:
+    ru_bandwidth_MHz: 100
+    is_prach_cp_enabled: true
     enable_ul_static_compr_hdr: true
     enable_dl_static_compr_hdr: true
     iq_scaling: 1.0
@@ -118,10 +213,19 @@ f1u:
   network:
     # -- Put F1-U (GTP-U toward the CU-UP) on a macvlan of a host NIC instead of the pod network. Use when the CU-UP runs on another node and the pod network between the nodes is slower than the user plane.
     enabled: false
-    # -- Host interface the F1-U macvlan sits on (link toward the CU-UP node).
+    # -- macvlan (F1-U over a host NIC toward a CU-UP on another node) or bridge (veth on a Linux bridge, for a
+    # CU-UP on the same node: all-in-one). RPS works only on the bridge veth.
+    cniType: macvlan
+    # -- Host interface the F1-U macvlan sits on (link toward the CU-UP node), or the Linux bridge (cniType bridge, e.g. br-f1u).
     master: ""
     # -- DU F1-U address with prefix. The IP part is the F1-U bind address.
     cidr: ""
+    # -- RPS CPU mask, quoted hex (e.g. "c00000" = CPUs 22,23), set on the f1u0 veth rx queues at start. Moves
+    # the receive softirq for DL GTP-U off the sending CU-UP worker. Needs cniType bridge. Empty leaves RPS off.
+    rpsCpus: ""
+  # -- F1-U bind address when f1u.network is off. Empty: the pod IP (the node IP with ru.vendor aw2s, which
+  # runs in the host network). With aw2s next to a CU-UP on the same node, use a host address on br-f1u.
+  bindAddress: ""
 mplane:
   # -- Run the M-plane NETCONF client toward the O-RU (needs an M-plane build).
   enabled: false
@@ -169,6 +273,8 @@ o1:
   statePath: ""
   yangSearchPath: /usr/local/yang
   restartOnColdCommit: false
+  # -- netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info.
+  netconfVerbosity: warning
   ueMetrics:
     # -- Publish per-UE PM (/ocudu-performance gnb-du-id and ue-metrics) for the NMS UE dashboard. Needs o1.enabled. Turns on scheduler metrics (metrics.layers.enable_sched).
     enabled: true
@@ -263,9 +369,9 @@ extraConfig:
     port: 9090
 
 preflight:
-  # -- Pre-install/pre-upgrade Job on the DU node: VF on vfio-pci, hugepages, M-plane parent NIC.
+  # -- Pre-install/pre-upgrade Job on the DU node: VF on vfio-pci and hugepages (dpdk), the OFH netdev (socket), or the Swallow host libraries (the image device library must resolve against them), the Swallow XML and the RMU socket (aw2s); F1-U bridge, M-plane parent NIC.
   enabled: true
-  # -- Image for the check (needs bash). Empty uses the DU image.
+  # -- Image for the check (needs bash and, for aw2s, ldd and the DU's /usr/local/lib/aw2s). Empty uses the DU image.
   image: ""
   timeoutSeconds: 120
 

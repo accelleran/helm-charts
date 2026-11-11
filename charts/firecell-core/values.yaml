@@ -5,17 +5,17 @@ global:
   # Namespace for all resources
   namespace: firecell-core
 
-  # GHCR — pre-create ghcr-regcred secret before helm install
-  imageRegistry: ghcr.io/accelleran
+  # Docker Hub — pre-create a docker-registry pull secret before helm install
+  imageRegistry: docker.io/accelleran
   # The busybox used by every initContainer in this chart. Composed from
   # imageRegistry when unset; name it in full to pull it from anywhere else.
-  busyboxImage: docker.io/library/busybox:1.37.0-glibc
+  busyboxImage: docker.io/library/busybox:1.38.0-glibc
   imagePullPolicy: IfNotPresent
   imagePullSecrets:
-    - name: ghcr-regcred
+    - name: dockerhub-regcred
 
-  # Package version — used as the image tag suffix (images tagged as v<pkgVersion>)
-  pkgVersion: "1.0.0"
+  # Package version — default image tag when an NF imageTag is empty
+  pkgVersion: "6.0.0"
 
   # Timezone for all NF containers
   timezone: Europe/Paris
@@ -64,17 +64,17 @@ network:
   acsExternalIP: "192.0.2.102"
   upfExternalIP: "198.51.100.101"
 
-# --- Database (MySQL 8.0 single-node) ---
+# --- Database (MySQL 8.3 single-node) ---
 # For production, consider switching to Percona XtraDB Cluster operator.
 # Credentials: set via --set / site overlay. Lab-only insecure defaults:
 #   environments/values-lab-insecure-defaults.yaml
 mysql:
   enabled: true
   image: mysql:8.3
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  imageOverride: ""
+  # Full image reference, winning over registry + image composition.
+  # image is "mysql:8.3" (includes a tag); without this override the chart
+  # would ask Hub for accelleran/mysql:8.3.
+  imageOverride: "docker.io/library/mysql:8.3"
   rootPassword: ""            # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
   database: oai_db
   user: ""                    # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
@@ -92,16 +92,12 @@ mysql:
       cpu: 1000m
 
 # --- UDSF (Unstructured Data Storage Function) + Redis backing store ---
-# Disabled by default. Enable via environments/values-stateless.yaml (Phase 3 stateless overlay).
 udsf:
-  enabled: false
+  enabled: true
   image: cn5g-udsf
-  # cn5g-udsf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150143-8446d7937614"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
-  # e.g. imageOverride: ghcr.io/accelleran/cn5g-udsf:20261023-150143-8446d7937614
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   serviceName: oai-udsf
   host: oai-udsf
@@ -153,11 +149,9 @@ udsf:
 nrf:
   enabled: true
   image: cn5g-nrf
-  # cn5g-nrf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145947-8ffa19a30160"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-crit
   command:
@@ -202,11 +196,9 @@ nrf:
 udr:
   enabled: true
   image: cn5g-udr
-  # cn5g-udr master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150124-ba06a65dc652"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-crit
   command:
@@ -254,11 +246,9 @@ udr:
 udm:
   enabled: true
   image: cn5g-udm
-  # cn5g-udm master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150041-5d27bfb4c0aa"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
   command:
@@ -306,11 +296,9 @@ udm:
 ausf:
   enabled: true
   image: cn5g-ausf
-  # cn5g-ausf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145814-c57395265ab7"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
   command:
@@ -355,11 +343,9 @@ ausf:
 amf:
   enabled: true
   image: cn5g-amf
-  # cn5g-amf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145217-51981a952d51"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   # Kubernetes Service type for oai-amf (NGAP must be reachable off-cluster).
   # Empty falls back to network.amfServiceType ("LoadBalancer" by default).
@@ -432,11 +418,9 @@ amf:
 smf:
   enabled: true
   image: cn5g-smf
-  # cn5g-smf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-145035-c61997f2e8be"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-high
   command:
@@ -529,11 +513,9 @@ smf:
 pcf:
   enabled: true
   image: cn5g-pcf
-  # cn5g-pcf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  imageTag: "20261023-150020-2c4d980dbe8e"
-  # Full image reference, winning over the registry + image + tag composition.
-  # Same escape hatch every NF has: the composition glues on imageRegistry,
-  # so an image published anywhere else cannot be named without it.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
   command:
@@ -585,15 +567,10 @@ pcf:
 # --- UPF (User Plane Function) ---
 upf:
   enabled: true
-  # "oai" for OAI UPF (default, the cn5g-upf CI image), "o5gs" for Open5GS UPF
-  type: oai
-  o5gsImage: o5gs-upf
-  # Full reference for the o5gs UPF, like oaiImageOverride for the OAI one.
-  o5gsImageOverride: ""
   oaiImage: cn5g-upf
-  # cn5g-upf master CI build (ghcr-image.yml), used as-is. Empty: v<global.pkgVersion>.
-  oaiImageTag: "20261023-150221-9ccff53abf4b"
-  # Full reference for the OAI UPF, like o5gsImageOverride for the o5gs one.
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  oaiImageTag: ""
+  # Full reference for the OAI UPF, winning over registry + oaiImage + oaiImageTag.
   oaiImageOverride: ""
   # Kubernetes Service type for the GTP-U Service(s).
   # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP
@@ -677,48 +654,6 @@ upf:
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
   oaiEnableEthPdu: false
-  # fc-packet-capture sidecar (REST on FC_REST_PORT). See docs/operations/upf-packet-capture.md.
-  packetCapture:
-    enabled: true
-    # Multiple hostNetwork UPF pods: one REST port per pod, cn-agent has a single n3_interface_name.
-    disableOnMultiInstance: true
-    # fc-packet-capture is a Firecell agent-family image on the NMS release line (like cnAgent/
-    # fcAcsAgent), NOT the OAI 5GC core line. It has no global.pkgVersion (e.g. v5.1.0) build, so
-    # pin it to the NMS tag. Empty => falls back to global.pkgVersion.
-    imageTag: "5.0.1.0"
-    imageOverride: ""
-  # fc-dnn-dataplane sidecar. The NMS calls it once, after an operator
-  # Start/Restart, to add the routes and SNAT rules a newly added DNN needs.
-  # It has no loop of its own and never deletes a rule it did not expect.
-  #
-  # Off by default: it is only useful with the CM DNN feature enabled on the
-  # NMS side (NMS_DNN_DATAPLANE_ENABLED), and it is only load-bearing for the
-  # userspace datapath. With enableBpfDatapath: true it reports NOT_APPLICABLE
-  # on every call, because XDP programs the pool in eBPF and there is no
-  # per-DNN Linux route to check.
-  #
-  # See cm-poc/docs/dnn-dataplane.md.
-  dnnDataplane:
-    enabled: false
-    image: fc-dnn-dataplane
-    # Firecell agent-family image on the NMS release line, like packetCapture:
-    # it has no global.pkgVersion build. Empty => falls back to pkgVersion.
-    imageTag: "5.0.1.0"
-    # Full image ref (skips registry + :vTAG), for a locally imported lab build
-    # that helm must still name, or the next upgrade silently reverts it.
-    # e.g. imageOverride: "fc-dnn-dataplane:route-fix"
-    imageOverride: ""
-    # One port per pod: N hostNetwork UPFs on one host would otherwise collide.
-    # Offset from 8095 (packetCapture) far enough that the two ranges cannot
-    # overlap however many instances are declared.
-    basePort: 8196
-    resources:
-      requests:
-        memory: 64Mi
-        cpu: 50m
-      limits:
-        memory: 256Mi
-        cpu: 500m
   # Optional overrides for hostnet ConfigMap (see docs/developer/oai-upf-ebpf-hostnet.md)
   oaiHostNet:
     stubInterface: ""            # Else sbiInterface, else eno8303
@@ -771,43 +706,13 @@ upf:
     measPeriodSec: 5
     # Alarm dispatch interval (FCAPS_NOTIFY_INTERVAL_SEC). UPF default 30 s.
     notifyIntervalSec: 5
-  # UPF-specific env vars (o5gs)
-  disableNat: "FALSE"
-  blockSshAccess: "FALSE"
-  protectedSshNetworks: "10.0.0.0/8,192.168.31.0/24,172.17.5.0/24"
-  sshExemptedIps: "192.168.31.254"
-
-  # open5gs-upfd global.max.ue — max concurrent PDU sessions (not UE count;
-  # each UE may have multiple sessions). Memory ≈ 1–2 KB per session.
-  maxSessions: 1024
-
-  # Userplane performance tuning — all gated on performance.enabled.
-  # Safe to leave disabled (default). Enable per environment in values-<env>.yaml.
-  performance:
-    enabled: false
-    mtu: 1420             # ogstun MTU; also used as session MTU in upf.yaml
-                          # 1420 = safe default (GTP-U overhead 36B + 44B headroom)
-                          # 1380 = conservative (use on known-good single-hop LAN)
-    tcpMssClamp: true     # iptables mangle TCPMSS --clamp-mss-to-pmtu on ogstun
-    socketRmemMax: 26214400   # net.core.rmem_max (25 MB) — absorbs ~17ms of 10Gbps burst
-    socketWmemMax: 26214400   # net.core.wmem_max
-    conntrackMax: 524288      # net.netfilter.nf_conntrack_max
-    conntrackUdpTimeout: 120        # seconds; default 30 causes flow stall when iperf report-back is lost
-    conntrackUdpStreamTimeout: 3600  # seconds after first bidirectional UDP exchange
-    enableBBR: true           # load tcp_bbr2 / tcp_bbr kernel module
-    txQueueLen: 10000         # ogstun txqueuelen (default 500 is too small for bursts)
-    disableLRO: true          # ethtool lro off on N3 NIC (LRO corrupts GTP inner checksums)
-    tunQdisc: "pfifo_fast"    # TUN qdisc; pfifo_fast has lower overhead than fq_codel for bulk forwarding
-    netdevBudget: 600         # packets processed per NAPI cycle (default 300 throttles high-PPS)
-    netdevBudgetUsecs: 8000   # CPU time budget per NAPI cycle in µs (default 2000)
-    cpuAffinity: ""           # taskset core list for open5gs-upfd (e.g. "8-15"); empty = no pinning
 
   # Multi-UPF instance list. When non-empty, replaces legacy single-UPF config.
   # Each entry produces one independent Deployment + Service (type: upf.serviceType).
   # Leave empty for single-UPF operation (backward compatible).
   instances: []
   # instances:
-  #   - suffix: ""           # Deployment name suffix: "o5gs-upf" when empty
+  #   - suffix: ""           # Deployment name suffix: "oai-upf" when empty
   #     n3IP: "10.x.x.x"    # MetalLB VIP for GTP-U (must be in up.poolRange)
   #     n3Interface: eno1
   #     n6Interface: eno1
@@ -815,11 +720,9 @@ upf:
   #     inSmfPool: true                   # include this UPF in SMF upf_pool/upfs
   #     poolState: ACTIVE                 # ACTIVE|DRAINING (rendered to SMF config)
   #     dnns: ["oai"]                     # per-UPF DNN steering (e.g. oai/oai2)
-  #     tunDev: "ogstun"                   # TUN device name — MUST be unique per instance on same host
   #     hostPfcpMacvlan: "smf-pfcp-mac"   # unique per instance
   #     hostPfcpIP: "10.x.x.y"            # PFCP source IP (not in any MetalLB pool)
   #     pfcpHost: "10.x.x.y"
-  #     sessions: "12.1.1.0/24"           # comma-separated UE subnets for this instance
 
 # --- IMS (Kamailio + Cx-on-UDR default; Asterisk via examples/values-ims-asterisk.yaml) ---
 ims:
@@ -919,8 +822,9 @@ ims:
         cpu: 500m
 
 # --- External Data Network ---
+# Off by default; lab/examples enable it when a traffic generator is needed.
 extDn:
-  enabled: true
+  enabled: false
   image: trf-gen-cn5g
   # Full image reference, winning over the registry + image + tag composition.
   # Same escape hatch every NF has: the composition glues on imageRegistry,
@@ -935,6 +839,20 @@ extDn:
     limits:
       memory: 128Mi
       cpu: 200m
+  # Second interface (net1) on the UPF's N6 bridge, for a Multus UPF with
+  # upf.multus.n6.cniType: bridge only. The extdn-probe sidecar needs it to
+  # ping a UE: it routes the UE address via upf.multus.n6.ip on net1 and the
+  # echo enters the UPF like any other downlink packet. Without net1 the echo
+  # leaves through Cilium, which masquerades it, and no UE ever answers.
+  #
+  # Not for host-device (the N6 NIC belongs to the UPF pod), macvlan (a sibling
+  # on the same parent bypasses generic XDP) or a hostNetwork UPF: rendering
+  # fails.
+  n6:
+    # Free address in the UPF's N6 subnet (upf.multus.n6.ip/subnetPrefix),
+    # e.g. 10.10.0.102. Empty: no N6 interface.
+    ip: ""
+    nadName: ext-dn-n6
   sidecar:
     # OFF by default until the image is published to imageRegistry. The
     # composed default below resolves to
@@ -957,79 +875,16 @@ extDn:
         memory: 128Mi
         cpu: 200m
 
-# --- CN Agent (Firecell Core Network Agent) ---
-# Kubernetes health uses cn-agent CoreServiceK8sHandler label selector app=<nf>,role=active.
-# All core NF pod templates set role: active so /cn_agent_health can pass without manual kubectl label.
-cnAgent:
-  enabled: true
-  image: cn-agent
-  # Full image reference, winning over the registry + image + tag composition.
-  # Every NF already has this; the agents did not, so an agent published
-  # anywhere but imageRegistry could not be named at all.
-  imageOverride: ""
-  # cn-agent/fc-acs-agent ship on the NMS release line (v5.0.1.0), independent of
-  # the 5GC global.pkgVersion. Unset imageTag falls back to global.pkgVersion.
-  imageTag: "5.0.1.0"
-  # DB migration target for cn_version env (must match cn-agent migration registry).
-  dbVersion: "5.0.1"
-  priorityClassName: firecell-prio-normal
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 500m
-    limits:
-      memory: 2Gi
-      cpu: 2000m
-  # Agent-specific configuration
-  config:
-    logLevel: debug
-    qosEnabled: true
-    deployment: kubernetes    # docker-compose | kubernetes
-    n3InterfaceName: eno8303  # later make it bond0
-
-    # Platform-agnostic health check settings
-    healthCheck:
-      sbiCheck: true          # set false for infra-only health (no NF REST API probes)
-      sbiProbeTimeoutS: 3     # per-NF SBI HTTP probe timeout in seconds
-    # Packet capture client settings
-    packetCapture:
-      connectTimeoutS: 1.0
-      readTimeoutS: 2.0
-      retryCount: 1
-      retryBackoffS: 0.2
-      k8sServiceName: upf-packet-capture
-      servicePort: 8095
-
-    # Required when deployment: kubernetes
-    kubernetes:
-      namespace: ""           # leave empty to inherit global.namespace
-      coreNfLabelSelector: "firecell.io/role=core-nf"
-      podSelection: any       # any | active  (active requires role=active label on pods)
-      execContainer: null     # null = K8s default container (single-container pods, k3s)
-      # minHealthy: 1         # minimum ready pods per component
-      # kubeconfigPath: ""    # leave unset when running inside the cluster
-      components: {}          # per-component overrides, e.g:
-                              #   oai-upf:
-                              #     minHealthy: 2
-                              #   oai-ausf:
-                              #     podSelection: any
-  backendIp: "nms-api.firecell-nms.svc.cluster.local"
-  # Headless service used for packet-capture endpoint discovery across all UPF pods.
-  packetCaptureAddress: "upf-packet-capture:8095"
-  apiVictoriaMetricsUrl: "http://nms-api-victoria-metrics-dev.firecell-nms.svc.cluster.local:8430"
-  redisCacheHost: "redis-cache.firecell-nms.svc.cluster.local"
-  redisCachePort: 6799
-  redisCacheDb: 0
-
 # --- FC ACS Agent (TR-069 ACS endpoint) ---
+# Off by default (CloudRAN / ACS installs enable it explicitly).
 fcAcsAgent:
-  enabled: true
+  enabled: false
   image: fc-acs-agent
   # Full image reference, winning over the registry + image + tag composition.
   # Every NF already has this; the agents did not, so an agent published
   # anywhere but imageRegistry could not be named at all.
   imageOverride: ""
-  imageTag: "5.0.1.0"   # NMS release line; see cnAgent.imageTag
+  imageTag: "5.0.1.0"   # NMS release line, independent of global.pkgVersion
   # Kubernetes Service type for fc-acs-agent (TR-069 must be reachable off-cluster).
   # Anything but LoadBalancer drops the MetalLB annotations below — a pool/VIP
   # annotation on a ClusterIP Service is dead config — and network.acsExternalIP
@@ -1115,7 +970,7 @@ coreConfig:
     enableSmfSelection: "no"
     releaseAllPduSessions: "no"
     enableIms: "yes"
-    enableUdsf: "no"
+    enableUdsf: "yes"
     amfRegionId: "01"
     amfSetId: "001"
     amfPointer: "01"
@@ -1157,7 +1012,7 @@ coreConfig:
     useLocalSubscriptionInfo: "no"
     useLocalPccRules: "no"
     enableQer: "yes"
-    enableUdsf: "no"
+    enableUdsf: "yes"
     enableUsageReporting: "no"
     # OAI key: enable_dl_pdr_in_pfcp_session_establishment (per-UPF under smf.upfs[].config)
     enableDlPdrInPfcpSessionEstablishment: "yes"
@@ -1194,17 +1049,10 @@ coreConfig:
     generateRandom: true
     connectionTimeout: 10
 
-  # UPF session subnets (used in o5gs-upf config templates)
-  upfSessions:
-    - subnet: "12.1.1.0/24"
-      gateway: "12.1.1.1"
-    - subnet: "14.1.1.0/24"
-      gateway: "14.1.1.1"
-
 # --- Network Policies ---
 networkPolicies:
   enabled: true
-  # Whether to allow ingress from nms.namespace (defaults to true when cnAgent/fcAcsAgent enabled)
+  # Whether to allow ingress from nms.namespace (defaults to true when fcAcsAgent enabled)
   allowNmsNamespace: true
   allowedNamespaces: []
   # CIDRs allowed to reach core NFs from outside the cluster (RAN, gNB, test hosts)
@@ -1246,8 +1094,8 @@ hooks:
     timeoutSeconds: 90
 
 # --- Image Pull Secret ---
-# Pre-create before helm install:
-#   kubectl create secret docker-registry ghcr-regcred \
-#     --docker-server=ghcr.io \
+# Pre-create before helm install (Docker Hub):
+#   kubectl create secret docker-registry dockerhub-regcred \
+#     --docker-server=https://index.docker.io/v1/ \
 #     --docker-username=<user> --docker-password=<token> \
 #     -n firecell-core

@@ -19,7 +19,7 @@ Not included: Grafana (use grafana-operator or any Grafana with a datasource on 
 
 The `firecell-nms-ng-*` commands and the `FIRECELL_NMS_NG_*` environment variables come from the backend itself, so they keep its `ng` naming.
 
-Both images come from the `master` branches of [nms-backend](https://github.com/accelleran/nms-backend) and [nms-frontend](https://github.com/accelleran/nms-frontend). Until there are releases, the defaults are the GHCR `edge-<sha>` builds; releases will be `docker.io/accelleran/nms-backend:X.Y.Z` and `docker.io/accelleran/nms-frontend:X.Y.Z`.
+Both images come from [nms-backend](https://github.com/accelleran/nms-backend) and [nms-frontend](https://github.com/accelleran/nms-frontend). Defaults are the published `docker.io/accelleran/nms-backend:6.0.0` and `docker.io/accelleran/nms-frontend:6.0.0` images.
 
 Set `global.imageRegistry` to pull every image from one registry; each image keeps its `repository` and `tag`.
 
@@ -199,8 +199,8 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.config.qosReconcileIntervalSeconds | int | `30` | How often the operator's PCC rules are re-asserted on the PCF. 0 disables it. |
 | backend.config.reconcileTimeoutSeconds | int | `15` |  |
 | backend.config.retentionIntervalSeconds | int | `3600` |  |
-| backend.config.seedDnnsJson | string | `""` | Level-1 "Data network" instances the bootstrap seeds on an EMPTY catalogue. Pass the DNNs the 5GC chart runs, e.g. `[{"dnn":"oai","ipv4Subnet":"12.1.1.0/25","pduSessionType":"IPV4"}]`. Empty keeps the built-in seed (a DNN called "default"). |
-| backend.config.seedSliceJson | string | `""` | The first slice the bootstrap seeds, e.g. `{"sst":1,"sd":"000001"}`. |
+| backend.config.seedDnnsJson | string | `"[{\"dnn\":\"oai\",\"ipv4Subnet\":\"12.1.1.0/25\",\"pduSessionType\":\"IPV4\"},{\"dnn\":\"ims\",\"ipv4Subnet\":\"14.1.1.0/25\",\"pduSessionType\":\"IPV4V6\"}]"` | Level-1 "Data network" instances the bootstrap seeds on an EMPTY catalogue, in the order of firecell-core `coreConfig.dnns` (the order numbers the instances, and the SMF and UPF number their DNNs the same way). The default is firecell-core's default. Change both together. Empty keeps the backend's built-in seed (a DNN called "default"). |
+| backend.config.seedSliceJson | string | `"{\"sst\":1,\"sd\":\"000001\"}"` | The first slice the bootstrap seeds: firecell-core's default `coreConfig.nssai[0]` and the RAN charts' `gnb.slices[0]`. |
 | backend.config.southboundTimeoutSeconds | int | `6` |  |
 | backend.config.trustGatewayHeaders | bool | `false` | Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires networkPolicy.enabled: the backend does not check tokens on this path. |
 | backend.controlPlane.minReadySeconds | int | `20` | Seconds the control plane must stay up before it counts as available (its probes only check that the process lives). |
@@ -227,11 +227,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.endpoints.victoria | string | `""` | Where PM reports and alarm gauges are written. Empty: the in-chart VictoriaMetrics. Grafana alert rules read core_alarm_active from here and post to /api/alarms/webhook, so without it no alarm arrives. |
 | backend.existingSecret | string | `"nms-secrets"` | Secret with the backend credentials, created before install; the chart never creates it. Required keys: `database-root-password`, `database-password`, `database-url`, `network-name`, `op`, `api-tokens-json`, `default-admin-user`, `default-admin-password` (see README). |
 | backend.extraEnv | list | `[]` | Extra environment (EnvVar list) for the API, worker and control plane, e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL. |
-| backend.image | object | `{"digest":"","registry":"ghcr.io","repository":"accelleran/nms-backend","tag":"edge-1501118"}` | Backend image (API, worker, control plane, migration and bootstrap). |
+| backend.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-backend","tag":"6.0.0"}` | Backend image (API, worker, control plane, migration and bootstrap). |
 | backend.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
-| backend.image.registry | string | `"ghcr.io"` | Image registry host. Replaced by global.imageRegistry when set. |
+| backend.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | backend.image.repository | string | `"accelleran/nms-backend"` | Image repository path, including the org (kept when the registry is rewritten). |
-| backend.image.tag | string | `"edge-1501118"` | Until there is a release; then docker.io and X.Y.Z. |
+| backend.image.tag | string | `"6.0.0"` | Image tag. |
 | backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the check-schema, migrate, bootstrap and wait-for-schema init containers. |
 | backend.passwordCheck.caKey | string | `"ca.crt"` | Key of the CA bundle in caSecret. |
 | backend.passwordCheck.caSecret | string | `""` | Secret with the CA bundle that signs zitadelUrl, mounted optional like patSecret. Empty: system trust. |
@@ -250,11 +250,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | front.backendUrl | string | `""` | Where nginx sends /api/. Empty: the in-chart nms-api Service. |
 | front.cmUrl | string | `""` | Where nginx sends /nms-cm/ (the CM console). Empty: the backend's built-in console, `<nms-api>/ui`. |
 | front.grafanaUrl | string | `""` | External Grafana base URL (the chart has no Grafana of its own). The UI links to <origin>/grafana/...; /grafana/ redirects there, path and query intact. Empty leaves the location out. |
-| front.image | object | `{"digest":"","registry":"ghcr.io","repository":"accelleran/nms-frontend","tag":"edge-db0447e"}` | NMS frontend (nginx) image. Needs a CM-enabled build that talks to the new backend. |
+| front.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-frontend","tag":"6.0.0"}` | NMS frontend (nginx) image. Needs a CM-enabled build that talks to the new backend. |
 | front.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
-| front.image.registry | string | `"ghcr.io"` | Image registry host. Replaced by global.imageRegistry when set. |
+| front.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | front.image.repository | string | `"accelleran/nms-frontend"` | Image repository path, including the org (kept when the registry is rewritten). |
-| front.image.tag | string | `"edge-db0447e"` | Until there is a release; then docker.io and X.Y.Z. |
+| front.image.tag | string | `"6.0.0"` | Image tag. |
 | front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics. |
 | front.resources.limits.cpu | string | `"200m"` |  |
 | front.resources.limits.memory | string | `"128Mi"` |  |

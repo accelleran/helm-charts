@@ -3,11 +3,17 @@
 {{- if dig "enabled" false $f1u }}
 {{- $cfg := dict
   "cniVersion" "0.3.1"
-  "type" "macvlan"
-  "master" $f1u.master
-  "mode" "bridge"
   "ipam" (dict "type" "static" "addresses" (list (dict "address" $f1u.cidr))) }}
-# F1-U (GTP-U toward the CU-UP) off the pod network, e.g. over a direct link to the CU node.
+{{- if eq (toString ($f1u.cniType | default "macvlan")) "bridge" }}
+{{- $_ := set $cfg "type" "bridge" }}
+{{- $_ := set $cfg "bridge" $f1u.master }}
+{{- else }}
+{{- $_ := set $cfg "type" "macvlan" }}
+{{- $_ := set $cfg "master" $f1u.master }}
+{{- $_ := set $cfg "mode" "bridge" }}
+{{- end }}
+# F1-U (GTP-U toward the CU-UP) off the pod network: a macvlan over a direct link to
+# the CU node, or a veth on a Linux bridge shared with a CU-UP on this node.
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:

@@ -1,4 +1,4 @@
-{{- if and .Values.upf.enabled (eq .Values.upf.type "oai") (not .Values.upf.hostNetwork) (.Values.upf.multus.enabled | default false) }}
+{{- if and .Values.upf.enabled (not .Values.upf.hostNetwork) (.Values.upf.multus.enabled | default false) }}
 {{- $n3 := .Values.upf.multus.n3 | default dict }}
 {{- $n6 := .Values.upf.multus.n6 | default dict }}
 {{- $n3cni := $n3.cniType | default "macvlan" }}
