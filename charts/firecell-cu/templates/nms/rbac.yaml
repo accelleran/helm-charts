@@ -3,10 +3,10 @@
 {{- $nmsNs := required "nms.namespace is required" .Values.nms.namespace }}
 {{- $deployments := list }}
 {{- if .Values.cuCp.enabled }}
-{{- $deployments = append $deployments "cu-cp" }}
+{{- $deployments = append $deployments (include "firecell-cu.cuCpName" .) }}
 {{- end }}
 {{- if .Values.cuUp.enabled }}
-{{- $deployments = append $deployments "cu-up" }}
+{{- $deployments = append $deployments (include "firecell-cu.cuUpName" .) }}
 {{- end }}
 # Pod reads come from the firecell-nms chart's ClusterRole, granted in this
 # namespace only. Grants nothing until that chart is installed.

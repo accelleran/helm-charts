@@ -20,6 +20,7 @@ CU-CP Ocudu config (YAML).
 {{- $base := dict
   "gnb_id" $v.gnb.gnbId
   "gnb_id_bit_length" $v.gnb.gnbIdBitLength
+  "ran_node_name" ($v.gnb.ranNodeName | default (include "firecell-cu.cuCpName" .))
   "cu_cp" (dict
     "request_pdu_session_timeout" $v.cuCp.requestPduSessionTimeout
     "amf" $amf
