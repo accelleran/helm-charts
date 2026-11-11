@@ -146,6 +146,12 @@ amf:
   relative_capacity: {{ $v.coreConfig.amf.relativeCapacity }}
   statistics_timer_interval: {{ $v.coreConfig.amf.statisticsTimerInterval }}
   emergency_support: {{ $v.coreConfig.amf.emergencySupport }}
+  {{- with $v.coreConfig.amf.paging }}
+  {{- if hasKey . "fanoutMultiGnb" }}
+  paging:
+    fanout_multi_gnb: {{ .fanoutMultiGnb }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}

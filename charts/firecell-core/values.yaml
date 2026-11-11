@@ -1017,6 +1017,11 @@ coreConfig:
     relativeCapacity: 30
     statisticsTimerInterval: 20
     emergencySupport: false
+    # AMF paging (cn5g-amf amf.paging). fanoutMultiGnb: page an idle UE on every gNB
+    # serving its registration area, not only the last serving gNB. The AMF built-in
+    # default is false when the key is absent; cn5g-amf etc/config.yaml sets true.
+    paging:
+      fanoutMultiGnb: true
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
