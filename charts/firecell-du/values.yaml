@@ -106,7 +106,7 @@ ru:
       lib: liboai_device.so
       # -- Host directory with the Swallow libraries the image does not carry (libswallow.so, libratcm.so), mounted read-only. The device library (lib) is taken from the image first; a copy here is only a fallback.
       hostLibDir: /usr/local/lib
-      # -- Host directory with the Swallow RU XML. The host RMU must use the same file. With generate it is mounted
+      # -- Host directory with the Swallow RU XML. The DU hands the file to the vendor library (device_args rf_config). With generate it is mounted
       # read-write and the DU overwrites the file.
       configDir: ""
       # -- Swallow RU XML in configDir (device_args rf_config=).
