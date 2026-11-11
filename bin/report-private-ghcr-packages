@@ -4,13 +4,15 @@
 # Close that issue if the package is later public. A closed issue is left
 # alone so "should stay private" is just closing it.
 #
+# Charts in deprecated/ and archived/ are not reported. An open issue for one
+# of them is closed, since its visibility no longer needs a decision.
+#
 # Packages are fetched one-by-one. Listing org container packages with
 # GITHUB_TOKEN returns HTTP 400 Invalid argument.
 #
 # DRY_RUN=1 prints actions without creating or closing issues.
 
 set -eu -o pipefail
-shopt -s nullglob globstar
 
 if ! command -v gh >/dev/null ; then
     echo "gh is required" 1>&2
@@ -22,39 +24,35 @@ if ! command -v jq >/dev/null ; then
     exit 1
 fi
 
-GIT_ROOT="$(realpath "$(dirname "$0")/..")"
+# shellcheck source=bin/external-charts-lib.sh
+source "$(dirname "$(realpath "$0")")/external-charts-lib.sh"
+
 CHARTS_ROOT="${GIT_ROOT}/charts"
 DEPRECATED_ROOT="${GIT_ROOT}/deprecated"
+ARCHIVED_ROOT="${GIT_ROOT}/archived"
 REPO="${GITHUB_REPOSITORY:-accelleran/helm-charts}"
 ORG="${REPO%%/*}"
 LABEL="${GHCR_VISIBILITY_LABEL:-ghcr-visibility}"
 DRY_RUN="${DRY_RUN:-}"
 
-yaml_name() {
-    awk '
-        /^name:[[:space:]]*/ {
-            val = $0
-            sub(/^name:[[:space:]]*/, "", val)
-            gsub(/[\r\n]/, "", val)
-            gsub(/^["'\'']|["'\'']$/, "", val)
-            print val
-            exit
-        }
-    ' "$1"
-}
-
-chart_package_names() {
+print_package_names() {
     local f name
-    for f in \
-        "${CHARTS_ROOT}"/*/Chart.yaml \
-        "${DEPRECATED_ROOT}"/*/Chart.yaml \
-        "${CHARTS_ROOT}"/**/External.yaml \
-    ; do
+    for f in "$@" ; do
         name=$(yaml_name "${f}")
         if [[ -n "${name}" ]] ; then
             printf 'charts/%s\n' "${name}"
         fi
-    done | sort -u
+    done
+}
+
+chart_package_names() {
+    local -a files
+    mapfile -t files < <(list_external_chart_files)
+    print_package_names "${CHARTS_ROOT}"/*/Chart.yaml "${files[@]}" | sort -u
+}
+
+retired_package_names() {
+    print_package_names "${DEPRECATED_ROOT}"/*/Chart.yaml "${ARCHIVED_ROOT}"/*/Chart.yaml | sort -u
 }
 
 issue_title() {
@@ -103,6 +101,19 @@ created=0
 closed=0
 skipped=0
 missing=0
+
+while IFS= read -r name ; do
+    [[ -z "${name}" ]] && continue
+    title=$(issue_title "${name}")
+    open_number=$(printf '%s' "${issues_json}" | jq -r --arg title "${title}" '[.[] | select(.title == $title and .state == "OPEN") | .number] | first // empty')
+    if [[ -n "${open_number}" ]] ; then
+        echo "Closing #${open_number}: ${name} is deprecated or archived"
+        if [[ -z "${DRY_RUN}" ]] ; then
+            gh issue close "${open_number}" --repo "${REPO}" --reason "not planned" --comment "This chart is deprecated or archived, so its package visibility is no longer tracked."
+        fi
+        closed=$((closed + 1))
+    fi
+done < <(retired_package_names)
 
 while IFS= read -r name ; do
     [[ -z "${name}" ]] && continue

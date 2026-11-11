@@ -28,7 +28,8 @@
       "customType": "regex",
       "datasourceTemplate": "docker",
       "managerFilePatterns": [
-        "/(^|/)External\\.yaml$/"
+        "/(^|/)External\\.yaml$/",
+        "/^external/[^/]+\\.ya?ml$/"
       ],
       "matchStrings": [
         "name:\\s+\"?(?<chartName>.*?)\"?\\s+(.*\\s)?repository:\\s+\"?oci://(?<registryRef>.*?)\"?\\s+(.*\\s)?version:\\s+\"?(?<currentValue>[\\w\\.\\-]*)\"?"
@@ -91,7 +92,8 @@
       "description": "Automerge external chart updates",
       "automerge": true,
       "matchFileNames": [
-        "/External\\.yaml/"
+        "/External\\.yaml/",
+        "external/*.yaml"
       ]
     },
     {
