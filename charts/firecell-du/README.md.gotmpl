@@ -28,7 +28,7 @@ Everything under `ru` and `txPower` is the **boot default**: a value the NMS set
 | OFH netdev | NAD `<name>-ofh` (`host-device`) | `ofh.mode: socket` only |
 | F1-U | NAD `<name>-f1u` (macvlan or bridge) | `f1u.network.enabled`; not with `aw2s` (use `f1u.bindAddress`) |
 | M-plane | NAD `<name>-mplane`, Secret `<name>-mplane`, optional `mplane-dhcp` sidecar | dnsmasq leases the O-RU and sends option 43/129 (call-home) |
-| Pre-flight | hook Job `<name>-preflight` on the DU node | checks VF on vfio-pci and hugepages, the OFH netdev, or the AW2S library, Swallow XML and RMU socket; F1-U bridge, M-plane parent NIC |
+| Pre-flight | hook Job `<name>-preflight` on the DU node | checks VF on vfio-pci and hugepages, the OFH netdev, or the Swallow host libraries, Swallow XML and RMU socket; F1-U bridge, M-plane parent NIC |
 
 `<name>` is `name`, or the release name when `name` is empty.
 
@@ -73,7 +73,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 - `ofh.mode: dpdk`: VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).
 - `ofh.mode: dpdk`: 2 MiB hugepages, at least `hugepages2Mi` per DU on the node (`vm.nr_hugepages`); restart kubelet after changing them.
 - `ofh.mode: socket`: the netdev `ofh.interface` exists on the node before the DU starts (MTU and offloads set on the host), and Multus has the `host-device` plugin.
-- `ru.vendor: aw2s`: Swallow PCIe card with its kernel module, and `libswallow.so` and `libratcm.so` in `ru.sdr.aw2s.hostLibDir` (the device library `liboai_device.so` is taken from the image first), the Swallow XML in `ru.sdr.aw2s.configDir` (writable with `generate`), and the host Radio Management Unit running with that XML (its socket is in `/tmp`). The DU uses the host network, so only one AW2S DU per node can keep the default O2 (9090) and O1 (830) ports.
+- `ru.vendor: aw2s`: Swallow PCIe card with its kernel module, and `libswallow.so` and `libratcm.so` in `ru.sdr.aw2s.hostLibDir` (the device library `liboai_device.so` is taken from the image first), the Swallow XML in `ru.sdr.aw2s.configDir` (writable with `generate`), and the host Radio Management Unit running (its socket is in `/tmp`). The DU uses the host network, so only one AW2S DU per node can keep the default O2 (9090) and O1 (830) ports.
 - Isolated CPUs for `cpus.timing`, `cpus.txrx` (OFH) or `cpus.ru` (split 8), and `cpus.pool`.
 - `f1u.network.cniType: bridge`: the Linux bridge `f1u.network.master` exists on the node.
 - Multus with the macvlan and static IPAM plugins when `mplane.enabled`.
