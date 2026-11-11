@@ -13,7 +13,7 @@ Install one release per DU; each attaches over F1 to the CU-CP of a [`firecell-c
 |-----------|-------|----|-----------|
 | `"7.2"` / `benetel`, `comba`, `eridan` (default) | O-RAN 7.2x O-RU, optional M-plane (NETCONF call-home) | `odu_split_7_2` | `ofh.mode: dpdk`: SR-IOV VF on vfio-pci + hugepages |
 | `"7.2"`, lab | Amarisoft UE simulator acting as the O-RU on the same node | `odu_split_7_2` | `ofh.mode: socket`: kernel raw socket on a host netdev (e.g. a veth) that Multus `host-device` moves into the pod |
-| `"8"` / `aw2s` | AW2S Swallow RRH over CPRI, Swallow PCIe card | dynamic `odu` (split 8, `ru_sdr`) | `liboai_device.so` + host Radio Management Unit; the pod runs in the host network. The DU can write the Swallow file itself (`ru.sdr.aw2s.generate`) |
+| `"8"` / `aw2s` | AW2S Swallow RRH over CPRI, Swallow PCIe card | dynamic `odu` (split 8, `ru_sdr`) | `liboai_device.so` from the image, `libswallow.so` and `libratcm.so` from the host, and the host Radio Management Unit; the pod runs in the host network. The DU can write the Swallow file itself (`ru.sdr.aw2s.generate`) |
 | `"8"` / `b210` | Ettus B210 over USB 3 through UHD | dynamic `odu` (split 8, `ru_sdr`) | `ru.sdr.b210.usb` mounts `/dev/bus/usb`; 20 and 40 MHz |
 | `"8"` / `zmq` | no hardware | dynamic `odu` (split 8, `ru_sdr`) | ZMQ ports in `ru.sdr.zmq.args` |
 
@@ -73,7 +73,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 - `ofh.mode: dpdk`: VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).
 - `ofh.mode: dpdk`: 2 MiB hugepages, at least `hugepages2Mi` per DU on the node (`vm.nr_hugepages`); restart kubelet after changing them.
 - `ofh.mode: socket`: the netdev `ofh.interface` exists on the node before the DU starts (MTU and offloads set on the host), and Multus has the `host-device` plugin.
-- `ru.vendor: aw2s`: Swallow PCIe card and its libraries in `ru.sdr.aw2s.hostLibDir`, the Swallow XML in `ru.sdr.aw2s.configDir` (writable with `generate`), and the host Radio Management Unit running with that XML (its socket is in `/tmp`). The DU uses the host network, so only one AW2S DU per node can keep the default O2 (9090) and O1 (830) ports.
+- `ru.vendor: aw2s`: Swallow PCIe card with its kernel module, and `libswallow.so` and `libratcm.so` in `ru.sdr.aw2s.hostLibDir` (the device library `liboai_device.so` is taken from the image first), the Swallow XML in `ru.sdr.aw2s.configDir` (writable with `generate`), and the host Radio Management Unit running with that XML (its socket is in `/tmp`). The DU uses the host network, so only one AW2S DU per node can keep the default O2 (9090) and O1 (830) ports.
 - Isolated CPUs for `cpus.timing`, `cpus.txrx` (OFH) or `cpus.ru` (split 8), and `cpus.pool`.
 - `f1u.network.cniType: bridge`: the Linux bridge `f1u.network.master` exists on the node.
 - Multus with the macvlan and static IPAM plugins when `mplane.enabled`.
