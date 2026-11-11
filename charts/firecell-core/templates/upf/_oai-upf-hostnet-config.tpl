@@ -108,7 +108,7 @@ upf:
     enable_bar: no
     enable_mar: no
     enable_snat: {{ if ($inst.enableSnat | default $v.upf.enableSnat | default true) }}yes{{ else }}no{{ end }}
-    enable_fr: no
+    enable_fr: {{ if $v.upf.enableFramedRouting }}yes{{ else }}no{{ end }}
     enable_eth_pdu: {{ if $v.upf.oaiEnableEthPdu }}yes{{ else }}no{{ end }}
     # cn5g-upf v5.1.0.x sizes m_arp_table from support_features (not datapath_configuration).
     max_arp_entries: 256
