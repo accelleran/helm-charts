@@ -128,12 +128,14 @@ backend:
     defaultSnssaisJson: "[]"
     defaultPlmn: "00101"
     # -- Level-1 "Data network" instances the bootstrap seeds on an EMPTY
-    # catalogue. Pass the DNNs the 5GC chart runs, e.g.
-    # `[{"dnn":"oai","ipv4Subnet":"12.1.1.0/25","pduSessionType":"IPV4"}]`.
-    # Empty keeps the built-in seed (a DNN called "default").
-    seedDnnsJson: ""
-    # -- The first slice the bootstrap seeds, e.g. `{"sst":1,"sd":"000001"}`.
-    seedSliceJson: ""
+    # catalogue, in the order of firecell-core `coreConfig.dnns` (the order
+    # numbers the instances, and the SMF and UPF number their DNNs the same
+    # way). The default is firecell-core's default. Change both together.
+    # Empty keeps the backend's built-in seed (a DNN called "default").
+    seedDnnsJson: '[{"dnn":"oai","ipv4Subnet":"12.1.1.0/25","pduSessionType":"IPV4"},{"dnn":"ims","ipv4Subnet":"14.1.1.0/25","pduSessionType":"IPV4V6"}]'
+    # -- The first slice the bootstrap seeds: firecell-core's default
+    # `coreConfig.nssai[0]` and the RAN charts' `gnb.slices[0]`.
+    seedSliceJson: '{"sst":1,"sd":"000001"}'
     cmConfigMapKey: cm.json
     southboundTimeoutSeconds: 6
     reconcileTimeoutSeconds: 15

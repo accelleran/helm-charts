@@ -36,7 +36,7 @@ printf "ip_range=%s\n" "${ip_range}"
 ip_address=$net_ip_prefix.250
 printf "ip_address=%s\n" "${ip_address}"
 
-kubectl apply -f - <<EOF
+pool_manifest=$(cat <<EOF
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
@@ -52,3 +52,21 @@ metadata:
   name: empty
   namespace: metallb-system
 EOF
+)
+
+# Pod readiness (/readyz on :17472) does not cover the webhook server on :9443,
+# so applying right after the wait above can hit "connection refused". A
+# server-side dry run goes through the validating webhooks without persisting
+# anything; once it passes, the webhook is serving.
+webhook_timeout=120
+deadline=$((SECONDS + webhook_timeout))
+until echo "$pool_manifest" | kubectl apply --dry-run=server -f - >/dev/null; do
+  if [ $SECONDS -ge $deadline ]; then
+    echo "MetalLB webhook not serving after ${webhook_timeout}s" 1>&2
+    exit 1
+  fi
+  echo "Waiting for the MetalLB webhook..."
+  sleep 2
+done
+
+echo "$pool_manifest" | kubectl apply -f -

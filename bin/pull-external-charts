@@ -1,10 +1,10 @@
 #!/bin/bash
 
 set -eu -o pipefail
-shopt -s nullglob globstar
 
-GIT_ROOT="$(realpath "$(dirname "$0")/..")"
-CHARTS_ROOT="${GIT_ROOT}/charts"
+# shellcheck source=bin/external-charts-lib.sh
+source "$(dirname "$(realpath "$0")")/external-charts-lib.sh"
+
 PACKAGE_PATH="${CR_PACKAGE_PATH:-${GIT_ROOT}/.cr-release-packages}"
 
 function fatal() {
@@ -24,7 +24,7 @@ mkdir -p "${PACKAGE_PATH}"
 
 exit_status=0
 
-for ext in "$CHARTS_ROOT"/**/External.yaml ; do
+while IFS= read -r ext; do
     chart_name="$(yq '.name' "$ext")"
     chart_alias="$(yq '.alias // ""' "$ext")"
     chart_repository="$(yq '.repository' "$ext")"
@@ -48,6 +48,6 @@ for ext in "$CHARTS_ROOT"/**/External.yaml ; do
         exit_status=1
         continue
     fi
-done
+done < <(list_external_chart_files)
 
 exit "$exit_status"

@@ -7,7 +7,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 1
 fi
 
-GIT_ROOT="$(realpath "$(dirname "${BASH_SOURCE[0]}")/..")"
+# shellcheck source=bin/external-charts-lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/external-charts-lib.sh"
+
 RELEASE_PLEASE_CONFIG="${GIT_ROOT}/etc/release-please-config.json"
 RELEASE_PLEASE_MANIFEST="${GIT_ROOT}/etc/.release-please-manifest.json"
 
@@ -42,7 +44,7 @@ function chart_location() {
         printf '%s\n' "deprecated"
     elif [[ -f "${GIT_ROOT}/archived/${name}/Chart.yaml" ]]; then
         printf '%s\n' "archived"
-    elif [[ -f "${GIT_ROOT}/charts/${name}/External.yaml" ]]; then
+    elif is_external_chart "${name}"; then
         printf '%s\n' "external"
     else
         printf '%s\n' "missing"
@@ -51,32 +53,23 @@ function chart_location() {
 
 function refuse_external_chart() {
     local name="${1}"
-    error "${name} is an external chart (charts/${name}/External.yaml). Stop republishing it by deleting that directory."
-}
-
-function read_chart_name() {
-    local chart_yaml="${1}"
-    local name
-    name="$(awk '
-        /^name:[[:space:]]*/ {
-            val = $0
-            sub(/^name:[[:space:]]*/, "", val)
-            gsub(/[\r\n]/, "", val)
-            gsub(/^["'\'']|["'\'']$/, "", val)
-            print val
-            exit
-        }
-    ' "${chart_yaml}")"
-    if [[ -z "${name}" ]]; then
-        error "No top-level name: in ${chart_yaml}"
+    local file rel
+    file="$(external_chart_file_for "${name}")"
+    if [[ -n "${file}" ]]; then
+        rel="${file#"${GIT_ROOT}/"}"
+        error "${name} is an external chart (${rel}). Stop republishing it by deleting that file."
     fi
-    printf '%s\n' "${name}"
+    error "${name} is an external chart. Stop republishing it by deleting the yaml file under external/."
 }
 
 function require_directory_matches_chart_name() {
     local name="${1}" root="${2}"
+    local chart_yaml="${GIT_ROOT}/${root}/${name}/Chart.yaml"
     local actual
-    actual="$(read_chart_name "${GIT_ROOT}/${root}/${name}/Chart.yaml")"
+    actual="$(yaml_name "${chart_yaml}")"
+    if [[ -z "${actual}" ]]; then
+        error "No top-level name: in ${chart_yaml}"
+    fi
     if [[ "${actual}" != "${name}" ]]; then
         error "Chart.yaml name '${actual}' does not match directory '${root}/${name}'"
     fi
