@@ -81,6 +81,10 @@
     "charts/firecell-du": {
       "component": "firecell-du",
       "package-name": "firecell-du"
+    },
+    "charts/cbrs-domain-proxy": {
+      "component": "cbrs-domain-proxy",
+      "package-name": "cbrs-domain-proxy"
     }
   }
 }

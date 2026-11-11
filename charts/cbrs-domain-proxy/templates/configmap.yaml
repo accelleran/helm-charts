@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cbrs-domain-proxy.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- include "cbrs-domain-proxy.config" . | nindent 4 }}
+---
+{{- /* The NMS creates nothing (its Role cannot create by name) and writes the allowlist later: keep what it wrote. */}}
+{{- $cur := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-allowlist" .Release.Name) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-allowlist
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cbrs-domain-proxy.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/resource-policy: keep
+{{- /* toJson keeps the live text byte for byte, so an upgrade applies no change to the NMS's field. */}}
+data:
+  allowlist.yaml: {{ if and $cur $cur.data (hasKey $cur.data "allowlist.yaml") }}{{ index $cur.data "allowlist.yaml" | toJson }}{{ else }}{{ dict "allowlist" .Values.allowlist | toYaml | toJson }}{{ end }}
