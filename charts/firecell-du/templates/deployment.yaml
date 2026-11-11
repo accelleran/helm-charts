@@ -2,7 +2,15 @@
 {{- $ns := include "firecell-du.namespace" . }}
 {{- $img := include "firecell-du.image" (dict "root" $ "image" $i.image) }}
 {{- $o2Port := dig "o2" "port" 9090 $i.extraConfig }}
+{{- $dpdk := eq (include "firecell-du.dpdk" $i) "true" }}
+{{- $aw2s := eq (include "firecell-du.ruType" $i) "aw2s" }}
+{{- $sdr := eq (include "firecell-du.sdr" $i) "true" }}
+{{- $b210 := eq (include "firecell-du.ruType" $i) "uhd" }}
+{{- $generate := eq (include "firecell-du.aw2sGenerate" $i) "true" }}
 {{- $networks := list }}
+{{- if eq (include "firecell-du.ofhSocket" $i) "true" }}
+{{- $networks = append $networks (dict "name" (printf "%s-ofh" $i.name) "namespace" $ns "interface" (toString $i.ofh.interface)) }}
+{{- end }}
 {{- if $i.mplane.enabled }}
 {{- $networks = append $networks (dict "name" (printf "%s-mplane" $i.name) "namespace" $ns "interface" "mplane0") }}
 {{- end }}
@@ -22,7 +30,7 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 2
-  # The VF, hugepages and pinned CPUs are exclusive: never run two pods at once.
+  # The OFH device (VF or host netdev), hugepages and pinned CPUs are exclusive: never run two pods at once.
   strategy:
     type: Recreate
   selector:
@@ -45,6 +53,12 @@ spec:
     spec:
       terminationGracePeriodSeconds: {{ $i.terminationGracePeriodSeconds | int }}
       {{- include "firecell-du.scheduling" (dict "root" $ "nodeSelector" $i.nodeSelector "tolerations" $i.tolerations) | trim | nindent 6 }}
+      {{- if $aw2s }}
+      # liboai_device.so (from the image) talks to the host Radio Management Unit and the Swallow card
+      # netdevs (swa0p*), which stay in the host network namespace.
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
       initContainers:
         - name: wait-cu-cp-f1
           image: {{ $img }}
@@ -76,7 +90,7 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             - name: DU_BINARY
-              value: {{ $i.binary | quote }}
+              value: {{ include "firecell-du.binary" $i | quote }}
             - name: DU_CPUS
               value: {{ include "firecell-du.allCpus" $i | quote }}
             - name: DU_POOL_CPUS
@@ -85,6 +99,24 @@ spec:
               value: {{ $i.o1.enabled | toString | quote }}
             - name: NETCONF_VERBOSITY
               value: {{ include "firecell-du.netconfVerbosity" $i.o1.netconfVerbosity | quote }}
+            {{- if $sdr }}
+            # The DU pins its own radio and pool threads (ru_cpus, main_pool_cpus); a
+            # taskset wrapper would drag its housekeeping threads onto those cores.
+            - name: DU_SELF_PIN
+              value: "true"
+            {{- end }}
+            {{- if $aw2s }}
+            - name: LD_LIBRARY_PATH
+              value: /usr/local/lib/aw2s:/host-aw2s:/usr/local/lib
+            {{- end }}
+            {{- if eq (include "firecell-du.ofhSocket" $i) "true" }}
+            - name: OFH_INTERFACE
+              value: {{ $i.ofh.interface | toString | quote }}
+            {{- end }}
+            {{- with dig "network" "rpsCpus" "" ($i.f1u | default dict) }}
+            - name: F1U_RPS_CPUS
+              value: {{ . | quote }}
+            {{- end }}
             {{- if $i.mplane.enabled }}
             - name: MPLANE_SSH_PASSWORD
               valueFrom:
@@ -109,16 +141,23 @@ spec:
           resources:
             {{- $res := $i.resources | default dict }}
             requests:
+              {{- if $dpdk }}
               hugepages-2Mi: {{ $i.hugepages2Mi }}
+              {{- end }}
               memory: {{ $i.memory }}
               {{- with $res.requests }}
               {{- toYaml (omit . "hugepages-2Mi" "memory") | nindent 14 }}
               {{- end }}
+            {{- $lim := omit ($res.limits | default dict) "hugepages-2Mi" }}
+            {{- if or $dpdk $lim }}
             limits:
+              {{- if $dpdk }}
               hugepages-2Mi: {{ $i.hugepages2Mi }}
-              {{- with $res.limits }}
-              {{- toYaml (omit . "hugepages-2Mi") | nindent 14 }}
               {{- end }}
+              {{- with $lim }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
+            {{- end }}
           volumeMounts:
             - name: config
               mountPath: /config/du.yml
@@ -127,8 +166,28 @@ spec:
               mountPath: /opt/firecell
             - name: logs
               mountPath: /tmp/logs
+            {{- if $dpdk }}
             - name: hugepages
               mountPath: /dev/hugepages
+            {{- end }}
+            {{- if and $b210 (dig "sdr" "b210" "usb" true $i.ru) }}
+            - name: usb
+              mountPath: /dev/bus/usb
+            {{- end }}
+            {{- if $aw2s }}
+            - name: aw2s-libs
+              mountPath: /host-aw2s
+              readOnly: true
+            - name: aw2s-config
+              mountPath: /root/.config
+              {{- if not $generate }}
+              readOnly: true
+              {{- end }}
+            # libratcm.so reaches the host Radio Management Unit through a socket in /tmp.
+            # Without it the DU logs "Radio Management Unit is not running".
+            - name: host-tmp
+              mountPath: /tmp
+            {{- end }}
             {{- if $i.o1.enabled }}
             - name: o1-state
               mountPath: /var/lib/ocudu
@@ -166,10 +225,32 @@ spec:
             defaultMode: 0755
         - name: logs
           emptyDir: {}
+        {{- if $dpdk }}
         - name: hugepages
           hostPath:
             path: /dev/hugepages
             type: DirectoryOrCreate
+        {{- end }}
+        {{- if and $b210 (dig "sdr" "b210" "usb" true $i.ru) }}
+        - name: usb
+          hostPath:
+            path: /dev/bus/usb
+            type: Directory
+        {{- end }}
+        {{- if $aw2s }}
+        - name: aw2s-libs
+          hostPath:
+            path: {{ $i.ru.sdr.aw2s.hostLibDir }}
+            type: Directory
+        - name: aw2s-config
+          hostPath:
+            path: {{ $i.ru.sdr.aw2s.configDir }}
+            type: Directory
+        - name: host-tmp
+          hostPath:
+            path: /tmp
+            type: Directory
+        {{- end }}
         {{- if $i.o1.enabled }}
         - name: o1-state
           hostPath:
