@@ -395,7 +395,7 @@ amf:
     #   configmap  the NMS owns the document and the NF mounts it read-only
     #              (contract 1.0.7). Durable in etcd, identical for every
     #              replica, and visible to GitOps.
-    intentMode: pvc
+    intentMode: configmap
     datastore:
       mountPath: /openair-amf/state
       file: cm.json

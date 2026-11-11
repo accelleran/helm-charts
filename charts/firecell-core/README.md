@@ -137,7 +137,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | amf.fcaps.enabled | bool | `false` |  |
 | amf.fcaps.intentConfigMap.name | string | `"oai-amf-cm-intent"` |  |
 | amf.fcaps.intentConfigMap.optional | bool | `true` |  |
-| amf.fcaps.intentMode | string | `"pvc"` |  |
+| amf.fcaps.intentMode | string | `"configmap"` |  |
 | amf.fcaps.mnsPort | int | `9091` |  |
 | amf.fcaps.seedConfigPath | string | `"/openair-amf/etc/config.yaml"` |  |
 | amf.headlessN2.enabled | bool | `false` |  |
