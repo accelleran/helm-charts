@@ -174,6 +174,9 @@ amf:
 
 smf:
   ue_mtu: {{ $v.coreConfig.smf.ueMtu }}
+  {{- with $v.coreConfig.smf.locationApiRoot }}
+  location_api_root: {{ . | quote }}
+  {{- end }}
   support_features:
     use_local_subscription_info: {{ $v.coreConfig.smf.useLocalSubscriptionInfo }}
     use_local_pcc_rules: {{ $v.coreConfig.smf.useLocalPccRules }}
