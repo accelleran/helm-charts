@@ -104,7 +104,7 @@ ru:
       generate: false
       # -- Device library loaded by the aw2s driver (device_args lib=).
       lib: liboai_device.so
-      # -- Host directory with the Swallow/AW2S libraries (liboai_device.so, libratcm.so), mounted read-only.
+      # -- Host directory with the Swallow libraries the image does not carry (libswallow.so, libratcm.so), mounted read-only. The device library (lib) is taken from the image first; a copy here is only a fallback.
       hostLibDir: /usr/local/lib
       # -- Host directory with the Swallow RU XML. The host RMU must use the same file. With generate it is mounted
       # read-write and the DU overwrites the file.
@@ -369,9 +369,9 @@ extraConfig:
     port: 9090
 
 preflight:
-  # -- Pre-install/pre-upgrade Job on the DU node: VF on vfio-pci and hugepages (dpdk), the OFH netdev (socket), or the AW2S library, Swallow XML and RMU socket (aw2s); F1-U bridge, M-plane parent NIC.
+  # -- Pre-install/pre-upgrade Job on the DU node: VF on vfio-pci and hugepages (dpdk), the OFH netdev (socket), or the Swallow host libraries (the image device library must resolve against them), the Swallow XML and the RMU socket (aw2s); F1-U bridge, M-plane parent NIC.
   enabled: true
-  # -- Image for the check (needs bash). Empty uses the DU image.
+  # -- Image for the check (needs bash and, for aw2s, ldd and the DU's /usr/local/lib/aw2s). Empty uses the DU image.
   image: ""
   timeoutSeconds: 120
 

@@ -12,7 +12,7 @@ Install one release per DU; each attaches over F1 to the CU-CP of a [`firecell-c
 |-----------|-------|----|-----------|
 | `"7.2"` / `benetel`, `comba`, `eridan` (default) | O-RAN 7.2x O-RU, optional M-plane (NETCONF call-home) | `odu_split_7_2` | `ofh.mode: dpdk`: SR-IOV VF on vfio-pci + hugepages |
 | `"7.2"`, lab | Amarisoft UE simulator acting as the O-RU on the same node | `odu_split_7_2` | `ofh.mode: socket`: kernel raw socket on a host netdev (e.g. a veth) that Multus `host-device` moves into the pod |
-| `"8"` / `aw2s` | AW2S Swallow RRH over CPRI, Swallow PCIe card | dynamic `odu` (split 8, `ru_sdr`) | `liboai_device.so` + host Radio Management Unit; the pod runs in the host network. The DU can write the Swallow file itself (`ru.sdr.aw2s.generate`) |
+| `"8"` / `aw2s` | AW2S Swallow RRH over CPRI, Swallow PCIe card | dynamic `odu` (split 8, `ru_sdr`) | `liboai_device.so` from the image, `libswallow.so` and `libratcm.so` from the host, and the host Radio Management Unit; the pod runs in the host network. The DU can write the Swallow file itself (`ru.sdr.aw2s.generate`) |
 | `"8"` / `b210` | Ettus B210 over USB 3 through UHD | dynamic `odu` (split 8, `ru_sdr`) | `ru.sdr.b210.usb` mounts `/dev/bus/usb`; 20 and 40 MHz |
 | `"8"` / `zmq` | no hardware | dynamic `odu` (split 8, `ru_sdr`) | ZMQ ports in `ru.sdr.zmq.args` |
 
@@ -72,7 +72,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 - `ofh.mode: dpdk`: VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).
 - `ofh.mode: dpdk`: 2 MiB hugepages, at least `hugepages2Mi` per DU on the node (`vm.nr_hugepages`); restart kubelet after changing them.
 - `ofh.mode: socket`: the netdev `ofh.interface` exists on the node before the DU starts (MTU and offloads set on the host), and Multus has the `host-device` plugin.
-- `ru.vendor: aw2s`: Swallow PCIe card and its libraries in `ru.sdr.aw2s.hostLibDir`, the Swallow XML in `ru.sdr.aw2s.configDir` (writable with `generate`), and the host Radio Management Unit running with that XML (its socket is in `/tmp`). The DU uses the host network, so only one AW2S DU per node can keep the default O2 (9090) and O1 (830) ports.
+- `ru.vendor: aw2s`: Swallow PCIe card with its kernel module, and `libswallow.so` and `libratcm.so` in `ru.sdr.aw2s.hostLibDir` (the device library `liboai_device.so` is taken from the image first), the Swallow XML in `ru.sdr.aw2s.configDir` (writable with `generate`), and the host Radio Management Unit running with that XML (its socket is in `/tmp`). The DU uses the host network, so only one AW2S DU per node can keep the default O2 (9090) and O1 (830) ports.
 - Isolated CPUs for `cpus.timing`, `cpus.txrx` (OFH) or `cpus.ru` (split 8), and `cpus.pool`.
 - `f1u.network.cniType: bridge`: the Linux bridge `f1u.network.master` exists on the node.
 - Multus with the macvlan and static IPAM plugins when `mplane.enabled`.
@@ -169,8 +169,8 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | ofh.vfPciAddr | string | `""` | PCI address of the SR-IOV VF bound to vfio-pci. Required with mode dpdk. |
 | ofh.vlanCp | int | `0` | C-plane VLAN tag. 0 sends untagged. |
 | ofh.vlanUp | int | `0` | U-plane VLAN tag. 0 sends untagged. |
-| preflight.enabled | bool | `true` | Pre-install/pre-upgrade Job on the DU node: VF on vfio-pci and hugepages (dpdk), the OFH netdev (socket), or the AW2S library, Swallow XML and RMU socket (aw2s); F1-U bridge, M-plane parent NIC. |
-| preflight.image | string | `""` | Image for the check (needs bash). Empty uses the DU image. |
+| preflight.enabled | bool | `true` | Pre-install/pre-upgrade Job on the DU node: VF on vfio-pci and hugepages (dpdk), the OFH netdev (socket), or the Swallow host libraries (the image device library must resolve against them), the Swallow XML and the RMU socket (aw2s); F1-U bridge, M-plane parent NIC. |
+| preflight.image | string | `""` | Image for the check (needs bash and, for aw2s, ldd and the DU's /usr/local/lib/aw2s). Empty uses the DU image. |
 | preflight.timeoutSeconds | int | `120` |  |
 | resources | object | `{}` |  |
 | ru.sdr.aw2s.antennas | list | `[]` | Antennas for generate: {id, masterPort, antennaPort} per antenna of the cell. Master ports 0 to 3 are the CPRI ports of the Swallow card; antenna ports restart at 0 on each RRH. |
@@ -178,7 +178,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 | ru.sdr.aw2s.configDir | string | `""` | Host directory with the Swallow RU XML. The host RMU must use the same file. With generate it is mounted read-write and the DU overwrites the file. |
 | ru.sdr.aw2s.extraArgs | string | `""` | Extra comma-separated device_args, appended in static-file mode and with generate. |
 | ru.sdr.aw2s.generate | bool | `false` | true: the DU writes the Swallow file (rf_config) at every start from the cell and these values, and the chart renders no srate, bw=, nrb_dl= or oversampling. false: static-file mode, the file in configDir is yours and the chart renders srate, bw= and nrb_dl= from the values below. |
-| ru.sdr.aw2s.hostLibDir | string | `"/usr/local/lib"` | Host directory with the Swallow/AW2S libraries (liboai_device.so, libratcm.so), mounted read-only. |
+| ru.sdr.aw2s.hostLibDir | string | `"/usr/local/lib"` | Host directory with the Swallow libraries the image does not carry (libswallow.so, libratcm.so), mounted read-only. The device library (lib) is taken from the image first; a copy here is only a fallback. |
 | ru.sdr.aw2s.iqCompression | string | `"none"` | IQ compression for generate: none or large. |
 | ru.sdr.aw2s.iqTxShift | int | `4` | IQ TX shift (device_args iq_txshift): IQ amplitude divided by 2^n. |
 | ru.sdr.aw2s.lib | string | `"liboai_device.so"` | Device library loaded by the aw2s driver (device_args lib=). |

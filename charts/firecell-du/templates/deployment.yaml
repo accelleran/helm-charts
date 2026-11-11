@@ -54,7 +54,7 @@ spec:
       terminationGracePeriodSeconds: {{ $i.terminationGracePeriodSeconds | int }}
       {{- include "firecell-du.scheduling" (dict "root" $ "nodeSelector" $i.nodeSelector "tolerations" $i.tolerations) | trim | nindent 6 }}
       {{- if $aw2s }}
-      # liboai_device.so talks to the host Radio Management Unit and the Swallow card
+      # liboai_device.so (from the image) talks to the host Radio Management Unit and the Swallow card
       # netdevs (swa0p*), which stay in the host network namespace.
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
@@ -107,7 +107,7 @@ spec:
             {{- end }}
             {{- if $aw2s }}
             - name: LD_LIBRARY_PATH
-              value: /host-aw2s:/usr/local/lib/aw2s:/usr/local/lib
+              value: /usr/local/lib/aw2s:/host-aw2s:/usr/local/lib
             {{- end }}
             {{- if eq (include "firecell-du.ofhSocket" $i) "true" }}
             - name: OFH_INTERFACE

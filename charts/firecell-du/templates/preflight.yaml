@@ -41,8 +41,29 @@ spec:
               else bad "VF {{ $i.ofh.vfPciAddr }} driver is '${drv:-none}', expected vfio-pci"; fi
               {{- else if eq (include "firecell-du.ruType" $i) "aw2s" }}
               {{- $a := $i.ru.sdr.aw2s }}
-              if [ -e /host-aw2s/{{ $a.lib }} ]; then ok "{{ $a.lib }} in {{ $a.hostLibDir }}"
-              else bad "{{ $a.lib }} not found in {{ $a.hostLibDir }} (install the Swallow/AW2S host libraries)"; fi
+              # The device library comes from the image (/usr/local/lib/aw2s); the Swallow libraries it needs come
+              # from the host. Same search order as the DU container.
+              for l in libswallow.so libratcm.so; do
+                if [ -e /host-aw2s/$l ]; then ok "$l in {{ $a.hostLibDir }}"
+                else bad "$l not found in {{ $a.hostLibDir }} (install the Swallow host stack: the image does not carry it)"; fi
+              done
+              lib={{ $a.lib | quote }}
+              dev=
+              case "$lib" in
+                /*) [ -e "$lib" ] && dev=$lib ;;
+                *) for d in /usr/local/lib/aw2s /host-aw2s /usr/local/lib; do
+                     [ -e "$d/$lib" ] && { dev=$d/$lib; break; }
+                   done ;;
+              esac
+              if [ -z "$dev" ]; then bad "$lib not found in the image or in {{ $a.hostLibDir }}"
+              elif ! command -v ldd >/dev/null 2>&1; then bad "ldd is not in the preflight image (use the DU image)"
+              else
+                out=$(LD_LIBRARY_PATH=/usr/local/lib/aw2s:/host-aw2s:/usr/local/lib ldd "$dev" 2>&1); rc=$?
+                miss=$(echo "$out" | grep 'not found')
+                if [ $rc -ne 0 ]; then bad "$lib ($dev) is not a loadable library: $(echo $out)"
+                elif [ -z "$miss" ]; then ok "$lib ($dev) resolves all its libraries"
+                else bad "$lib ($dev) misses: $(echo $miss)"; fi
+              fi
               {{- if $a.generate }}
               if [ -w /aw2s-config ]; then ok "Swallow directory {{ $a.configDir }} is writable (the DU writes {{ $a.rfConfigFile }})"
               else bad "Swallow directory {{ $a.configDir }} is not writable (the DU writes {{ $a.rfConfigFile }} at every start)"; fi
