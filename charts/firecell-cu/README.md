@@ -32,10 +32,12 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 ### 2.1 NMS Access
 With `nms.rbac` (the default), the release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs here:
 
-- RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: pod reads.
+- RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: reads of pods and their logs, ConfigMaps, events, and Deployments, ReplicaSets, StatefulSets and DaemonSets.
 - Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for `cu-cp` and `cu-up`, so the NMS can restart, stop and start them.
 
 The NMS and the CU can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
+
+Every install and upgrade also writes ConfigMap `<release>-release-info` (label `firecell.io/release-info: "true"`) in the release namespace, for the NMS support bundles and drift checks, since the NMS reads no Helm release Secret. `release.json` holds the release, namespace, chart (`<name>-<version>`), appVersion, revision, render time (`renderedAt`, UTC), a SHA-256 digest of the values (`valuesDigest`) and the image of every container the chart renders (`images`, keyed `<workload>/<container>`, taken from the rendered pods themselves). `history.json` keeps up to 20 earlier `release.json` records, newest first, read back from the live ConfigMap with `lookup`; it starts empty after `helm template` or a client-side dry run. Neither holds any values content or anything from a Secret. `helm rollback` reapplies the stored manifest of the target revision, so the record and its history roll back with it.
 
 ## 3. Node prerequisites
 - Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
