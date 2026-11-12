@@ -171,7 +171,18 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
-## 6. Configuration Parameters
+## 6. Support Logs
+
+The backend builds support bundles from the per-node log stores of the [`firecell-node-logs`](../firecell-node-logs) chart:
+
+- It finds the store of each node from the EndpointSlices of Service `supportLogs.logStore.service` (`vlogs-node`) in `supportLogs.logStore.namespace` (`firecell-logs`), port `supportLogs.logStore.port` (9428). The firecell-node-logs chart grants ServiceAccount `nms` that read access and lets this namespace through its NetworkPolicy.
+- It changes store retention by writing ConfigMap `supportLogs.retention.configMap` (`firecell-node-logs-overrides`) in `supportLogs.retention.configMapNamespace` (`flux-system`), which Flux merges into the firecell-node-logs HelmRelease values. The access to it comes with the Flux recipe, not this chart.
+- A worker builds each bundle in an emptyDir mounted at `supportLogs.bundles.dir` (`/var/lib/nms/bundles`, at most `supportLogs.bundles.scratchSizeLimit`) and keeps the finished archive in the NMS database, in 4 MiB parts; any API replica streams it. The bundles kept together are capped at `supportLogs.bundles.storeMaxBytes` (1 GiB), the oldest going first. No volume ties the API and worker pods to one node, so they spread freely.
+- Keeping bundles in the database is the first-phase answer. The plan is shared storage every pod can mount (Longhorn or another ReadWriteMany volume); bringing that into every edge install is a larger change than support bundles justify today.
+
+The API, worker and control plane get these settings as `FIRECELL_NMS_NG_LOG_STORE_NAMESPACE`, `FIRECELL_NMS_NG_LOG_STORE_SERVICE`, `FIRECELL_NMS_NG_LOG_STORE_PORT`, `FIRECELL_NMS_NG_BUNDLE_DIR`, `FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP` and `FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP_NAMESPACE` from ConfigMap `nms-config`.
+
+## 7. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
 
@@ -258,6 +269,14 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | networkPolicy.oauth2ProxyLabel | string | `"oauth2-proxy"` | app.kubernetes.io/name label of the oauth2-proxy pods in this namespace. |
 | rbac.coreNamespace | string | `"firecell-core"` | Namespace of the 5GC NFs: CM intent ConfigMaps, the default southbound URLs and the NetworkPolicy. The chart renders nothing there, so it need not exist yet; the core chart grants the access (see the README). |
 | rbac.ranNamespace | string | `""` | Namespace of all the CU-CPs, CU-UPs and DUs when they do not run in coreNamespace. When set, RAN-domain elements are rolled there. The chart renders nothing there; the RAN charts grant the access. |
+| supportLogs.bundles.dir | string | `"/var/lib/nms/bundles"` | Where the worker builds a bundle (an emptyDir). |
+| supportLogs.bundles.scratchSizeLimit | string | `"5Gi"` | Size limit of that emptyDir. A bundle is at most 2 GiB before compression by default, written once uncompressed and once packed. |
+| supportLogs.bundles.storeMaxBytes | int | `1073741824` | Finished bundles kept in the database together, in bytes; the oldest go first. Each also expires after a day. |
+| supportLogs.logStore.namespace | string | `"firecell-logs"` | Namespace of the firecell-node-logs release. |
+| supportLogs.logStore.port | int | `9428` | Port of every store. |
+| supportLogs.logStore.service | string | `"vlogs-node"` | Headless Service of the stores; the backend reads its EndpointSlices to find the store of each node. |
+| supportLogs.retention.configMap | string | `"firecell-node-logs-overrides"` | ConfigMap the backend writes store retention overrides to (Flux merges it into the firecell-node-logs HelmRelease values). |
+| supportLogs.retention.configMapNamespace | string | `"flux-system"` | Namespace of that ConfigMap. |
 | victoriaMetrics.image | object | `{"digest":"","registry":"docker.io","repository":"victoriametrics/victoria-metrics","tag":"v1.93.4"}` | VictoriaMetrics image. |
 | victoriaMetrics.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | victoriaMetrics.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
@@ -272,7 +291,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | victoriaMetrics.retentionPeriod | string | `"7d"` |  |
 | victoriaMetrics.storage | string | `"20Gi"` | Size of PVC nms-vm-data. |
 
-## 7. Upgrading from 0.1.x
+## 8. Upgrading from 0.1.x
 
 There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 
