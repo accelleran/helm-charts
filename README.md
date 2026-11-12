@@ -2,6 +2,8 @@
 
 This repository contains accelleran's helm charts.
 
+This repository uses Helm v4: CI lints, tests, and releases the charts with Helm v4, and every example command in this repository and its chart READMEs assumes Helm v4.
+
 ## Chart lifecycle
 
 Charts live in one of three top-level directories:
