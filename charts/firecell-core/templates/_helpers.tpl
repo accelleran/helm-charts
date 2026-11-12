@@ -409,3 +409,157 @@ conditions of the NF Deployment templates.
 {{- end -}}
 {{- toJson $names -}}
 {{- end }}
+
+{{/*
+IPv6 DNN: "true" for a coreConfig.dnns entry of type IPV6 or IPV4V6 that has an
+IPv6 pool: ipv6Prefix, or ipAllocationMode dhcp (the /64 then comes from DHCPv6).
+The NFs read ipv6_prefix only for those two types (common-src dnn_config::validate),
+and an IPV4V6 DNN without a pool is IPv4-only. Context: the DNN entry.
+*/}}
+{{- define "firecell-5gc.isIpv6Dnn" -}}
+{{- if and (has (.pduSessionType | default "" | toString | upper) (list "IPV6" "IPV4V6")) (or .ipv6Prefix (eq (.ipAllocationMode | default "" | toString) "dhcp")) -}}true{{- end -}}
+{{- end }}
+
+{{/*
+IPv6 user plane (P23) on: "true" when coreConfig.dnns has an IPv6 DNN
+(firecell-5gc.isIpv6Dnn). Empty otherwise. Every IPv6 item of the chart is behind
+this one test, so the default values (the "ims" DNN is IPV4V6 without an IPv6
+pool) render as before.
+*/}}
+{{- define "firecell-5gc.ipv6UserPlane" -}}
+{{- $on := false -}}
+{{- range .Values.coreConfig.dnns -}}
+{{- if include "firecell-5gc.isIpv6Dnn" . -}}{{- $on = true -}}{{- end -}}
+{{- end -}}
+{{- if $on -}}true{{- end -}}
+{{- end }}
+
+{{/*
+"key: value" lines, one per pair (list "<NF yaml key>" <value>) whose value is
+set; an unset ("" or absent) value is left out so the NF keeps its own default.
+dict keys: pairs (list of pairs), indent (int).
+*/}}
+{{- define "firecell-5gc.optionalKeys" -}}
+{{- range .pairs }}
+{{- $v := index . 1 }}
+{{- if not (or (kindIs "invalid" $v) (eq (toString $v) "")) }}
+{{ printf "%s: %s" (index . 0) (ternary (quote $v) (toString $v) (kindIs "string" $v)) | indent $.indent }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+The IPv6 keys of one coreConfig.dnns entry (common-src dnn_config, P23-a/P23-g),
+for both DNN lists (common config and the hostNetwork UPF config), so the SMF and
+the UPF read the same pool. Context: the DNN entry.
+*/}}
+{{- define "firecell-5gc.dnnIpv6Keys" -}}
+{{- with .ipAllocationMode }}
+{{- if not (has (toString .) (list "static" "dhcp")) }}
+{{- fail (printf "coreConfig.dnns[].ipAllocationMode must be static or dhcp (got %q)" (toString .)) }}
+{{- end }}
+{{- end }}
+{{- include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "ipv6_prefix" .ipv6Prefix) (list "ip_allocation_mode" .ipAllocationMode))) }}
+{{- end }}
+
+{{/*
+CP relay (cn5g-upf support_features.enable_cp_relay, cn5g-smf
+upfs[].config.enable_cp_relay; P23-c/P23-e, D-1c) for one UPF instance: "true"
+when the IPv6 user plane is on and the instance serves an IPv6 DNN (no "dnns"
+list = all DNNs). Both sides must agree: the SMF defaults to yes and the UPF to
+no, and with that pairing RS/RA never flow and SLAAC does not complete.
+dict keys: ctx (root context), inst (upf.instances entry, or an empty dict for the
+single UPF).
+*/}}
+{{- define "firecell-5gc.upfCpRelay" -}}
+{{- $v := .ctx.Values -}}
+{{- if include "firecell-5gc.ipv6UserPlane" .ctx -}}
+{{- $v6dnns := list -}}
+{{- range $v.coreConfig.dnns -}}
+{{- if include "firecell-5gc.isIpv6Dnn" . -}}
+{{- $v6dnns = append $v6dnns (.dnn | toString) -}}
+{{- end -}}
+{{- end -}}
+{{- $serves := not .inst.dnns -}}
+{{- range (.inst.dnns | default list) -}}
+{{- if has (. | toString) $v6dnns -}}{{- $serves = true -}}{{- end -}}
+{{- end -}}
+{{- if $serves -}}true{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+N4 != N3 (user decision Q7, 9 Nov 2026: N4 and N3 shall not share an IP address).
+Mirrors cn5g-upf cp_relay_config_error (P23-e): with enable_cp_relay on, the UPF
+opens its N4-u GTP-U endpoint (UDP 2152) on the N4 IPv4 address and refuses to
+load when that is the N3 or the N9 address. The chart fails earlier, from what it
+knows: the interface names the UPF config gets (same coalesce chains as the two
+config templates), and the N3/N4 addresses when both are set in the values. Two
+different interfaces that carry the same address are left to the UPF check. N9 is
+not checked: the UPF compares N4 with N9 only with n9.enabled, which the chart
+never writes.
+dict keys: ctx, inst, appName.
+*/}}
+{{- define "firecell-5gc.upfN4N3Check" -}}
+{{- $v := .ctx.Values -}}
+{{- $inst := .inst -}}
+{{- if include "firecell-5gc.upfCpRelay" (dict "ctx" .ctx "inst" $inst) -}}
+{{- $n3 := "" -}}{{- $n4 := "" -}}
+{{- if $v.upf.hostNetwork -}}
+{{- $n3 = coalesce $inst.n3Interface $v.upf.n3Interface "eth0" -}}
+{{- $n4 = coalesce $inst.hostPfcpMacvlan $inst.n4Interface $v.upf.hostPfcpMacvlan $v.upf.n4Interface "eno1" -}}
+{{- else -}}
+{{- $n3 = $v.upf.n3Interface | default "eth0" -}}
+{{- $n4 = $v.upf.hostPfcpMacvlan | default "eth0" -}}
+{{- end -}}
+{{- $why := "the IPv6 CP relay (enable_cp_relay, on because a DNN has an IPv6 pool) opens the UPF N4-u GTP-U endpoint, UDP 2152 on the N4 IPv4 address, which must not be the N3 address (N4 and N3 shall not share an IP address): give N4 its own interface and address (upf.hostPfcpMacvlan + upf.hostPfcpIP, or upf.n4Interface)" -}}
+{{- if eq $n4 $n3 -}}
+{{- fail (printf "%s: N4 interface %q is the N3 interface; %s" .appName $n4 $why) -}}
+{{- end -}}
+{{- /* coalesce of only empty values is nil, and nil | toString is "<nil>" */ -}}
+{{- $n3ip := (coalesce $inst.n3IP $v.upf.n3IP | default "") | toString -}}
+{{- $n4ip := "" -}}
+{{- if coalesce $inst.hostPfcpMacvlan $v.upf.hostPfcpMacvlan -}}
+{{- $n4ip = (coalesce $inst.hostPfcpIP $v.upf.hostPfcpIP | default "") | toString -}}
+{{- end -}}
+{{- if and $n3ip $n4ip (eq $n3ip $n4ip) -}}
+{{- fail (printf "%s: the N4 address %s is the N3 address; %s" .appName $n4ip $why) -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+The SMF N4-u GTP-U port (cn5g-smf smf.ipv6.n4u.port, default 2152).
+*/}}
+{{- define "firecell-5gc.smfN4uPort" -}}
+{{- (((.Values.coreConfig.smf.ipv6 | default dict).n4u | default dict).port | default 2152) -}}
+{{- end }}
+
+{{/*
+"true" when the SMF N4-u address survives an SMF pod replacement (D-1b): the SMF
+binds ipv6.n4u.address, default its N4 address, and puts it in the UPF's
+"to CP function" FAR. Stable: a hostNetwork SMF on its PFCP macvlan
+(smf.hostPfcpIP / smf.n4IP), a Multus SMF with smf.n4IP, or an explicit
+coreConfig.smf.ipv6.n4u.address. Otherwise it is the pod IP.
+*/}}
+{{- define "firecell-5gc.smfN4uStable" -}}
+{{- $s := .Values.smf -}}
+{{- $n4u := ((.Values.coreConfig.smf.ipv6 | default dict).n4u | default dict) -}}
+{{- if or $n4u.address (and $s.hostNetwork (coalesce $s.hostPfcpIP $s.n4IP "")) (and (not $s.hostNetwork) ($s.multus).enabled $s.n4IP) -}}true{{- end -}}
+{{- end }}
+
+{{/*
+cn5g-upf support_features.delete_sessions_on_smf_restart (P20-upf), written only
+when upf.deleteSessionsOnSmfRestart is set, as "yes"/"no" (true/false accepted).
+Context: .Values.upf.
+*/}}
+{{- define "firecell-5gc.upfDeleteSessionsOnSmfRestart" -}}
+{{- $d := .deleteSessionsOnSmfRestart -}}
+{{- if not (or (kindIs "invalid" $d) (eq (toString $d) "")) }}
+{{- $s := toString $d | lower }}
+{{- if not (has $s (list "yes" "no" "true" "false")) }}
+{{- fail (printf "upf.deleteSessionsOnSmfRestart must be yes or no (got %q)" (toString $d)) }}
+{{- end }}
+    delete_sessions_on_smf_restart: {{ if has $s (list "yes" "true") }}yes{{ else }}no{{ end }}
+{{- end }}
+{{- end }}

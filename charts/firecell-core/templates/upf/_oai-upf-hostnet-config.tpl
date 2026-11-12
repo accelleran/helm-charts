@@ -88,6 +88,7 @@ snssais:
 ue_dns:
   primary_ipv4: {{ $v.coreConfig.dns.primaryIpv4 | quote }}
   secondary_ipv4: {{ $v.coreConfig.dns.secondaryIpv4 | quote }}
+  {{- include "firecell-5gc.optionalKeys" (dict "indent" 2 "pairs" (list (list "primary_ipv6" $v.coreConfig.dns.primaryIpv6) (list "secondary_ipv6" $v.coreConfig.dns.secondaryIpv6))) }}
 
 ims:
   pcscf_ipv4: {{ $v.coreConfig.ims.pcscfIpv4 | quote }}
@@ -98,6 +99,7 @@ dnns:
   - dnn: {{ .dnn | quote }}
     pdu_session_type: {{ .pduSessionType | quote }}
     ipv4_subnet: {{ .ipv4Subnet | quote }}
+    {{- include "firecell-5gc.dnnIpv6Keys" . }}
 {{- end }}
 
 upf:
@@ -110,6 +112,12 @@ upf:
     enable_snat: {{ if ($inst.enableSnat | default $v.upf.enableSnat | default true) }}yes{{ else }}no{{ end }}
     enable_fr: no
     enable_eth_pdu: {{ if $v.upf.oaiEnableEthPdu }}yes{{ else }}no{{ end }}
+{{- if include "firecell-5gc.ipv6UserPlane" $root }}
+    # IPv6 RS/NS and RA/NA relayed between the UE and the SMF over N4-u (UDP 2152 on
+    # the N4 address, which must differ from N3 and N9).
+    enable_cp_relay: {{ if include "firecell-5gc.upfCpRelay" (dict "ctx" $root "inst" $inst) }}yes{{ else }}no{{ end }}
+{{- end }}
+    {{- include "firecell-5gc.upfDeleteSessionsOnSmfRestart" $v.upf }}
     # cn5g-upf v5.1.0.x sizes m_arp_table from support_features (not datapath_configuration).
     max_arp_entries: 256
 {{- if eq $schema "legacy" }}

@@ -25,6 +25,7 @@
 {{- $smfN4 = $smfPfcpMac }}
 {{- end }}
 {{- $useClusterDNS := or $hostNet $smfHostNet }}
+{{- $ipv6On := include "firecell-5gc.ipv6UserPlane" $ctx }}
 ############# Common configuration
 
 # Log level for all the NFs
@@ -225,6 +226,9 @@ smf:
         {{- if $upfInst.n3IP }}
         n3_local_ipv4: {{ $upfInst.n3IP }}
         {{- end }}
+        {{- if $ipv6On }}
+        enable_cp_relay: {{ if include "firecell-5gc.upfCpRelay" (dict "ctx" $ctx "inst" $upfInst) }}yes{{ else }}no{{ end }}
+        {{- end }}
       {{- /* Per-UPF dnnUpfInfoList on static pool entry (OAI-SMF DNN match; top-level nssai breaks fcdevelop). */}}
       {{- if $upfInst.dnns }}
       upf_info:
@@ -265,13 +269,41 @@ smf:
         {{- if $v.upf.n3IP }}
         n3_local_ipv4: {{ $v.upf.n3IP }}
         {{- end }}
+        {{- if $ipv6On }}
+        enable_cp_relay: yes
+        {{- end }}
   {{- end }}
   ue_dns:
     primary_ipv4: {{ $v.coreConfig.dns.primaryIpv4 | quote }}
     secondary_ipv4: {{ $v.coreConfig.dns.secondaryIpv4 | quote }}
+    {{- include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "primary_ipv6" $v.coreConfig.dns.primaryIpv6) (list "secondary_ipv6" $v.coreConfig.dns.secondaryIpv6))) }}
   ims:
     pcscf_ipv4: {{ $v.coreConfig.ims.pcscfIpv4 | quote }}
     pcscf_ipv6: {{ $v.coreConfig.ims.pcscfIpv6 | quote }}
+  {{- if $ipv6On }}
+  {{- /* cn5g-smf smf_ipv6_options (P23-c, P23-g): only the keys set in
+         coreConfig.smf.ipv6 are written; the SMF defaults the rest. */}}
+  {{- $i6 := $v.coreConfig.smf.ipv6 | default dict }}
+  {{- $n4u := $i6.n4u | default dict }}
+  {{- $ra := $i6.ra | default dict }}
+  {{- $d6 := $i6.dhcpv6 | default dict }}
+  {{- $n4uKeys := include "firecell-5gc.optionalKeys" (dict "indent" 6 "pairs" (list (list "address" $n4u.address) (list "port" $n4u.port))) }}
+  {{- $raKeys := include "firecell-5gc.optionalKeys" (dict "indent" 6 "pairs" (list (list "max_rtr_adv_interval_s" $ra.maxRtrAdvIntervalS) (list "router_lifetime_s" $ra.routerLifetimeS) (list "initial_count" $ra.initialCount) (list "initial_interval_s" $ra.initialIntervalS) (list "mtu" $ra.mtu) (list "rdnss" $ra.rdnss))) }}
+  {{- $d6Keys := include "firecell-5gc.optionalKeys" (dict "indent" 6 "pairs" (list (list "primary_server" $d6.primaryServer) (list "secondary_server" $d6.secondaryServer) (list "link_address" $d6.linkAddress) (list "allocate_timeout_s" $d6.allocateTimeoutS) (list "send_release" $d6.sendRelease))) }}
+  {{- $llKeys := include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "smf_link_local" $i6.smfLinkLocal))) }}
+  {{- if or $llKeys $n4uKeys $raKeys $d6Keys }}
+  ipv6:{{ $llKeys }}
+    {{- if $n4uKeys }}
+    n4u:{{ $n4uKeys }}
+    {{- end }}
+    {{- if $raKeys }}
+    ra:{{ $raKeys }}
+    {{- end }}
+    {{- if $d6Keys }}
+    dhcpv6:{{ $d6Keys }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   smf_info:
     sNssaiSmfInfoList:
     {{- range $v.coreConfig.nssai }}
@@ -309,6 +341,7 @@ dnns:
   - dnn: {{ .dnn | quote }}
     pdu_session_type: {{ .pduSessionType | quote }}
     ipv4_subnet: {{ .ipv4Subnet | quote }}
+    {{- include "firecell-5gc.dnnIpv6Keys" . }}
 {{- end }}
 
 nrf:
@@ -330,6 +363,10 @@ upf:
     enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
+    {{- if $ipv6On }}
+    enable_cp_relay: yes
+    {{- end }}
+    {{- include "firecell-5gc.upfDeleteSessionsOnSmfRestart" $v.upf }}
   upf_info:
     sNssaiUpfInfoList:
     {{- range $v.coreConfig.nssai }}

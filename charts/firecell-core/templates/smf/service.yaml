@@ -92,6 +92,16 @@ spec:
       port: 8805
       targetPort: 8805
       protocol: UDP
+    {{- if include "firecell-5gc.ipv6UserPlane" . }}
+    # IPv6 user plane: the SMF N4-u GTP-U endpoint (ipv6.n4u), on the N4 address
+    # unless coreConfig.smf.ipv6.n4u.address says otherwise. Headless on purpose:
+    # the SMF binds this address and the UPF's CP-relay FAR carries it, so it must
+    # be the SMF's own address, never a ClusterIP.
+    - name: n4u
+      port: {{ include "firecell-5gc.smfN4uPort" . }}
+      targetPort: {{ include "firecell-5gc.smfN4uPort" . }}
+      protocol: UDP
+    {{- end }}
   selector:
     app: oai-smf
 {{- end }}

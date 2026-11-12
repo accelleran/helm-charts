@@ -42,6 +42,7 @@
 {{- $upfMultus := and (not $.Values.upf.hostNetwork) ($.Values.upf.multus.enabled | default false) }}
 {{- $upfMultusN3 := $.Values.upf.multus.n3 | default dict }}
 {{- $upfMultusN6 := $.Values.upf.multus.n6 | default dict }}
+{{- include "firecell-5gc.upfN4N3Check" (dict "ctx" $ "inst" $inst "appName" $appName) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -406,6 +407,98 @@ spec:
               echo "${UPF_APP}" > "${LEASE_DIR}/${UPF_APP}@${N3_DEV}"
               echo "${UPF_APP}" > "${LEASE_DIR}/${UPF_APP}@${N6_DEV}"
               echo "[datapath-init] ${UPF_APP}: OK"
+        {{- end }}
+        {{- if and (or $.Values.upf.hostNetwork $upfMultus) (include "firecell-5gc.upfCpRelay" (dict "ctx" $ "inst" $inst)) }}
+        {{- /* IPv6 user plane (P23-k k4): N6 IPv6 for a UPF that serves an IPv6 DNN.
+               hostNetwork: in the node's network namespace. Multus: in the pod's own
+               one; the N6 address then comes from the n6 NetworkAttachment (static
+               IPAM, upf.n6Ipv6Cidr), so it is not added here.
+               No NAT66: the UE keeps its own source address, so the UL policy rule
+               matches the DNN pools (the IPv4 rule matches the N6 address because
+               IPv4 is SNATed). The UL next hop is the kernel FIB (eBPF:
+               bpf_fib_lookup AF_INET6 with the UE source, P23-f), which needs
+               IPv6 forwarding on and a neighbour for the gateway. */}}
+        {{- /* coalesce of only empty values is nil, and nil | toString is "<nil>" */}}
+        {{- $n6v6 := (coalesce $inst.n6Ipv6Cidr $.Values.upf.n6Ipv6Cidr | default "") | toString | trim }}
+        {{- if $upfMultus }}{{ $n6v6 = "" }}{{ end }}
+        {{- $n6gw6 := (coalesce $inst.remoteN6GwIpv6 $.Values.upf.remoteN6GwIpv6 | default "") | toString | trim }}
+        {{- $v6pools := list }}
+        {{- range $.Values.coreConfig.dnns }}
+        {{- if and .ipv6Prefix (include "firecell-5gc.isIpv6Dnn" .) (ne (.ipAllocationMode | default "" | toString) "dhcp") (or (not $inst.dnns) (has (.dnn | toString) $inst.dnns)) }}
+        {{- $v6pools = append $v6pools (.ipv6Prefix | toString) }}
+        {{- end }}
+        {{- end }}
+        {{- $v6table := add 200 $idx }}
+        {{- if $n6cidr }}
+        {{- $v4last := $n6cidr | regexFind "[^/]+" | splitList "." | last | atoi }}
+        {{- $v6table = $v4last }}
+        {{- if or (le $v4last 0) (ge $v4last 250) }}{{ $v6table = add 100 (mod $v4last 100) }}{{ end }}
+        {{- end }}
+        {{- $di6 := $.Values.upf.datapathInit | default dict }}
+        - name: n6-ipv6-init
+          image: {{ $.Values.global.busyboxImage | default (printf "%s/busybox:stable" $.Values.global.imageRegistry) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN, NET_RAW]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              N6_DEV="{{ $n6if }}"
+              N6_CIDR6="{{ $n6v6 }}"
+              N6_GW6="{{ $n6gw6 }}"
+              TABLE="{{ $v6table }}"
+              RULE_PRIO="{{ add 101 (mul $idx 2) }}"
+              echo "[n6-ipv6-init] {{ $appName }}: N6=${N6_DEV} addr=${N6_CIDR6:-none} gw=${N6_GW6:-none} table ${TABLE}"
+              {{- if $upfMultus }}
+              # IPv6 forwarding in the UPF pod's network namespace (Multus); the N6
+              # address is on {{ $n6if }} from the NetworkAttachment.
+              {{- else }}
+              # Node-wide (hostNetwork): IPv6 forwarding. Interfaces with accept_ra=1
+              # stop accepting Router Advertisements once forwarding is on.
+              {{- end }}
+              sysctl -w net.ipv6.conf.all.forwarding=1
+              ip link set "${N6_DEV}" up
+              if [ -n "${N6_CIDR6}" ]; then
+                # Restart-safe: the address may already be there (from a previous start,
+                # possibly written differently or with another length): EEXIST is fine.
+                if ! ip -6 addr add "${N6_CIDR6}" dev "${N6_DEV}" 2>/tmp/n6-ipv6-addr.err; then
+                  if grep -q "File exists" /tmp/n6-ipv6-addr.err; then
+                    echo "[n6-ipv6-init] ${N6_CIDR6%/*} already on ${N6_DEV}"
+                  else
+                    cat /tmp/n6-ipv6-addr.err >&2
+                    exit 1
+                  fi
+                fi
+              fi
+              if [ -n "${N6_GW6}" ]; then
+                ip -6 route replace default via "${N6_GW6}" dev "${N6_DEV}" table "${TABLE}"
+                {{- range $p := ($v6pools | uniq) }}
+                ip -6 rule del from "{{ $p }}" lookup "${TABLE}" priority "${RULE_PRIO}" 2>/dev/null || true
+                ip -6 rule add from "{{ $p }}" lookup "${TABLE}" priority "${RULE_PRIO}"
+                {{- end }}
+                _try=0
+                # Not fatal (the eBPF uplink falls back to the IPv4 N6 next hop, and IPv4
+                # must not stop for IPv6), so the wait is short: a restart without the
+                # neighbour costs n6GatewayNdRetries x n6GatewayArpIntervalSec.
+                while [ "${_try}" -lt {{ $di6.n6GatewayNdRetries | default 12 | int }} ]; do
+                  ping -6 -c 1 -W 2 -I "${N6_DEV}" "${N6_GW6}" >/dev/null 2>&1 || true
+                  if ip -6 neigh show dev "${N6_DEV}" to "${N6_GW6}" 2>/dev/null | grep -q lladdr; then
+                    echo "[n6-ipv6-init] {{ $appName }}: N6 IPv6 gateway neighbour OK"
+                    break
+                  fi
+                  _try=$((_try + 1))
+                  sleep {{ $di6.n6GatewayArpIntervalSec | default 5 | int }}
+                done
+                ip -6 neigh show dev "${N6_DEV}" to "${N6_GW6}" 2>/dev/null | grep -q lladdr || \
+                  echo "[n6-ipv6-init] {{ $appName }}: WARNING: no neighbour for ${N6_GW6} on ${N6_DEV}; IPv6 uplink falls back to the IPv4 N6 next hop"
+              else
+                echo "[n6-ipv6-init] {{ $appName }}: WARNING: upf.remoteN6GwIpv6 not set; IPv6 uplink uses the main routing table"
+              fi
+              echo "[n6-ipv6-init] {{ $appName }}: OK"
         {{- end }}
         {{- if and $pfcpMac $pfcpIP }}
         - name: pfcp-macvlan-init

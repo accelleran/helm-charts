@@ -81,6 +81,11 @@ spec:
           {
             "address": "{{ $n6.ip }}/{{ $n6.subnetPrefix | default 24 }}"
           }
+          {{- if and (include "firecell-5gc.upfCpRelay" (dict "ctx" $ "inst" dict)) .Values.upf.n6Ipv6Cidr }},
+          {
+            "address": "{{ .Values.upf.n6Ipv6Cidr }}"
+          }
+          {{- end }}
         ]
       }
     }
