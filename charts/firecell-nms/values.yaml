@@ -142,8 +142,9 @@ backend:
     # -- Finished jobs older than this are deleted. 0 keeps everything.
     jobRetentionSeconds: 604800
     # -- nf_observed rows older than this are deleted (the newest 50 per
-    # instance always stay). 0 keeps everything.
-    observationRetentionSeconds: 604800
+    # instance always stay). One row per element per reconcile pass: a week
+    # was 1.2 GB on a 14-element lab. 0 keeps everything.
+    observationRetentionSeconds: 3600
     retentionIntervalSeconds: 3600
     # -- How often the operator's PCC rules are re-asserted on the PCF. 0 disables it.
     qosReconcileIntervalSeconds: 30
