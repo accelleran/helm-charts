@@ -98,3 +98,44 @@ subjects:
   - kind: ServiceAccount
     name: nms
     namespace: {{ .Release.Namespace }}
+---
+# The NMS's own namespace. Support bundles read it like the core and RAN
+# ones: its pods and their logs (when no node log store answers), events,
+# workloads and ConfigMaps, the NMS chart's release-info among them.
+# Read-only, and nothing on Secrets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nms-self
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+  {{- include "firecell-nms.backend.supportReadRules" . | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nms-self
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nms-self
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ .Release.Namespace }}
