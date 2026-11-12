@@ -7,7 +7,7 @@ Release {{ .Release.Name }} in namespace {{ .Values.global.namespace }}.
 Standalone 3GPP 5G Core Network with built-in atomic lifecycle:
   - Pre-flight validation hook: validates host interfaces, kernel SCTP, storage, and cluster resources.
   - Post-flight verification hook: validates MySQL schema, NF readiness, SCTP NGAP (38412), GTP-U (2152), and datapath.
-  - Automatic rollback on install or upgrade failure (--atomic).
+  - Automatic rollback on install or upgrade failure (--rollback-on-failure).
 
 {{- if .Values.namespace.create }}
 
