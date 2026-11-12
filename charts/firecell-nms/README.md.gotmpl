@@ -172,13 +172,24 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
-## 6. Configuration Parameters
+## 6. Support Logs
+
+The backend builds support bundles from the per-node log stores of the [`firecell-node-logs`](../firecell-node-logs) chart:
+
+- It finds the store of each node from the EndpointSlices of Service `supportLogs.logStore.service` (`vlogs-node`) in `supportLogs.logStore.namespace` (`firecell-logs`), port `supportLogs.logStore.port` (9428). The firecell-node-logs chart grants ServiceAccount `nms` that read access and lets this namespace through its NetworkPolicy.
+- It changes store retention by writing ConfigMap `supportLogs.retention.configMap` (`firecell-node-logs-overrides`) in `supportLogs.retention.configMapNamespace` (`flux-system`), which Flux merges into the firecell-node-logs HelmRelease values. The access to it comes with the Flux recipe, not this chart.
+- A worker builds each bundle in an emptyDir mounted at `supportLogs.bundles.dir` (`/var/lib/nms/bundles`, at most `supportLogs.bundles.scratchSizeLimit`) and keeps the finished archive in the NMS database, in 4 MiB parts; any API replica streams it. The bundles kept together are capped at `supportLogs.bundles.storeMaxBytes` (1 GiB), the oldest going first. No volume ties the API and worker pods to one node, so they spread freely.
+- Keeping bundles in the database is the first-phase answer. The plan is shared storage every pod can mount (Longhorn or another ReadWriteMany volume); bringing that into every edge install is a larger change than support bundles justify today.
+
+The API, worker and control plane get these settings as `FIRECELL_NMS_NG_LOG_STORE_NAMESPACE`, `FIRECELL_NMS_NG_LOG_STORE_SERVICE`, `FIRECELL_NMS_NG_LOG_STORE_PORT`, `FIRECELL_NMS_NG_BUNDLE_DIR`, `FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP` and `FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP_NAMESPACE` from ConfigMap `nms-config`.
+
+## 7. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
 
 {{ template "chart.valuesTable" . }}
 
-## 7. Upgrading from 0.1.x
+## 8. Upgrading from 0.1.x
 
 There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 
