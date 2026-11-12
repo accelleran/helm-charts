@@ -146,6 +146,12 @@ amf:
   relative_capacity: {{ $v.coreConfig.amf.relativeCapacity }}
   statistics_timer_interval: {{ $v.coreConfig.amf.statisticsTimerInterval }}
   emergency_support: {{ $v.coreConfig.amf.emergencySupport }}
+  {{- with $v.coreConfig.amf.paging }}
+  {{- if hasKey . "fanoutMultiGnb" }}
+  paging:
+    fanout_multi_gnb: {{ .fanoutMultiGnb }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
@@ -174,6 +180,9 @@ amf:
 
 smf:
   ue_mtu: {{ $v.coreConfig.smf.ueMtu }}
+  {{- with $v.coreConfig.smf.locationApiRoot }}
+  location_api_root: {{ . | quote }}
+  {{- end }}
   support_features:
     use_local_subscription_info: {{ $v.coreConfig.smf.useLocalSubscriptionInfo }}
     use_local_pcc_rules: {{ $v.coreConfig.smf.useLocalPccRules }}
@@ -330,6 +339,7 @@ upf:
     enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_snat: yes
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
+    enable_fr: {{ if ($v.upf.enableFramedRouting | default false) }}yes{{ else }}no{{ end }}
   upf_info:
     sNssaiUpfInfoList:
     {{- range $v.coreConfig.nssai }}
@@ -363,4 +373,9 @@ udm:
     - id: {{ $v.coreConfig.udm.suciProfileId }}
       key_file: {{ $v.coreConfig.udm.suciKeyFile }}
       scheme: {{ $v.coreConfig.udm.suciScheme }}
+  {{- range $v.udm.extraSuciProfiles }}
+    - id: {{ required "udm.extraSuciProfiles[].id is required" .id }}
+      key_file: /openair-udm/etc/suci-{{ .id }}.pem
+      scheme: {{ required "udm.extraSuciProfiles[].scheme is required" .scheme }}
+  {{- end }}
 {{- end }}

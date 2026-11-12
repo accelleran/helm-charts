@@ -1,5 +1,7 @@
 {{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.cxGateway.enabled }}
 {{- $imsDomain := include "firecell-5gc.imsDomain" . }}
+{{- $image := .Values.ims.cxGateway.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.cxGateway.image .Values.ims.cxGateway.imageTag) }}
+{{- $split := eq (.Values.ims.cxGateway.mode | default "split") "split" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,39 +25,71 @@ spec:
     spec:
       hostNetwork: {{ .Values.ims.cxGateway.hostNetwork | default true }}
       dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        # The image runs as uid 10001; the group lets it read the 0440 secret files.
+        fsGroup: 10001
       initContainers:
         {{- include "firecell-5gc.waitForMysql" . | nindent 8 }}
+        {{- if $split }}
+        # CX_MODE=provision: the only step that needs the MySQL root password. It
+        # creates ims_hss_db and oai_db.CxScscfBinding, the pyhss account and its
+        # grants, runs the self-check and exits; the serving container never sees root.
+        - name: cx-provision
+          image: {{ $image }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            {{- include "firecell-5gc.cxGatewayEnv" (dict "root" . "mode" "provision" "imsDomain" $imsDomain) | nindent 12 }}
+            - name: MYSQL_ROOT_PASSWORD_FILE
+              value: /run/secrets/ims/root-password
+            {{- if .Values.ims.cxGateway.dropWildcardAccount }}
+            # Drops a leftover 'pyhss'@'%' once a restricted dbAccountHost is in use.
+            - name: CX_DB_DROP_WILDCARD_ACCOUNT
+              value: "1"
+            {{- end }}
+          volumeMounts:
+            - name: cx-provision-secrets
+              mountPath: /run/secrets/ims
+              readOnly: true
+        {{- end }}
       containers:
         - name: cx-gateway
           # Diameter Cx peer for S-CSCF SAR/MAR. CX_SOT=udr hydrates from oai_db on Cx lookup.
-          image: {{ .Values.ims.cxGateway.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.cxGateway.image .Values.ims.cxGateway.imageTag) }}
+          image: {{ $image }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           env:
-            - name: MYSQL_HOST
-              value: {{ .Values.ims.mysqlHost | default (printf "mysql.%s.svc.cluster.local" .Values.global.namespace) | quote }}
-            - name: MYSQL_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secrets
-                  key: root-password
-            - name: CX_GATEWAY_IP
-              value: {{ .Values.ims.cxGateway.ip | quote }}
-            - name: CX_GATEWAY_PORT
-              value: {{ .Values.ims.cxGateway.port | default "3868" | quote }}
-            - name: MCC
-              value: {{ .Values.coreConfig.mcc | default "001" | quote }}
-            - name: MNC
-              value: {{ .Values.coreConfig.mnc | default "01" | quote }}
-            - name: IMS_DOMAIN
-              value: {{ $imsDomain | quote }}
-            - name: CX_SOT
-              value: {{ .Values.ims.cxGateway.cxSot | default "udr" | quote }}
+            {{- include "firecell-5gc.cxGatewayEnv" (dict "root" . "mode" (ternary "serve" "all" $split) "imsDomain" $imsDomain) | nindent 12 }}
+            {{- if not $split }}
+            - name: MYSQL_ROOT_PASSWORD_FILE
+              value: /run/secrets/ims/root-password
+            {{- end }}
           ports:
             - name: diameter
               containerPort: {{ .Values.ims.cxGateway.port | default 3868 }}
               protocol: TCP
+          # Same check as the image HEALTHCHECK: Cx listener, local Redis, hssService.
+          startupProbe:
+            exec:
+              command: ["/opt/firecell/cx-gateway/cx_healthcheck.sh"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            exec:
+              command: ["/opt/firecell/cx-gateway/cx_healthcheck.sh"]
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: cx-secrets
+              mountPath: /run/secrets/ims
+              readOnly: true
           resources:
             {{- toYaml .Values.ims.cxGateway.resources | nindent 12 }}
+      volumes:
+        {{- include "firecell-5gc.imsSecretVolume" (dict "root" . "name" "cx-secrets" "withRoot" (not $split) "keys" (list "cx-db-password")) | nindent 8 }}
+        {{- if $split }}
+        {{- include "firecell-5gc.imsSecretVolume" (dict "root" . "name" "cx-provision-secrets" "withRoot" true "keys" (list "cx-db-password")) | nindent 8 }}
+        {{- end }}
 ---
 apiVersion: v1
 kind: Service
