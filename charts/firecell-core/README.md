@@ -38,7 +38,7 @@ The chart incorporates built-in Kubernetes job hooks to guarantee atomic lifecyc
   - Confirms all Core NFs reach `Ready` status within timeouts.
   - Verifies SCTP NGAP listening state (port 38412) and GTP-U listening state (port 2152).
   - Validates end-to-end control-plane and data-path viability.
-  - If any verification step fails, exits non-zero to trigger Helm's `--atomic` automatic rollback.
+  - If any verification step fails, exits non-zero to trigger Helm's `--rollback-on-failure` automatic rollback.
 - **Post-Delete Cleanup (`post-delete`):**
   - Reaps dangling ephemeral resources while respecting PVC retention policies.
 
@@ -68,17 +68,17 @@ MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when
      --namespace firecell-core \
      -f examples/values-images-ghcr.yaml \
      --set global.pkgVersion=pr-<NUMBER> \
-     --atomic --timeout 15m
+     --rollback-on-failure --timeout 15m
    ```
    That overlay points `imageRegistry` at `ghcr.io/accelleran` and expects a
    `ghcr-regcred` pull secret (`--docker-server=ghcr.io`).
 
 ### 3.2 Atomic Installation
-Deploy the chart with `--atomic` and an appropriate timeout:
+Deploy the chart with `--rollback-on-failure` and an appropriate timeout:
 ```bash
 helm install --repo https://accelleran.github.io/helm-charts firecell-core firecell-core \
   --namespace firecell-core \
-  --atomic \
+  --rollback-on-failure \
   --timeout 15m
 ```
 
@@ -87,7 +87,7 @@ Upgrades will automatically roll back to the previous release if post-flight ver
 ```bash
 helm upgrade --repo https://accelleran.github.io/helm-charts firecell-core firecell-core \
   --namespace firecell-core \
-  --atomic \
+  --rollback-on-failure \
   --timeout 15m
 ```
 
@@ -103,7 +103,7 @@ Default IMS is **Kamailio** P/I/S-CSCF + Cx (`CX_SOT=udr`). MySQL init applies `
 helm upgrade --install firecell-core ./charts/firecell-core \
   --namespace firecell-core \
   -f examples/values-ims-asterisk.yaml \
-  --atomic --timeout 15m
+  --rollback-on-failure --timeout 15m
 ```
 
 ### 3.5 Uninstallation
