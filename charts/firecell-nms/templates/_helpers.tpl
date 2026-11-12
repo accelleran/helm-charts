@@ -38,6 +38,20 @@ Usage: include "firecell-nms.backend.coreUrl" (list . "udr" "oai-udr")
 {{- index $root.Values.backend.endpoints $key | default (printf "http://%s.%s.svc.cluster.local:8080" $service $root.Values.rbac.coreNamespace) }}
 {{- end }}
 
+{{/*
+Read-only rules support bundles need in the core and the RAN namespace:
+events, and the workloads with their rollout history (ReplicaSets) and
+managedFields. Never Secrets.
+*/}}
+{{- define "firecell-nms.backend.supportReadRules" -}}
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["list"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+  verbs: ["get", "list"]
+{{- end }}
+
 {{- define "firecell-nms.backend.secretName" -}}
 {{- required "backend.existingSecret is required: name the Secret holding the backend credentials (see README)" .Values.backend.existingSecret }}
 {{- end }}
