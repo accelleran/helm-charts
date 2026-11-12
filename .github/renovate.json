@@ -98,6 +98,16 @@
       ]
     },
     {
+      "description": "Bump every Helm CLI pin in one PR: the setup-helm `version` input (github-actions manager) and `helm_version` in helm-charts.yaml (custom regex manager) are separate dependencies that would otherwise land in different PRs.",
+      "matchDatasources": [
+        "github-releases"
+      ],
+      "matchPackageNames": [
+        "helm/helm"
+      ],
+      "groupName": "helm"
+    },
+    {
       "description": "Use loose versioning for acc-generic-img to allow k8s suffix changes",
       "matchDatasources": [
         "docker"
