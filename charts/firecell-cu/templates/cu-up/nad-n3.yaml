@@ -23,7 +23,7 @@
 apiVersion: k8s.cni.cncf.io/v1
 kind: NetworkAttachmentDefinition
 metadata:
-  name: cu-up-n3
+  name: {{ include "firecell-cu.cuUpName" . }}-n3
   namespace: {{ include "firecell-cu.namespace" . }}
   labels:
     {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 4 }}

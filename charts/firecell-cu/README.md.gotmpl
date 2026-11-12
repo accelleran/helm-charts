@@ -13,8 +13,8 @@ CU-CP over F1 through the headless Service `cuCpService.name`.
 ### 1.1 Components
 | Component | Objects | Notes |
 |-----------|---------|-------|
-| CU-CP | Deployment/ConfigMap `cu-cp`, headless Service `cu-cp` (SCTP F1-C 38472, E1 38462) | N2 towards `amf.addr` |
-| CU-UP | Deployment/ConfigMap `cu-up`, NAD `cu-up-n3` | N3 on a macvlan when `cuUp.n3.enabled` |
+| CU-CP | Deployment, headless Service and pod label `cuCpService.name` (default `cu-cp`), ConfigMap `<name>-config` (SCTP F1-C 38472, E1 38462) | N2 towards `amf.addr` |
+| CU-UP | Deployment, Service and pod label `cuUp.name` (default `cu-up`), ConfigMap `<name>-config`, NAD `<name>-n3` | N3 on a macvlan when `cuUp.n3.enabled` |
 
 ## 2. Install
 ```bash
@@ -30,11 +30,30 @@ From a checkout of this repository, use the chart paths instead: `helm install r
 `cu-cp.<namespace>.svc.cluster.local` without further configuration.
 Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig`.
 
+### 2.0 A second gNB
+Each CU release is one gNB. A second one, on the same core and in the same namespace or another,
+needs its own names, gNB-ID and N3 address; the O1 state directories follow the names:
+
+```yaml
+gnb:
+  gnbId: 2
+cuCpService:
+  name: cu-cp2      # its DUs: cuCpAddress cu-cp2.<namespace>.svc.cluster.local, gnb.gnbId 2
+cuUp:
+  name: cu-up2
+  n3:
+    cidr: 10.3.0.6/24
+```
+
+The AMF lists it as `cu-cp2` (`gnb.ranNodeName`). Two releases with the same names in two
+namespaces on one node would share `/var/lib/firecell/ocudu/<name>`: set `cuCp.o1.statePath` and
+`cuUp.o1.statePath` then.
+
 ### 2.1 NMS Access
 With `nms.rbac` (the default), the release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs here:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: pod reads.
-- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for `cu-cp` and `cu-up`, so the NMS can restart, stop and start them.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the CU-CP and CU-UP Deployments (`cuCpService.name`, `cuUp.name`), so the NMS can restart, stop and start them.
 
 The NMS and the CU can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
 
