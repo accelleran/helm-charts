@@ -63,9 +63,15 @@ spec:
           volumeMounts:
             - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
+            - {name: bundles, mountPath: {{ .Values.supportLogs.bundles.dir }}}
       volumes:
         - name: kubeconfig
           configMap:
             name: nms-kubeconfig
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}
+        # Scratch space while a bundle is built; the finished archive goes
+        # to the database, so nothing here needs to outlive the pod.
+        - name: bundles
+          emptyDir:
+            sizeLimit: {{ .Values.supportLogs.bundles.scratchSizeLimit | quote }}
