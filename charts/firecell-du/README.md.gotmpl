@@ -85,6 +85,7 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 {{ template "chart.valuesTable" . }}
 
 ## 5. Maintenance & Troubleshooting
+- The DU logs to stdout (`extraConfig.log.filename: stdout`): read it with `kubectl logs deploy/<name> -c odu`, and the node's log store ([`firecell-node-logs`](../firecell-node-logs)) keeps it across restarts. The per-second console metrics table is off (`extraConfig.metrics.autostart_stdout_metrics: false`) so it does not fill that store; the NMS gets the same metrics over O1 PM. Set `filename` to a path under `/tmp/logs` to log to a file again; that directory is an emptyDir, emptied with the pod.
 - OFH: the DU launcher waits for the `ru_timing` thread, then re-pins every non-`ru_*` thread onto `cpus.pool`. AW2S: no taskset wrapper; the DU pins its radio (`cpus.ru`) and pool threads itself and leaves the rest on the housekeeping CPUs.
 - AW2S: `Radio Management Unit is not running` in the DU log means the host RMU is down or its socket is not in `/tmp`; `Tx underflow` means the radio or pool CPUs are overloaded or not isolated.
 - With `mplane.dhcp.enabled`, `kubectl logs <name> -c mplane-dhcp` shows the O-RU DHCP exchange; the O-RU then calls home to `<duCidr IP>:4334`. With it off, the node must serve that lease (option 43, sub-options 129/130).
