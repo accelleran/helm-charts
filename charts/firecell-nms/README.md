@@ -75,8 +75,11 @@ The backend reads pods, writes intent ConfigMaps, and restarts, stops and starts
 
 | ClusterRole | Rules | Bound by |
 |-------------|-------|----------|
-| `nms-core-<namespace>` | pods and `pods/status`: get, list, watch; `pods/log`: get; ConfigMaps: get, create, update, patch | the core chart, in `rbac.coreNamespace` |
-| `nms-ran-<namespace>` | pods and `pods/status`: get, list, watch | every CU-CP, CU-UP and DU chart, in `rbac.ranNamespace` |
+| `nms-core-<namespace>` | pods and `pods/status`: get, list, watch; `pods/log`: get; ConfigMaps: get, list, create, update, patch; events: list; Deployments, ReplicaSets, StatefulSets, DaemonSets: get, list | the core chart, in `rbac.coreNamespace` |
+| `nms-ran-<namespace>` | pods and `pods/status`: get, list, watch; `pods/log`: get; ConfigMaps: get, list; events: list; Deployments, ReplicaSets, StatefulSets, DaemonSets: get, list | every CU-CP, CU-UP and DU chart, in `rbac.ranNamespace` |
+| `nms-nodes-<namespace>` | nodes: get, list | this chart, with a ClusterRoleBinding of the same name |
+
+None of them grants anything on Secrets, and none may: the backend, and so a support bundle, never reads credentials. Release history comes from Flux HelmRelease status and the `<release>-release-info` ConfigMaps the core, CU, DU and NMS charts write, not from Helm's release Secrets.
 
 `<namespace>` is the NMS release namespace. Each binding chart renders the following, named after its release, since several CU-CPs, CU-UPs and DUs share the RAN namespace (`<nms-namespace>`, `<release>` and `<deployment>` are placeholders):
 
