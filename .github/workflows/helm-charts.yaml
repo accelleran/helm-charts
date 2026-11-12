@@ -32,9 +32,7 @@ jobs:
       charts_to_test: ${{ steps.list-charts.outputs.charts_to_test }}
       charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
       # renovate: github_repository=helm/helm versioning=semver extract_version=^v(?<version>.*)$
-      helm_version: 3.22.1
-      # renovate: github_repository=halkeye/helm-repo-html versioning=semver
-      helm_repo_html_version: v0.2.1
+      helm_version: 4.3.1
     timeout-minutes: 2
     steps:
       - name: Expose variables
@@ -245,10 +243,6 @@ jobs:
         with:
           version: "${{ needs.vars.outputs.helm_version }}"
 
-      - name: Install helm repo html plugin
-        if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
-        run: helm plugin install https://github.com/halkeye/helm-repo-html --version ${{ needs.vars.outputs.helm_repo_html_version }}
-
       - name: Add helm repositories
         run: ./bin/add-repos
 
@@ -330,9 +324,11 @@ jobs:
       - name: Generate repo html index
         if: ${{ needs.vars.outputs.is_main_branch == 'true' }}
         run: |-
+          # gh-pages has no bin/, so keep the generator outside the checkout.
+          cp bin/generate-repo-html "$RUNNER_TEMP/"
           git checkout gh-pages
           git pull # pull index.yaml commit from chart releaser
-          helm repo-html
+          "$RUNNER_TEMP/generate-repo-html"
           if ! git diff --exit-code index.html > /dev/null 2>&1 ; then
             git add index.html
             git commit -s -m "Update index.html"

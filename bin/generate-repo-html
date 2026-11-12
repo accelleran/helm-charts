@@ -1,0 +1,180 @@
+#!/usr/bin/python3
+#
+# Render the Helm repository landing page (index.html) from index.yaml.
+#
+# Replaces the unmaintained helm-repo-html plugin, which does not install on
+# Helm 4. Output is byte-identical to that plugin rendering the former
+# gh-pages index.tpl, so escaping follows Go's html/template rules.
+
+import argparse
+import re
+import sys
+from datetime import datetime, timedelta, timezone
+
+import yaml
+
+try:
+    Loader = yaml.CBaseLoader
+except AttributeError:
+    Loader = yaml.BaseLoader
+
+HEADER = """<!DOCTYPE html>
+<html>
+  <head>
+    <title>Helm Charts</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/2.10.0/github-markdown.min.css" />
+    <style>
+      .markdown-body {
+        box-sizing: border-box;
+        min-width: 200px;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 45px;
+      }
+      @media (max-width: 767px) {
+        .markdown-body {
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="markdown-body">
+      <h1>Helm Charts</h1>
+
+      <h2>Usage</h2>
+      <pre lang="no-highlight"><code>helm repo add accelleran https://accelleran.github.io/helm-charts</code></pre>
+
+      <h2>Charts</h2>
+      <ul>"""
+
+FOOTER = """
+      </ul>
+    </section>
+    <time datetime="{iso}" pubdate id="generated">{human}</time>
+  </body>
+</html>
+"""
+
+# Go html/template escaping for text and attribute values.
+HTML_ESCAPES = str.maketrans({
+    "\0": "\ufffd",
+    '"': "&#34;",
+    "&": "&amp;",
+    "'": "&#39;",
+    "+": "&#43;",
+    "<": "&lt;",
+    ">": "&gt;",
+})
+
+# Characters Go's html/template leaves unencoded in URL attributes.
+URL_SAFE = frozenset(
+    b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    b"-._~!#$&*+,/:;=?@[]%"
+)
+
+WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+TIMESTAMP = re.compile(
+    r"(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2}):(\d{2})(?:\.\d+)?"
+    r"\s*(Z|z|[+-]\d{2}:?\d{2})?$"
+)
+
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        description="Render index.html for a Helm repository from its index.yaml"
+    )
+    parser.add_argument("-i", "--input", default="index.yaml", help="input index.yaml")
+    parser.add_argument("-o", "--output", default="index.html", help="output file, - for stdout")
+    return parser.parse_args()
+
+
+def escape_html(value):
+    return value.translate(HTML_ESCAPES)
+
+
+def escape_url(value):
+    scheme, sep, _ = value.partition(":")
+    if sep and "/" not in scheme and scheme.lower() not in ("http", "https", "mailto"):
+        return "#ZgotmplZ"
+    encoded = "".join(
+        chr(b) if b in URL_SAFE else f"%{b:02x}" for b in value.encode("utf-8")
+    )
+    return escape_html(encoded)
+
+
+def format_generated(value):
+    match = TIMESTAMP.match(value.strip())
+    if not match:
+        sys.exit(f"Unsupported generated timestamp: {value!r}")
+    year, month, day, hour, minute, second, tz = match.groups()
+    if tz in (None, "Z", "z"):
+        zone, offset = "UTC", timedelta(0)
+    else:
+        tz = tz.replace(":", "")
+        sign = -1 if tz[0] == "-" else 1
+        offset = sign * timedelta(hours=int(tz[1:3]), minutes=int(tz[3:5]))
+        zone = tz  # Go prints a fixed offset without a zone name as +hhmm
+    dt = datetime(int(year), int(month), int(day), int(hour), int(minute),
+                  int(second), tzinfo=timezone(offset))
+
+    total = int(offset.total_seconds()) // 60
+    sign = "-" if total < 0 else "+"
+    hours, minutes = divmod(abs(total), 60)
+    hour12 = dt.hour % 12 or 12
+    iso = dt.strftime("%Y-%m-%dT%H:%M:%S")
+    human = (
+        f"{WEEKDAYS[dt.weekday()]} {MONTHS[dt.month - 1]} {dt.day} {dt.year:04d} "
+        f"{hour12:02d}:{dt.minute:02d}:{dt.second:02d}{'PM' if dt.hour >= 12 else 'AM'} "
+        f"{zone}{sign}{hours:02d}:{minutes:02d}"
+    )
+    return escape_html(iso), escape_html(human)
+
+
+def render_chart(name, chart):
+    urls = chart.get("urls") or []
+    if not urls:
+        sys.exit(f"Chart {name} has no urls")
+    url = urls[0]
+    app_version = chart.get("appVersion", "")
+    app = f"\n            @\n            {escape_html(app_version)}" if app_version else ""
+    return (
+        "\n        <li>\n          <p>\n"
+        f"            {escape_html(chart.get('name', ''))}\n"
+        f'            (<a href="{escape_url(url)}" title="{escape_html(url)}">\n'
+        f"            {escape_html(chart.get('version', ''))}{app}\n"
+        "            </a>)\n          </p>\n          <p>\n"
+        f"            {escape_html(chart.get('description', ''))}\n"
+        "          </p>\n        </li>"
+    )
+
+
+def main():
+    args = get_args()
+    with open(args.input, encoding="utf-8") as f:
+        index = yaml.load(f, Loader=Loader)
+
+    entries = index.get("entries") or {}
+    # Go ranges over maps in byte order of the keys.
+    charts = "".join(
+        render_chart(name, entries[name][0])
+        for name in sorted(entries, key=lambda k: k.encode("utf-8"))
+    )
+    iso, human = format_generated(index.get("generated", ""))
+    html = HEADER + charts + FOOTER.format(iso=iso, human=human)
+
+    if args.output == "-":
+        sys.stdout.write(html)
+    else:
+        with open(args.output, "w", encoding="utf-8", newline="") as f:
+            f.write(html)
+
+
+if __name__ == "__main__":
+    main()
