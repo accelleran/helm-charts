@@ -47,6 +47,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 {{ template "chart.valuesTable" . }}
 
 ## 5. Maintenance & Troubleshooting
+- CU-CP and CU-UP log to stdout (`log.filename: stdout` in `cuCp.extraConfig` and `cuUp.extraConfig`): read them with `kubectl logs deploy/cu-cp -c ocucp` and `kubectl logs deploy/cu-up -c ocuup`, and the node's log store ([`firecell-node-logs`](../firecell-node-logs)) keeps them across restarts. Set `filename` to a path under `/tmp/logs` to log to a file again; that directory is an emptyDir, emptied with the pod, and still holds the pcaps.
 - If CU-CP and CU-UP restart together, CU-UP can time out on its first E1 connect and restart once. That restart is expected.
 - CU-UP starts `min(cuUp.nofThreads, len(cuUp.cpus) - 3)` pool workers, so a 4-CPU `cuUp.cpus` gives one worker. Give it at least `nofThreads + 3` CPUs.
 - Restarting CU-CP drops every DU's F1 association; the DUs reconnect on their own.
