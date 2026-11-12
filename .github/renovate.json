@@ -3,7 +3,8 @@
   "extends": [
     "local>accelleran/renovate-config",
     ":semanticCommitTypeAll(fix)",
-    ":automergeMinor"
+    ":automergeMinor",
+    "local>accelleran/helm-charts//.github/renovate/mysql-lts.json"
   ],
   "reviewers": [
     "team:dRAX"
