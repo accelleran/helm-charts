@@ -1,0 +1,37 @@
+{{- $port := include "firecell-node-logs.storePort" . }}
+# Every store, all profiles. Headless: the NMS reads its EndpointSlices,
+# where each endpoint carries its nodeName, to find the store of a node.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vlogs-node
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vlogs-node
+    app.kubernetes.io/component: store
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: vlogs-node
+  ports:
+    - {name: http, port: {{ $port }}, targetPort: http, protocol: TCP}
+---
+# vlagent writes here. internalTrafficPolicy Local keeps every line on the
+# node it was written on: only the store of the sending node answers.
+apiVersion: v1
+kind: Service
+metadata:
+  name: vlogs-local
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vlogs-node
+    app.kubernetes.io/component: store
+spec:
+  type: ClusterIP
+  internalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: vlogs-node
+  ports:
+    - {name: http, port: {{ $port }}, targetPort: http, protocol: TCP}

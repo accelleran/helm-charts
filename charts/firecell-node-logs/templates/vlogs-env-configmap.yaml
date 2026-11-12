@@ -1,0 +1,24 @@
+{{- /*
+Retention of each profile, read by VictoriaLogs from its environment
+(-envflag.enable: flag names with dots become underscores). The store
+DaemonSet carries a checksum of this data, so a change rolls its pods.
+*/}}
+{{- $profiles := include "firecell-node-logs.profiles" . | fromJson }}
+{{- range $name := keys $profiles | sortAlpha }}
+{{- $p := index $profiles $name }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vlogs-node-{{ $name }}-env
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" $ | nindent 4 }}
+    app.kubernetes.io/name: vlogs-node
+    app.kubernetes.io/component: store
+    {{ include "firecell-node-logs.profileLabel" $ }}: {{ $name }}
+data:
+  {{- range $k := keys $p.env | sortAlpha }}
+  {{ $k }}: {{ index $p.env $k | quote }}
+  {{- end }}
+{{- end }}

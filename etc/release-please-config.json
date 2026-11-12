@@ -81,6 +81,10 @@
     "charts/firecell-du": {
       "component": "firecell-du",
       "package-name": "firecell-du"
+    },
+    "charts/firecell-node-logs": {
+      "component": "firecell-node-logs",
+      "package-name": "firecell-node-logs"
     }
   }
 }
