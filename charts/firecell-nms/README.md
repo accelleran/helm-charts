@@ -182,6 +182,10 @@ The backend builds support bundles from the per-node log stores of the [`firecel
 
 The API, worker and control plane get these settings as `FIRECELL_NMS_NG_LOG_STORE_NAMESPACE`, `FIRECELL_NMS_NG_LOG_STORE_SERVICE`, `FIRECELL_NMS_NG_LOG_STORE_PORT`, `FIRECELL_NMS_NG_BUNDLE_DIR`, `FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP` and `FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP_NAMESPACE` from ConfigMap `nms-config`.
 
+### 6.1 Release Record
+
+Every install and upgrade also writes ConfigMap `<release>-release-info` (label `firecell.io/release-info: "true"`) in the release namespace, for the NMS support bundles and drift checks, since the NMS reads no Helm release Secret. `release.json` holds the release, namespace, chart (`<name>-<version>`), appVersion, revision, render time (`renderedAt`, UTC), a SHA-256 digest of the values (`valuesDigest`) and the image of every container the chart renders (`images`, keyed `<workload>/<container>`, taken from the rendered pods themselves). `history.json` keeps up to 20 earlier `release.json` records, newest first, read back from the live ConfigMap with `lookup`; it starts empty after `helm template` or a client-side dry run. Neither holds any values content or anything from a Secret. `helm rollback` reapplies the stored manifest of the target revision, so the record and its history roll back with it.
+
 ## 7. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.

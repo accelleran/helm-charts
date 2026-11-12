@@ -1,0 +1,42 @@
+{{- /*
+What this release rendered, for the NMS support bundles and drift checks:
+the NMS reads no Helm release Secret. No values content and nothing from a
+Secret: the values appear only as a digest. List every template that
+renders a pod.
+*/}}
+{{- $ns := .Values.global.namespace }}
+{{- $name := printf "%s-release-info" .Release.Name }}
+{{- $templates := list
+      "amf/deployment.yaml"
+      "ausf/deployment.yaml"
+      "ext-dn/deployment.yaml"
+      "fc-acs-agent/deployment.yaml"
+      "hooks/post-delete-cleanup.yaml"
+      "hooks/post-flight-verify.yaml"
+      "hooks/pre-flight-check.yaml"
+      "ims/deployment.yaml"
+      "ims/kamailio/deployment-cx-gateway.yaml"
+      "ims/kamailio/deployment-icscf.yaml"
+      "ims/kamailio/deployment-pcscf.yaml"
+      "ims/kamailio/deployment-scscf.yaml"
+      "mysql/statefulset.yaml"
+      "nrf/deployment.yaml"
+      "pcf/deployment.yaml"
+      "smf/deployment.yaml"
+      "udm/deployment.yaml"
+      "udr/deployment.yaml"
+      "udsf/deployment.yaml"
+      "udsf/redis-deployment.yaml"
+      "upf/deployment-oai.yaml"
+}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    firecell.io/release-info: "true"
+data:
+  release.json: {{ include "firecell-5gc.releaseInfo.record" (dict "root" . "namespace" $ns "templates" $templates) | quote }}
+  history.json: {{ include "firecell-5gc.releaseInfo.history" (dict "root" . "live" (lookup "v1" "ConfigMap" $ns $name)) | quote }}
