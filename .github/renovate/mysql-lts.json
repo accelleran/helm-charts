@@ -1,0 +1,53 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Track MySQL LTS instead of Docker Hub's latest (Innovation) tags for MySQL pins in chart values.",
+  "customDatasources": {
+    "mysql-lts": {
+      "description": "Docker Official Images tag list for mysql. Returns the X.Y and X.Y.Z tags of every supported LTS series (all tag lines except the one tagged `innovation`), so a pin gets patch updates within its series and a separate major PR when a newer LTS exists.",
+      "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/docker-library/official-images/master/library/mysql",
+      "format": "plain",
+      "transformTemplates": [
+        "( $tagLines := releases.version[$substring($, 0, 6) = 'Tags: ' and $not($contains(', ' & $substringAfter($, 'Tags: ') & ', ', ', innovation, '))]; $versions := $tagLines.($split($substringAfter($, 'Tags: '), ', ')[$match($, /^\\d+\\.\\d+(\\.\\d+)?$/)]); { 'homepage': 'https://hub.docker.com/_/mysql', 'releases': [$map($versions, function($v) { { 'version': $v } })] } )"
+      ]
+    }
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "MySQL image pins in chart values (`image: mysql:X.Y`, `imageOverride: docker.io/library/mysql:X.Y`, `repository: library/mysql` + `tag: X.Y.Z`), tracked against supported MySQL LTS series. Docker versioning only proposes versions with the same precision as the pin (X.Y or X.Y.Z).",
+      "datasourceTemplate": "custom.mysql-lts",
+      "depNameTemplate": "mysql",
+      "versioningTemplate": "docker",
+      "managerFilePatterns": [
+        "/(^|/)values\\.y[a]?ml$/"
+      ],
+      "matchStrings": [
+        "\\b(?:image|imageOverride):\\s*\"?(?:(?:index\\.)?docker\\.io/)?(?:library/)?mysql:(?<currentValue>\\d+\\.\\d+(?:\\.\\d+)?)\"?",
+        "\\brepository:\\s*\"?(?:(?:index\\.)?docker\\.io/)?(?:library/)?mysql\"?[ \\t]*\\n(?:[ \\t]*#.*\\n)*[ \\t]*tag:\\s*\"?(?<currentValue>\\d+\\.\\d+(?:\\.\\d+)?)\"?"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "MySQL: do not offer Docker Hub's latest tags (Innovation releases, e.g. 26.x). custom.mysql-lts proposes LTS updates for the same values instead.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchFileNames": [
+        "**/values.yaml",
+        "**/values.yml"
+      ],
+      "matchPackageNames": [
+        "/^((index\\.)?docker\\.io\\/)?(library\\/)?mysql$/"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "MySQL LTS datasource returns no release timestamps; the org minimumReleaseAge would block it forever.",
+      "matchDatasources": [
+        "custom.mysql-lts"
+      ],
+      "minimumReleaseAge": null
+    }
+  ]
+}
