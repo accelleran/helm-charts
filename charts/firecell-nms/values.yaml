@@ -153,6 +153,27 @@ backend:
     # networkPolicy.enabled: the backend does not check tokens on this path.
     trustGatewayHeaders: false
 
+  # Password check behind the console's "copy operator code (OP)" dialog.
+  # The API asks Zitadel's Session API whether the signed-in person typed
+  # their own password; the OP is only sent after that. Needs a Zitadel
+  # machine user with the instance role IAM_LOGIN_CLIENT and its PAT in a
+  # Secret here (galaxy's oidc-ensure creates both). Password only: if
+  # Zitadel ever forces MFA, the check has to change (see the README).
+  passwordCheck:
+    # -- Zitadel base URL, e.g. `https://auth.<domain>`. Empty: off, and a
+    # single sign-on user's OP copy answers 503.
+    zitadelUrl: ""
+    # -- Secret holding the machine user's PAT. Mounted optional: the API
+    # starts before it exists and re-reads it on every check.
+    patSecret: ""
+    # -- Key of the PAT in patSecret.
+    patKey: pat
+    # -- Secret with the CA bundle that signs zitadelUrl, mounted optional
+    # like patSecret. Empty: system trust.
+    caSecret: ""
+    # -- Key of the CA bundle in caSecret.
+    caKey: ca.crt
+
   # -- Extra environment (EnvVar list) for the API, worker and control plane,
   # e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL.
   extraEnv: []

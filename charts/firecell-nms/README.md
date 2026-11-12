@@ -168,6 +168,16 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
+### 5.1 Password Check for the OP
+
+The console's "copy operator code (OP)" dialog asks the signed-in person for their password again. The API answers `POST /api/core-topology/<id>/op` only after Zitadel confirmed it: it creates a Zitadel session with a user check (the subject oauth2-proxy proved) and a password check, then ends that session. The topology read itself no longer carries the OP.
+
+Set `backend.passwordCheck.zitadelUrl` and `backend.passwordCheck.patSecret` together (one without the other fails the render). The PAT belongs to a Zitadel machine user with the instance role `IAM_LOGIN_CLIENT`, the role Zitadel's own login UI uses, and nothing else. The Secret is mounted, optional, into the API pods only and read on every check, so the API starts before the Secret exists and follows a rotation without a restart. Unset, a single sign-on user's copy answers 503. When Zitadel is served with the Firecell CA, point `caSecret` at it (oauth2-proxy's `oauth2-proxy-ca`). Egress to Zitadel must be open; the chart's NetworkPolicies only restrict ingress.
+
+Wrong passwords count toward Zitadel's lockout policy, as for a normal sign-in; the API adds no throttle of its own.
+
+**MFA.** The check is password only. While Zitadel asks for nothing more at sign-in, that equals a full re-login. If a login policy forces a second factor, this check becomes weaker than signing in and has to change: a TOTP code can join the same session check, a security key or passkey needs a WebAuthn challenge in the browser, or the console re-authenticates through OIDC (`prompt=login`) instead.
+
 ## 6. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
@@ -223,6 +233,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.image.repository | string | `"accelleran/nms-backend"` | Image repository path, including the org (kept when the registry is rewritten). |
 | backend.image.tag | string | `"6.0.0"` | Image tag. |
 | backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the check-schema, migrate, bootstrap and wait-for-schema init containers. |
+| backend.passwordCheck.caKey | string | `"ca.crt"` | Key of the CA bundle in caSecret. |
+| backend.passwordCheck.caSecret | string | `""` | Secret with the CA bundle that signs zitadelUrl, mounted optional like patSecret. Empty: system trust. |
+| backend.passwordCheck.patKey | string | `"pat"` | Key of the PAT in patSecret. |
+| backend.passwordCheck.patSecret | string | `""` | Secret holding the machine user's PAT. Mounted optional: the API starts before it exists and re-reads it on every check. |
+| backend.passwordCheck.zitadelUrl | string | `""` | Zitadel base URL, e.g. `https://auth.<domain>`. Empty: off, and a single sign-on user's OP copy answers 503. |
 | backend.progressDeadlineSeconds | int | `1200` | Rollout deadline of the API and worker Deployments. New pods wait for the old control plane to stop and the migration to finish, so it must exceed terminationGracePeriodSeconds plus the migration time. Keep the Helm / HelmRelease timeout above it. |
 | backend.terminationGracePeriodSeconds | int | `660` | Longer than the backend's slowest lifecycle operation (600s), so workers and the control plane can finish in-flight work after SIGTERM. On an image change the new control plane, and so the migration, starts only after the old one has stopped: up to this long. |
 | backend.worker.minReadySeconds | int | `20` | Seconds a new worker must stay up before it counts as available (its probes only check that the process lives). |
