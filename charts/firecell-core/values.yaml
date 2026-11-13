@@ -425,6 +425,21 @@ eir:
     limits:
       memory: 1Gi
       cpu: 1000m
+  # FCAPS MnS (TS 28.532) of the EIR on mnsPort, from the cn5g-eir FCAPS build (WITH_FCAPS):
+  # identity, heartbeat, alarms, PM and CM. Off by default. The image must be an FCAPS build.
+  # intentMode, datastore and intentConfigMap work as for ausf.fcaps.
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      name: oai-eir-cm-intent
+      optional: true
   config:
     listenHost: "0.0.0.0"
     # SBI port: HTTP/2 only. healthHttp1Port: HTTP/1.1 /health for the readiness probe;
@@ -472,7 +487,26 @@ nef:
     limits:
       memory: 1Gi
       cpu: 1000m
+  # FCAPS MnS (TS 28.532) of the NEF on mnsPort, from the cn5g-nef FCAPS build (WITH_FCAPS):
+  # identity, heartbeat, alarms, PM and CM. Off by default. The image must be an FCAPS build.
+  # intentMode, datastore and intentConfigMap work as for ausf.fcaps.
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      name: oai-nef-cm-intent
+      optional: true
   config:
+    # Monitoring Event exposure (TS 29.122 5.3, cn5g-nef SUPPORT_FEATURES.MONITORING_EVENT_ENABLED, env
+    # MONITORING_EVENT_ENABLED; NEF default yes), seed of the FCAPS switch monitoringEventEnabled.
+    # false: a new subscription is refused with 403; existing ones stay.
+    monitoringEventEnabled: true
     interfaceName: eth0
     # The NEF's own HTTP/1.1 and HTTP/2 ports (image defaults 80 and 8080).
     sbiPort: 80

@@ -1,0 +1,19 @@
+{{- /* The writable-datastore variant of eir.fcaps; only for intentMode "pvc" (as ausf). */ -}}
+{{- if and .Values.eir.enabled .Values.eir.fcaps.enabled (eq .Values.eir.fcaps.intentMode "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oai-eir-cm-state
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-eir
+    tier: core-network
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.eir.fcaps.datastore.size }}
+  storageClassName: {{ .Values.eir.fcaps.datastore.storageClassName }}
+{{- end }}

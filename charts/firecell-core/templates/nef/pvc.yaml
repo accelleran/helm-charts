@@ -1,0 +1,19 @@
+{{- /* The writable-datastore variant of nef.fcaps; only for intentMode "pvc" (as ausf). */ -}}
+{{- if and .Values.nef.enabled .Values.nef.fcaps.enabled (eq .Values.nef.fcaps.intentMode "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oai-nef-cm-state
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-nef
+    tier: core-network
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.nef.fcaps.datastore.size }}
+  storageClassName: {{ .Values.nef.fcaps.datastore.storageClassName }}
+{{- end }}

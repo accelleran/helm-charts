@@ -69,6 +69,12 @@ spec:
             - name: NRF_PORT
               value: {{ $cfg.nrf.port | quote }}
             {{- end }}
+            - name: MONITORING_EVENT_ENABLED
+              value: {{ ternary "yes" "no" $cfg.monitoringEventEnabled | quote }}
+            {{- if .Values.nef.fcaps.enabled }}
+            - name: FCAPS_CM_DATASTORE
+              value: {{ printf "%s/%s" .Values.nef.fcaps.datastore.mountPath .Values.nef.fcaps.datastore.file | quote }}
+            {{- end }}
             - name: REGISTER_NRF
               value: {{ ternary "yes" "no" $cfg.nrf.register | quote }}
             - name: DISCOVER_AMF
@@ -80,6 +86,24 @@ spec:
             - name: http2
               containerPort: {{ $cfg.sbiHttp2Port }}
               protocol: TCP
+            {{- if .Values.nef.fcaps.enabled }}
+            - name: mns
+              containerPort: {{ .Values.nef.fcaps.mnsPort }}
+              protocol: TCP
+            {{- end }}
+          {{- if or .Values.nef.fcaps.enabled (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "nef")) }}
+          volumeMounts:
+            {{- if .Values.nef.fcaps.enabled }}
+            - name: cm-state
+              mountPath: {{ .Values.nef.fcaps.datastore.mountPath }}
+              {{- if eq .Values.nef.fcaps.intentMode "configmap" }}
+              readOnly: true
+              {{- end }}
+            {{- end }}
+            {{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "nef")) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+          {{- end }}
           resources:
             {{- toYaml $nef.resources | nindent 12 }}
           # The image HEALTHCHECK script.
@@ -97,6 +121,24 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 5
+      {{- if or .Values.nef.fcaps.enabled (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "nef")) }}
+      volumes:
+        {{- if .Values.nef.fcaps.enabled }}
+        - name: cm-state
+          {{- if eq .Values.nef.fcaps.intentMode "configmap" }}
+          # A directory, not a subPath: kubelet never refreshes a ConfigMap mounted through subPath.
+          configMap:
+            name: {{ .Values.nef.fcaps.intentConfigMap.name }}
+            optional: {{ .Values.nef.fcaps.intentConfigMap.optional }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: oai-nef-cm-state
+          {{- end }}
+        {{- end }}
+        {{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "nef")) }}
+        {{- . | nindent 8 }}
+        {{- end }}
+      {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
