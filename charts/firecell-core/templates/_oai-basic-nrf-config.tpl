@@ -264,9 +264,17 @@ smf:
   location_api_root: {{ . | quote }}
   {{- end }}
   {{- with $v.coreConfig.smf.handover }}
-  {{- if hasKey . "endMarker" }}
+  {{- if or (hasKey . "endMarker") .dataForwarding .indirectForwardingTimerMs }}
   handover:
+    {{- if hasKey . "endMarker" }}
     end_marker: {{ .endMarker }}
+    {{- end }}
+    {{- with .dataForwarding }}
+    data_forwarding: {{ . }}
+    {{- end }}
+    {{- with .indirectForwardingTimerMs }}
+    indirect_forwarding_timer_ms: {{ . }}
+    {{- end }}
   {{- end }}
   {{- end }}
   support_features:
