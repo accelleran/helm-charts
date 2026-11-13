@@ -22,6 +22,47 @@ global:
   # Timezone for all NF containers
   timezone: Europe/Paris
 
+  # SBI security (TS 29.500 5.1: "all 3GPP NFs shall support TLS and TLS shall be used within a
+  # PLMN if network security is not provided by other means"; TS 33.501 13.1.0 mutual TLS; TS 29.500
+  # 6.7.3 OAuth2 access tokens). Both are off by default and then nothing below is rendered. They
+  # are the operator's choice (TS 33.501 13.1.0 NOTE 2); cn5g-common-src tls / oauth2 blocks.
+  #
+  # TLS on: the NFs serve and call the SBI over HTTP/2 with TLS, so http_version is written as 2
+  # whatever coreConfig.httpVersion says (the NFs refuse TLS with HTTP/1). Each NF mounts the
+  # Secret <secretPrefix>-<nf> (keys tls.crt, tls.key, ca.crt) at /etc/firecell/sbi-tls.
+  # Not covered when TLS is on (FIXME(limitation)): the IMS (the Rx-N5 IWF and the P-CSCF
+  # restoration call the PCF in clear text), the NMS and ACS agents, and the post-flight verify
+  # hook (it reads the NRF over http); the NEF is added after its TLS build decision.
+  sbi:
+    tls:
+      enabled: false
+      # Mutual TLS: a client must present a certificate the CA verifies. verifyPeer: the NFs verify
+      # the server certificate of the NFs they call.
+      requireClientCert: true
+      verifyPeer: true
+      # secrets: the Secrets exist already: scripts/gen-sbi-certs.sh makes the PKI files (a test
+      # PKI, not for production) and scripts/sbi-secrets-from-certs.sh creates the Secrets from
+      # them. certManager: the chart creates a self-signed CA Issuer, the CA, a CA Issuer and one
+      # Certificate per NF (cert-manager must be installed).
+      source: secrets
+      secretPrefix: sbi-tls
+      certManager:
+        duration: 8760h
+        renewBefore: 720h
+    # OAuth2 access tokens (TS 29.500 6.7.3, TS 33.501 13.4.1): the NRF signs them with ES256
+    # (EC P-256), the producers check them with its public key. Two Secrets, made by
+    # scripts/gen-sbi-certs.sh: signingKeySecret (key signing-key.pem, mounted in the NRF only) and
+    # publicKeySecret (key public-key.pem, mounted in every NF; they all read the shared config).
+    # The NFs refuse OAuth2 with http_version 1, so OAuth2 needs TLS on and HTTP/2.
+    oauth2:
+      enabled: false
+      signingKeySecret: nrf-oauth2-signing-key
+      publicKeySecret: nrf-oauth2-public-key
+      # Seconds before expiry at which an NF fetches a new token (0..3600; NF default 30).
+      tokenRefreshMarginS: 30
+      # Lifetime of a token issued by the NRF (60..86400; NRF default 3600).
+      tokenValiditySeconds: 3600
+
 # --- Namespace Management ---
 # Set create: false when using `helm upgrade --install --create-namespace` or when
 # the namespace is pre-created externally (e.g., to hold registry pull secrets).

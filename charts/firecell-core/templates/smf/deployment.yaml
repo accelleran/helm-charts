@@ -163,6 +163,9 @@ spec:
             {{- end }}
           {{- end }}
           volumeMounts:
+{{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "smf")) }}
+{{ . | indent 12 }}
+{{- end }}
             - name: common-config
               mountPath: {{ .Values.smf.configMountPath }}
               subPath: {{ if $smfHostNet }}basic_nrf_config_ebpf_smf_hostnet.yaml{{ else }}basic_nrf_config_ebpf_qos.yaml{{ end }}
@@ -187,6 +190,9 @@ spec:
           {{- include "firecell-5gc.nfLivenessProbe" (dict "healthPort" $smfHealthPort "initialDelaySeconds" 45 "periodSeconds" 10 "failureThreshold" 8 "timeoutSeconds" 5) | nindent 10 }}
         {{- include "firecell-5gc.healthzSidecar" (dict "Values" .Values "nfName" "smf" "healthPath" "/nsmf-pdusession/v1/health" "healthPort" $smfHealthPort "omitContainerPort" $smfHostNet) | nindent 8 }}
       volumes:
+{{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "smf")) }}
+{{ . | indent 8 }}
+{{- end }}
         - name: common-config
           configMap:
             name: firecell-common-config

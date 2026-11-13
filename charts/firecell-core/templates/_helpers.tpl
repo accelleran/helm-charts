@@ -661,3 +661,57 @@ Context: .Values.upf.
     delete_sessions_on_smf_restart: {{ if has $s (list "yes" "true") }}yes{{ else }}no{{ end }}
 {{- end }}
 {{- end }}
+
+{{/*
+SBI security (global.sbi.tls / global.sbi.oauth2): the NFs that get a certificate, and the
+volumes and mounts of an NF container. All empty when both are off.
+*/}}
+{{- define "firecell-5gc.sbiNfs" -}}
+{{- $v := .Values -}}
+{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" -}}
+{{- if (index $v $nf).enabled }}
+- {{ $nf }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/* dict: ctx (root), nf */}}
+{{- define "firecell-5gc.sbiSecurityMounts" -}}
+{{- $sbi := .ctx.Values.global.sbi -}}
+{{- if $sbi.tls.enabled }}
+- name: sbi-tls
+  mountPath: /etc/firecell/sbi-tls
+  readOnly: true
+{{- end }}
+{{- if $sbi.oauth2.enabled }}
+- name: sbi-oauth2-public
+  mountPath: /etc/firecell/sbi-oauth2
+  readOnly: true
+{{- if eq .nf "nrf" }}
+- name: sbi-oauth2-signing
+  mountPath: /etc/firecell/sbi-oauth2-signing
+  readOnly: true
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/* dict: ctx (root), nf */}}
+{{- define "firecell-5gc.sbiSecurityVolumes" -}}
+{{- $sbi := .ctx.Values.global.sbi -}}
+{{- if $sbi.tls.enabled }}
+- name: sbi-tls
+  secret:
+    secretName: {{ printf "%s-%s" $sbi.tls.secretPrefix .nf }}
+{{- end }}
+{{- if $sbi.oauth2.enabled }}
+- name: sbi-oauth2-public
+  secret:
+    secretName: {{ $sbi.oauth2.publicKeySecret }}
+{{- if eq .nf "nrf" }}
+- name: sbi-oauth2-signing
+  secret:
+    secretName: {{ $sbi.oauth2.signingKeySecret }}
+{{- end }}
+{{- end }}
+{{- end }}
+

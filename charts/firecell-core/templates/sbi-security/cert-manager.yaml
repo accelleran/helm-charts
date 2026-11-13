@@ -1,0 +1,81 @@
+{{- if and .Values.global.sbi.tls.enabled (eq .Values.global.sbi.tls.source "certManager") }}
+{{- /* SBI TLS certificates from cert-manager (global.sbi.tls.source certManager): a self-signed
+       Issuer makes the CA certificate sbi-ca, an Issuer backed by it signs one Certificate per
+       NF. The Secrets are named <secretPrefix>-<nf> with tls.crt, tls.key and ca.crt, as the
+       NFs expect them. Each NF is both server and client on the SBI (mutual TLS), so the usages
+       are server auth and client auth. */}}
+{{- $sbi := .Values.global.sbi }}
+{{- $ns := .Values.global.namespace }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: sbi-selfsigned
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: sbi-ca
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  isCA: true
+  commonName: firecell-core-sbi-ca
+  secretName: sbi-ca
+  duration: {{ $sbi.tls.certManager.duration }}
+  renewBefore: {{ $sbi.tls.certManager.renewBefore }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: sbi-selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: sbi-ca
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  ca:
+    secretName: sbi-ca
+{{- range $nf := (include "firecell-5gc.sbiNfs" . | fromYamlArray) }}
+{{- $svc := printf "oai-%s" $nf }}
+{{- if eq $nf "udsf" }}{{ $svc = ($.Values.udsf.serviceName | default "oai-udsf") }}{{ end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ printf "%s-%s" $sbi.tls.secretPrefix $nf }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+    app: {{ $svc }}
+spec:
+  secretName: {{ printf "%s-%s" $sbi.tls.secretPrefix $nf }}
+  commonName: {{ $svc }}
+  duration: {{ $sbi.tls.certManager.duration }}
+  renewBefore: {{ $sbi.tls.certManager.renewBefore }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    - {{ $svc }}
+    - {{ $svc }}.{{ $ns }}
+    - {{ $svc }}.{{ $ns }}.svc
+    - {{ $svc }}.{{ $ns }}.svc.cluster.local
+  issuerRef:
+    name: sbi-ca
+    kind: Issuer
+{{- end }}
+{{- end }}
