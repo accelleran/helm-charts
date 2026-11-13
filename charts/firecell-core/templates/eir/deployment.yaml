@@ -62,6 +62,9 @@ spec:
             - name: eir-config
               mountPath: {{ .Values.eir.configMountPath }}
               subPath: eir.yaml
+            {{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "eir")) }}
+            {{- . | nindent 12 }}
+            {{- end }}
           resources:
             {{- toYaml .Values.eir.resources | nindent 12 }}
           readinessProbe:
@@ -81,6 +84,9 @@ spec:
         - name: eir-config
           secret:
             secretName: oai-eir-config
+        {{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "eir")) }}
+        {{- . | nindent 8 }}
+        {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

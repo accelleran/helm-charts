@@ -616,6 +616,9 @@ spec:
             {{- end }}
           {{- end }}
           volumeMounts:
+{{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" $ "nf" "upf")) }}
+{{ . | indent 12 }}
+{{- end }}
             {{- if $.Values.upf.hostNetwork }}
             - name: oai-upf-hostnet-config
               mountPath: /openair-upf/etc/config.yaml
@@ -719,6 +722,9 @@ spec:
           {{- end }}
         {{- include "firecell-5gc.healthzSidecar" (dict "Values" $.Values "nfName" "upf" "healthPath" "/nupf-access/v1/health" "healthPort" $healthPort "omitContainerPort" $omitKubePorts) | nindent 8 }}
       volumes:
+{{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" $ "nf" "upf")) }}
+{{ . | indent 8 }}
+{{- end }}
         {{- if $.Values.upf.hostNetwork }}
         - name: oai-upf-hostnet-config
           configMap:

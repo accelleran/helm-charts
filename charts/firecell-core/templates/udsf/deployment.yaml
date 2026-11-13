@@ -50,6 +50,18 @@ spec:
               value: {{ .Values.udsf.redis.port | quote }}
             - name: PORT
               value: {{ .Values.udsf.sbiPort | quote }}
+            {{- if .Values.global.sbi.tls.enabled }}
+            # SBI TLS (global.sbi.tls): the UDSF reads the files from the environment (cn5g-udsf
+            # config/tls.go); TLS is on when TLS_CERT or TLS_KEY is set.
+            - name: TLS_CERT
+              value: /etc/firecell/sbi-tls/tls.crt
+            - name: TLS_KEY
+              value: /etc/firecell/sbi-tls/tls.key
+            - name: TLS_CA
+              value: /etc/firecell/sbi-tls/ca.crt
+            - name: TLS_REQUIRE_CLIENT_CERT
+              value: {{ ternary "true" "false" .Values.global.sbi.tls.requireClientCert | quote }}
+            {{- end }}
             {{- if .Values.udsf.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.udsf.fcaps.datastore.mountPath .Values.udsf.fcaps.datastore.file | quote }}
@@ -80,18 +92,29 @@ spec:
             initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 6
-          {{- if .Values.udsf.fcaps.enabled }}
+          {{- $sbiMounts := include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "udsf") }}
+          {{- if or .Values.udsf.fcaps.enabled $sbiMounts }}
           volumeMounts:
+            {{- if .Values.udsf.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.udsf.fcaps.datastore.mountPath }}
               {{- if eq .Values.udsf.fcaps.intentMode "configmap" }}
               readOnly: true
               {{- end }}
+            {{- end }}
+            {{- with $sbiMounts }}
+            {{- . | nindent 12 }}
+            {{- end }}
           {{- end }}
           resources:
             {{- toYaml .Values.udsf.resources | nindent 12 }}
-      {{- if .Values.udsf.fcaps.enabled }}
+      {{- $sbiVolumes := include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "udsf") }}
+      {{- if or .Values.udsf.fcaps.enabled $sbiVolumes }}
       volumes:
+        {{- with $sbiVolumes }}
+        {{- . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.udsf.fcaps.enabled }}
         - name: cm-state
           {{- if eq .Values.udsf.fcaps.intentMode "configmap" }}
           # A directory, not a subPath: kubelet never refreshes a ConfigMap
@@ -104,6 +127,7 @@ spec:
           persistentVolumeClaim:
             claimName: oai-udsf-cm-state
           {{- end }}
+        {{- end }}
       {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:

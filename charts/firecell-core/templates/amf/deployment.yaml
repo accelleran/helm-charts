@@ -63,6 +63,9 @@ spec:
               protocol: TCP
             {{- end }}
           volumeMounts:
+{{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "amf")) }}
+{{ . | indent 12 }}
+{{- end }}
             - name: common-config
               mountPath: {{ .Values.amf.configMountPath }}
               subPath: basic_nrf_config_ebpf_qos.yaml
@@ -86,6 +89,9 @@ spec:
           {{- include "firecell-5gc.nfLivenessProbe" (dict "initialDelaySeconds" 30 "periodSeconds" 10 "failureThreshold" 5 "timeoutSeconds" 5) | nindent 10 }}
         {{- include "firecell-5gc.healthzSidecar" (dict "Values" .Values "nfName" "amf" "healthPath" "/namf-comm/v1/health") | nindent 8 }}
       volumes:
+{{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "amf")) }}
+{{ . | indent 8 }}
+{{- end }}
         - name: common-config
           configMap:
             name: firecell-common-config
