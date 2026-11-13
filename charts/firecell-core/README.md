@@ -253,6 +253,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.smf.enableQer | string | `"yes"` |  |
 | coreConfig.smf.enableUdsf | string | `"yes"` |  |
 | coreConfig.smf.enableUpfWoNfDiscovery | string | `"yes"` |  |
+| coreConfig.smf.handover.endMarker | bool | `true` |  |
 | coreConfig.smf.enableUsageReporting | string | `"no"` |  |
 | coreConfig.smf.ueMtu | int | `1452` |  |
 | coreConfig.smf.useLocalPccRules | string | `"no"` |  |

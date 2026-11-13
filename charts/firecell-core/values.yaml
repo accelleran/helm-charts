@@ -1262,6 +1262,12 @@ coreConfig:
     useLocalPccRules: "no"
     enableQer: "yes"
     enableUdsf: "yes"
+    # Handover (cn5g-smf smf.handover). endMarker, seed of the FCAPS switch endMarkerEnabled:
+    # at an Xn path switch or an N2 handover the SMF asks the UPF to send End Marker packets on
+    # the old N3 path (SNDEM, TS 29.244 5.3.2, TS 23.501 5.8.2.9.1). It takes effect only when
+    # the UPF reports the EMPU feature. The SMF default is true. false: no SNDEM is requested.
+    handover:
+      endMarker: true
     # PDU session type switches (cn5g-smf smf.support_features), the seeds of the FCAPS
     # switches ipv6PduEnabled and ethernetPduEnabled. A key is written only when it is
     # set, so the SMF defaults apply: enableIpv6Pdu yes, enableEthernetPdu no.
