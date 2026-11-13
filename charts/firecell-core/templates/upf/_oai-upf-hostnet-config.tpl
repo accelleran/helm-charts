@@ -98,7 +98,9 @@ dnns:
 {{- range $v.coreConfig.dnns }}
   - dnn: {{ .dnn | quote }}
     pdu_session_type: {{ .pduSessionType | quote }}
-    ipv4_subnet: {{ .ipv4Subnet | quote }}
+    {{- with .ipv4Subnet }}
+    ipv4_subnet: {{ . | quote }}
+    {{- end }}
     {{- include "firecell-5gc.dnnIpv6Keys" . }}
 {{- end }}
 
@@ -112,6 +114,10 @@ upf:
     enable_snat: {{ if ($inst.enableSnat | default $v.upf.enableSnat | default true) }}yes{{ else }}no{{ end }}
     enable_fr: {{ if $v.upf.enableFramedRouting }}yes{{ else }}no{{ end }}
     enable_eth_pdu: {{ if $v.upf.oaiEnableEthPdu }}yes{{ else }}no{{ end }}
+    {{- if $v.upf.oaiEnableEthPdu }}
+    eth_dl_broadcast_enabled: {{ if $v.upf.ethDlBroadcastEnabled }}yes{{ else }}no{{ end }}
+    eth_dl_flood_max_copies: {{ $v.upf.ethDlFloodMaxCopies | default 50 }}
+    {{- end }}
 {{- if include "firecell-5gc.ipv6UserPlane" $root }}
     # IPv6 RS/NS and RA/NA relayed between the UE and the SMF over N4-u (UDP 2152 on
     # the N4 address, which must differ from N3 and N9).

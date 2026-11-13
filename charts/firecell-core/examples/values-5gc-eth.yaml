@@ -1,0 +1,55 @@
+# Ethernet PDU sessions (v6.0 rc-02): layer on the site values, after values-5gc-common.yaml.
+# Usage:
+#   helm upgrade --install firecell-5gc ./charts/firecell-core -n firecell-core \
+#     -f examples/values-5gc-common.yaml \
+#     -f examples/values-5gc-eth.yaml
+#
+# Three switches turn the feature on, each in its NF:
+#   - coreConfig.smf.enableEthernetPdu: the SMF admits an Ethernet PDU session on a DNN with
+#     pdu_session_type ETHERNET, if the subscription lists Ethernet as the DNN's default or an
+#     allowed type (otherwise it answers 5GSM cause #28);
+#   - upf.oaiEnableEthPdu: the UPF builds the session (cn5g-upf support_features.enable_eth_pdu);
+#   - upf.ethDlBroadcastEnabled / ethDlFloodMaxCopies: DL flooding of broadcast, multicast and
+#     not-yet-learnt destinations (on by default, here written out).
+# The UPF learns the UEs' MAC addresses from the uplink and forwards DL unicast by them
+# (TS 23.501 5.8.2.5.3, 5.6.10.2). N6 carries the frames unchanged, VLAN tags included.
+#
+# The eth DNN has no ipv4Subnet: an ETHERNET DNN gets no address pool, and the templates write
+# ipv4_subnet only when it is set. mysql.extraInitSql below adds the Ethernet subscription of
+# the lab UE 999990000000002 (the same UE and PLMN 99999 as sql/ims_subscribers.sql): it merges
+# the DNN eth into the UE's SessionManagementSubscriptionData with ETHERNET as the default and
+# the only allowed PDU session type. Change ueid and servingPlmnid for another subscriber. Like
+# every MySQL init script it runs only when the data directory is first initialised; on a
+# running database run the same statement with mysql.
+#
+# Not done by the chart: the N6 interface must be one the UPF can send and receive Ethernet
+# frames on (one shared N6, FIXME in cn5g-upf); Ethernet packet filters are match-all
+# (FIXME(limitation) A7 in cn5g-upf).
+
+coreConfig:
+  dnns:
+    - dnn: "oai"
+      pduSessionType: "IPV4"
+      ipv4Subnet: "12.1.1.0/25"
+    - dnn: "eth"
+      pduSessionType: "ETHERNET"
+  smf:
+    enableEthernetPdu: true
+
+upf:
+  oaiEnableEthPdu: true
+  ethDlBroadcastEnabled: true
+  ethDlFloodMaxCopies: 50
+
+mysql:
+  extraInitSql: |
+    USE oai_db;
+    INSERT INTO SessionManagementSubscriptionData (ueid, servingPlmnid, singleNssai, dnnConfigurations)
+    VALUES (
+      '999990000000002',
+      '99999',
+      '{"sst": 1, "sd": "000001"}',
+      '{"eth": {"pduSessionTypes": {"defaultSessionType": "ETHERNET", "allowedSessionTypes": ["ETHERNET"]}, "sscModes": {"defaultSscMode": "SSC_MODE_1", "allowedSscModes": ["SSC_MODE_1"]}}}'
+    )
+    ON DUPLICATE KEY UPDATE
+      dnnConfigurations = JSON_MERGE_PATCH(COALESCE(dnnConfigurations, '{}'), VALUES(dnnConfigurations));
