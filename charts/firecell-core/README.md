@@ -245,6 +245,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.nssai[0].sst | int | `1` |  |
 | coreConfig.pcf.amPolicy | object | `{}` |  |
 | coreConfig.pcf.enablePolicyProvisioningApi | string | `"yes"` |  |
+| coreConfig.pcf.policyAuthorization.afEvents | bool | `true` |  |
+| coreConfig.pcf.policyAuthorization.pcscfRestoration | bool | `true` |  |
 | coreConfig.registerNf | string | `"yes"` |  |
 | coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | string | `"yes"` |  |
 | coreConfig.smf.enableQer | string | `"yes"` |  |

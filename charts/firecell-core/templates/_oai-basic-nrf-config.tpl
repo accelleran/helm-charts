@@ -444,6 +444,17 @@ pcf:
       {{- end }}
     {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.pcf.policyAuthorization }}
+  {{- if or (hasKey . "afEvents") (hasKey . "pcscfRestoration") }}
+  policy_authorization:
+    {{- if hasKey . "afEvents" }}
+    af_events: {{ .afEvents }}
+    {{- end }}
+    {{- if hasKey . "pcscfRestoration" }}
+    pcscf_restoration: {{ .pcscfRestoration }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
 
 upf:
   {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use

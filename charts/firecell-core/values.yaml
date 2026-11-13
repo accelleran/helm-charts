@@ -1335,6 +1335,15 @@ coreConfig:
     #  supi:
     #    imsi-001010000000002:
     #      rfspIndex: 7
+    # Npcf_PolicyAuthorization (N5) switches (cn5g-pcf pcf.policy_authorization), seeds of the
+    # FCAPS switches afEventsEnabled and pcscfRestorationEnabled. Both values are the PCF
+    # defaults. afEvents: the AF events subscription over N5 and the optional notifications to
+    # the AF (resources allocation outcome, already met events); the termination request the
+    # PCF sends when the PDU session ends is always sent (TS 29.514 4.2.5.3). pcscfRestoration:
+    # PCF based P-CSCF restoration (TS 29.514 4.2.2.27, TS 29.512 4.2.3.18).
+    policyAuthorization:
+      afEvents: true
+      pcscfRestoration: true
 
   # UDM configuration
   udm:
