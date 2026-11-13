@@ -243,6 +243,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.nrf.suspendedNfInterval | int | `120` |  |
 | coreConfig.nssai[0].sd | string | `"000001"` |  |
 | coreConfig.nssai[0].sst | int | `1` |  |
+| coreConfig.pcf.amPolicy | object | `{}` |  |
 | coreConfig.pcf.enablePolicyProvisioningApi | string | `"yes"` |  |
 | coreConfig.registerNf | string | `"yes"` |  |
 | coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | string | `"yes"` |  |

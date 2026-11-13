@@ -419,6 +419,31 @@ nrf:
 
 pcf:
   enable_policy_provisioning_api: {{ $v.coreConfig.pcf.enablePolicyProvisioningApi }}
+  {{- with $v.coreConfig.pcf.amPolicy }}
+  am_policy:
+    {{- if .rfspIndex }}
+    rfsp_index: {{ .rfspIndex }}
+    {{- end }}
+    {{- with .ueAmbr }}
+    ue_ambr:
+      uplink: {{ .uplink | quote }}
+      downlink: {{ .downlink | quote }}
+    {{- end }}
+    {{- with .supi }}
+    supi:
+      {{- range $supi, $d := . }}
+      {{ $supi | quote }}:
+        {{- if $d.rfspIndex }}
+        rfsp_index: {{ $d.rfspIndex }}
+        {{- end }}
+        {{- with $d.ueAmbr }}
+        ue_ambr:
+          uplink: {{ .uplink | quote }}
+          downlink: {{ .downlink | quote }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
 
 upf:
   {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use

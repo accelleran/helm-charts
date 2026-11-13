@@ -1322,6 +1322,19 @@ coreConfig:
   # PCF configuration
   pcf:
     enablePolicyProvisioningApi: "yes"
+    # AM policy the PCF returns to the AMF (cn5g-pcf pcf.am_policy; Npcf_AMPolicyControl,
+    # TS 29.507). Only used when the AMF asks for it: coreConfig.amf.amPolicy.enabled. Empty
+    # (default): the PCF answers with the values the AMF sent. rfspIndex 1..256; ueAmbr needs
+    # both uplink and downlink as TS 29.571 BitRate strings; supi overrides the defaults per
+    # SUPI (the same two keys). The PCF refuses a bad value at start.
+    amPolicy: {}
+    #  rfspIndex: 12
+    #  ueAmbr:
+    #    uplink: "100 Mbps"
+    #    downlink: "1 Gbps"
+    #  supi:
+    #    imsi-001010000000002:
+    #      rfspIndex: 7
 
   # UDM configuration
   udm:
