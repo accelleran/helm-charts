@@ -283,6 +283,14 @@ smf:
   {{- with $v.coreConfig.smf.locationApiRoot }}
   location_api_root: {{ . | quote }}
   {{- end }}
+  {{- with $v.coreConfig.smf.mbs }}
+  mbs:
+    enabled: {{ .enabled | default false }}
+    {{- with .sessions }}
+    sessions:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
   {{- with $v.coreConfig.smf.handover }}
   {{- if or (hasKey . "endMarker") .dataForwarding .indirectForwardingTimerMs }}
   handover:

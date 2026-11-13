@@ -1379,6 +1379,24 @@ coreConfig:
     useLocalPccRules: "no"
     enableQer: "yes"
     enableUdsf: "yes"
+    # 5MBS (TS 23.247): the co-located MB-SMF of the SMF (cn5g-smf smf.mbs; "SMF and MB-SMF may be
+    # co-located"), multicast sessions preconfigured here ("can be pre-configured in the network").
+    # Off by default, no sessions. enabled true lets a UE join a session in a PDU Session
+    # Modification (the SMF checks mbsAllowed with the UDM, mbs-data); radio delivery is not done
+    # yet (FIXME(limitation) T1 in cn5g-smf). sessions is passed to the SMF as written, with its
+    # own key names (snake_case), one entry per multicast session:
+    #   - tmgi: {service_id: "000001", mcc: "001", mnc: "01"}   # service_id: 6 hex digits
+    #     ssm: {source: 10.0.0.1, group: 232.1.1.1}             # optional
+    #     dnn: oai
+    #     snssai: {sst: 1, sd: "000001"}                         # sd optional
+    #     any_ue: false          # open to any UE (a UE still needs mbsAllowed)
+    #     state: active          # active | inactive
+    #     qos_flows:
+    #       - {qfi: 9, 5qi: 9, arp_priority: 8}
+    # The SMF refuses a bad block at start. Seed of the FCAPS switch mbsMulticastEnabled.
+    mbs:
+      enabled: false
+      sessions: []
     # Handover (cn5g-smf smf.handover). endMarker, seed of the FCAPS switch endMarkerEnabled:
     # at an Xn path switch or an N2 handover the SMF asks the UPF to send End Marker packets on
     # the old N3 path (SNDEM, TS 29.244 5.3.2, TS 23.501 5.8.2.9.1). It takes effect only when

@@ -18,6 +18,9 @@ data:
 {{ .Files.Get "sql/ims_subscribers.sql" | indent 4 }}
   02c-cx-scscf-binding.sql: |
 {{ .Files.Get "sql/cx_scscf_binding.sql" | indent 4 }}
+  # 5MBS: MbsSubscriptionData of the UDR (cn5g-udr L5-MBS-UDR-1).
+  02d-5mbs.sql: |
+{{ .Files.Get "sql/oai_db-5mbs.sql" | indent 4 }}
 {{- range $path, $_ := .Files.Glob "sql/pcf-provisioning/*.sql" }}
   03-pcf-{{ base $path }}: |
     USE oai_db;
