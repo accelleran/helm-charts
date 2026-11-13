@@ -902,6 +902,36 @@ ims:
   rtpengine:
     enabled: false
     ip: "127.0.0.1"
+  # Rx to N5 interworking function of the P-CSCF (cn5g-ims rx-n5-iwf; Diameter Rx,
+  # TS 29.214, to Npcf_PolicyAuthorization, TS 29.514). Off by default. A normal pod
+  # behind the ClusterIP Service ims-rx-n5-iwf: the P-CSCF connects to it on diameterPort,
+  # the PCF posts its notify / terminate to notifyPort. The P-CSCF side (its Rx peer
+  # pcrf.<EPC_DOMAIN>) is configured in the kamailio-ims image. mcc and mnc are the
+  # P-CSCF's (coreConfig); set epcDomain only if the P-CSCF's EPC_DOMAIN is set.
+  rxN5Iwf:
+    enabled: false
+    image: rx-n5-iwf
+    imageOverride: ""
+    imageTag: latest
+    epcDomain: ""
+    logLevel: INFO
+    diameterPort: 3868
+    notifyPort: 8080
+    # Empty: http://oai-pcf.<namespace>.svc.cluster.local:8080 (how the other NFs reach the PCF).
+    pcfUri: ""
+    # Empty: coreConfig.httpVersion (1 in this chart). 1 or 2.
+    pcfHttpVersion: ""
+    pcfTimeoutS: 5
+    # Empty: http://ims-rx-n5-iwf.<namespace>.svc.cluster.local:<notifyPort>. It must be
+    # an address the PCF can reach.
+    notifyUri: ""
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+        cpu: 500m
   pcscf:
     ip: "192.168.31.205"
     hostNetwork: true
