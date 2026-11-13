@@ -47,6 +47,11 @@ managedFields. Never Secrets.
 - apiGroups: [""]
   resources: ["events"]
   verbs: ["list"]
+# An element's URL names a Service; where it is not named like its workload,
+# its selector finds the element's pods.
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get"]
 - apiGroups: ["apps"]
   resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
   verbs: ["get", "list"]
