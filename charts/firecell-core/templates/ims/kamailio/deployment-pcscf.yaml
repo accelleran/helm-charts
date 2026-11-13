@@ -63,6 +63,18 @@ spec:
             # false drops FORCE_RTPRELAY (the image default is true).
             - name: RTPENGINE_ENABLED
               value: {{ ternary "true" "false" (.Values.ims.rtpengine.enabled | default false) | quote }}
+            {{- if .Values.ims.rxN5Iwf.enabled }}
+            # Rx towards the rx-n5-iwf sidecar (cn5g-ims L4-11-8): media authorization at
+            # INVITE. RX_PEER_HOST is the IWF's Diameter identity and DNS name.
+            - name: RX_ENABLED
+              value: "true"
+            - name: RX_PEER_HOST
+              value: {{ .Values.ims.rxN5Iwf.originHost | default "ims-rx-n5-iwf" | quote }}
+            - name: RX_PEER_PORT
+              value: {{ .Values.ims.rxN5Iwf.diameterPort | quote }}
+            - name: RX_REG_ENABLED
+              value: {{ ternary "true" "false" (.Values.ims.rxN5Iwf.rxRegEnabled | default false) | quote }}
+            {{- end }}
           volumeMounts:
             - name: ims-secrets
               mountPath: /run/secrets/ims
