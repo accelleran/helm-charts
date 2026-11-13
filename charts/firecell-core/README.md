@@ -203,6 +203,10 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.enableSmfSelection | string | `"no"` |  |
 | coreConfig.amf.enableUdsf | string | `"yes"` |  |
 | coreConfig.amf.name | string | `"OAI-AMF"` |  |
+| coreConfig.amf.nasTimers.t3512Min | int | `50` |  |
+| coreConfig.amf.nid | string | `""` |  |
+| coreConfig.amf.npn | object | `{}` |  |
+| coreConfig.amf.redcap | object | `{}` |  |
 | coreConfig.amf.relativeCapacity | int | `30` |  |
 | coreConfig.amf.releaseAllPduSessions | string | `"no"` |  |
 | coreConfig.amf.statisticsTimerInterval | int | `20` |  |
@@ -210,6 +214,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.supportedEncryptionAlgorithms[1] | string | `"NEA1"` |  |
 | coreConfig.amf.supportedEncryptionAlgorithms[2] | string | `"NEA2"` |  |
 | coreConfig.amf.supportedIntegrityAlgorithms[0] | string | `"NIA2"` |  |
+| coreConfig.amf.ueAmbrDefault.downlink | string | `"1 Gbps"` |  |
+| coreConfig.amf.ueAmbrDefault.uplink | string | `"1 Gbps"` |  |
 | coreConfig.database.connectionTimeout | int | `10` |  |
 | coreConfig.database.generateRandom | bool | `true` |  |
 | coreConfig.database.host | string | `"mysql"` |  |
@@ -228,7 +234,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.httpRequestTimeoutMs | int | `10000` |  |
 | coreConfig.httpVersion | int | `1` |  |
 | coreConfig.ims.pcscfIpv4 | string | `"192.168.31.205"` |  |
-| coreConfig.ims.pcscfIpv6 | string | `"fe80::7915:f408:1787:db8b"` |  |
+| coreConfig.ims.pcscfIpv6 | string | `""` |  |
 | coreConfig.logLevel | string | `"debug"` |  |
 | coreConfig.mcc | string | `"001"` |  |
 | coreConfig.mnc | string | `"01"` |  |

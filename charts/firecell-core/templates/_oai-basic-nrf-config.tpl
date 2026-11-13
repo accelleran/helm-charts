@@ -153,6 +153,40 @@ amf:
     fanout_multi_gnb: {{ .fanoutMultiGnb }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.npn }}
+  {{- if or (hasKey . "cagEnforcement") (hasKey . "nonCagUeRejectCause") }}
+  npn:
+    {{- if hasKey . "cagEnforcement" }}
+    cag_enforcement: {{ .cagEnforcement }}
+    {{- end }}
+    {{- if hasKey . "nonCagUeRejectCause" }}
+    non_cag_ue_reject_cause: {{ .nonCagUeRejectCause }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- with $v.coreConfig.amf.redcap }}
+  {{- if hasKey . "enabled" }}
+  redcap:
+    enabled: {{ .enabled }}
+  {{- end }}
+  {{- end }}
+  {{- with $v.coreConfig.amf.ueAmbrDefault }}
+  {{- if or .uplink .downlink }}
+  ue_ambr_default:
+    {{- if .uplink }}
+    uplink: {{ .uplink | quote }}
+    {{- end }}
+    {{- if .downlink }}
+    downlink: {{ .downlink | quote }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- with $v.coreConfig.amf.nasTimers }}
+  {{- if .t3512Min }}
+  nas_timers:
+    t3512_min: {{ .t3512Min }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
@@ -163,6 +197,9 @@ amf:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
       tac: {{ $v.coreConfig.tac }}
+      {{- with $v.coreConfig.amf.nid }}
+      nid: {{ . | quote }}
+      {{- end }}
       nssai:
       {{- range $v.coreConfig.nssai }}
         - sst: {{ .sst }}
@@ -189,6 +226,12 @@ smf:
     use_local_pcc_rules: {{ $v.coreConfig.smf.useLocalPccRules }}
     enable_qer: {{ $v.coreConfig.smf.enableQer }}
     enable_udsf: {{ $v.coreConfig.smf.enableUdsf | default "no" }}
+    {{- if hasKey $v.coreConfig.smf "enableIpv6Pdu" }}
+    enable_ipv6_pdu: {{ $v.coreConfig.smf.enableIpv6Pdu }}
+    {{- end }}
+    {{- if hasKey $v.coreConfig.smf "enableEthernetPdu" }}
+    enable_ethernet_pdu: {{ $v.coreConfig.smf.enableEthernetPdu }}
+    {{- end }}
   upf_pool:
   {{- if $v.upf.instances }}
   {{- range $v.upf.instances }}
