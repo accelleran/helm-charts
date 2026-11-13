@@ -194,6 +194,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.amfPointer | string | `"01"` |  |
 | coreConfig.amf.amfRegionId | string | `"01"` |  |
 | coreConfig.amf.amfSetId | string | `"001"` |  |
+| coreConfig.amf.amPolicy.enabled | bool | `false` |  |
 | coreConfig.amf.emergencySupport | bool | `false` |  |
 | coreConfig.amf.eir.enabled | bool | `true` |  |
 | coreConfig.amf.eir.enforcementMode | string | `"permissive"` |  |

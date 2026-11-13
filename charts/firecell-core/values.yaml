@@ -1168,6 +1168,13 @@ coreConfig:
     eir:
       enabled: true
       enforcementMode: permissive
+    # AM policy association with the PCF at registration (cn5g-amf amf.am_policy; TS 23.502
+    # 4.2.2.2.2 step 16, TS 29.507), seed of the FCAPS switch amPolicyEnabled. Off by
+    # default, which is the AMF default. On: the AMF asks the PCF (the nfs.pcf entry of the
+    # config, no NRF discovery) for the RFSP index and the UE-AMBR, and deletes the
+    # association at de-registration. The PCF values are set under coreConfig.pcf.amPolicy.
+    amPolicy:
+      enabled: false
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
