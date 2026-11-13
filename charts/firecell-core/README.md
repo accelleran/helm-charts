@@ -226,7 +226,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.httpRequestTimeoutMs | int | `10000` |  |
 | coreConfig.httpVersion | int | `1` |  |
 | coreConfig.ims.pcscfIpv4 | string | `"192.168.31.205"` |  |
-| coreConfig.ims.pcscfIpv6 | string | `"fe80::7915:f408:1787:db8b"` |  |
+| coreConfig.ims.pcscfIpv6 | string | `""` |  |
 | coreConfig.logLevel | string | `"debug"` |  |
 | coreConfig.mcc | string | `"001"` |  |
 | coreConfig.mnc | string | `"01"` |  |

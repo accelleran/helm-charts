@@ -1099,7 +1099,12 @@ coreConfig:
   # IMS P-CSCF
   ims:
     pcscfIpv4: "192.168.31.205"
-    pcscfIpv6: "fe80::7915:f408:1787:db8b"
+    # Empty (default): the SMF sends no IPv6 P-CSCF address to the UE (an
+    # unspecified address is skipped, cn5g-smf smf_pco.cpp). To offer one, set
+    # the P-CSCF's global IPv6 address here, not a link-local one (RFC 4291
+    # 2.5.6: link-local addresses are not valid outside their link).
+    # IPv6 P-CSCF sent when set (needs smf L4-11-2b).
+    pcscfIpv6: ""
 
   # SMF configuration
   smf:
