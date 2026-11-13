@@ -926,6 +926,12 @@ ims:
     imageOverride: ""
     imageTag: latest
     epcDomain: ""
+    # Diameter identity of the IWF (RX_N5_IWF_ORIGIN_HOST) and the name the P-CSCF connects to
+    # (RX_PEER_HOST). Empty: the Service name ims-rx-n5-iwf, which resolves in the namespace.
+    originHost: ""
+    # With the IWF on, the P-CSCF gets RX_ENABLED=true (Rx at INVITE / re-INVITE). true also
+    # sets RX_REG_ENABLED (an AAR at REGISTER): not needed for voice QoS.
+    rxRegEnabled: false
     logLevel: INFO
     diameterPort: 3868
     notifyPort: 8080

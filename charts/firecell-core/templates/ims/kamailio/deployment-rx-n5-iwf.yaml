@@ -58,6 +58,9 @@ spec:
             {{- end }}
             - name: RX_N5_IWF_LOG_LEVEL
               value: {{ $iwf.logLevel | quote }}
+            # The Diameter identity the P-CSCF's RX_PEER_HOST names (also its DNS name).
+            - name: RX_N5_IWF_ORIGIN_HOST
+              value: {{ $iwf.originHost | default $svc | quote }}
             - name: RX_N5_IWF_DIAMETER_BIND
               value: "0.0.0.0"
             - name: RX_N5_IWF_DIAMETER_PORT
