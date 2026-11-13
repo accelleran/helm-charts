@@ -164,6 +164,12 @@ amf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.redcap }}
+  {{- if hasKey . "enabled" }}
+  redcap:
+    enabled: {{ .enabled }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}

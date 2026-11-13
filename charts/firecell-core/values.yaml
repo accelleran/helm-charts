@@ -1054,6 +1054,12 @@ coreConfig:
     # NID of the SNPN: written into the AMF plmn_support_list entry when set (11
     # hex digits, first digit 0-2, cn5g-amf NID_REGEX). Empty: no nid is written.
     nid: ""
+    # NR RedCap (cn5g-amf amf.redcap), seed of the FCAPS switch redcapEnabled. The key
+    # is rendered only when set; the AMF default is true, and the setting only matters
+    # for a gNB that sends a RedCap Indication. false: a RedCap UE is reported to the
+    # UDM and the SMF with RAT type NR, as before the feature, not NR_REDCAP.
+    redcap: {}
+    #  enabled: true
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
