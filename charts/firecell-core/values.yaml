@@ -75,6 +75,10 @@ mysql:
   # image is "mysql:8.3" (includes a tag); without this override the chart
   # would ask Hub for accelleran/mysql:8.3.
   imageOverride: "docker.io/library/mysql:8.3"
+  # Extra SQL run once at first initialisation of the data directory, after the chart's own
+  # scripts (a docker-entrypoint-initdb.d file, so it does not run on an existing volume).
+  # Empty: nothing is added. examples/values-5gc-eth.yaml uses it for an Ethernet subscriber.
+  extraInitSql: ""
   rootPassword: ""            # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
   database: oai_db
   user: ""                    # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
@@ -742,6 +746,14 @@ upf:
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
   oaiEnableEthPdu: false
+  # Ethernet PDU downlink flooding (cn5g-upf support_features.eth_dl_broadcast_enabled and
+  # eth_dl_flood_max_copies; seeds of the FCAPS switches ethDlBroadcastEnabled and
+  # ethDlFloodMaxCopies). Written only with oaiEnableEthPdu. A DL frame from N6 to a broadcast,
+  # multicast or not-yet-learnt MAC is copied to every Ethernet PDU session that has a DL tunnel
+  # (TS 23.501 5.8.2.5.3), at most ethDlFloodMaxCopies copies (1..50; the UPF refuses other
+  # values at start). ethDlBroadcastEnabled false: such frames are dropped, not flooded.
+  ethDlBroadcastEnabled: true
+  ethDlFloodMaxCopies: 50
   # OAI UPF: framed routing (cn5g-upf support_features.enable_fr). When true the UPF
   # matches downlink traffic to the Framed-Route prefixes the SMF signals for a PDU
   # session (TS 29.244 Framed-Route IE). Default off.
