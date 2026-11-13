@@ -187,6 +187,17 @@ amf:
     t3512_min: {{ .t3512Min }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.eir }}
+  {{- if or (hasKey . "enabled") .enforcementMode }}
+  eir:
+    {{- if hasKey . "enabled" }}
+    enabled: {{ .enabled }}
+    {{- end }}
+    {{- if .enforcementMode }}
+    enforcement_mode: {{ .enforcementMode }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}

@@ -355,6 +355,59 @@ ausf:
       optional: true
     seedConfigPath: /openair-ausf/etc/config.yaml
 
+# --- EIR (5G Equipment Identity Register, cn5g-eir) ---
+# Off by default: the cn5g-eir image is not published yet. The AMF finds the EIR through
+# the NRF (the EIR registers itself) and checks the PEI at registration: see
+# coreConfig.amf.eir. Config keys follow cn5g-eir configs/eir.yaml. The EIR creates its
+# two tables (equipment_bindings, audit_events) in the chart's MySQL database at start, so
+# there is no SQL to load. MySQL host, user, password and database come from
+# coreConfig.database.
+eir:
+  enabled: false
+  image: cn5g-eir
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
+  imageOverride: ""
+  priorityClassName: firecell-prio-normal
+  command:
+    - /usr/local/bin/cn5g-eir
+    - --config
+    - /etc/cn5g-eir/eir.yaml
+  configMountPath: /etc/cn5g-eir/eir.yaml
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+  config:
+    listenHost: "0.0.0.0"
+    # SBI port: HTTP/2 only. healthHttp1Port: HTTP/1.1 /health for the readiness probe;
+    # 0 disables it (the probe then checks the SBI port).
+    listenPort: 8080
+    healthHttp1Port: 8081
+    # Empty: coreConfig.database.name.
+    mysqlDatabase: ""
+    # Lab profile. FIXME(spec, TS 29.511 6.1.7.3 / TS 29.500 6.7.3): the AMF sends no
+    # OAuth2 access token until feature 05 is on, so the equipment-status check is let in
+    # without one (allowAnonymous). The two tokens are lab placeholders for the client
+    # lists; replace them in site values.
+    authProfile: lab
+    allowAnonymous: true
+    checkToken: "lab-amf-token"
+    provToken: "lab-nms-prov-token"
+    # NFRegister at the NRF. Empty nrfNfmUrl: http://oai-nrf:<nrf.sbiPort>/nnrf-nfm/v1.
+    # Empty advertiseApiRoot: http://oai-eir.<namespace>.svc.cluster.local:<listenPort>.
+    nrfEnabled: true
+    nrfRequired: true
+    nrfNfmUrl: ""
+    advertiseApiRoot: ""
+    # Local policy (L3-06-5, not a TS 29.511 rule): a PEI bound to another SUPI/GPSI
+    # answers BLACKLISTED (SIM lock). Seed of the FCAPS switch peiSupiBindingCheckEnabled.
+    peiSupiBindingCheck: true
+
 # --- AMF (Access and Mobility Management Function) ---
 amf:
   enabled: true
@@ -1077,6 +1130,16 @@ coreConfig:
     # de-registration timers follow it (T3512 + 4 minutes).
     nasTimers:
       t3512Min: 50
+    # PEI check against the EIR at registration (cn5g-amf amf.eir), seeds of the FCAPS
+    # switches eirCheckEnabled and eirEnforcementMode. Both values are the AMF defaults.
+    # enabled true also when the release has no EIR (eir.enabled false): the AMF then finds
+    # none through the NRF and, in either mode, lets the UE register. false: no check at all.
+    # enforcementMode permissive: a PEI the EIR does not know (404 ERROR_EQUIPMENT_UNKNOWN)
+    # is allowed, only BLACKLISTED is refused. strict: an unknown PEI is refused too
+    # (5GMM cause #6, TS 29.511 5.2.2.2, TS 24.501 Annex A). The AMF refuses any other value.
+    eir:
+      enabled: true
+      enforcementMode: permissive
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
