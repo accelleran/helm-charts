@@ -1067,6 +1067,14 @@ coreConfig:
     ueAmbrDefault:
       uplink: "1 Gbps"
       downlink: "1 Gbps"
+    # NAS timer T3512 (periodic registration update) in minutes, sent to the UE in the
+    # Registration Accept (cn5g-amf amf.nas_timers.t3512_min, default 50; TS 24.501 5.3.7).
+    # It must be exactly encodable as a GPRS Timer 3 (TS 24.008 10.5.7.4a: a value of 1 to
+    # 31 in units of 1 minute, 10 minutes, 1 hour or 10 hours), so 50 or 60 but not 54;
+    # the AMF refuses other values at start. The mobile reachable and implicit
+    # de-registration timers follow it (T3512 + 4 minutes).
+    nasTimers:
+      t3512Min: 50
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"

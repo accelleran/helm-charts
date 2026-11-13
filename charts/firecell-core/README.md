@@ -201,6 +201,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.enableSmfSelection | string | `"no"` |  |
 | coreConfig.amf.enableUdsf | string | `"yes"` |  |
 | coreConfig.amf.name | string | `"OAI-AMF"` |  |
+| coreConfig.amf.nasTimers.t3512Min | int | `50` |  |
 | coreConfig.amf.nid | string | `""` |  |
 | coreConfig.amf.npn | object | `{}` |  |
 | coreConfig.amf.redcap | object | `{}` |  |

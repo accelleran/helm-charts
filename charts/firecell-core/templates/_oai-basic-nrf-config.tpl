@@ -181,6 +181,12 @@ amf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.nasTimers }}
+  {{- if .t3512Min }}
+  nas_timers:
+    t3512_min: {{ .t3512Min }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
