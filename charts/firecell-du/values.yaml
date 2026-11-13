@@ -347,7 +347,11 @@ extraConfig:
     all_level: warning
     du_level: info
     f1ap_level: info
-    mac_level: info
+    # warning (ocudu's own default): at info the MAC and scheduler log every
+    # PDU and every skipped slot, about 2.8 GB an hour with 10 UEs on lab .39,
+    # which would fill the node log store in hours. Raise it through the NMS
+    # (Log verbosity (RAN), DU MAC) while investigating.
+    mac_level: warning
     rlc_level: warning
     f1u_level: info
     gtpu_level: warning
