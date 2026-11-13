@@ -1175,6 +1175,19 @@ coreConfig:
     # association at de-registration. The PCF values are set under coreConfig.pcf.amPolicy.
     amPolicy:
       enabled: false
+    # NGAP call trace (cn5g-amf amf.call_trace; TS 32.422, TS 38.413 Trace Start). Empty
+    # (default) is off: the AMF sends no Trace Start without a usable profile. A profile needs
+    # ngranTraceId = 16 hex digits whose first 6 are a PLMN-coded Trace Reference prefix (for
+    # MCC 001 / MNC 01: 00F110) and tceIpv4 = the Trace Collection Entity (not in
+    # 192.0.2.0/24, the documentation range). interfacesToTrace is the Interfaces To Trace
+    # byte (AMF default 0x80), traceDepth a string (AMF default "minimum"); autoStartSupi
+    # starts a trace for that SUPI at registration. Keys are written only when set.
+    callTrace: {}
+    #  ngranTraceId: "00F1100000010001"
+    #  tceIpv4: "10.0.0.10"
+    #  interfacesToTrace: "0x80"
+    #  traceDepth: minimum
+    #  autoStartSupi: imsi-001010000000002
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"

@@ -204,6 +204,31 @@ amf:
     enabled: {{ .enabled }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.callTrace }}
+  {{- $prof := or .ngranTraceId .tceIpv4 .interfacesToTrace .traceDepth }}
+  {{- if or $prof .autoStartSupi }}
+  call_trace:
+    {{- if $prof }}
+    profile:
+      {{- with .ngranTraceId }}
+      ngran_trace_id: {{ . | quote }}
+      {{- end }}
+      {{- with .tceIpv4 }}
+      tce_ipv4: {{ . | quote }}
+      {{- end }}
+      {{- with .interfacesToTrace }}
+      interfaces_to_trace: {{ . }}
+      {{- end }}
+      {{- with .traceDepth }}
+      trace_depth: {{ . | quote }}
+      {{- end }}
+    {{- end }}
+    {{- with .autoStartSupi }}
+    admin:
+      auto_start_supi: {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
