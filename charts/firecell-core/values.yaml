@@ -1045,6 +1045,38 @@ coreConfig:
     # default is false when the key is absent; cn5g-amf etc/config.yaml sets true.
     paging:
       fanoutMultiGnb: true
+    # SNPN / CAG (cn5g-amf amf.npn). A key is rendered only when it is set, so the
+    # AMF defaults apply otherwise: cagEnforcement true, nonCagUeRejectCause 7.
+    # nonCagUeRejectCause is the 5GMM cause for a UE without CAG support that is
+    # rejected because of CAG restrictions (TS 24.501 5.5.1.2.8); the AMF accepts
+    # 7, 11, 27 and 73 and refuses any other value at start.
+    npn: {}
+    #  cagEnforcement: true
+    #  nonCagUeRejectCause: 7
+    # NID of the SNPN: written into the AMF plmn_support_list entry when set (11
+    # hex digits, first digit 0-2, cn5g-amf NID_REGEX). Empty: no nid is written.
+    nid: ""
+    # NR RedCap (cn5g-amf amf.redcap), seed of the FCAPS switch redcapEnabled. The key
+    # is rendered only when set; the AMF default is true, and the setting only matters
+    # for a gNB that sends a RedCap Indication. false: a RedCap UE is reported to the
+    # UDM and the SMF with RAT type NR, as before the feature, not NR_REDCAP.
+    redcap: {}
+    #  enabled: true
+    # UE-AMBR the AMF sends to the gNB when neither the PCF nor the subscription
+    # (am-data) gives one (cn5g-amf amf.ue_ambr_default). TS 29.571 BitRate strings,
+    # at most 4000000000000 bps (TS 38.413 9.3.1.4); the AMF refuses other values at
+    # start. 1 Gbps is the AMF default, so this block does not change behaviour as is.
+    ueAmbrDefault:
+      uplink: "1 Gbps"
+      downlink: "1 Gbps"
+    # NAS timer T3512 (periodic registration update) in minutes, sent to the UE in the
+    # Registration Accept (cn5g-amf amf.nas_timers.t3512_min, default 50; TS 24.501 5.3.7).
+    # It must be exactly encodable as a GPRS Timer 3 (TS 24.008 10.5.7.4a: a value of 1 to
+    # 31 in units of 1 minute, 10 minutes, 1 hour or 10 hours), so 50 or 60 but not 54;
+    # the AMF refuses other values at start. The mobile reachable and implicit
+    # de-registration timers follow it (T3512 + 4 minutes).
+    nasTimers:
+      t3512Min: 50
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
@@ -1100,8 +1132,16 @@ coreConfig:
 
   # IMS P-CSCF
   ims:
+    # A valid IPv4 address, never "": the SMF refuses an empty or malformed value at start.
+    # 0.0.0.0 means "no IPv4 P-CSCF", e.g. for an IPv6-only IMS DNN: the SMF then sends no
+    # P-CSCF IPv4 container (cn5g-smf L4-11-2).
     pcscfIpv4: "192.168.31.205"
-    pcscfIpv6: "fe80::7915:f408:1787:db8b"
+    # Empty (default) or "::" means no IPv6 P-CSCF: the SMF sends no IPv6 container. To offer
+    # one, set the P-CSCF's global IPv6 address, not a link-local one (RFC 4291 2.5.6:
+    # link-local addresses are not valid outside their link). A malformed address makes the
+    # SMF refuse its config at start. IPv6 P-CSCF sent when set (needs smf L4-11-2b); the SMF
+    # reads the two addresses independently.
+    pcscfIpv6: ""
 
   # SMF configuration
   smf:
@@ -1111,6 +1151,16 @@ coreConfig:
     useLocalPccRules: "no"
     enableQer: "yes"
     enableUdsf: "yes"
+    # PDU session type switches (cn5g-smf smf.support_features), the seeds of the FCAPS
+    # switches ipv6PduEnabled and ethernetPduEnabled. A key is written only when it is
+    # set, so the SMF defaults apply: enableIpv6Pdu yes, enableEthernetPdu no.
+    # enableIpv6Pdu "no": the SMF treats its configuration as limited to IPv4 only
+    # (IPv4v6 request: IPv4 and 5GSM cause #50; IPv6 request: reject #50 or #28, TS 24.501
+    # 6.4.1.3, 6.4.1.4.1), whatever the DNNs say. enableEthernetPdu "yes": the SMF admits
+    # an Ethernet PDU session on a DNN with pdu_session_type ETHERNET; the UPF side is
+    # not set here.
+    # enableIpv6Pdu: "yes"
+    # enableEthernetPdu: "no"
     # OAI key: smf.location_api_root (cn5g-smf #49). apiRoot the SMF puts in the Location of a
     # created SM context, e.g. "http://oai-smf:8080", so the AMF keeps a URI that outlives the SMF pod
     # (TS 29.502 6.1.3.2.3.1, TS 29.500 6.10.4). Empty = SMF default (its listen address).
