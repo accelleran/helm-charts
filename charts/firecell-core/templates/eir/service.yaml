@@ -1,0 +1,27 @@
+{{- if .Values.eir.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-eir
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-eir
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    # The SBI port serves HTTP/2 only (nghttp2); the health port is HTTP/1.1.
+    - name: sbi
+      port: {{ .Values.eir.config.listenPort }}
+      targetPort: {{ .Values.eir.config.listenPort }}
+      protocol: TCP
+    {{- if gt (int .Values.eir.config.healthHttp1Port) 0 }}
+    - name: health
+      port: {{ .Values.eir.config.healthHttp1Port }}
+      targetPort: {{ .Values.eir.config.healthHttp1Port }}
+      protocol: TCP
+    {{- end }}
+  selector:
+    app: oai-eir
+{{- end }}
