@@ -7031,6 +7031,24 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/acc-common-0.1.0/acc-common-0.1.0.tgz
     version: 0.1.0
+  cbrs-domain-proxy:
+  - apiVersion: v2
+    appVersion: 0.5.0
+    created: "2026-11-13T13:54:03.412652707Z"
+    description: CBRS Domain Proxy - the CBSD-facing gRPC front for the SAS, one per
+      site
+    digest: 02a28663b8c70ceec0e99a0685e257c03efcaa68582f5ee46c6b1edfe38c20d3
+    keywords:
+    - cbrs
+    - sas
+    - domain-proxy
+    name: cbrs-domain-proxy
+    sources:
+    - https://github.com/accelleran/cbrs-domain-proxy
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/cbrs-domain-proxy-0.1.0/cbrs-domain-proxy-0.1.0.tgz
+    version: 0.1.0
   cell-wrapper:
   - apiVersion: v2
     appVersion: 7.4.1
@@ -40075,4 +40093,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/zitadel-10.0.4/zitadel-10.0.4.tgz
     version: 10.0.4
-generated: "2026-11-06T14:31:57.888417165Z"
+generated: "2026-11-13T13:54:04.869412964Z"
