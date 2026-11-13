@@ -999,6 +999,22 @@ ims:
     bindPort: 5060
     ipsecClientPort: 5100
     ipsecServerPort: 6100
+    # The alternative P-CSCF of P-CSCF restoration (TS 23.380 5.8.5.2; cn5g-ims L4-A9-5). Off by
+    # default: no second P-CSCF is rendered and the S-CSCF retries nothing. On: a second P-CSCF
+    # Deployment ims-pcscf-alt at ip (required; like the first, a hostNetwork address that must
+    # exist on the node), and the S-CSCF gets ALTERNATIVE_PCSCF=<ip>:<bindPort>. It asks the PCF
+    # for the restoration at pcfUri over pcfHttpVersion; the PCF side is
+    # coreConfig.pcf.policyAuthorization.pcscfRestoration and the SMF acts on it. Ports empty:
+    # those of the first P-CSCF. Empty pcfUri: http://oai-pcf.<namespace>.svc.cluster.local:8080;
+    # empty pcfHttpVersion: coreConfig.httpVersion (1 or 2).
+    alternative:
+      enabled: false
+      ip: ""
+      bindPort: ""
+      ipsecClientPort: ""
+      ipsecServerPort: ""
+      pcfUri: ""
+      pcfHttpVersion: ""
   icscf:
     ip: "192.168.31.206"
     hostNetwork: true
