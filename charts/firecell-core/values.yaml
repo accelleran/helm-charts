@@ -30,7 +30,9 @@ global:
   # Secret <secretPrefix>-<nf> (keys tls.crt, tls.key, ca.crt) at /etc/firecell/sbi-tls.
   # Not covered when TLS is on (FIXME(limitation)): the IMS (the Rx-N5 IWF and the P-CSCF
   # restoration call the PCF in clear text), the NMS and ACS agents, and the post-flight verify
-  # hook (it reads the NRF over http); the NEF is added after its TLS build decision.
+  # hook (it reads the NRF over http), and the NEF: cn5g-nef 98ea2070 reads TLS and OAUTH2 groups
+  # from its libconfig file, but the etc/nef.conf template the image renders from the environment
+  # has no placeholders for them, so the chart cannot set them.
   sbi:
     tls:
       enabled: false
