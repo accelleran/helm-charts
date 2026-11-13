@@ -1,0 +1,23 @@
+{{- /*
+What this release rendered, for the NMS support bundles and drift checks:
+the NMS reads no Helm release Secret. No values content and nothing from a
+Secret: the values appear only as a digest. List every template that
+renders a pod.
+*/}}
+{{- $ns := include "firecell-du.namespace" . }}
+{{- $name := printf "%s-release-info" .Release.Name }}
+{{- $templates := list
+      "deployment.yaml"
+      "preflight.yaml"
+}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-du.labels" . | nindent 4 }}
+    firecell.io/release-info: "true"
+data:
+  release.json: {{ include "firecell-du.releaseInfo.record" (dict "root" . "namespace" $ns "templates" $templates) | quote }}
+  history.json: {{ include "firecell-du.releaseInfo.history" (dict "root" . "live" (lookup "v1" "ConfigMap" $ns $name)) | quote }}

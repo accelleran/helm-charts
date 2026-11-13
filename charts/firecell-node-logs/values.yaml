@@ -1,0 +1,162 @@
+# Firecell node logs: on every node, a VictoriaLogs store (one DaemonSet per
+# profile) and vlagent, which collects the stdout of every container on the
+# node and writes only to the store on that same node. Nothing leaves the
+# node until the NMS queries the store. Install one release per cluster:
+# object names are fixed so the NMS can rely on them.
+
+global:
+  # -- Registry (host[:port][/path]) replacing every image's registry,
+  # keeping its repository path. Empty: each image's own registry.
+  imageRegistry: ""
+  # -- Pull policy of every image in the chart.
+  imagePullPolicy: IfNotPresent
+  # -- Pull secrets of every pod in the chart, e.g. `[{name: registry-secret}]`.
+  imagePullSecrets: []
+
+# -- Tolerations of the store and vlagent pods. Both must run on every node,
+# RAN nodes included, or that node's logs are not kept.
+tolerations:
+  - key: node-role.firecell/ran
+    operator: Exists
+
+# -- PriorityClass of the store and vlagent pods. Empty: none. Use a class
+# below the RAN and core workloads, and one that exists before this chart is
+# installed (a missing class makes every pod fail admission).
+priorityClassName: ""
+
+# --- The NMS that queries the stores and changes their retention ---
+nms:
+  # -- Namespace of the firecell-nms release. Its ServiceAccount `nms` may
+  # list the store endpoints here, and the NetworkPolicy lets that namespace
+  # reach the stores.
+  namespace: firecell-nms
+
+# --- Store profiles ---
+# Nodes pick a profile with the label `firecell.io/log-profile=<name>`. Each
+# enabled profile renders its own store DaemonSet `vlogs-node-<name>`, because
+# a store has one retention for everything it holds. defaultProfile also runs
+# on every node without the label, or with a label naming no other enabled
+# profile, so every node gets exactly one store.
+
+# -- Profile that runs on nodes not labelled for another enabled profile.
+defaultProfile: standard
+
+profiles:
+  standard:
+    # -- Render this profile's DaemonSet.
+    enabled: true
+    # -- Extra node labels a node must also have (ANDed with the profile rule).
+    nodeSelector: {}
+    # -- Logs older than this are deleted. A number and a unit: h, d, w, M or y; at least 1d.
+    retentionPeriod: 7d
+    diskLimit:
+      # -- `bytes`: value is a size (e.g. 5GiB). `percent`: value is the
+      # highest use (1-100) of the filesystem holding the store. The oldest
+      # days are dropped first when the limit is reached.
+      kind: bytes
+      # -- Disk limit, see kind.
+      value: 5GiB
+    # -- Store resources. Never request whole CPUs: with the static CPU
+    # manager that would take isolated cores away from the RAN.
+    resources:
+      requests: {cpu: 20m, memory: 96Mi}
+      limits: {cpu: 500m, memory: 512Mi}
+  small:
+    # -- Render this profile's DaemonSet.
+    enabled: true
+    # -- Extra node labels a node must also have (ANDed with the profile rule).
+    nodeSelector: {}
+    # -- Logs older than this are deleted.
+    retentionPeriod: 3d
+    diskLimit:
+      # -- `bytes` or `percent`, see profiles.standard.diskLimit.kind.
+      kind: bytes
+      # -- Disk limit, see kind.
+      value: 2GiB
+    # -- Store resources. Never request whole CPUs.
+    resources:
+      requests: {cpu: 10m, memory: 64Mi}
+      limits: {cpu: 250m, memory: 256Mi}
+
+# --- VictoriaLogs store ---
+store:
+  image:
+    # -- Image registry host. Replaced by global.imageRegistry when set.
+    registry: docker.io
+    # -- Image repository path, including the org (kept when the registry is rewritten).
+    repository: victoriametrics/victoria-logs
+    # -- Image tag.
+    tag: v1.53.0
+    # -- Optional. When set, used as registry/repository@digest instead of :tag.
+    digest: ""
+  # -- Host directory of the store data; each profile uses `<hostPath>/<profile>`.
+  # The data survives pod restarts and chart upgrades.
+  hostPath: /var/lib/firecell/vlogs
+  # -- Extra VictoriaLogs flags, e.g. `["-search.maxQueryDuration=120s"]`.
+  # Retention flags do not belong here: they come from the profile.
+  extraArgs: []
+  # -- Seconds the store gets to flush its data on shutdown.
+  terminationGracePeriodSeconds: 60
+
+# --- vlagent: collects every container's stdout on the node ---
+vlagent:
+  image:
+    # -- Image registry host. Replaced by global.imageRegistry when set.
+    registry: docker.io
+    # -- Image repository path, including the org (kept when the registry is rewritten).
+    repository: victoriametrics/vlagent
+    # -- Image tag.
+    tag: v1.53.0
+    # -- Optional. When set, used as registry/repository@digest instead of :tag.
+    digest: ""
+  # -- Host directory of the read checkpoints and the send buffer. Both
+  # survive restarts, so a restarted vlagent goes on where it stopped.
+  hostPath: /var/lib/firecell/vlagent
+  # -- Largest send buffer per destination while a store is unreachable
+  # (e.g. during its rolling restart). The oldest buffered logs are dropped first.
+  maxDiskUsagePerURL: 256MiB
+  # -- Memory vlagent may use for caches (`-memory.allowedBytes`). Empty: the VictoriaMetrics default.
+  memoryAllowedBytes: 24MiB
+  # -- Extra vlagent flags.
+  extraArgs: []
+  # -- vlagent resources. Never request whole CPUs.
+  resources:
+    requests: {cpu: 10m, memory: 48Mi}
+    limits: {cpu: 250m, memory: 192Mi}
+  # -- vlagent container securityContext. It runs as root to read the
+  # kubelet's log files, without privileges or capabilities.
+  securityContext:
+    runAsUser: 0
+    runAsNonRoot: false
+    privileged: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop: ["ALL"]
+
+collect:
+  # -- LogsQL filter on container metadata: matching containers are not
+  # collected at all. The default skips pods annotated
+  # `firecell.io/log-exclude: "true"`. Fields: kubernetes.pod_namespace,
+  # kubernetes.pod_name, kubernetes.container_name,
+  # kubernetes.pod_labels.<label>, kubernetes.pod_annotations.<annotation>,
+  # kubernetes.namespace_labels.<label>, kubernetes.node_labels.<label>.
+  # Quote field names that contain `/` or `-`. Empty collects everything.
+  excludeFilter: '"kubernetes.pod_annotations.firecell.io/log-exclude":="true"'
+  # -- Fields added to every collected line, e.g. `{site: lab-1}`.
+  extraFields: {}
+
+# Optional copy of every collected line to a central VictoriaLogs. Off by
+# default: logs then never leave the node unless the NMS asks for them.
+centralCopy:
+  # -- Also send every line to centralCopy.url. vlagent buffers for it
+  # separately, so an unreachable central store does not hold up the local one.
+  enabled: false
+  # -- Central VictoriaLogs insert URL, ending in `/insert/native`.
+  url: ""
+
+networkPolicy:
+  # -- Let only vlagent and the NMS namespace (and extraFrom) reach the stores on port 9428.
+  enabled: true
+  # -- More NetworkPolicyPeers allowed to the stores, e.g. a monitoring namespace that scrapes /metrics.
+  extraFrom: []

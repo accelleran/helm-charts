@@ -1,0 +1,38 @@
+# The NMS (ServiceAccount nms of the firecell-nms release) finds the store
+# of each node from the EndpointSlices of Service vlogs-node, and follows a
+# retention change through the store DaemonSets' rollout. Read-only.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nms-log-stores
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-access
+rules:
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["daemonsets"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nms-log-stores
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-access
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nms-log-stores
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ required "firecell-node-logs: nms.namespace is required" .Values.nms.namespace }}

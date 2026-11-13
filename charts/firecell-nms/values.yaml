@@ -168,6 +168,41 @@ rbac:
   # renders nothing there; the RAN charts grant the access.
   ranNamespace: ""
 
+# --- Support logs and bundles ---
+# A worker builds support bundles from the per-node log stores of the
+# firecell-node-logs chart, in scratch space of its own, and keeps the
+# finished archive in the NMS database, from which any API replica streams
+# it. API and worker pods therefore spread over nodes freely.
+#
+# Keeping bundles in the database is the first-phase answer. The plan is
+# shared storage every pod can mount (Longhorn or another ReadWriteMany
+# volume); bringing that into every edge install is a larger change than
+# support bundles justify today.
+supportLogs:
+  logStore:
+    # -- Namespace of the firecell-node-logs release.
+    namespace: firecell-logs
+    # -- Headless Service of the stores; the backend reads its EndpointSlices
+    # to find the store of each node.
+    service: vlogs-node
+    # -- Port of every store.
+    port: 9428
+  retention:
+    # -- ConfigMap the backend writes store retention overrides to (Flux
+    # merges it into the firecell-node-logs HelmRelease values).
+    configMap: firecell-node-logs-overrides
+    # -- Namespace of that ConfigMap.
+    configMapNamespace: flux-system
+  bundles:
+    # -- Where the worker builds a bundle (an emptyDir).
+    dir: /var/lib/nms/bundles
+    # -- Size limit of that emptyDir. A bundle is at most 2 GiB before
+    # compression by default, written once uncompressed and once packed.
+    scratchSizeLimit: 5Gi
+    # -- Finished bundles kept in the database together, in bytes; the oldest
+    # go first. Each also expires after a day.
+    storeMaxBytes: 1073741824
+
 # --- NetworkPolicies for the gateway identity headers ---
 networkPolicy:
   # -- Restrict who reaches the API (nms-api, port 8080) and nms-front

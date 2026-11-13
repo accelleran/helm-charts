@@ -1,0 +1,31 @@
+{{- if .Values.networkPolicy.enabled }}
+# The stores hold every container's output: only vlagent (to write), the
+# NMS namespace (to query) and networkPolicy.extraFrom may connect.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vlogs-node
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vlogs-node
+    app.kubernetes.io/component: store
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: vlogs-node
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vlagent
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ required "firecell-node-logs: nms.namespace is required" .Values.nms.namespace }}
+        {{- with .Values.networkPolicy.extraFrom }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      ports:
+        - {port: {{ include "firecell-node-logs.storePort" . }}, protocol: TCP}
+{{- end }}

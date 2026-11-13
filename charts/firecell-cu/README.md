@@ -1,6 +1,6 @@
 # firecell-cu
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service DUs (firecell-du) attach to
 
@@ -32,10 +32,12 @@ Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig
 ### 2.1 NMS Access
 With `nms.rbac` (the default), the release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs here:
 
-- RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: pod reads.
+- RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: reads of pods and their logs, ConfigMaps, events, and Deployments, ReplicaSets, StatefulSets and DaemonSets.
 - Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for `cu-cp` and `cu-up`, so the NMS can restart, stop and start them.
 
 The NMS and the CU can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
+
+Every install and upgrade also writes ConfigMap `<release>-release-info` (label `firecell.io/release-info: "true"`) in the release namespace, for the NMS support bundles and drift checks, since the NMS reads no Helm release Secret. `release.json` holds the release, namespace, chart (`<name>-<version>`), appVersion, revision, render time (`renderedAt`, UTC), a SHA-256 digest of the values (`valuesDigest`) and the image of every container the chart renders (`images`, keyed `<workload>/<container>`, taken from the rendered pods themselves). `history.json` keeps up to 20 earlier `release.json` records, newest first, read back from the live ConfigMap with `lookup`; it starts empty after `helm template` or a client-side dry run. Neither holds any values content or anything from a Secret. `helm rollback` reapplies the stored manifest of the target revision, so the record and its history roll back with it.
 
 ## 3. Node prerequisites
 - Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
@@ -50,18 +52,16 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | amf.procedureTimeoutMs | int | `15000` | NGAP procedure timeout (ms). |
 | cuCp.cpus | string | `""` | CPU list for taskset. Empty runs unpinned. |
 | cuCp.enabled | bool | `true` | Deploy CU-CP and its headless F1/E1 Service. |
-| cuCp.extraConfig | object | `{"log":{"all_level":"warning","cu_level":"info","e1ap_level":"warning","f1ap_level":"info","filename":"/tmp/logs/ocudu_cu_cp.log","hex_max_size":0,"ngap_level":"info","pdcp_level":"warning","rrc_level":"info"},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9093},"pcap":{"e1ap_enable":false,"e1ap_filename":"/tmp/logs/cu_cp_e1ap.pcap","f1ap_enable":false,"f1ap_filename":"/tmp/logs/cu_cp_f1ap.pcap","ngap_enable":false,"ngap_filename":"/tmp/logs/cu_cp_ngap.pcap"}}` | Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict). |
+| cuCp.extraConfig | object | `{"log":{"all_level":"warning","cu_level":"info","e1ap_level":"warning","f1ap_level":"info","filename":"stdout","hex_max_size":0,"ngap_level":"info","pdcp_level":"warning","rrc_level":"info"},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9093},"pcap":{"e1ap_enable":false,"e1ap_filename":"/tmp/logs/cu_cp_e1ap.pcap","f1ap_enable":false,"f1ap_filename":"/tmp/logs/cu_cp_f1ap.pcap","ngap_enable":false,"ngap_filename":"/tmp/logs/cu_cp_ngap.pcap"}}` | Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict). |
 | cuCp.image | string | `""` | Image override (defaults to global.image). |
 | cuCp.nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
-| cuCp.o1.enabled | bool | `false` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
+| cuCp.o1 | object | `{"enabled":false,"netconfVerbosity":"warning","restartOnColdCommit":false,"statePath":"","ueContext":{"enabled":true,"maxUes":256,"measReport":{"intervalMs":1024,"sectorIds":[]}},"yangSearchPath":"/usr/local/yang"}` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
 | cuCp.o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
-| cuCp.o1.restartOnColdCommit | bool | `false` |  |
 | cuCp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp. |
 | cuCp.o1.ueContext.enabled | bool | `true` | Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty. |
 | cuCp.o1.ueContext.maxUes | int | `256` | Maximum published UE entries. |
 | cuCp.o1.ueContext.measReport.intervalMs | int | `1024` | Report interval in ms (120, 240, 480, 640, 1024 or 2048). Must stay below ocudu's ue_meas_max_age_ms (3000), or every report is dropped as stale. |
 | cuCp.o1.ueContext.measReport.sectorIds | list | `[]` | cell.sectorId of every DU cell on this CU-CP. Each gets a periodic serving-cell measurement report so ue-context carries RSRP/RSRQ/SINR. Empty sends no reports (the three panels stay empty). NCI = gnb.gnbId << (36 - gnb.gnbIdBitLength) \| sectorId. |
-| cuCp.o1.yangSearchPath | string | `"/usr/local/yang"` |  |
 | cuCp.requestPduSessionTimeout | int | `15` | Seconds the CU-CP waits for PDU session setup before releasing the UE. |
 | cuCp.resources | object | `{}` |  |
 | cuCp.tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |
@@ -69,15 +69,15 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuUp.cpus | string | `""` | CPU list for taskset. Empty runs unpinned. |
 | cuUp.cuCpAddress | string | `""` | E1 target. Empty resolves to <cuCpService.name>.<namespace>.svc.cluster.local. |
 | cuUp.enabled | bool | `true` | Deploy CU-UP. |
-| cuUp.extraConfig | object | `{"cu_up":{"ngu":{"gtpu":{"ignore_ue_ambr":true}},"warn_on_drop":true},"log":{"all_level":"warning","filename":"/tmp/logs/ocudu_cu_up.log","hex_max_size":0},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9094},"pcap":{"e1ap_enable":false,"f1u_enable":false,"n3_enable":false}}` | Raw Ocudu cu_up YAML merged over the generated config. |
+| cuUp.extraConfig | object | `{"cu_up":{"ngu":{"gtpu":{"ignore_ue_ambr":true}},"warn_on_drop":true},"log":{"all_level":"warning","filename":"stdout","hex_max_size":0},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9094},"pcap":{"e1ap_enable":false,"f1u_enable":false,"n3_enable":false}}` | Raw Ocudu cu_up YAML merged over the generated config. |
 | cuUp.f1u.network.cidr | string | `""` | CU-UP F1-U address with prefix. The IP part is the F1-U bind address. |
 | cuUp.f1u.network.enabled | bool | `false` | Put F1-U (GTP-U toward the DUs) on a macvlan of a host NIC instead of the pod network. Use when the DUs run on another node and the pod network between the nodes is slower than the user plane. |
 | cuUp.f1u.network.master | string | `""` | Host interface the F1-U macvlan sits on (link toward the DU node). |
 | cuUp.image | string | `""` |  |
 | cuUp.n3.cidr | string | `"10.3.0.4/24"` | Static N3 address with prefix. The IP part is the NG-U bind address. |
 | cuUp.n3.cniType | string | `"macvlan"` | macvlan (CU-UP on a different node than the UPF) or bridge (CU-UP on the UPF node with the UPF on a Linux bridge and generic XDP; macvlan siblings bypass generic XDP). |
-| cuUp.n3.enabled | bool | `true` | Attach a macvlan for N3. When false, N3 binds the pod IP. |
-| cuUp.n3.mac | string | `""` | Fixed MAC for the N3 macvlan (keeps the UPF neighbour entry valid). Empty lets CNI pick. |
+| cuUp.n3.enabled | bool | `true` | Attach a secondary interface for N3. When false, N3 binds the pod IP. |
+| cuUp.n3.mac | string | `""` | Fixed MAC for the N3 interface (keeps the UPF neighbour entry valid). Empty lets CNI pick. |
 | cuUp.n3.master | string | `"eth1"` | Host parent interface (macvlan) or Linux bridge name (bridge, e.g. br-n3). |
 | cuUp.nodeSelector | object | `{}` |  |
 | cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
@@ -86,8 +86,8 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuUp.o1.restartOnColdCommit | bool | `false` |  |
 | cuUp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up. |
 | cuUp.o1.yangSearchPath | string | `"/usr/local/yang"` |  |
-| cuUp.rpsCpus | string | `""` | RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off. |
 | cuUp.resources | object | `{}` |  |
+| cuUp.rpsCpus | string | `""` | RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off. |
 | cuUp.tolerations | list | `[]` |  |
 | global.image | string | `"docker.io/accelleran/ran:0.1.0"` | Ocudu runtime image. Components may override it. |
 | global.imagePullPolicy | string | `"IfNotPresent"` | Pull policy for the Ocudu image. Use Never for images imported into containerd. |
@@ -104,6 +104,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | nms.rbac | bool | `true` | Let the NMS read pods here, and restart, stop and start the cu-cp and cu-up Deployments. |
 
 ## 5. Maintenance & Troubleshooting
+- CU-CP and CU-UP log to stdout (`log.filename: stdout` in `cuCp.extraConfig` and `cuUp.extraConfig`): read them with `kubectl logs deploy/cu-cp -c ocucp` and `kubectl logs deploy/cu-up -c ocuup`, and the node's log store ([`firecell-node-logs`](../firecell-node-logs)) keeps them across restarts. Set `filename` to a path under `/tmp/logs` to log to a file again; that directory is an emptyDir, emptied with the pod, and still holds the pcaps.
 - If CU-CP and CU-UP restart together, CU-UP can time out on its first E1 connect and restart once. That restart is expected.
 - CU-UP starts `min(cuUp.nofThreads, len(cuUp.cpus) - 3)` pool workers, so a 4-CPU `cuUp.cpus` gives one worker. Give it at least `nofThreads + 3` CPUs.
 - Restarting CU-CP drops every DU's F1 association; the DUs reconnect on their own.
