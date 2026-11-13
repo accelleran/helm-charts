@@ -1,0 +1,24 @@
+{{- if .Values.nef.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-nef
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-nef
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    - name: sbi
+      port: {{ .Values.nef.config.sbiPort }}
+      targetPort: {{ .Values.nef.config.sbiPort }}
+      protocol: TCP
+    - name: http2
+      port: {{ .Values.nef.config.sbiHttp2Port }}
+      targetPort: {{ .Values.nef.config.sbiHttp2Port }}
+      protocol: TCP
+  selector:
+    app: oai-nef
+{{- end }}

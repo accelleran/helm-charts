@@ -412,6 +412,48 @@ eir:
     # answers BLACKLISTED (SIM lock). Seed of the FCAPS switch peiSupiBindingCheckEnabled.
     peiSupiBindingCheck: true
 
+# --- NEF (Network Exposure Function, cn5g-nef) ---
+# Off by default: the cn5g-nef image is not published yet. Monitoring events (TS 29.122
+# 4.4.2) through the AMF's Namf_EventExposure. The image renders etc/nef.conf from the
+# environment at start, so config holds the placeholders of that file (see cn5g-nef README,
+# "Environment Variables"). Only the AMF is used for the monitoring events; the SMF and UDM
+# entries are read by the NEF but not used by this feature.
+nef:
+  enabled: false
+  image: cn5g-nef
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
+  imageOverride: ""
+  priorityClassName: firecell-prio-normal
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+  config:
+    interfaceName: eth0
+    # The NEF's own HTTP/1.1 and HTTP/2 ports (image defaults 80 and 8080).
+    sbiPort: 80
+    sbiHttp2Port: 8080
+    # yes: the NEF calls its peers over HTTP/2 (USE_HTTP2). This chart's NFs speak HTTP/1.1.
+    useHttp2: false
+    # Peers, by Service name; the NEF resolves them when it starts. Port is the HTTP/1.1
+    # port, as the other NFs of this chart use it (8080 with coreConfig.httpVersion 1).
+    peers:
+      amf: {hostname: oai-amf, port: 8080, http2Port: 8080}
+      smf: {hostname: oai-smf, port: 8080, http2Port: 8080}
+      udm: {hostname: oai-udm, port: 8080, http2Port: 8080}
+    # Optional NRF use (cn5g-nef L1-12-5): register the NEF, and find the AMF through the NRF
+    # (else the AMF above). Both off by default; the NRF is passed to the NEF only when one is on.
+    nrf:
+      hostname: oai-nrf
+      port: 8080
+      register: false
+      discoverAmf: false
+
 # --- AMF (Access and Mobility Management Function) ---
 amf:
   enabled: true
