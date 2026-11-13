@@ -1,0 +1,88 @@
+{{- if .Values.eir.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oai-eir
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-eir
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oai-eir
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: oai-eir
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+      annotations:
+        checksum/eir-config: {{ include (print $.Template.BasePath "/eir/secret.yaml") . | sha256sum }}
+    spec:
+      priorityClassName: {{ .Values.eir.priorityClassName }}
+      initContainers:
+        {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
+        # The EIR creates its two tables at start and fails fast when MySQL is unreachable.
+        - name: wait-for-mysql
+          image: {{ .Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              until nc -z "{{ .Values.coreConfig.database.host }}" {{ .Values.coreConfig.database.port | default 3306 }}; do
+                echo "MySQL not ready, retrying in 5s..."
+                sleep 5
+              done
+      containers:
+        - name: eir
+          image: {{ .Values.eir.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.eir.image "imageTag" .Values.eir.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            {{- toYaml .Values.eir.command | nindent 12 }}
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+          ports:
+            - name: sbi
+              containerPort: {{ .Values.eir.config.listenPort }}
+              protocol: TCP
+            {{- if gt (int .Values.eir.config.healthHttp1Port) 0 }}
+            - name: health
+              containerPort: {{ .Values.eir.config.healthHttp1Port }}
+              protocol: TCP
+            {{- end }}
+          volumeMounts:
+            - name: eir-config
+              mountPath: {{ .Values.eir.configMountPath }}
+              subPath: eir.yaml
+          resources:
+            {{- toYaml .Values.eir.resources | nindent 12 }}
+          readinessProbe:
+            {{- if gt (int .Values.eir.config.healthHttp1Port) 0 }}
+            httpGet:
+              path: /health
+              port: {{ .Values.eir.config.healthHttp1Port }}
+            {{- else }}
+            tcpSocket:
+              port: {{ .Values.eir.config.listenPort }}
+            {{- end }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 6
+            timeoutSeconds: 3
+      volumes:
+        - name: eir-config
+          secret:
+            secretName: oai-eir-config
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
