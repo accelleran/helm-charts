@@ -1,0 +1,104 @@
+{{- if .Values.nef.enabled }}
+{{- /* cn5g-nef (Nnef_EventExposure, TS 29.122 monitoring events). The image renders its
+       etc/nef.conf from environment variables at start (entrypoint.py), so there is no
+       ConfigMap; the variable names are the placeholders of etc/nef.conf. */}}
+{{- $nef := .Values.nef }}
+{{- $cfg := $nef.config }}
+{{- $nrfOn := or $cfg.nrf.register $cfg.nrf.discoverAmf }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oai-nef
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-nef
+    tier: core-network
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oai-nef
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: oai-nef
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      priorityClassName: {{ $nef.priorityClassName }}
+      {{- if $nrfOn }}
+      initContainers:
+        {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: nef
+          image: {{ $nef.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" $nef.image "imageTag" $nef.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          # The image ENTRYPOINT and CMD start the NEF: entrypoint.py renders etc/nef.conf.
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+            - name: NEF_INTERFACE_NAME_FOR_SBI
+              value: {{ $cfg.interfaceName | quote }}
+            - name: NEF_INTERFACE_PORT_FOR_SBI
+              value: {{ $cfg.sbiPort | quote }}
+            - name: NEF_INTERFACE_HTTP2_PORT_FOR_SBI
+              value: {{ $cfg.sbiHttp2Port | quote }}
+            # Peers, resolved by the entrypoint when the NEF starts (AMF: Namf_EventExposure).
+            {{- range $peer := list "amf" "smf" "udm" }}
+            {{- $p := get $cfg.peers $peer }}
+            - name: {{ upper $peer }}_HOSTNAME
+              value: {{ $p.hostname | quote }}
+            - name: {{ upper $peer }}_PORT
+              value: {{ $p.port | quote }}
+            - name: {{ upper $peer }}_HTTP2_PORT
+              value: {{ $p.http2Port | quote }}
+            {{- end }}
+            - name: USE_HTTP2
+              value: {{ ternary "yes" "no" $cfg.useHttp2 | quote }}
+            {{- if $nrfOn }}
+            # The NRF block of nef.conf is written when a host is set, and the entrypoint
+            # resolves it at start: only with REGISTER_NRF / DISCOVER_AMF, so a NEF without
+            # them does not depend on the NRF.
+            - name: NRF_HOSTNAME
+              value: {{ $cfg.nrf.hostname | quote }}
+            - name: NRF_PORT
+              value: {{ $cfg.nrf.port | quote }}
+            {{- end }}
+            - name: REGISTER_NRF
+              value: {{ ternary "yes" "no" $cfg.nrf.register | quote }}
+            - name: DISCOVER_AMF
+              value: {{ ternary "yes" "no" $cfg.nrf.discoverAmf | quote }}
+          ports:
+            - name: sbi
+              containerPort: {{ $cfg.sbiPort }}
+              protocol: TCP
+            - name: http2
+              containerPort: {{ $cfg.sbiHttp2Port }}
+              protocol: TCP
+          resources:
+            {{- toYaml $nef.resources | nindent 12 }}
+          # The image HEALTHCHECK script.
+          readinessProbe:
+            exec:
+              command: ["/openair-nef/bin/healthcheck.sh"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["/openair-nef/bin/healthcheck.sh"]
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 5
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
