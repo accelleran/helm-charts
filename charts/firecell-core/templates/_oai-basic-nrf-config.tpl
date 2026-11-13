@@ -201,6 +201,12 @@ amf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.handover }}
+  {{- if hasKey . "sourceReleaseDelayMs" }}
+  handover:
+    source_release_delay_ms: {{ .sourceReleaseDelayMs }}
+  {{- end }}
+  {{- end }}
   {{- with $v.coreConfig.amf.nasTimers }}
   {{- if .t3512Min }}
   nas_timers:

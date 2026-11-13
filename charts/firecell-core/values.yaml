@@ -1303,6 +1303,12 @@ coreConfig:
     ueAmbrDefault:
       uplink: "1 Gbps"
       downlink: "1 Gbps"
+    # N2 handover (cn5g-amf amf.handover). sourceReleaseDelayMs, seed of the FCAPS switch
+    # hoSourceReleaseDelayMs (0..5000 ms, AMF default 1000): how long after the Handover Notify the
+    # AMF releases the source RAN's UE context, so that forwarded packets can still arrive; 0
+    # releases at the Notify, as before the feature. The AMF refuses other values at start.
+    handover:
+      sourceReleaseDelayMs: 1000
     # NAS timer T3512 (periodic registration update) in minutes, sent to the UE in the
     # Registration Accept (cn5g-amf amf.nas_timers.t3512_min, default 50; TS 24.501 5.3.7).
     # It must be exactly encodable as a GPRS Timer 3 (TS 24.008 10.5.7.4a: a value of 1 to
