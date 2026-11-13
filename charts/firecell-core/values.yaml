@@ -1043,6 +1043,17 @@ coreConfig:
     # default is false when the key is absent; cn5g-amf etc/config.yaml sets true.
     paging:
       fanoutMultiGnb: true
+    # SNPN / CAG (cn5g-amf amf.npn). A key is rendered only when it is set, so the
+    # AMF defaults apply otherwise: cagEnforcement true, nonCagUeRejectCause 7.
+    # nonCagUeRejectCause is the 5GMM cause for a UE without CAG support that is
+    # rejected because of CAG restrictions (TS 24.501 5.5.1.2.8); the AMF accepts
+    # 7, 11, 27 and 73 and refuses any other value at start.
+    npn: {}
+    #  cagEnforcement: true
+    #  nonCagUeRejectCause: 7
+    # NID of the SNPN: written into the AMF plmn_support_list entry when set (11
+    # hex digits, first digit 0-2, cn5g-amf NID_REGEX). Empty: no nid is written.
+    nid: ""
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"

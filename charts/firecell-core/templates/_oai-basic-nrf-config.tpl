@@ -153,6 +153,17 @@ amf:
     fanout_multi_gnb: {{ .fanoutMultiGnb }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.npn }}
+  {{- if or (hasKey . "cagEnforcement") (hasKey . "nonCagUeRejectCause") }}
+  npn:
+    {{- if hasKey . "cagEnforcement" }}
+    cag_enforcement: {{ .cagEnforcement }}
+    {{- end }}
+    {{- if hasKey . "nonCagUeRejectCause" }}
+    non_cag_ue_reject_cause: {{ .nonCagUeRejectCause }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
@@ -163,6 +174,9 @@ amf:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
       tac: {{ $v.coreConfig.tac }}
+      {{- with $v.coreConfig.amf.nid }}
+      nid: {{ . | quote }}
+      {{- end }}
       nssai:
       {{- range $v.coreConfig.nssai }}
         - sst: {{ .sst }}
