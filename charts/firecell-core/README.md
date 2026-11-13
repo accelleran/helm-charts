@@ -255,6 +255,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.smf.enableQer | string | `"yes"` |  |
 | coreConfig.smf.enableUdsf | string | `"yes"` |  |
 | coreConfig.smf.enableUpfWoNfDiscovery | string | `"yes"` |  |
+| coreConfig.smf.handover.endMarker | bool | `true` |  |
 | coreConfig.smf.enableUsageReporting | string | `"no"` |  |
 | coreConfig.smf.ueMtu | int | `1452` |  |
 | coreConfig.smf.useLocalPccRules | string | `"no"` |  |
@@ -387,6 +388,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.usersConf | string | `""` |  |
 | mysql.database | string | `"oai_db"` |  |
 | mysql.enabled | bool | `true` |  |
+| mysql.extraInitSql | string | `""` |  |
 | mysql.image | string | `"mysql:8.3"` |  |
 | mysql.imageOverride | string | `"docker.io/library/mysql:8.3"` |  |
 | mysql.keepSecretOnUninstall | bool | `false` |  |
@@ -626,6 +628,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.dnsServers[0] | string | `"10.152.183.10"` |  |
 | upf.enableBpfDatapath | bool | `true` |  |
 | upf.enabled | bool | `true` |  |
+| upf.ethDlBroadcastEnabled | bool | `true` |  |
+| upf.ethDlFloodMaxCopies | int | `50` |  |
 | upf.fcaps.datastore.file | string | `"cm.json"` |  |
 | upf.fcaps.datastore.mountPath | string | `"/var/lib/firecell/cm"` |  |
 | upf.fcaps.datastore.size | string | `"128Mi"` |  |

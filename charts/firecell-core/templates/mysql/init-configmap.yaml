@@ -27,4 +27,8 @@ data:
   {{ base $path }}: |
 {{ $.Files.Get $path | indent 4 }}
 {{- end }}
+{{- with .Values.mysql.extraInitSql }}
+  09-extra.sql: |
+{{ . | indent 4 }}
+{{- end }}
 {{- end }}
