@@ -196,6 +196,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.amfPointer | string | `"01"` |  |
 | coreConfig.amf.amfRegionId | string | `"01"` |  |
 | coreConfig.amf.amfSetId | string | `"001"` |  |
+| coreConfig.amf.callTrace | object | `{}` |  |
+| coreConfig.amf.amPolicy.enabled | bool | `false` |  |
 | coreConfig.amf.emergencySupport | bool | `false` |  |
 | coreConfig.amf.eir.enabled | bool | `true` |  |
 | coreConfig.amf.eir.enforcementMode | string | `"permissive"` |  |
@@ -244,7 +246,10 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.nrf.suspendedNfInterval | int | `120` |  |
 | coreConfig.nssai[0].sd | string | `"000001"` |  |
 | coreConfig.nssai[0].sst | int | `1` |  |
+| coreConfig.pcf.amPolicy | object | `{}` |  |
 | coreConfig.pcf.enablePolicyProvisioningApi | string | `"yes"` |  |
+| coreConfig.pcf.policyAuthorization.afEvents | bool | `true` |  |
+| coreConfig.pcf.policyAuthorization.pcscfRestoration | bool | `true` |  |
 | coreConfig.registerNf | string | `"yes"` |  |
 | coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | string | `"yes"` |  |
 | coreConfig.smf.enableQer | string | `"yes"` |  |

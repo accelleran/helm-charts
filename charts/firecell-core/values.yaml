@@ -1170,6 +1170,26 @@ coreConfig:
     eir:
       enabled: true
       enforcementMode: permissive
+    # AM policy association with the PCF at registration (cn5g-amf amf.am_policy; TS 23.502
+    # 4.2.2.2.2 step 16, TS 29.507), seed of the FCAPS switch amPolicyEnabled. Off by
+    # default, which is the AMF default. On: the AMF asks the PCF (the nfs.pcf entry of the
+    # config, no NRF discovery) for the RFSP index and the UE-AMBR, and deletes the
+    # association at de-registration. The PCF values are set under coreConfig.pcf.amPolicy.
+    amPolicy:
+      enabled: false
+    # NGAP call trace (cn5g-amf amf.call_trace; TS 32.422, TS 38.413 Trace Start). Empty
+    # (default) is off: the AMF sends no Trace Start without a usable profile. A profile needs
+    # ngranTraceId = 16 hex digits whose first 6 are a PLMN-coded Trace Reference prefix (for
+    # MCC 001 / MNC 01: 00F110) and tceIpv4 = the Trace Collection Entity (not in
+    # 192.0.2.0/24, the documentation range). interfacesToTrace is the Interfaces To Trace
+    # byte (AMF default 0x80), traceDepth a string (AMF default "minimum"); autoStartSupi
+    # starts a trace for that SUPI at registration. Keys are written only when set.
+    callTrace: {}
+    #  ngranTraceId: "00F1100000010001"
+    #  tceIpv4: "10.0.0.10"
+    #  interfacesToTrace: "0x80"
+    #  traceDepth: minimum
+    #  autoStartSupi: imsi-001010000000002
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
@@ -1317,6 +1337,28 @@ coreConfig:
   # PCF configuration
   pcf:
     enablePolicyProvisioningApi: "yes"
+    # AM policy the PCF returns to the AMF (cn5g-pcf pcf.am_policy; Npcf_AMPolicyControl,
+    # TS 29.507). Only used when the AMF asks for it: coreConfig.amf.amPolicy.enabled. Empty
+    # (default): the PCF answers with the values the AMF sent. rfspIndex 1..256; ueAmbr needs
+    # both uplink and downlink as TS 29.571 BitRate strings; supi overrides the defaults per
+    # SUPI (the same two keys). The PCF refuses a bad value at start.
+    amPolicy: {}
+    #  rfspIndex: 12
+    #  ueAmbr:
+    #    uplink: "100 Mbps"
+    #    downlink: "1 Gbps"
+    #  supi:
+    #    imsi-001010000000002:
+    #      rfspIndex: 7
+    # Npcf_PolicyAuthorization (N5) switches (cn5g-pcf pcf.policy_authorization), seeds of the
+    # FCAPS switches afEventsEnabled and pcscfRestorationEnabled. Both values are the PCF
+    # defaults. afEvents: the AF events subscription over N5 and the optional notifications to
+    # the AF (resources allocation outcome, already met events); the termination request the
+    # PCF sends when the PDU session ends is always sent (TS 29.514 4.2.5.3). pcscfRestoration:
+    # PCF based P-CSCF restoration (TS 29.514 4.2.2.27, TS 29.512 4.2.3.18).
+    policyAuthorization:
+      afEvents: true
+      pcscfRestoration: true
 
   # UDM configuration
   udm:

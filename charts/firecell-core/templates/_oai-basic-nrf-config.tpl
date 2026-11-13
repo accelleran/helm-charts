@@ -198,6 +198,37 @@ amf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.amPolicy }}
+  {{- if hasKey . "enabled" }}
+  am_policy:
+    enabled: {{ .enabled }}
+  {{- end }}
+  {{- end }}
+  {{- with $v.coreConfig.amf.callTrace }}
+  {{- $prof := or .ngranTraceId .tceIpv4 .interfacesToTrace .traceDepth }}
+  {{- if or $prof .autoStartSupi }}
+  call_trace:
+    {{- if $prof }}
+    profile:
+      {{- with .ngranTraceId }}
+      ngran_trace_id: {{ . | quote }}
+      {{- end }}
+      {{- with .tceIpv4 }}
+      tce_ipv4: {{ . | quote }}
+      {{- end }}
+      {{- with .interfacesToTrace }}
+      interfaces_to_trace: {{ . }}
+      {{- end }}
+      {{- with .traceDepth }}
+      trace_depth: {{ . | quote }}
+      {{- end }}
+    {{- end }}
+    {{- with .autoStartSupi }}
+    admin:
+      auto_start_supi: {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
@@ -413,6 +444,42 @@ nrf:
 
 pcf:
   enable_policy_provisioning_api: {{ $v.coreConfig.pcf.enablePolicyProvisioningApi }}
+  {{- with $v.coreConfig.pcf.amPolicy }}
+  am_policy:
+    {{- if .rfspIndex }}
+    rfsp_index: {{ .rfspIndex }}
+    {{- end }}
+    {{- with .ueAmbr }}
+    ue_ambr:
+      uplink: {{ .uplink | quote }}
+      downlink: {{ .downlink | quote }}
+    {{- end }}
+    {{- with .supi }}
+    supi:
+      {{- range $supi, $d := . }}
+      {{ $supi | quote }}:
+        {{- if $d.rfspIndex }}
+        rfsp_index: {{ $d.rfspIndex }}
+        {{- end }}
+        {{- with $d.ueAmbr }}
+        ue_ambr:
+          uplink: {{ .uplink | quote }}
+          downlink: {{ .downlink | quote }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- with $v.coreConfig.pcf.policyAuthorization }}
+  {{- if or (hasKey . "afEvents") (hasKey . "pcscfRestoration") }}
+  policy_authorization:
+    {{- if hasKey . "afEvents" }}
+    af_events: {{ .afEvents }}
+    {{- end }}
+    {{- if hasKey . "pcscfRestoration" }}
+    pcscf_restoration: {{ .pcscfRestoration }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
 
 upf:
   {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use
