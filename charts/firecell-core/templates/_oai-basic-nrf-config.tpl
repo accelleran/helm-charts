@@ -220,6 +220,12 @@ smf:
     use_local_pcc_rules: {{ $v.coreConfig.smf.useLocalPccRules }}
     enable_qer: {{ $v.coreConfig.smf.enableQer }}
     enable_udsf: {{ $v.coreConfig.smf.enableUdsf | default "no" }}
+    {{- if hasKey $v.coreConfig.smf "enableIpv6Pdu" }}
+    enable_ipv6_pdu: {{ $v.coreConfig.smf.enableIpv6Pdu }}
+    {{- end }}
+    {{- if hasKey $v.coreConfig.smf "enableEthernetPdu" }}
+    enable_ethernet_pdu: {{ $v.coreConfig.smf.enableEthernetPdu }}
+    {{- end }}
   upf_pool:
   {{- if $v.upf.instances }}
   {{- range $v.upf.instances }}

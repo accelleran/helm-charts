@@ -1138,6 +1138,16 @@ coreConfig:
     useLocalPccRules: "no"
     enableQer: "yes"
     enableUdsf: "yes"
+    # PDU session type switches (cn5g-smf smf.support_features), the seeds of the FCAPS
+    # switches ipv6PduEnabled and ethernetPduEnabled. A key is written only when it is
+    # set, so the SMF defaults apply: enableIpv6Pdu yes, enableEthernetPdu no.
+    # enableIpv6Pdu "no": the SMF treats its configuration as limited to IPv4 only
+    # (IPv4v6 request: IPv4 and 5GSM cause #50; IPv6 request: reject #50 or #28, TS 24.501
+    # 6.4.1.3, 6.4.1.4.1), whatever the DNNs say. enableEthernetPdu "yes": the SMF admits
+    # an Ethernet PDU session on a DNN with pdu_session_type ETHERNET; the UPF side is
+    # not set here.
+    # enableIpv6Pdu: "yes"
+    # enableEthernetPdu: "no"
     # OAI key: smf.location_api_root (cn5g-smf #49). apiRoot the SMF puts in the Location of a
     # created SM context, e.g. "http://oai-smf:8080", so the AMF keeps a URI that outlives the SMF pod
     # (TS 29.502 6.1.3.2.3.1, TS 29.500 6.10.4). Empty = SMF default (its listen address).
