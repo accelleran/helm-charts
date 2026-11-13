@@ -1,0 +1,130 @@
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.rxN5Iwf.enabled }}
+{{- /* Rx (Diameter, TS 29.214) to N5 (Npcf_PolicyAuthorization, TS 29.514) interworking
+       function of the P-CSCF (cn5g-ims rx-n5-iwf). The P-CSCF connects to it on the
+       Diameter port; the PCF calls it back on the notify port. Settings follow
+       rx-n5-iwf/config.py. */}}
+{{- $iwf := .Values.ims.rxN5Iwf }}
+{{- $svc := "ims-rx-n5-iwf" }}
+{{- $ns := .Values.global.namespace }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $svc }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: {{ $svc }}
+    tier: core-network
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ $svc }}
+  template:
+    metadata:
+      labels:
+        app: {{ $svc }}
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+    spec:
+      priorityClassName: {{ .Values.ims.priorityClassName }}
+      containers:
+        - name: rx-n5-iwf
+          image: {{ $iwf.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry $iwf.image $iwf.imageTag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          # The image runs as uid 10001 and writes nothing to disk.
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+            # Same MCC and MNC as the P-CSCF: both derive the Diameter realm and the
+            # Rx peer name pcrf.<EPC_DOMAIN> from them.
+            - name: MCC
+              value: {{ .Values.coreConfig.mcc | default "001" | quote }}
+            - name: MNC
+              value: {{ .Values.coreConfig.mnc | default "01" | quote }}
+            {{- with $iwf.epcDomain }}
+            - name: EPC_DOMAIN
+              value: {{ . | quote }}
+            {{- end }}
+            - name: RX_N5_IWF_LOG_LEVEL
+              value: {{ $iwf.logLevel | quote }}
+            - name: RX_N5_IWF_DIAMETER_BIND
+              value: "0.0.0.0"
+            - name: RX_N5_IWF_DIAMETER_PORT
+              value: {{ $iwf.diameterPort | quote }}
+            - name: RX_N5_IWF_PCF_URI
+              value: {{ $iwf.pcfUri | default (printf "http://oai-pcf.%s.svc.cluster.local:8080" $ns) | quote }}
+            - name: RX_N5_IWF_PCF_HTTP_VERSION
+              value: {{ $iwf.pcfHttpVersion | default .Values.coreConfig.httpVersion | quote }}
+            - name: RX_N5_IWF_PCF_TIMEOUT_S
+              value: {{ $iwf.pcfTimeoutS | quote }}
+            # The URI the PCF posts its notify / terminate to: this Service.
+            - name: RX_N5_IWF_NOTIFY_URI
+              value: {{ $iwf.notifyUri | default (printf "http://%s.%s.svc.cluster.local:%v" $svc $ns $iwf.notifyPort) | quote }}
+            - name: RX_N5_IWF_NOTIFY_BIND
+              value: "0.0.0.0"
+            - name: RX_N5_IWF_NOTIFY_PORT
+              value: {{ $iwf.notifyPort | quote }}
+          ports:
+            - name: diameter
+              containerPort: {{ $iwf.diameterPort }}
+              protocol: TCP
+            - name: notify
+              containerPort: {{ $iwf.notifyPort }}
+              protocol: TCP
+          # The image HEALTHCHECK: both the Diameter acceptor and the notification
+          # server must accept a TCP connection.
+          readinessProbe:
+            exec:
+              command: ["python3", "/opt/firecell/rx-n5-iwf/rx_n5_iwf.py", "--healthcheck"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["python3", "/opt/firecell/rx-n5-iwf/rx_n5_iwf.py", "--healthcheck"]
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml $iwf.resources | nindent 12 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $svc }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: {{ $svc }}
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    - name: diameter
+      port: {{ $iwf.diameterPort }}
+      targetPort: {{ $iwf.diameterPort }}
+      protocol: TCP
+    - name: notify
+      port: {{ $iwf.notifyPort }}
+      targetPort: {{ $iwf.notifyPort }}
+      protocol: TCP
+  selector:
+    app: {{ $svc }}
+{{- end }}
