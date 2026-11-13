@@ -170,6 +170,17 @@ amf:
     enabled: {{ .enabled }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.ueAmbrDefault }}
+  {{- if or .uplink .downlink }}
+  ue_ambr_default:
+    {{- if .uplink }}
+    uplink: {{ .uplink | quote }}
+    {{- end }}
+    {{- if .downlink }}
+    downlink: {{ .downlink | quote }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   served_guami_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}

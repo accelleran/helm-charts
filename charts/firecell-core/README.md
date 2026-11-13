@@ -211,6 +211,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.supportedEncryptionAlgorithms[1] | string | `"NEA1"` |  |
 | coreConfig.amf.supportedEncryptionAlgorithms[2] | string | `"NEA2"` |  |
 | coreConfig.amf.supportedIntegrityAlgorithms[0] | string | `"NIA2"` |  |
+| coreConfig.amf.ueAmbrDefault.downlink | string | `"1 Gbps"` |  |
+| coreConfig.amf.ueAmbrDefault.uplink | string | `"1 Gbps"` |  |
 | coreConfig.database.connectionTimeout | int | `10` |  |
 | coreConfig.database.generateRandom | bool | `true` |  |
 | coreConfig.database.host | string | `"mysql"` |  |

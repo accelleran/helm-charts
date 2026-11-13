@@ -1060,6 +1060,13 @@ coreConfig:
     # UDM and the SMF with RAT type NR, as before the feature, not NR_REDCAP.
     redcap: {}
     #  enabled: true
+    # UE-AMBR the AMF sends to the gNB when neither the PCF nor the subscription
+    # (am-data) gives one (cn5g-amf amf.ue_ambr_default). TS 29.571 BitRate strings,
+    # at most 4000000000000 bps (TS 38.413 9.3.1.4); the AMF refuses other values at
+    # start. 1 Gbps is the AMF default, so this block does not change behaviour as is.
+    ueAmbrDefault:
+      uplink: "1 Gbps"
+      downlink: "1 Gbps"
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
