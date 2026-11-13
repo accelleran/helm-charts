@@ -36,8 +36,28 @@ log_level:
 register_nf:
   general: {{ $v.coreConfig.registerNf }}
 
-http_version: {{ $v.coreConfig.httpVersion }}
+{{/* TLS needs HTTP/2: the NFs refuse tls.enable_tls with http_version 1. */ -}}
+http_version: {{ if $v.global.sbi.tls.enabled }}2{{ else }}{{ $v.coreConfig.httpVersion }}{{ end }}
 http_request_timeout: {{ $v.coreConfig.httpRequestTimeoutMs }}
+{{- if $v.global.sbi.tls.enabled }}
+
+# SBI TLS (global.sbi.tls): the NF's own Secret, mounted at /etc/firecell/sbi-tls
+tls:
+  enable_tls: true
+  cert_certificate_path: /etc/firecell/sbi-tls/tls.crt
+  cert_key_path: /etc/firecell/sbi-tls/tls.key
+  ca_path: /etc/firecell/sbi-tls/ca.crt
+  require_client_cert: {{ $v.global.sbi.tls.requireClientCert }}
+  verify_peer: {{ $v.global.sbi.tls.verifyPeer }}
+{{- end }}
+{{- if $v.global.sbi.oauth2.enabled }}
+
+# SBI OAuth2 (global.sbi.oauth2): the NRF's ES256 public key, mounted in every NF
+oauth2:
+  enable: true
+  nrf_public_key_path: /etc/firecell/sbi-oauth2/public-key.pem
+  token_refresh_margin_s: {{ $v.global.sbi.oauth2.tokenRefreshMarginS }}
+{{- end }}
 
 ############## SBI Interfaces
 nfs:
@@ -457,6 +477,11 @@ dnns:
 nrf:
   heartbeat: {{ $v.coreConfig.nrf.heartbeat }}
   suspended_nf_interval: {{ $v.coreConfig.nrf.suspendedNfInterval }}
+  {{- if $v.global.sbi.oauth2.enabled }}
+  # Only the NRF reads these (cn5g-nrf L3-05-10): the ES256 private key and the token lifetime.
+  oauth2_signing_key_path: /etc/firecell/sbi-oauth2-signing/signing-key.pem
+  oauth2_token_validity: {{ $v.global.sbi.oauth2.tokenValiditySeconds }}
+  {{- end }}
 
 pcf:
   enable_policy_provisioning_api: {{ $v.coreConfig.pcf.enablePolicyProvisioningApi }}

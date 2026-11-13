@@ -32,7 +32,23 @@ log_level:
   general: {{ $v.coreConfig.logLevel }}
 register_nf:
   general: {{ $v.coreConfig.registerNf }}
-http_version: {{ $v.coreConfig.httpVersion }}
+http_version: {{ if $v.global.sbi.tls.enabled }}2{{ else }}{{ $v.coreConfig.httpVersion }}{{ end }}
+{{- if $v.global.sbi.tls.enabled }}
+# SBI TLS (global.sbi.tls): the UPF is a client of the NRF only
+tls:
+  enable_tls: true
+  cert_certificate_path: /etc/firecell/sbi-tls/tls.crt
+  cert_key_path: /etc/firecell/sbi-tls/tls.key
+  ca_path: /etc/firecell/sbi-tls/ca.crt
+  require_client_cert: {{ $v.global.sbi.tls.requireClientCert }}
+  verify_peer: {{ $v.global.sbi.tls.verifyPeer }}
+{{- end }}
+{{- if $v.global.sbi.oauth2.enabled }}
+oauth2:
+  enable: true
+  nrf_public_key_path: /etc/firecell/sbi-oauth2/public-key.pem
+  token_refresh_margin_s: {{ $v.global.sbi.oauth2.tokenRefreshMarginS }}
+{{- end }}
 
 nfs:
   nrf:
