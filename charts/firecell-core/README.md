@@ -353,6 +353,13 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.image | string | `"asterisk-ims"` |  |
 | ims.imageOverride | string | `""` |  |
 | ims.imageTag | string | `"latest"` |  |
+| ims.pcscf.alternative.bindPort | string | `""` |  |
+| ims.pcscf.alternative.enabled | bool | `false` |  |
+| ims.pcscf.alternative.ip | string | `""` |  |
+| ims.pcscf.alternative.ipsecClientPort | string | `""` |  |
+| ims.pcscf.alternative.ipsecServerPort | string | `""` |  |
+| ims.pcscf.alternative.pcfHttpVersion | string | `""` |  |
+| ims.pcscf.alternative.pcfUri | string | `""` |  |
 | ims.priorityClassName | string | `"firecell-prio-support"` |  |
 | ims.resources.limits.cpu | string | `"500m"` |  |
 | ims.resources.limits.memory | string | `"256Mi"` |  |

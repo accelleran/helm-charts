@@ -50,6 +50,12 @@ spec:
               value: {{ .Values.ims.cxGateway.ip | quote }}
             - name: CX_GATEWAY_PORT
               value: {{ .Values.ims.cxGateway.port | default "3868" | quote }}
+            {{- if .Values.ims.pcscf.alternative.enabled }}
+            # P-CSCF restoration (cn5g-ims L4-A9-5): retry a terminating INVITE that the UE's
+            # P-CSCF answers with 408 or 503 through the alternative P-CSCF.
+            - name: ALTERNATIVE_PCSCF
+              value: {{ printf "%s:%v" (required "ims.pcscf.alternative.ip is required when ims.pcscf.alternative.enabled is true" .Values.ims.pcscf.alternative.ip) (.Values.ims.pcscf.alternative.bindPort | default .Values.ims.pcscf.bindPort | default 5060) | quote }}
+            {{- end }}
           volumeMounts:
             - name: ims-secrets
               mountPath: /run/secrets/ims
