@@ -50,6 +50,7 @@ Each profile sets:
 
 - `retentionPeriod`: logs older than this are deleted. At least `1d`; units `h`, `d`, `w`, `M`, `y`.
 - `diskLimit.kind: bytes` with a size (`5GiB`), or `diskLimit.kind: percent` with the highest use (1-100) of the filesystem holding the store. VictoriaLogs drops the oldest days first when the limit is reached. The two are exclusive; any other kind fails the render.
+- `minFreeDiskSpace`: free space the store always leaves on its filesystem. Below it the store stops taking new logs. VictoriaLogs always keeps the last two days whatever the disk limit, so a very noisy container can outgrow `diskLimit`; this keeps the node's disk above the kubelet eviction threshold (k3s: 5% of the root filesystem). Empty: the VictoriaLogs default (10 MB).
 - `resources`, and `nodeSelector` for extra node labels.
 
 To add a profile, add a key under `profiles` (a DNS label of at most 40 characters) with the same fields. The NMS changes retention by writing a values override for this release (with Flux, a ConfigMap merged through the HelmRelease `valuesFrom`); the store DaemonSet of that profile then rolls, and vlagent buffers on disk while a store restarts.

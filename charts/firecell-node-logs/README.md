@@ -49,6 +49,7 @@ Each profile sets:
 
 - `retentionPeriod`: logs older than this are deleted. At least `1d`; units `h`, `d`, `w`, `M`, `y`.
 - `diskLimit.kind: bytes` with a size (`5GiB`), or `diskLimit.kind: percent` with the highest use (1-100) of the filesystem holding the store. VictoriaLogs drops the oldest days first when the limit is reached. The two are exclusive; any other kind fails the render.
+- `minFreeDiskSpace`: free space the store always leaves on its filesystem. Below it the store stops taking new logs. VictoriaLogs always keeps the last two days whatever the disk limit, so a very noisy container can outgrow `diskLimit`; this keeps the node's disk above the kubelet eviction threshold (k3s: 5% of the root filesystem). Empty: the VictoriaLogs default (10 MB).
 - `resources`, and `nodeSelector` for extra node labels.
 
 To add a profile, add a key under `profiles` (a DNS label of at most 40 characters) with the same fields. The NMS changes retention by writing a values override for this release (with Flux, a ConfigMap merged through the HelmRelease `valuesFrom`); the store DaemonSet of that profile then rolls, and vlagent buffers on disk while a store restarts.
@@ -92,12 +93,14 @@ The filter can also name namespaces, containers or labels, e.g. `kubernetes.pod_
 | priorityClassName | string | `""` | PriorityClass of the store and vlagent pods. Empty: none. Use a class below the RAN and core workloads, and one that exists before this chart is installed (a missing class makes every pod fail admission). |
 | profiles.small.diskLimit.kind | string | `"bytes"` | `bytes` or `percent`, see profiles.standard.diskLimit.kind. |
 | profiles.small.diskLimit.value | string | `"2GiB"` | Disk limit, see kind. |
+| profiles.small.minFreeDiskSpace | string | `"8GiB"` | Free space the store always leaves, see profiles.standard.minFreeDiskSpace. |
 | profiles.small.enabled | bool | `true` | Render this profile's DaemonSet. |
 | profiles.small.nodeSelector | object | `{}` | Extra node labels a node must also have (ANDed with the profile rule). |
 | profiles.small.resources | object | `{"limits":{"cpu":"250m","memory":"256Mi"},"requests":{"cpu":"10m","memory":"64Mi"}}` | Store resources. Never request whole CPUs. |
 | profiles.small.retentionPeriod | string | `"3d"` | Logs older than this are deleted. |
 | profiles.standard.diskLimit.kind | string | `"bytes"` | `bytes`: value is a size (e.g. 5GiB). `percent`: value is the highest use (1-100) of the filesystem holding the store. The oldest days are dropped first when the limit is reached. |
 | profiles.standard.diskLimit.value | string | `"5GiB"` | Disk limit, see kind. |
+| profiles.standard.minFreeDiskSpace | string | `"25GiB"` | Free space the store always leaves on its filesystem (`-storage.minFreeDiskSpaceBytes`): below it the store stops taking new logs instead of filling the disk. The disk limit cannot stop that alone, because VictoriaLogs always keeps the last two days. Keep it above the kubelet eviction threshold (k3s: 5% of the root filesystem, about 23 GiB on a 457 GB disk) so a noisy container never gets the node's pods evicted. |
 | profiles.standard.enabled | bool | `true` | Render this profile's DaemonSet. |
 | profiles.standard.nodeSelector | object | `{}` | Extra node labels a node must also have (ANDed with the profile rule). |
 | profiles.standard.resources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"20m","memory":"96Mi"}}` | Store resources. Never request whole CPUs: with the static CPU manager that would take isolated cores away from the RAN. |

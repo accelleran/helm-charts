@@ -114,6 +114,13 @@ variables (dots become underscores with -envflag.enable).
 {{- else -}}
 {{- fail (printf "firecell-node-logs: profiles.%s.diskLimit.kind must be bytes or percent, not %q" $name (toString $limit.kind)) -}}
 {{- end -}}
+{{- with $p.minFreeDiskSpace -}}
+{{- $v := toString . -}}
+{{- if not (regexMatch "^[0-9]+(\\.[0-9]+)?(KB|MB|GB|TB|KiB|MiB|GiB|TiB)?$" $v) -}}
+{{- fail (printf "firecell-node-logs: profiles.%s.minFreeDiskSpace %q is not a size (e.g. 25GiB)" $name $v) -}}
+{{- end -}}
+{{- $_ := set $env "storage_minFreeDiskSpaceBytes" $v -}}
+{{- end -}}
 {{- include "firecell-node-logs.checkResources" (dict "resources" $p.resources "name" (printf "profiles.%s.resources" $name)) -}}
 {{- $_ := set $out $name (dict "nodeSelector" ($p.nodeSelector | default dict) "resources" ($p.resources | default dict) "env" $env) -}}
 {{- end -}}

@@ -56,6 +56,13 @@ profiles:
       kind: bytes
       # -- Disk limit, see kind.
       value: 5GiB
+    # -- Free space the store always leaves on its filesystem
+    # (`-storage.minFreeDiskSpaceBytes`): below it the store stops taking new
+    # logs instead of filling the disk. The disk limit cannot stop that alone,
+    # because VictoriaLogs always keeps the last two days. Keep it above the
+    # kubelet eviction threshold (k3s: 5% of the root filesystem, about 23 GiB
+    # on a 457 GB disk) so a noisy container never gets the node's pods evicted.
+    minFreeDiskSpace: 25GiB
     # -- Store resources. Never request whole CPUs: with the static CPU
     # manager that would take isolated cores away from the RAN.
     resources:
@@ -73,6 +80,8 @@ profiles:
       kind: bytes
       # -- Disk limit, see kind.
       value: 2GiB
+    # -- Free space the store always leaves, see profiles.standard.minFreeDiskSpace.
+    minFreeDiskSpace: 8GiB
     # -- Store resources. Never request whole CPUs.
     resources:
       requests: {cpu: 10m, memory: 64Mi}
