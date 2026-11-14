@@ -44,14 +44,14 @@ jobs:
           fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
 
       - name: Set up python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: '3.14'
+          python-version: '3.15'
           check-latest: true
 
       - name: Set up chart-testing
         if: ${{ github.event_name == 'pull_request' }}
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
 
       - name: List charts
         id: list-charts
@@ -87,13 +87,13 @@ jobs:
           version: "${{ needs.vars.outputs.helm_version }}"
 
       - name: Set up python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: '3.14'
+          python-version: '3.15'
           check-latest: true
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
 
       - name: Add helm repositories
         run: ./bin/add-repos
@@ -133,13 +133,13 @@ jobs:
           version: "${{ needs.vars.outputs.helm_version }}"
 
       - name: Set up python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: '3.14'
+          python-version: '3.15'
           check-latest: true
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@720270857a28afd41e2426521a7801db09e9b510 # v2.9.0
 
       - name: Add helm repositories
         run: ./bin/add-repos
@@ -236,7 +236,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set git user
-        uses: git-actions/set-user@v1
+        uses: git-actions/set-user@49fa9362373dabe0bfcbdb5e8d4da08045ebf6f8 # v1
 
       - name: Install Helm
         uses: azure/setup-helm@v5.0.1
@@ -253,7 +253,7 @@ jobs:
         run: helm registry login --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} ghcr.io
 
       - name: Install oras
-        uses: oras-project/setup-oras@v1.2.4
+        uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1.2.4
 
       - name: Login to GHCR (oras)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io --username ${{ github.actor }} --password-stdin
@@ -262,7 +262,7 @@ jobs:
         run: ./bin/generate-release-notes
 
       - name: Run chart releaser
-        uses: helm/chart-releaser-action@v1.9.0
+        uses: helm/chart-releaser-action@92c6b97fa9f664492a2592e0d1d80bc6bf378957 # v1.9.0
         with:
           config: etc/cr.yaml
           skip_existing: true
@@ -282,7 +282,7 @@ jobs:
 
       - name: Run chart releaser for deprecated charts
         if: hashFiles('deprecated/*/Chart.yaml') != ''
-        uses: helm/chart-releaser-action@v1.9.0
+        uses: helm/chart-releaser-action@92c6b97fa9f664492a2592e0d1d80bc6bf378957 # v1.9.0
         with:
           config: etc/cr.yaml
           charts_dir: deprecated
@@ -303,7 +303,7 @@ jobs:
 
       - name: Publish external charts
         if: hashFiles('external/*.yaml') != '' || hashFiles('external/*/External.yaml') != ''
-        uses: helm/chart-releaser-action@v1.9.0
+        uses: helm/chart-releaser-action@92c6b97fa9f664492a2592e0d1d80bc6bf378957 # v1.9.0
         with:
           config: etc/cr.yaml
           skip_packaging: true
