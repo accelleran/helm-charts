@@ -70,11 +70,11 @@ network:
 #   environments/values-lab-insecure-defaults.yaml
 mysql:
   enabled: true
-  image: mysql:8.4
+  image: mysql:9.7
   # Full image reference, winning over registry + image composition.
   # image is "mysql:8.3" (includes a tag); without this override the chart
   # would ask Hub for accelleran/mysql:8.3.
-  imageOverride: "docker.io/library/mysql:8.4"
+  imageOverride: "docker.io/library/mysql:9.7"
   rootPassword: ""            # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
   database: oai_db
   user: ""                    # REQUIRED — set via overlay or --set (preserved on upgrade via lookup)
