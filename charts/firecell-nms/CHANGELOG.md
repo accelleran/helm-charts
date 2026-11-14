@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.2](https://github.com/accelleran/helm-charts/compare/firecell-nms-0.2.1...firecell-nms-0.2.2) (2026-11-14)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency mysql to v8.4.13 ([2548f49](https://github.com/accelleran/helm-charts/commit/2548f49ad251a626a812a24cfd3b750f753fc659))
+* **deps:** Update docker.io/library/mysql docker tag to v8.4.11 ([#1880](https://github.com/accelleran/helm-charts/issues/1880)) ([4696205](https://github.com/accelleran/helm-charts/commit/46962055add6033353f805786f5fcf4a5f86e602))
+* **firecell-cu,firecell-nms:** Align the CU-UP gNB ID and the NMS seed with the other charts' defaults ([#1879](https://github.com/accelleran/helm-charts/issues/1879)) ([eeb9241](https://github.com/accelleran/helm-charts/commit/eeb9241b1c513e6cbdd2ccd71c806d596d89bbe5))
+* **firecell-nms:** Keep an hour of CM observations, not a week ([708ecee](https://github.com/accelleran/helm-charts/commit/708ecee22cb0924f33126bbb5821f8eae3234479))
+
 ## [0.2.1](https://github.com/accelleran/helm-charts/compare/firecell-nms-0.2.0...firecell-nms-0.2.1) (2026-11-05)
 
 
