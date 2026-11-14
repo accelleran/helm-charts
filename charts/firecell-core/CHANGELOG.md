@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.1](https://github.com/accelleran/helm-charts/compare/firecell-core-0.2.0...firecell-core-0.2.1) (2026-11-14)
+
+
+### Features
+
+* **firecell-core:** Add the PCF SliceDnnPolicyDecision tables ([4621191](https://github.com/accelleran/helm-charts/commit/46211916983897a927b88801be74e83a6d0835c6))
+
+
+### Bug Fixes
+
+* **deps:** Update dependency mysql to v8.4 ([a9bfc1e](https://github.com/accelleran/helm-charts/commit/a9bfc1eedc464a87b463e6d93d4a5982c5fe078c))
+* **deps:** Update docker.io/library/busybox docker tag to v1.38.0 ([#1881](https://github.com/accelleran/helm-charts/issues/1881)) ([a75b0ef](https://github.com/accelleran/helm-charts/commit/a75b0ef609eb327a019854717b70e04c67387f7a))
+* **firecell-core:** The AMF reads its CM intent from the ConfigMap, like every other NF ([7fe09b0](https://github.com/accelleran/helm-charts/commit/7fe09b072a3555d39e21a6c36a4eb5c841ec3778))
+
 ## [0.2.0](https://github.com/accelleran/helm-charts/compare/firecell-core-0.1.0...firecell-core-0.2.0) (2026-11-05)
 
 
