@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1](https://github.com/accelleran/helm-charts/compare/firecell-cu-0.2.0...firecell-cu-0.2.1) (2026-11-14)
+
+
+### Features
+
+* **firecell-cu,firecell-du:** NetconfVerbosity sets the netopeer2 log level ([d201997](https://github.com/accelleran/helm-charts/commit/d201997506b9e103238440581ee851905c3c74c7))
+
+
+### Bug Fixes
+
+* **firecell-cu,firecell-nms:** Align the CU-UP gNB ID and the NMS seed with the other charts' defaults ([#1879](https://github.com/accelleran/helm-charts/issues/1879)) ([eeb9241](https://github.com/accelleran/helm-charts/commit/eeb9241b1c513e6cbdd2ccd71c806d596d89bbe5))
+
 ## [0.2.0](https://github.com/accelleran/helm-charts/compare/firecell-cu-0.1.0...firecell-cu-0.2.0) (2026-11-05)
 
 
