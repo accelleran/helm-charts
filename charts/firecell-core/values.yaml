@@ -1530,16 +1530,27 @@ coreConfig:
     # AM policy the PCF returns to the AMF (cn5g-pcf pcf.am_policy; Npcf_AMPolicyControl,
     # TS 29.507). Only used when the AMF asks for it: coreConfig.amf.amPolicy.enabled. Empty
     # (default): the PCF answers with the values the AMF sent. rfspIndex 1..256; ueAmbr needs
-    # both uplink and downlink as TS 29.571 BitRate strings; supi overrides the defaults per
-    # SUPI (the same two keys). The PCF refuses a bad value at start.
+    # both uplink and downlink as TS 29.571 BitRate strings; servAreaRes is the Service Area
+    # Restriction (TS 29.571 ServiceAreaRestriction, L1-A3-8): restrictionType ALLOWED_AREAS
+    # or NOT_ALLOWED_AREAS and tacs, a list of 4 or 6 hex digit TACs, which must be QUOTED
+    # (an unquoted 000009 is the number 9). The PCF sends it only when the AMF sent a
+    # servAreaRes in its request. supi overrides the defaults per SUPI (the same three keys).
+    # The PCF refuses a bad value at start; the render fails first for a missing
+    # restrictionType or tacs.
     amPolicy: {}
     #  rfspIndex: 12
     #  ueAmbr:
     #    uplink: "100 Mbps"
     #    downlink: "1 Gbps"
+    #  servAreaRes:
+    #    restrictionType: NOT_ALLOWED_AREAS
+    #    tacs: ["000009"]
     #  supi:
     #    imsi-001010000000002:
     #      rfspIndex: 7
+    #      servAreaRes:
+    #        restrictionType: ALLOWED_AREAS
+    #        tacs: ["000001", "00000A"]
     # Npcf_PolicyAuthorization (N5) switches (cn5g-pcf pcf.policy_authorization), seeds of the
     # FCAPS switches afEventsEnabled and pcscfRestorationEnabled. Both values are the PCF
     # defaults. afEvents: the AF events subscription over N5 and the optional notifications to
