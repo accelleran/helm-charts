@@ -1052,6 +1052,8 @@ ims:
     image: rx-n5-iwf
     imageOverride: ""
     imageTag: latest
+    # Diameter realm of the Rx link (EPC_DOMAIN), given to the IWF and to the P-CSCFs. Empty: each
+    # derives epc.mnc<MNC>.mcc<MCC>.3gppnetwork.org from coreConfig.mcc / mnc, the same value.
     epcDomain: ""
     # Diameter identity of the IWF (RX_N5_IWF_ORIGIN_HOST) and the name the P-CSCF connects to
     # (RX_PEER_HOST). Empty: the Service name ims-rx-n5-iwf, which resolves in the namespace.
