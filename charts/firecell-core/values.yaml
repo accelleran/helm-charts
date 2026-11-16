@@ -30,9 +30,17 @@ global:
   # Secret <secretPrefix>-<nf> (keys tls.crt, tls.key, ca.crt) at /etc/firecell/sbi-tls.
   # Not covered when TLS is on (FIXME(limitation)): the IMS (the Rx-N5 IWF and the P-CSCF
   # restoration call the PCF in clear text), the NMS and ACS agents, and the post-flight verify
-  # hook (it reads the NRF over http), and the NEF: cn5g-nef 98ea2070 reads TLS and OAUTH2 groups
-  # from its libconfig file, but the etc/nef.conf template the image renders from the environment
-  # has no placeholders for them, so the chart cannot set them.
+  # hook (it reads the NRF over http).
+  # The NEF (nef.enabled) is covered: TLS on its northbound API and toward the AMF, SMF, UDM and
+  # NRF; OAuth2 needs nef.config.nrf.register (the render fails without it). Its image must be a
+  # build with Pistache SSL (cn5g-nef NEF_PISTACHE_SSL), else the NEF exits with TLS on. With
+  # requireClientCert an AF calling the NEF needs a client certificate from the SBI CA.
+  # FIXME(limitation), NEF with TLS: (1) the notificationUri the NEF gives the AMF is
+  # https://<NEF pod IP>:<sbiPort> (cn5g-nef nef_config::get_nf_event_notify_url) and the AMF checks
+  # the host against the NEF certificate (cs http_client VerifyHost), which names oai-nef only, so
+  # AMF event notifications to the NEF fail until the NEF puts a host name there; (2) with
+  # nef.config.nrf.discoverAmf the discovered AMF is dialled by IP (cn5g-nef 113084c7): use the
+  # static peer (discoverAmf false).
   sbi:
     tls:
       enabled: false
@@ -517,6 +525,8 @@ nef:
     useHttp2: false
     # Peers, by Service name; the NEF resolves them when it starts. Port is the HTTP/1.1
     # port, as the other NFs of this chart use it (8080 with coreConfig.httpVersion 1).
+    # With global.sbi.tls the NEF calls port over TLS and HTTP/2 (ALPN) whatever useHttp2 says,
+    # and checks the peer certificate against hostname: keep the Service names.
     peers:
       amf: {hostname: oai-amf, port: 8080, http2Port: 8080}
       smf: {hostname: oai-smf, port: 8080, http2Port: 8080}

@@ -706,7 +706,7 @@ volumes and mounts of an NF container. All empty when both are off.
 */}}
 {{- define "firecell-5gc.sbiNfs" -}}
 {{- $v := .Values -}}
-{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" -}}
+{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" "nef" -}}
 {{- if (index $v $nf).enabled }}
 - {{ $nf }}
 {{- end }}
