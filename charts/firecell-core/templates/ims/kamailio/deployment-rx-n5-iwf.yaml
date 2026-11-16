@@ -6,6 +6,13 @@
 {{- $iwf := .Values.ims.rxN5Iwf }}
 {{- $svc := "ims-rx-n5-iwf" }}
 {{- $ns := .Values.global.namespace }}
+{{- $stateVol := $iwf.state.volume | default "none" }}
+{{- if not (has $stateVol (list "none" "emptyDir" "pvc")) }}
+{{- fail (printf "ims.rxN5Iwf.state.volume must be none, emptyDir or pvc (got %q)" $stateVol) }}
+{{- end }}
+{{- if and (ne $stateVol "none") (or (lt (int $iwf.state.maxAgeS) 60) (gt (int $iwf.state.maxAgeS) 2592000)) }}
+{{- fail (printf "ims.rxN5Iwf.state.maxAgeS must be 60 to 2592000 seconds (got %v)" $iwf.state.maxAgeS) }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,11 +38,16 @@ spec:
         role: active
     spec:
       priorityClassName: {{ .Values.ims.priorityClassName }}
+      {{- if eq $stateVol "pvc" }}
+      # A new claim's directory is root-owned: the group lets uid 10001 write the state file.
+      securityContext:
+        fsGroup: 10001
+      {{- end }}
       containers:
         - name: rx-n5-iwf
           image: {{ $iwf.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry $iwf.image $iwf.imageTag) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
-          # The image runs as uid 10001 and writes nothing to disk.
+          # The image runs as uid 10001; it writes only the Rx session map (state.volume).
           securityContext:
             runAsNonRoot: true
             runAsUser: 10001
@@ -78,6 +90,14 @@ spec:
               value: "0.0.0.0"
             - name: RX_N5_IWF_NOTIFY_PORT
               value: {{ $iwf.notifyPort | quote }}
+            {{- if ne $stateVol "none" }}
+            # The Rx session map on disk (cn5g-ims L8-P-3): calls in progress keep their N5
+            # app-session across an IWF restart.
+            - name: RX_N5_IWF_STATE_FILE
+              value: /var/lib/rx-n5-iwf/sessions.db
+            - name: RX_N5_IWF_STATE_MAX_AGE_S
+              value: {{ $iwf.state.maxAgeS | quote }}
+            {{- end }}
           ports:
             - name: diameter
               containerPort: {{ $iwf.diameterPort }}
@@ -103,6 +123,21 @@ spec:
             failureThreshold: 3
           resources:
             {{- toYaml $iwf.resources | nindent 12 }}
+          {{- if ne $stateVol "none" }}
+          volumeMounts:
+            - name: state
+              mountPath: /var/lib/rx-n5-iwf
+          {{- end }}
+      {{- if ne $stateVol "none" }}
+      volumes:
+        - name: state
+          {{- if eq $stateVol "pvc" }}
+          persistentVolumeClaim:
+            claimName: ims-rx-n5-iwf-state
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -130,4 +165,23 @@ spec:
       protocol: TCP
   selector:
     app: {{ $svc }}
+{{- if eq $stateVol "pvc" }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ims-rx-n5-iwf-state
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: {{ $svc }}
+    tier: core-network
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $iwf.state.size }}
+  storageClassName: {{ $iwf.state.storageClassName }}
+{{- end }}
 {{- end }}
