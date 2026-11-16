@@ -98,6 +98,10 @@ spec:
               value: /etc/firecell/sbi-tls/ca.crt
             - name: TLS_REQUIRE_CLIENT_CERT
               value: {{ ternary "yes" "no" $sbi.tls.requireClientCert | quote }}
+            # The NEF's own host name in the notification URI it gives the AMF (cn5g-nef
+            # 56cc868): the Service name, which its certificate carries (sbi-tls-nef).
+            - name: NEF_HOSTNAME
+              value: oai-nef
             {{- end }}
             {{- if $sbi.oauth2.enabled }}
             # SBI OAuth2 (global.sbi.oauth2): tokens from the NRF for the requests to the AMF,
