@@ -28,9 +28,14 @@ global:
   # TLS on: the NFs serve and call the SBI over HTTP/2 with TLS, so http_version is written as 2
   # whatever coreConfig.httpVersion says (the NFs refuse TLS with HTTP/1). Each NF mounts the
   # Secret <secretPrefix>-<nf> (keys tls.crt, tls.key, ca.crt) at /etc/firecell/sbi-tls.
-  # Not covered when TLS is on (FIXME(limitation)): the IMS (the Rx-N5 IWF and the P-CSCF
-  # restoration call the PCF in clear text), the NMS and ACS agents, and the post-flight verify
-  # hook (it reads the NRF over http).
+  # The Rx-N5 IWF (ims.rxN5Iwf) is covered: HTTPS + OAuth2 to the PCF and the NRF, client
+  # certificate sbi-tls-rx-n5-iwf; OAuth2 needs ims.rxN5Iwf.nrf.register (the render fails without
+  # it). The P-CSCFs get SBI_TLS_ENABLED / SBI_OAUTH2_ENABLED and only warn: the Rx link to the
+  # IWF is Diameter, not SBI.
+  # Not covered when TLS is on (FIXME(limitation)): the P-CSCF restoration request of the
+  # alternative P-CSCF (cleartext, no token: the PCF refuses it with TLS or OAuth2 on), the PCF's
+  # notifications to the IWF (http), the NMS and ACS agents, and the post-flight verify hook (it
+  # reads the NRF over http).
   # The NEF (nef.enabled) is covered: TLS on its northbound API and toward the AMF, SMF, UDM and
   # NRF; OAuth2 needs nef.config.nrf.register (the render fails without it). Its image must be a
   # build with Pistache SSL (cn5g-nef NEF_PISTACHE_SSL), else the NEF exits with TLS on. With
@@ -1062,10 +1067,20 @@ ims:
     logLevel: INFO
     diameterPort: 3868
     notifyPort: 8080
-    # Empty: http://oai-pcf.<namespace>.svc.cluster.local:8080 (how the other NFs reach the PCF).
+    # Empty: http://oai-pcf.<namespace>.svc.cluster.local:8080 (how the other NFs reach the PCF);
+    # with global.sbi.tls.enabled https://oai-pcf:8080 (the name in the PCF certificate). A set
+    # value must use the scheme that follows global.sbi.tls.enabled.
     pcfUri: ""
-    # Empty: coreConfig.httpVersion (1 in this chart). 1 or 2.
+    # Empty: coreConfig.httpVersion (1 in this chart). 1 or 2. Always 2 with global.sbi.tls.enabled.
     pcfHttpVersion: ""
+    # Registration at the NRF as an AF (cn5g-ims L8-P-2b): needed for the OAuth2 access tokens
+    # (global.sbi.oauth2.enabled; the render fails with OAuth2 on and register false). uri empty:
+    # <scheme>://oai-nrf:<nrf.sbiPort>. nfInstanceId empty: a UUID derived from the namespace,
+    # the same at every start (the IWF draws a random one without it).
+    nrf:
+      register: false
+      uri: ""
+      nfInstanceId: ""
     pcfTimeoutS: 5
     # Empty: http://ims-rx-n5-iwf.<namespace>.svc.cluster.local:<notifyPort>. It must be
     # an address the PCF can reach.

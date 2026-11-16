@@ -402,6 +402,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.rxN5Iwf.logLevel | string | `"INFO"` |  |
 | ims.rxN5Iwf.notifyPort | int | `8080` |  |
 | ims.rxN5Iwf.notifyUri | string | `""` |  |
+| ims.rxN5Iwf.nrf.nfInstanceId | string | `""` |  |
+| ims.rxN5Iwf.nrf.register | bool | `false` |  |
+| ims.rxN5Iwf.nrf.uri | string | `""` |  |
 | ims.rxN5Iwf.state.maxAgeS | int | `86400` |  |
 | ims.rxN5Iwf.state.size | string | `"64Mi"` |  |
 | ims.rxN5Iwf.state.storageClassName | string | `"local-path"` |  |

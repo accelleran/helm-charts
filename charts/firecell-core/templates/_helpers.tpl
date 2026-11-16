@@ -711,6 +711,33 @@ volumes and mounts of an NF container. All empty when both are off.
 - {{ $nf }}
 {{- end }}
 {{- end }}
+{{- if include "firecell-5gc.rxN5IwfEnabled" . }}
+- rx-n5-iwf
+{{- end }}
+{{- end }}
+
+{{/* "true" when the Rx-N5 IWF is rendered (Kamailio IMS with ims.rxN5Iwf.enabled), else empty. */}}
+{{- define "firecell-5gc.rxN5IwfEnabled" -}}
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.rxN5Iwf.enabled -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+nfInstanceId of the Rx-N5 IWF at the NRF: ims.rxN5Iwf.nrf.nfInstanceId, else a UUID version 4
+derived from the namespace, so it stays the same across restarts and upgrades (the IWF draws a
+new random one at every start without it). The NRF checks the version 4 form (validate_uuid).
+*/}}
+{{- define "firecell-5gc.rxN5IwfNfInstanceId" -}}
+{{- with .Values.ims.rxN5Iwf.nrf.nfInstanceId -}}
+{{- . -}}
+{{- else -}}
+{{- $h := sha256sum (printf "%s/ims-rx-n5-iwf" .Values.global.namespace) -}}
+{{- $c := substr 16 17 $h -}}
+{{- $variant := "b" -}}
+{{- if contains $c "0123" }}{{ $variant = "8" }}{{ else if contains $c "4567" }}{{ $variant = "9" }}{{ else if contains $c "89ab" }}{{ $variant = "a" }}{{ end -}}
+{{- printf "%s-%s-4%s-%s%s-%s" (substr 0 8 $h) (substr 8 12 $h) (substr 13 16 $h) $variant (substr 17 20 $h) (substr 20 32 $h) -}}
+{{- end -}}
 {{- end }}
 
 {{/* dict: ctx (root), nf */}}

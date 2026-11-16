@@ -7,6 +7,21 @@
 {{- $svc := "ims-rx-n5-iwf" }}
 {{- $ns := .Values.global.namespace }}
 {{- $stateVol := $iwf.state.volume | default "none" }}
+{{- $sbi := .Values.global.sbi }}
+{{- $scheme := ternary "https" "http" $sbi.tls.enabled }}
+{{- $nrfOn := or $iwf.nrf.register $sbi.oauth2.enabled }}
+{{- if and $sbi.oauth2.enabled (not $iwf.nrf.register) }}
+{{- fail "global.sbi.oauth2.enabled needs ims.rxN5Iwf.nrf.register true: the NRF issues no access token to an IWF that is not registered, and the IWF refuses to start (cn5g-ims config.py)" }}
+{{- end }}
+{{- if and $sbi.tls.enabled $iwf.pcfHttpVersion (ne (toString $iwf.pcfHttpVersion) "2") }}
+{{- fail "ims.rxN5Iwf.pcfHttpVersion must be 2 (or empty) with global.sbi.tls.enabled: the SBI runs HTTP/2 over TLS" }}
+{{- end }}
+{{- range $k := list "pcfUri" "nrf.uri" }}
+{{- $u := ternary $iwf.pcfUri $iwf.nrf.uri (eq $k "pcfUri") }}
+{{- if and $u (not (hasPrefix (printf "%s://" $scheme) $u)) }}
+{{- fail (printf "ims.rxN5Iwf.%s must start with %s:// (it follows global.sbi.tls.enabled; got %q)" $k $scheme $u) }}
+{{- end }}
+{{- end }}
 {{- if not (has $stateVol (list "none" "emptyDir" "pvc")) }}
 {{- fail (printf "ims.rxN5Iwf.state.volume must be none, emptyDir or pvc (got %q)" $stateVol) }}
 {{- end }}
@@ -38,6 +53,10 @@ spec:
         role: active
     spec:
       priorityClassName: {{ .Values.ims.priorityClassName }}
+      {{- if $iwf.nrf.register }}
+      initContainers:
+        {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
+      {{- end }}
       {{- if eq $stateVol "pvc" }}
       # A new claim's directory is root-owned: the group lets uid 10001 write the state file.
       securityContext:
@@ -77,10 +96,44 @@ spec:
               value: "0.0.0.0"
             - name: RX_N5_IWF_DIAMETER_PORT
               value: {{ $iwf.diameterPort | quote }}
+            {{- if $sbi.tls.enabled }}
+            # SBI TLS (global.sbi.tls; cn5g-ims L8-P-2): HTTPS and HTTP/2 to the PCF and the NRF,
+            # by the Service names their certificates carry; the IWF's own certificate
+            # (sbi-tls-rx-n5-iwf) is its client certificate. The notify server stays http.
+            - name: RX_N5_IWF_TLS_ENABLED
+              value: "true"
+            - name: RX_N5_IWF_TLS_CA
+              value: /etc/firecell/sbi-tls/ca.crt
+            - name: RX_N5_IWF_TLS_CERT
+              value: /etc/firecell/sbi-tls/tls.crt
+            - name: RX_N5_IWF_TLS_KEY
+              value: /etc/firecell/sbi-tls/tls.key
+            - name: RX_N5_IWF_TLS_VERIFY_PEER
+              value: {{ ternary "true" "false" $sbi.tls.verifyPeer | quote }}
+            - name: RX_N5_IWF_PCF_URI
+              value: {{ $iwf.pcfUri | default "https://oai-pcf:8080" | quote }}
+            - name: RX_N5_IWF_PCF_HTTP_VERSION
+              value: "2"
+            {{- else }}
             - name: RX_N5_IWF_PCF_URI
               value: {{ $iwf.pcfUri | default (printf "http://oai-pcf.%s.svc.cluster.local:8080" $ns) | quote }}
             - name: RX_N5_IWF_PCF_HTTP_VERSION
               value: {{ $iwf.pcfHttpVersion | default .Values.coreConfig.httpVersion | quote }}
+            {{- end }}
+            {{- if $sbi.oauth2.enabled }}
+            # SBI OAuth2 (global.sbi.oauth2; cn5g-ims L8-P-2): access tokens from the NRF.
+            - name: RX_N5_IWF_OAUTH2_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if $nrfOn }}
+            # Registration at the NRF as an AF (cn5g-ims L8-P-2b), needed for OAuth2.
+            - name: RX_N5_IWF_REGISTER_NRF
+              value: {{ ternary "true" "false" $iwf.nrf.register | quote }}
+            - name: RX_N5_IWF_NRF_URI
+              value: {{ $iwf.nrf.uri | default (printf "%s://oai-nrf:%v" $scheme (.Values.nrf.sbiPort | default 8080)) | quote }}
+            - name: RX_N5_IWF_NF_INSTANCE_ID
+              value: {{ include "firecell-5gc.rxN5IwfNfInstanceId" . | quote }}
+            {{- end }}
             - name: RX_N5_IWF_PCF_TIMEOUT_S
               value: {{ $iwf.pcfTimeoutS | quote }}
             # The URI the PCF posts its notify / terminate to: this Service.
@@ -123,13 +176,21 @@ spec:
             failureThreshold: 3
           resources:
             {{- toYaml $iwf.resources | nindent 12 }}
-          {{- if ne $stateVol "none" }}
+          {{- $mounts := include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "rx-n5-iwf") }}
+          {{- if or (ne $stateVol "none") $mounts }}
           volumeMounts:
+            {{- if ne $stateVol "none" }}
             - name: state
               mountPath: /var/lib/rx-n5-iwf
+            {{- end }}
+            {{- with $mounts }}
+            {{- . | nindent 12 }}
+            {{- end }}
           {{- end }}
-      {{- if ne $stateVol "none" }}
+      {{- $vols := include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "rx-n5-iwf") }}
+      {{- if or (ne $stateVol "none") $vols }}
       volumes:
+        {{- if ne $stateVol "none" }}
         - name: state
           {{- if eq $stateVol "pvc" }}
           persistentVolumeClaim:
@@ -137,6 +198,10 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        {{- end }}
+        {{- with $vols }}
+        {{- . | nindent 8 }}
+        {{- end }}
       {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:

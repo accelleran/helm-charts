@@ -63,6 +63,16 @@ spec:
             # false drops FORCE_RTPRELAY (the image default is true).
             - name: RTPENGINE_ENABLED
               value: {{ ternary "true" "false" (.Values.ims.rtpengine.enabled | default false) | quote }}
+            {{- if .Values.global.sbi.tls.enabled }}
+            # The core's SBI security (cn5g-ims 2991677): read only to warn that the P-CSCF
+            # restoration request is cleartext without a token.
+            - name: SBI_TLS_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.global.sbi.oauth2.enabled }}
+            - name: SBI_OAUTH2_ENABLED
+              value: "true"
+            {{- end }}
             {{- if .Values.ims.rxN5Iwf.enabled }}
             # Rx towards the rx-n5-iwf sidecar (cn5g-ims L4-11-8): media authorization at
             # INVITE. RX_PEER_HOST is the IWF's Diameter identity and DNS name.

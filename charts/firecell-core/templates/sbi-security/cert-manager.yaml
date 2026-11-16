@@ -49,6 +49,7 @@ spec:
 {{- range $nf := (include "firecell-5gc.sbiNfs" . | fromYamlArray) }}
 {{- $svc := printf "oai-%s" $nf }}
 {{- if eq $nf "udsf" }}{{ $svc = ($.Values.udsf.serviceName | default "oai-udsf") }}{{ end }}
+{{- if eq $nf "rx-n5-iwf" }}{{ $svc = "ims-rx-n5-iwf" }}{{ end }}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
