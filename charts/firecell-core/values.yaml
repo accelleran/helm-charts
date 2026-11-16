@@ -1560,6 +1560,19 @@ coreConfig:
     policyAuthorization:
       afEvents: true
       pcscfRestoration: true
+    # Subscription trace (cn5g-pcf pcf.trace; TS 29.507 4.2.2.1, TS 32.422): for a UE whose
+    # subscription has traceData naming the PCF, the PCF writes the AM and SM policy messages
+    # of its associations as JSON lines to <dir>/<traceRef>_<TRSR>.jsonl. Empty (default): the
+    # key is not written, the PCF uses its own defaults and no volume is added. Setting any
+    # key writes pcf.trace and mounts an emptyDir at dir, because the image has no
+    # /openair-pcf/trace and the PCF does not create the directory (without it the PCF logs
+    # "Trace record not written"). The files are lost when the pod restarts and are collected
+    # with kubectl cp; they are not sent to a Trace Collection Entity (FIXME in the PCF).
+    # dir: an absolute path (default /openair-pcf/trace); maxSessions: Trace Sessions at a
+    # time, 1 or more (PCF default 100).
+    trace: {}
+    #  dir: /openair-pcf/trace
+    #  maxSessions: 100
 
   # UDM configuration
   udm:

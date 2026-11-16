@@ -543,6 +543,16 @@ pcf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.pcf.trace }}
+  trace:
+    dir: {{ include "firecell-5gc.pcfTraceDir" . | quote }}
+    {{- if hasKey . "maxSessions" }}
+    {{- if lt (int .maxSessions) 1 }}
+    {{- fail (printf "coreConfig.pcf.trace.maxSessions must be 1 or more (got %v)" .maxSessions) }}
+    {{- end }}
+    max_sessions: {{ int .maxSessions }}
+    {{- end }}
+  {{- end }}
 
 upf:
   {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use

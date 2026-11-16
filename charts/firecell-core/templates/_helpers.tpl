@@ -688,6 +688,19 @@ tacs:
 {{- end }}
 
 {{/*
+PCF trace record directory (cn5g-pcf pcf.trace.dir, default /openair-pcf/trace): the one
+place the config (pcf.trace.dir) and the Deployment (the emptyDir mounted there) read it
+from. Takes the coreConfig.pcf.trace map. An absolute path is required.
+*/}}
+{{- define "firecell-5gc.pcfTraceDir" -}}
+{{- $dir := .dir | default "/openair-pcf/trace" -}}
+{{- if not (hasPrefix "/" $dir) }}
+{{- fail (printf "coreConfig.pcf.trace.dir must be an absolute path (got %q)" $dir) }}
+{{- end }}
+{{- $dir }}
+{{- end }}
+
+{{/*
 SBI security (global.sbi.tls / global.sbi.oauth2): the NFs that get a certificate, and the
 volumes and mounts of an NF container. All empty when both are off.
 */}}
