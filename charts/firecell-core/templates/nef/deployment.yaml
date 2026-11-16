@@ -5,6 +5,10 @@
 {{- $nef := .Values.nef }}
 {{- $cfg := $nef.config }}
 {{- $nrfOn := or $cfg.nrf.register $cfg.nrf.discoverAmf }}
+{{- $sbi := .Values.global.sbi }}
+{{- if and $sbi.oauth2.enabled (not $cfg.nrf.register) }}
+{{- fail "global.sbi.oauth2.enabled needs nef.config.nrf.register true: the NEF gets its access tokens from the NRF only when it is registered there, else its requests to the AMF, SMF and UDM carry no token and are refused" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -69,10 +73,38 @@ spec:
             - name: NRF_PORT
               value: {{ $cfg.nrf.port | quote }}
             {{- end }}
+            - name: MONITORING_EVENT_ENABLED
+              value: {{ ternary "yes" "no" $cfg.monitoringEventEnabled | quote }}
+            {{- if .Values.nef.fcaps.enabled }}
+            - name: FCAPS_CM_DATASTORE
+              value: {{ printf "%s/%s" .Values.nef.fcaps.datastore.mountPath .Values.nef.fcaps.datastore.file | quote }}
+            {{- end }}
             - name: REGISTER_NRF
               value: {{ ternary "yes" "no" $cfg.nrf.register | quote }}
             - name: DISCOVER_AMF
               value: {{ ternary "yes" "no" $cfg.nrf.discoverAmf | quote }}
+            {{- if $sbi.tls.enabled }}
+            # SBI TLS (global.sbi.tls): the TLS group of etc/nef.conf (cn5g-nef 169bd33a). The
+            # northbound API and the calls to the AMF, SMF, UDM and NRF use TLS; the NEF dials
+            # them by the host names above (113084c7), which the peers' certificates carry.
+            # The NEF always verifies its peers (verifyPeer is not read).
+            - name: ENABLE_TLS
+              value: "yes"
+            - name: TLS_CERT
+              value: /etc/firecell/sbi-tls/tls.crt
+            - name: TLS_KEY
+              value: /etc/firecell/sbi-tls/tls.key
+            - name: TLS_CA
+              value: /etc/firecell/sbi-tls/ca.crt
+            - name: TLS_REQUIRE_CLIENT_CERT
+              value: {{ ternary "yes" "no" $sbi.tls.requireClientCert | quote }}
+            {{- end }}
+            {{- if $sbi.oauth2.enabled }}
+            # SBI OAuth2 (global.sbi.oauth2): tokens from the NRF for the requests to the AMF,
+            # SMF and UDM (OAUTH2 group of etc/nef.conf, 169bd33a).
+            - name: ENABLE_OAUTH2
+              value: "yes"
+            {{- end }}
           ports:
             - name: sbi
               containerPort: {{ $cfg.sbiPort }}
@@ -80,6 +112,24 @@ spec:
             - name: http2
               containerPort: {{ $cfg.sbiHttp2Port }}
               protocol: TCP
+            {{- if .Values.nef.fcaps.enabled }}
+            - name: mns
+              containerPort: {{ .Values.nef.fcaps.mnsPort }}
+              protocol: TCP
+            {{- end }}
+          {{- if or .Values.nef.fcaps.enabled (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "nef")) }}
+          volumeMounts:
+            {{- if .Values.nef.fcaps.enabled }}
+            - name: cm-state
+              mountPath: {{ .Values.nef.fcaps.datastore.mountPath }}
+              {{- if eq .Values.nef.fcaps.intentMode "configmap" }}
+              readOnly: true
+              {{- end }}
+            {{- end }}
+            {{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "nef")) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+          {{- end }}
           resources:
             {{- toYaml $nef.resources | nindent 12 }}
           # The image HEALTHCHECK script.
@@ -97,6 +147,24 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 5
+      {{- if or .Values.nef.fcaps.enabled (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "nef")) }}
+      volumes:
+        {{- if .Values.nef.fcaps.enabled }}
+        - name: cm-state
+          {{- if eq .Values.nef.fcaps.intentMode "configmap" }}
+          # A directory, not a subPath: kubelet never refreshes a ConfigMap mounted through subPath.
+          configMap:
+            name: {{ .Values.nef.fcaps.intentConfigMap.name }}
+            optional: {{ .Values.nef.fcaps.intentConfigMap.optional }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: oai-nef-cm-state
+          {{- end }}
+        {{- end }}
+        {{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "nef")) }}
+        {{- . | nindent 8 }}
+        {{- end }}
+      {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

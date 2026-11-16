@@ -69,6 +69,12 @@ spec:
               readOnly: true
               {{- end }}
             {{- end }}
+            {{- with .Values.coreConfig.pcf.trace }}
+            # Trace record files (pcf.trace.dir): the image has no such directory and the PCF
+            # does not create it.
+            - name: trace
+              mountPath: {{ include "firecell-5gc.pcfTraceDir" . }}
+            {{- end }}
           resources:
             {{- toYaml .Values.pcf.resources | nindent 12 }}
           readinessProbe:
@@ -101,6 +107,11 @@ spec:
           persistentVolumeClaim:
             claimName: oai-pcf-cm-state
           {{- end }}
+        {{- end }}
+        {{- if .Values.coreConfig.pcf.trace }}
+        # Lost when the pod restarts, like the Trace Sessions themselves (they are in memory).
+        - name: trace
+          emptyDir: {}
         {{- end }}
         {{- include "firecell-5gc.healthzVolume" . | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}

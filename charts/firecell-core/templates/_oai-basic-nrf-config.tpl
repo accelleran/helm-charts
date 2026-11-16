@@ -201,6 +201,12 @@ amf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.handover }}
+  {{- if hasKey . "sourceReleaseDelayMs" }}
+  handover:
+    source_release_delay_ms: {{ .sourceReleaseDelayMs }}
+  {{- end }}
+  {{- end }}
   {{- with $v.coreConfig.amf.nasTimers }}
   {{- if .t3512Min }}
   nas_timers:
@@ -503,6 +509,10 @@ pcf:
       uplink: {{ .uplink | quote }}
       downlink: {{ .downlink | quote }}
     {{- end }}
+    {{- with .servAreaRes }}
+    serv_area_res:
+      {{- include "firecell-5gc.pcfServAreaRes" (dict "d" . "where" "coreConfig.pcf.amPolicy.servAreaRes") | nindent 6 }}
+    {{- end }}
     {{- with .supi }}
     supi:
       {{- range $supi, $d := . }}
@@ -514,6 +524,10 @@ pcf:
         ue_ambr:
           uplink: {{ .uplink | quote }}
           downlink: {{ .downlink | quote }}
+        {{- end }}
+        {{- with $d.servAreaRes }}
+        serv_area_res:
+          {{- include "firecell-5gc.pcfServAreaRes" (dict "d" . "where" (printf "coreConfig.pcf.amPolicy.supi.%s.servAreaRes" $supi)) | nindent 10 }}
         {{- end }}
       {{- end }}
     {{- end }}
@@ -528,6 +542,16 @@ pcf:
     pcscf_restoration: {{ .pcscfRestoration }}
     {{- end }}
   {{- end }}
+  {{- end }}
+  {{- with $v.coreConfig.pcf.trace }}
+  trace:
+    dir: {{ include "firecell-5gc.pcfTraceDir" . | quote }}
+    {{- if hasKey . "maxSessions" }}
+    {{- if lt (int .maxSessions) 1 }}
+    {{- fail (printf "coreConfig.pcf.trace.maxSessions must be 1 or more (got %v)" .maxSessions) }}
+    {{- end }}
+    max_sessions: {{ int .maxSessions }}
+    {{- end }}
   {{- end }}
 
 upf:

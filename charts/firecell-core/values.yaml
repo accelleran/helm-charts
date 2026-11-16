@@ -32,7 +32,17 @@ global:
   # Secret <secretPrefix>-<nf> (keys tls.crt, tls.key, ca.crt) at /etc/firecell/sbi-tls.
   # Not covered when TLS is on (FIXME(limitation)): the IMS (the Rx-N5 IWF and the P-CSCF
   # restoration call the PCF in clear text), the NMS and ACS agents, and the post-flight verify
-  # hook (it reads the NRF over http); the NEF is added after its TLS build decision.
+  # hook (it reads the NRF over http).
+  # The NEF (nef.enabled) is covered: TLS on its northbound API and toward the AMF, SMF, UDM and
+  # NRF; OAuth2 needs nef.config.nrf.register (the render fails without it). Its image must be a
+  # build with Pistache SSL (cn5g-nef NEF_PISTACHE_SSL), else the NEF exits with TLS on. With
+  # requireClientCert an AF calling the NEF needs a client certificate from the SBI CA.
+  # FIXME(limitation), NEF with TLS: (1) the notificationUri the NEF gives the AMF is
+  # https://<NEF pod IP>:<sbiPort> (cn5g-nef nef_config::get_nf_event_notify_url) and the AMF checks
+  # the host against the NEF certificate (cs http_client VerifyHost), which names oai-nef only, so
+  # AMF event notifications to the NEF fail until the NEF puts a host name there; (2) with
+  # nef.config.nrf.discoverAmf the discovered AMF is dialled by IP (cn5g-nef 113084c7): use the
+  # static peer (discoverAmf false).
   sbi:
     tls:
       enabled: false
@@ -427,6 +437,21 @@ eir:
     limits:
       memory: 1Gi
       cpu: 1000m
+  # FCAPS MnS (TS 28.532) of the EIR on mnsPort, from the cn5g-eir FCAPS build (WITH_FCAPS):
+  # identity, heartbeat, alarms, PM and CM. Off by default. The image must be an FCAPS build.
+  # intentMode, datastore and intentConfigMap work as for ausf.fcaps.
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      name: oai-eir-cm-intent
+      optional: true
   config:
     listenHost: "0.0.0.0"
     # SBI port: HTTP/2 only. healthHttp1Port: HTTP/1.1 /health for the readiness probe;
@@ -474,7 +499,26 @@ nef:
     limits:
       memory: 1Gi
       cpu: 1000m
+  # FCAPS MnS (TS 28.532) of the NEF on mnsPort, from the cn5g-nef FCAPS build (WITH_FCAPS):
+  # identity, heartbeat, alarms, PM and CM. Off by default. The image must be an FCAPS build.
+  # intentMode, datastore and intentConfigMap work as for ausf.fcaps.
+  fcaps:
+    enabled: false
+    mnsPort: 9091
+    intentMode: configmap
+    datastore:
+      mountPath: /var/lib/firecell/cm
+      file: cm.json
+      size: 128Mi
+      storageClassName: local-path
+    intentConfigMap:
+      name: oai-nef-cm-intent
+      optional: true
   config:
+    # Monitoring Event exposure (TS 29.122 5.3, cn5g-nef SUPPORT_FEATURES.MONITORING_EVENT_ENABLED, env
+    # MONITORING_EVENT_ENABLED; NEF default yes), seed of the FCAPS switch monitoringEventEnabled.
+    # false: a new subscription is refused with 403; existing ones stay.
+    monitoringEventEnabled: true
     interfaceName: eth0
     # The NEF's own HTTP/1.1 and HTTP/2 ports (image defaults 80 and 8080).
     sbiPort: 80
@@ -483,6 +527,8 @@ nef:
     useHttp2: false
     # Peers, by Service name; the NEF resolves them when it starts. Port is the HTTP/1.1
     # port, as the other NFs of this chart use it (8080 with coreConfig.httpVersion 1).
+    # With global.sbi.tls the NEF calls port over TLS and HTTP/2 (ALPN) whatever useHttp2 says,
+    # and checks the peer certificate against hostname: keep the Service names.
     peers:
       amf: {hostname: oai-amf, port: 8080, http2Port: 8080}
       smf: {hostname: oai-smf, port: 8080, http2Port: 8080}
@@ -1269,6 +1315,12 @@ coreConfig:
     ueAmbrDefault:
       uplink: "1 Gbps"
       downlink: "1 Gbps"
+    # N2 handover (cn5g-amf amf.handover). sourceReleaseDelayMs, seed of the FCAPS switch
+    # hoSourceReleaseDelayMs (0..5000 ms, AMF default 1000): how long after the Handover Notify the
+    # AMF releases the source RAN's UE context, so that forwarded packets can still arrive; 0
+    # releases at the Notify, as before the feature. The AMF refuses other values at start.
+    handover:
+      sourceReleaseDelayMs: 1000
     # NAS timer T3512 (periodic registration update) in minutes, sent to the UE in the
     # Registration Accept (cn5g-amf amf.nas_timers.t3512_min, default 50; TS 24.501 5.3.7).
     # It must be exactly encodable as a GPRS Timer 3 (TS 24.008 10.5.7.4a: a value of 1 to
@@ -1490,16 +1542,27 @@ coreConfig:
     # AM policy the PCF returns to the AMF (cn5g-pcf pcf.am_policy; Npcf_AMPolicyControl,
     # TS 29.507). Only used when the AMF asks for it: coreConfig.amf.amPolicy.enabled. Empty
     # (default): the PCF answers with the values the AMF sent. rfspIndex 1..256; ueAmbr needs
-    # both uplink and downlink as TS 29.571 BitRate strings; supi overrides the defaults per
-    # SUPI (the same two keys). The PCF refuses a bad value at start.
+    # both uplink and downlink as TS 29.571 BitRate strings; servAreaRes is the Service Area
+    # Restriction (TS 29.571 ServiceAreaRestriction, L1-A3-8): restrictionType ALLOWED_AREAS
+    # or NOT_ALLOWED_AREAS and tacs, a list of 4 or 6 hex digit TACs, which must be QUOTED
+    # (an unquoted 000009 is the number 9). The PCF sends it only when the AMF sent a
+    # servAreaRes in its request. supi overrides the defaults per SUPI (the same three keys).
+    # The PCF refuses a bad value at start; the render fails first for a missing
+    # restrictionType or tacs.
     amPolicy: {}
     #  rfspIndex: 12
     #  ueAmbr:
     #    uplink: "100 Mbps"
     #    downlink: "1 Gbps"
+    #  servAreaRes:
+    #    restrictionType: NOT_ALLOWED_AREAS
+    #    tacs: ["000009"]
     #  supi:
     #    imsi-001010000000002:
     #      rfspIndex: 7
+    #      servAreaRes:
+    #        restrictionType: ALLOWED_AREAS
+    #        tacs: ["000001", "00000A"]
     # Npcf_PolicyAuthorization (N5) switches (cn5g-pcf pcf.policy_authorization), seeds of the
     # FCAPS switches afEventsEnabled and pcscfRestorationEnabled. Both values are the PCF
     # defaults. afEvents: the AF events subscription over N5 and the optional notifications to
@@ -1509,6 +1572,19 @@ coreConfig:
     policyAuthorization:
       afEvents: true
       pcscfRestoration: true
+    # Subscription trace (cn5g-pcf pcf.trace; TS 29.507 4.2.2.1, TS 32.422): for a UE whose
+    # subscription has traceData naming the PCF, the PCF writes the AM and SM policy messages
+    # of its associations as JSON lines to <dir>/<traceRef>_<TRSR>.jsonl. Empty (default): the
+    # key is not written, the PCF uses its own defaults and no volume is added. Setting any
+    # key writes pcf.trace and mounts an emptyDir at dir, because the image has no
+    # /openair-pcf/trace and the PCF does not create the directory (without it the PCF logs
+    # "Trace record not written"). The files are lost when the pod restarts and are collected
+    # with kubectl cp; they are not sent to a Trace Collection Entity (FIXME in the PCF).
+    # dir: an absolute path (default /openair-pcf/trace); maxSessions: Trace Sessions at a
+    # time, 1 or more (PCF default 100).
+    trace: {}
+    #  dir: /openair-pcf/trace
+    #  maxSessions: 100
 
   # UDM configuration
   udm:

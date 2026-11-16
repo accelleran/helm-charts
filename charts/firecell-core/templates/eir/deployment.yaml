@@ -49,6 +49,10 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}
+            {{- if .Values.eir.fcaps.enabled }}
+            - name: FCAPS_CM_DATASTORE
+              value: {{ printf "%s/%s" .Values.eir.fcaps.datastore.mountPath .Values.eir.fcaps.datastore.file | quote }}
+            {{- end }}
           ports:
             - name: sbi
               containerPort: {{ .Values.eir.config.listenPort }}
@@ -58,10 +62,22 @@ spec:
               containerPort: {{ .Values.eir.config.healthHttp1Port }}
               protocol: TCP
             {{- end }}
+            {{- if .Values.eir.fcaps.enabled }}
+            - name: mns
+              containerPort: {{ .Values.eir.fcaps.mnsPort }}
+              protocol: TCP
+            {{- end }}
           volumeMounts:
             - name: eir-config
               mountPath: {{ .Values.eir.configMountPath }}
               subPath: eir.yaml
+            {{- if .Values.eir.fcaps.enabled }}
+            - name: cm-state
+              mountPath: {{ .Values.eir.fcaps.datastore.mountPath }}
+              {{- if eq .Values.eir.fcaps.intentMode "configmap" }}
+              readOnly: true
+              {{- end }}
+            {{- end }}
             {{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "eir")) }}
             {{- . | nindent 12 }}
             {{- end }}
@@ -84,6 +100,18 @@ spec:
         - name: eir-config
           secret:
             secretName: oai-eir-config
+        {{- if .Values.eir.fcaps.enabled }}
+        - name: cm-state
+          {{- if eq .Values.eir.fcaps.intentMode "configmap" }}
+          # A directory, not a subPath: kubelet never refreshes a ConfigMap mounted through subPath.
+          configMap:
+            name: {{ .Values.eir.fcaps.intentConfigMap.name }}
+            optional: {{ .Values.eir.fcaps.intentConfigMap.optional }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: oai-eir-cm-state
+          {{- end }}
+        {{- end }}
         {{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "eir")) }}
         {{- . | nindent 8 }}
         {{- end }}

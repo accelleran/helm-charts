@@ -22,6 +22,13 @@ spec:
       targetPort: {{ .Values.eir.config.healthHttp1Port }}
       protocol: TCP
     {{- end }}
+    {{- if .Values.eir.fcaps.enabled }}
+    # The NMS reaches the MnS producer here.
+    - name: mns
+      port: {{ .Values.eir.fcaps.mnsPort }}
+      targetPort: {{ .Values.eir.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
   selector:
     app: oai-eir
 {{- end }}
