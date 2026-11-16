@@ -1,0 +1,38 @@
+{{- if .Values.nms.rbac }}
+{{- $nmsNs := required "nms.namespace is required" .Values.nms.namespace }}
+# Restart (rollout restart patches the pod template) of this Deployment, and
+# the allowlist ConfigMap the NMS writes, by name. The chart creates the
+# ConfigMap: create cannot be limited by name.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-nms-lifecycle
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cbrs-domain-proxy.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: [{{ .Release.Name | quote }}]
+    verbs: ["get", "patch"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: [{{ printf "%s-allowlist" .Release.Name | quote }}]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-nms-lifecycle
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cbrs-domain-proxy.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-nms-lifecycle
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ $nmsNs }}
+{{- end }}

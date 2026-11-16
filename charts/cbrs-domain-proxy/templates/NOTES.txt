@@ -1,0 +1,10 @@
+cbrs-domain-proxy {{ .Chart.Version }} installed as "{{ .Release.Name }}" in namespace {{ .Release.Namespace }}.
+
+CBSD gRPC endpoint (mTLS):
+  {{ .Release.Name }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.grpc.port }}
+SAS: {{ .Values.sas.url }}
+
+The pod starts once the TLS Secrets {{ .Values.sas.secret | default (printf "%s-sas" .Release.Name) }} and {{ .Values.grpc.secret | default (printf "%s-cbsd" .Release.Name) }} exist.
+
+Check:
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
