@@ -80,9 +80,9 @@ spec:
             # Same MCC and MNC as the P-CSCF: both derive the Diameter realm and the
             # Rx peer name pcrf.<EPC_DOMAIN> from them.
             - name: MCC
-              value: {{ .Values.coreConfig.mcc | default "001" | quote }}
+              value: {{ include "firecell-5gc.mcc" . | quote }}
             - name: MNC
-              value: {{ .Values.coreConfig.mnc | default "01" | quote }}
+              value: {{ include "firecell-5gc.mnc" . | quote }}
             {{- with $iwf.epcDomain }}
             - name: EPC_DOMAIN
               value: {{ . | quote }}

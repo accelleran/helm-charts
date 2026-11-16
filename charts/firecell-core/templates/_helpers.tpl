@@ -346,11 +346,39 @@ HostNetwork IMS (Kamailio/Cx): set ims.mysqlHost to a node/external IP — Clust
 {{- end }}
 
 {{/*
+coreConfig.mcc / mnc as the digit strings the IMS images check (MCC ^[0-9]{3}$, MNC ^[0-9]{2,3}$).
+values.yaml quotes them; a number (--set coreConfig.mnc=1, or an unquoted value in a values file)
+has lost its leading zeros, so it is padded: MCC to 3 digits, MNC to 2 (1 -> "01", 123 -> "123").
+Anything else fails the render.
+*/}}
+{{- define "firecell-5gc.mcc" -}}
+{{- $v := .Values.coreConfig.mcc | default "001" -}}
+{{- if or (kindIs "float64" $v) (kindIs "int64" $v) (kindIs "int" $v) -}}
+{{- $v = printf "%03d" (int $v) -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]{3}$" (toString $v)) -}}
+{{- fail (printf "coreConfig.mcc must be 3 digits, quoted (got %v)" $v) -}}
+{{- end -}}
+{{- $v -}}
+{{- end }}
+
+{{- define "firecell-5gc.mnc" -}}
+{{- $v := .Values.coreConfig.mnc | default "01" -}}
+{{- if or (kindIs "float64" $v) (kindIs "int64" $v) (kindIs "int" $v) -}}
+{{- $v = printf "%02d" (int $v) -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]{2,3}$" (toString $v)) -}}
+{{- fail (printf "coreConfig.mnc must be 2 or 3 digits, quoted (got %v)" $v) -}}
+{{- end -}}
+{{- $v -}}
+{{- end }}
+
+{{/*
 IMS SIP domain from PLMN (999/99 -> ims.mnc099.mcc999.3gppnetwork.org).
 */}}
 {{- define "firecell-5gc.imsDomain" -}}
-{{- $mcc := .Values.coreConfig.mcc | default "001" -}}
-{{- $mnc := .Values.coreConfig.mnc | default "01" -}}
+{{- $mcc := include "firecell-5gc.mcc" . -}}
+{{- $mnc := include "firecell-5gc.mnc" . -}}
 {{- if eq (len $mnc) 3 -}}
 ims.mnc{{ $mnc }}.mcc{{ $mcc }}.3gppnetwork.org
 {{- else -}}
@@ -365,9 +393,9 @@ Kamailio CSCF common env (UDR MySQL).
 - name: COMPONENT_NAME
   value: {{ .component | quote }}
 - name: MCC
-  value: {{ .root.Values.coreConfig.mcc | default "001" | quote }}
+  value: {{ include "firecell-5gc.mcc" .root | quote }}
 - name: MNC
-  value: {{ .root.Values.coreConfig.mnc | default "01" | quote }}
+  value: {{ include "firecell-5gc.mnc" .root | quote }}
 - name: MYSQL_HOST
   value: {{ .root.Values.ims.mysqlHost | default (printf "mysql.%s.svc.cluster.local" .root.Values.global.namespace) | quote }}
 # The root password is used at start only (schema + account), then unset by the
@@ -416,9 +444,9 @@ Call with (dict "root" $ "mode" "provision|serve|all" "imsDomain" <domain>).
 - name: CX_GATEWAY_PORT
   value: {{ $v.ims.cxGateway.port | default "3868" | quote }}
 - name: MCC
-  value: {{ $v.coreConfig.mcc | default "001" | quote }}
+  value: {{ include "firecell-5gc.mcc" .root | quote }}
 - name: MNC
-  value: {{ $v.coreConfig.mnc | default "01" | quote }}
+  value: {{ include "firecell-5gc.mnc" .root | quote }}
 - name: IMS_DOMAIN
   value: {{ .imsDomain | quote }}
 - name: CX_SOT
