@@ -91,6 +91,12 @@ spec:
               value: {{ .Values.ims.rxN5Iwf.diameterPort | quote }}
             - name: RX_REG_ENABLED
               value: {{ ternary "true" "false" (.Values.ims.rxN5Iwf.rxRegEnabled | default false) | quote }}
+            {{- with .Values.ims.rxN5Iwf.epcDomain }}
+            # The Rx peer realm: the IWF gets the same EPC_DOMAIN, else the two derive it from
+            # MCC/MNC and the realms differ (the CER fails).
+            - name: EPC_DOMAIN
+              value: {{ . | quote }}
+            {{- end }}
             {{- end }}
           volumeMounts:
             - name: ims-secrets

@@ -50,6 +50,19 @@ spec:
               value: {{ .Values.ims.cxGateway.ip | quote }}
             - name: CX_GATEWAY_PORT
               value: {{ .Values.ims.cxGateway.port | default "3868" | quote }}
+            {{- $pds := .Values.ims.scscf.pcscfDownSeconds }}
+            {{- if and (not (kindIs "invalid" $pds)) (ne (toString $pds) "") }}
+            {{- if not (regexMatch "^[0-9]{1,5}$" (toString $pds)) }}
+            {{- fail (printf "ims.scscf.pcscfDownSeconds must be 1 to 86400 (got %v)" $pds) }}
+            {{- end }}
+            {{- if or (lt (int $pds) 1) (gt (int $pds) 86400) }}
+            {{- fail (printf "ims.scscf.pcscfDownSeconds must be 1 to 86400 (got %v)" $pds) }}
+            {{- end }}
+            # How long a P-CSCF that did not answer stays non-reachable (cn5g-ims L8-P-1; the
+            # S-CSCF default is 60 s).
+            - name: PCSCF_DOWN_SECONDS
+              value: {{ $pds | toString | quote }}
+            {{- end }}
             {{- if .Values.ims.pcscf.alternative.enabled }}
             # P-CSCF restoration (cn5g-ims L4-A9-5): retry a terminating INVITE that the UE's
             # P-CSCF answers with 408 or 503 through the alternative P-CSCF.

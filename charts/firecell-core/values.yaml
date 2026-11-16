@@ -1054,6 +1054,8 @@ ims:
     image: rx-n5-iwf
     imageOverride: ""
     imageTag: latest
+    # Diameter realm of the Rx link (EPC_DOMAIN), given to the IWF and to the P-CSCFs. Empty: each
+    # derives epc.mnc<MNC>.mcc<MCC>.3gppnetwork.org from coreConfig.mcc / mnc, the same value.
     epcDomain: ""
     # Diameter identity of the IWF (RX_N5_IWF_ORIGIN_HOST) and the name the P-CSCF connects to
     # (RX_PEER_HOST). Empty: the Service name ims-rx-n5-iwf, which resolves in the namespace.
@@ -1072,6 +1074,17 @@ ims:
     # Empty: http://ims-rx-n5-iwf.<namespace>.svc.cluster.local:<notifyPort>. It must be
     # an address the PCF can reach.
     notifyUri: ""
+    # The Rx session map on disk (cn5g-ims L8-P-3, RX_N5_IWF_STATE_FILE /var/lib/rx-n5-iwf/sessions.db):
+    # after an IWF restart the calls in progress still get their N5 Delete / Update and RAR / ASR.
+    # volume: emptyDir (default) survives a container restart, not a replaced pod; pvc survives
+    # both (claim ims-rx-n5-iwf-state, size, storageClassName); none keeps the map in memory, as
+    # the IWF does without the variable. maxAgeS (60..2592000): entries not written for that long
+    # are dropped when the IWF starts.
+    state:
+      volume: emptyDir
+      maxAgeS: 86400
+      size: 64Mi
+      storageClassName: local-path
     resources:
       requests:
         memory: 64Mi
@@ -1110,6 +1123,10 @@ ims:
     ip: "192.168.31.207"
     hostNetwork: true
     bindPort: 6060
+    # Seconds a P-CSCF that did not answer a terminating request stays non-reachable, without a
+    # sign of life, before the S-CSCF tries it again (TS 23.380 5.4.2.2.1; cn5g-ims L8-P-1,
+    # PCSCF_DOWN_SECONDS, 1..86400). Empty: the S-CSCF default, 60.
+    pcscfDownSeconds: ""
   cxGateway:
     enabled: true
     ip: "192.168.31.208"
