@@ -8,7 +8,17 @@ metadata:
   labels:
     {{- include "firecell-5gc.labels" . | nindent 4 }}
 spec:
+  {{- if and .Values.ims.enabled .Values.ims.rxN5Iwf.enabled }}
+  # The rx-n5-iwf has its own policy (rx-n5-iwf.yaml): its notify port is for the PCF only.
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: NotIn
+        values:
+          - ims-rx-n5-iwf
+  {{- else }}
   podSelector: {}
+  {{- end }}
   policyTypes:
     - Ingress
   ingress:

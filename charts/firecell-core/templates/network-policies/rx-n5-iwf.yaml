@@ -1,0 +1,58 @@
+{{- if and .Values.networkPolicies.enabled .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.rxN5Iwf.enabled }}
+{{- /* The rx-n5-iwf's notify server takes the PCF's Npcf_PolicyAuthorization_Notify (notify,
+       terminate) without checking the caller (cn5g-ims rx-n5-iwf/notify_server.py
+       FIXME(limitation): no TLS, no OAuth2, no source check; owner: chart, a NetworkPolicy
+       letting only the PCF in). cp-isolation leaves this pod out, so this policy is its only
+       one: the notify port from the PCF pods, the Diameter port from the same sources that
+       cp-isolation admits for every other pod. */}}
+{{- $iwf := .Values.ims.rxN5Iwf }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ims-rx-n5-iwf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app: ims-rx-n5-iwf
+  policyTypes:
+    - Ingress
+  ingress:
+    # Npcf_PolicyAuthorization_Notify from the PCF only
+    - from:
+        - podSelector:
+            matchLabels:
+              app: oai-pcf
+      ports:
+        - protocol: TCP
+          port: {{ $iwf.notifyPort }}
+    # Rx (Diameter) from the P-CSCFs: as cp-isolation. FIXME(lab): the P-CSCFs run on the
+    # host network, so their connections come from a node address, which no podSelector
+    # matches; whether the CNI admits node traffic to the pod is not tested (also before
+    # this policy).
+    - from:
+        - podSelector: {}
+        {{- $allowNms := .Values.fcAcsAgent.enabled }}
+        {{- if hasKey (.Values.networkPolicies | default dict) "allowNmsNamespace" }}
+        {{- $allowNms = .Values.networkPolicies.allowNmsNamespace }}
+        {{- end }}
+        {{- if $allowNms }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ include "firecell-5gc.nmsNamespace" . }}
+        {{- end }}
+        {{- range (.Values.networkPolicies).allowedNamespaces }}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ . }}
+        {{- end }}
+        {{- range .Values.networkPolicies.allowedExternalCIDRs }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+      ports:
+        - protocol: TCP
+          port: {{ $iwf.diameterPort }}
+{{- end }}
