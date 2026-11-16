@@ -87,6 +87,18 @@ spec:
             - name: EPC_DOMAIN
               value: {{ . | quote }}
             {{- end }}
+            # The CSCFs' IMS domain: the IWF's default allowed peer is pcscf.<IMS_DOMAIN>, the
+            # P-CSCF's Diameter identity (cn5g-ims L8-R-5).
+            - name: IMS_DOMAIN
+              value: {{ include "firecell-5gc.imsDomain" . | quote }}
+            {{- with $iwf.allowedPeers }}
+            {{- if not (regexMatch "^(\\*|[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?(,[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?)*)$" .) }}
+            {{- fail (printf "ims.rxN5Iwf.allowedPeers must be * or a comma-separated list of Diameter identities (got %q)" .) }}
+            {{- end }}
+            # Origin-Hosts whose CER the IWF accepts (cn5g-ims L8-R-5); * = any.
+            - name: RX_N5_IWF_ALLOWED_PEERS
+              value: {{ . | quote }}
+            {{- end }}
             - name: RX_N5_IWF_LOG_LEVEL
               value: {{ $iwf.logLevel | quote }}
             # The Diameter identity the P-CSCF's RX_PEER_HOST names (also its DNS name).

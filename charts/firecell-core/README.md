@@ -393,6 +393,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.resources.limits.memory | string | `"256Mi"` |  |
 | ims.resources.requests.cpu | string | `"100m"` |  |
 | ims.resources.requests.memory | string | `"128Mi"` |  |
+| ims.rxN5Iwf.allowedPeers | string | `""` |  |
 | ims.rxN5Iwf.diameterPort | int | `3868` |  |
 | ims.rxN5Iwf.enabled | bool | `false` |  |
 | ims.rxN5Iwf.epcDomain | string | `""` |  |
