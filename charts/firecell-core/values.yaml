@@ -1488,6 +1488,8 @@ coreConfig:
     # forwarding. indirectForwardingTimerMs, seed of hoIndirectForwardingTimerMs
     # (smf.handover.indirect_forwarding_timer_ms, 100..10000, SMF default 2000): how long the
     # indirect forwarding tunnel is kept after the handover; the SMF refuses other values at start.
+    # The render fails on a value the SMF would refuse; an unquoted off (a YAML boolean) is read
+    # as "off".
     handover:
       endMarker: true
       dataForwarding: direct_and_indirect

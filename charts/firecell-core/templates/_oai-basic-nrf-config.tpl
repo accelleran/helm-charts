@@ -317,16 +317,41 @@ smf:
     {{- end }}
   {{- end }}
   {{- with $v.coreConfig.smf.handover }}
-  {{- if or (hasKey . "endMarker") .dataForwarding .indirectForwardingTimerMs }}
+  {{- /* dataForwarding: an unquoted off in a values file is the YAML 1.1 boolean false, read
+         here as "off"; other values must be one of the SMF's three (smf_config_types.cpp
+         validation regex). indirectForwardingTimerMs: 100..10000 (the SMF refuses others). */}}
+  {{- $df := "" }}
+  {{- if hasKey . "dataForwarding" }}
+  {{- if kindIs "bool" .dataForwarding }}
+  {{- if .dataForwarding }}
+  {{- fail "coreConfig.smf.handover.dataForwarding must be off, direct_only or direct_and_indirect (got true)" }}
+  {{- end }}
+  {{- $df = "off" }}
+  {{- else if not (kindIs "invalid" .dataForwarding) }}
+  {{- $df = toString .dataForwarding }}
+  {{- end }}
+  {{- if and $df (not (has $df (list "off" "direct_only" "direct_and_indirect"))) }}
+  {{- fail (printf "coreConfig.smf.handover.dataForwarding must be off, direct_only or direct_and_indirect (got %q)" $df) }}
+  {{- end }}
+  {{- end }}
+  {{- $tm := "" }}
+  {{- if and (hasKey . "indirectForwardingTimerMs") (not (kindIs "invalid" .indirectForwardingTimerMs)) }}
+  {{- $tm = toString .indirectForwardingTimerMs }}
+  {{- if and $tm (or (not (regexMatch "^[0-9]{1,5}$" $tm)) (lt (int $tm) 100) (gt (int $tm) 10000)) }}
+  {{- fail (printf "coreConfig.smf.handover.indirectForwardingTimerMs must be 100 to 10000 (got %v)" .indirectForwardingTimerMs) }}
+  {{- end }}
+  {{- end }}
+  {{- if or (hasKey . "endMarker") $df $tm }}
   handover:
     {{- if hasKey . "endMarker" }}
     end_marker: {{ .endMarker }}
     {{- end }}
-    {{- with .dataForwarding }}
-    data_forwarding: {{ . }}
+    {{- if $df }}
+    {{- /* unquoted as before: the SMF reads it with yaml-cpp as<std::string>, "off" stays a string */}}
+    data_forwarding: {{ $df }}
     {{- end }}
-    {{- with .indirectForwardingTimerMs }}
-    indirect_forwarding_timer_ms: {{ . }}
+    {{- if $tm }}
+    indirect_forwarding_timer_ms: {{ $tm }}
     {{- end }}
   {{- end }}
   {{- end }}
