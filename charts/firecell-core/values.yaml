@@ -1121,6 +1121,10 @@ ims:
     ip: "192.168.31.207"
     hostNetwork: true
     bindPort: 6060
+    # Seconds a P-CSCF that did not answer a terminating request stays non-reachable, without a
+    # sign of life, before the S-CSCF tries it again (TS 23.380 5.4.2.2.1; cn5g-ims L8-P-1,
+    # PCSCF_DOWN_SECONDS, 1..86400). Empty: the S-CSCF default, 60.
+    pcscfDownSeconds: ""
   cxGateway:
     enabled: true
     ip: "192.168.31.208"

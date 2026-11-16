@@ -415,6 +415,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.rxN5Iwf.resources.requests.cpu | string | `"50m"` |  |
 | ims.rxN5Iwf.resources.requests.memory | string | `"64Mi"` |  |
 | ims.rxN5Iwf.rxRegEnabled | bool | `false` |  |
+| ims.scscf.pcscfDownSeconds | string | `""` |  |
 | ims.sidecar.enabled | bool | `false` |  |
 | ims.sidecar.image | string | `"nms-ims-sidecar"` |  |
 | ims.sidecar.imageOverride | string | `""` |  |
