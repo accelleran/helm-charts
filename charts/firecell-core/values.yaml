@@ -1065,8 +1065,10 @@ ims:
     # (RX_PEER_HOST). Empty: the Service name ims-rx-n5-iwf, which resolves in the namespace.
     originHost: ""
     # Diameter identities (Origin-Host) whose CER the IWF accepts, comma-separated; "*" = any
-    # (RX_N5_IWF_ALLOWED_PEERS, cn5g-ims L8-R-5). Empty: the IWF default, pcscf.<IMS domain>, the
-    # identity of the P-CSCF (the IWF gets the CSCFs' IMS_DOMAIN).
+    # (RX_N5_IWF_ALLOWED_PEERS, cn5g-ims L8-R-5). Empty: the IWF default, pcscf.<IMS domain> and
+    # pcscf-alternative.<IMS domain>, the identities of the P-CSCF and of the alternative P-CSCF
+    # (cn5g-ims L8-P-4; the IWF gets the CSCFs' IMS_DOMAIN). A list set here must name the
+    # alternative one when ims.pcscf.alternative.enabled (the render fails otherwise).
     allowedPeers: ""
     # With the IWF on, the P-CSCF gets RX_ENABLED=true (Rx at INVITE / re-INVITE). true also
     # sets RX_REG_ENABLED (an AAR at REGISTER): not needed for voice QoS.
