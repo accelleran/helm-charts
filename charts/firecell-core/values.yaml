@@ -47,7 +47,8 @@ global:
       verifyPeer: true
       # secrets: the Secrets exist already: scripts/gen-sbi-certs.sh makes the PKI files (a test
       # PKI, not for production) and scripts/sbi-secrets-from-certs.sh creates the Secrets from
-      # them. certManager: the chart creates a self-signed CA Issuer, the CA, a CA Issuer and one
+      # them. Run gen-sbi-certs.sh with -p oai- -a rx-n5-iwf=ims-rx-n5-iwf: the NFs dial each
+      # other by the Service names (oai-<nf>), and the peer certificate must carry them. certManager: the chart creates a self-signed CA Issuer, the CA, a CA Issuer and one
       # Certificate per NF (cert-manager must be installed).
       source: secrets
       secretPrefix: sbi-tls

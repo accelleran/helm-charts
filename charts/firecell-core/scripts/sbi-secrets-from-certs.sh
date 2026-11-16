@@ -2,7 +2,8 @@
 # sbi-secrets-from-certs.sh: create the Secrets that global.sbi.tls (source: secrets) and
 # global.sbi.oauth2 expect, from the files scripts/gen-sbi-certs.sh wrote.
 #
-#   scripts/gen-sbi-certs.sh -o ./sbi-certs -d firecell-core.svc.cluster.local
+#   scripts/gen-sbi-certs.sh -o ./sbi-certs -p oai- -a rx-n5-iwf=ims-rx-n5-iwf -d firecell-core.svc.cluster.local
+#   (-p / -a: the Service names the NFs dial, oai-<nf> and ims-rx-n5-iwf, go into the SANs)
 #   scripts/sbi-secrets-from-certs.sh -d ./sbi-certs -n firecell-core
 #   helm upgrade --install ... --set global.sbi.tls.enabled=true --set global.sbi.oauth2.enabled=true
 #
