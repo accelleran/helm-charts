@@ -158,6 +158,9 @@ udsf:
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   serviceName: oai-udsf
+  # The name the NFs dial (nfs.udsf.host; with hostNetwork NFs <host>.<namespace>.svc.cluster.local).
+  # With global.sbi.tls it must be in the UDSF certificate: source certManager adds it when it
+  # differs from serviceName; source secrets: gen-sbi-certs.sh -a udsf=<host>.
   host: oai-udsf
   sbiPort: 8080
   healthPath: /nudsf-data-mgmt/v1/healthz

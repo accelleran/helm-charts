@@ -71,10 +71,18 @@ spec:
     - server auth
     - client auth
   dnsNames:
-    - {{ $svc }}
-    - {{ $svc }}.{{ $ns }}
-    - {{ $svc }}.{{ $ns }}.svc
-    - {{ $svc }}.{{ $ns }}.svc.cluster.local
+    {{- $names := list $svc }}
+    {{- /* The NFs dial the UDSF by udsf.host (shared config nfs.udsf.host), which may differ
+           from the Service name: it must be in the certificate too. */}}
+    {{- if and (eq $nf "udsf") $.Values.udsf.host (ne $.Values.udsf.host $svc) }}
+    {{- $names = append $names $.Values.udsf.host }}
+    {{- end }}
+    {{- range $n := $names }}
+    - {{ $n }}
+    - {{ $n }}.{{ $ns }}
+    - {{ $n }}.{{ $ns }}.svc
+    - {{ $n }}.{{ $ns }}.svc.cluster.local
+    {{- end }}
   issuerRef:
     name: sbi-ca
     kind: Issuer
