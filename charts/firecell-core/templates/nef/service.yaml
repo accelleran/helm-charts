@@ -19,6 +19,13 @@ spec:
       port: {{ .Values.nef.config.sbiHttp2Port }}
       targetPort: {{ .Values.nef.config.sbiHttp2Port }}
       protocol: TCP
+    {{- if .Values.nef.fcaps.enabled }}
+    # The NMS reaches the MnS producer here.
+    - name: mns
+      port: {{ .Values.nef.fcaps.mnsPort }}
+      targetPort: {{ .Values.nef.fcaps.mnsPort }}
+      protocol: TCP
+    {{- end }}
   selector:
     app: oai-nef
 {{- end }}

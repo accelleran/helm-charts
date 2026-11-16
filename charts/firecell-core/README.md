@@ -206,6 +206,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.enableSimpleScenario | string | `"no"` |  |
 | coreConfig.amf.enableSmfSelection | string | `"no"` |  |
 | coreConfig.amf.enableUdsf | string | `"yes"` |  |
+| coreConfig.amf.handover.sourceReleaseDelayMs | int | `1000` |  |
 | coreConfig.amf.name | string | `"OAI-AMF"` |  |
 | coreConfig.amf.nasTimers.t3512Min | int | `50` |  |
 | coreConfig.amf.nid | string | `""` |  |
@@ -250,6 +251,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.pcf.enablePolicyProvisioningApi | string | `"yes"` |  |
 | coreConfig.pcf.policyAuthorization.afEvents | bool | `true` |  |
 | coreConfig.pcf.policyAuthorization.pcscfRestoration | bool | `true` |  |
+| coreConfig.pcf.trace | object | `{}` |  |
 | coreConfig.registerNf | string | `"yes"` |  |
 | coreConfig.smf.enableDlPdrInPfcpSessionEstablishment | string | `"yes"` |  |
 | coreConfig.smf.enableQer | string | `"yes"` |  |
@@ -286,6 +288,15 @@ The following table lists the configurable parameters of the Firecell Core chart
 | eir.config.provToken | string | `"lab-nms-prov-token"` |  |
 | eir.configMountPath | string | `"/etc/cn5g-eir/eir.yaml"` |  |
 | eir.enabled | bool | `false` |  |
+| eir.fcaps.datastore.file | string | `"cm.json"` |  |
+| eir.fcaps.datastore.mountPath | string | `"/var/lib/firecell/cm"` |  |
+| eir.fcaps.datastore.size | string | `"128Mi"` |  |
+| eir.fcaps.datastore.storageClassName | string | `"local-path"` |  |
+| eir.fcaps.enabled | bool | `false` |  |
+| eir.fcaps.intentConfigMap.name | string | `"oai-eir-cm-intent"` |  |
+| eir.fcaps.intentConfigMap.optional | bool | `true` |  |
+| eir.fcaps.intentMode | string | `"configmap"` |  |
+| eir.fcaps.mnsPort | int | `9091` |  |
 | eir.image | string | `"cn5g-eir"` |  |
 | eir.imageOverride | string | `""` |  |
 | eir.imageTag | string | `""` |  |
@@ -429,6 +440,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | namespace.create | bool | `false` |  |
 | namespace.keepOnUninstall | bool | `true` |  |
 | nef.config.interfaceName | string | `"eth0"` |  |
+| nef.config.monitoringEventEnabled | bool | `true` |  |
 | nef.config.nrf.discoverAmf | bool | `false` |  |
 | nef.config.nrf.hostname | string | `"oai-nrf"` |  |
 | nef.config.nrf.port | int | `8080` |  |
@@ -446,6 +458,15 @@ The following table lists the configurable parameters of the Firecell Core chart
 | nef.config.sbiPort | int | `80` |  |
 | nef.config.useHttp2 | bool | `false` |  |
 | nef.enabled | bool | `false` |  |
+| nef.fcaps.datastore.file | string | `"cm.json"` |  |
+| nef.fcaps.datastore.mountPath | string | `"/var/lib/firecell/cm"` |  |
+| nef.fcaps.datastore.size | string | `"128Mi"` |  |
+| nef.fcaps.datastore.storageClassName | string | `"local-path"` |  |
+| nef.fcaps.enabled | bool | `false` |  |
+| nef.fcaps.intentConfigMap.name | string | `"oai-nef-cm-intent"` |  |
+| nef.fcaps.intentConfigMap.optional | bool | `true` |  |
+| nef.fcaps.intentMode | string | `"configmap"` |  |
+| nef.fcaps.mnsPort | int | `9091` |  |
 | nef.image | string | `"cn5g-nef"` |  |
 | nef.imageOverride | string | `""` |  |
 | nef.imageTag | string | `""` |  |

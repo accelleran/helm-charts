@@ -663,12 +663,50 @@ Context: .Values.upf.
 {{- end }}
 
 {{/*
+PCF AM policy Service Area Restriction (cn5g-pcf am_policy[.supi.<supi>].serv_area_res,
+TS 29.571 ServiceAreaRestriction): restriction_type and a list of TACs. The PCF refuses
+anything else at start, so the render fails first. dict: d (the values map), where (its
+path, for the message). The TACs are written as strings: quote them in the values file
+(an unquoted 000009 is the number 9).
+*/}}
+{{- define "firecell-5gc.pcfServAreaRes" -}}
+{{- $t := required (printf "%s.restrictionType is required (ALLOWED_AREAS or NOT_ALLOWED_AREAS)" .where) .d.restrictionType -}}
+{{- if not (has $t (list "ALLOWED_AREAS" "NOT_ALLOWED_AREAS")) }}
+{{- fail (printf "%s.restrictionType must be ALLOWED_AREAS or NOT_ALLOWED_AREAS (got %q)" .where $t) }}
+{{- end }}
+{{- if not .d.tacs }}
+{{- fail (printf "%s.tacs is required (a list of 4 or 6 hex digit TACs, quoted)" .where) }}
+{{- end }}
+restriction_type: {{ $t | quote }}
+tacs:
+{{- range .d.tacs }}
+{{- if not (regexMatch "^([0-9A-Fa-f]{4}|[0-9A-Fa-f]{6})$" (toString .)) }}
+{{- fail (printf "%s.tacs: %q is not a TAC of 4 or 6 hex digits (quote it in the values file)" $.where (toString .)) }}
+{{- end }}
+  - {{ toString . | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+PCF trace record directory (cn5g-pcf pcf.trace.dir, default /openair-pcf/trace): the one
+place the config (pcf.trace.dir) and the Deployment (the emptyDir mounted there) read it
+from. Takes the coreConfig.pcf.trace map. An absolute path is required.
+*/}}
+{{- define "firecell-5gc.pcfTraceDir" -}}
+{{- $dir := .dir | default "/openair-pcf/trace" -}}
+{{- if not (hasPrefix "/" $dir) }}
+{{- fail (printf "coreConfig.pcf.trace.dir must be an absolute path (got %q)" $dir) }}
+{{- end }}
+{{- $dir }}
+{{- end }}
+
+{{/*
 SBI security (global.sbi.tls / global.sbi.oauth2): the NFs that get a certificate, and the
 volumes and mounts of an NF container. All empty when both are off.
 */}}
 {{- define "firecell-5gc.sbiNfs" -}}
 {{- $v := .Values -}}
-{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" -}}
+{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" "nef" -}}
 {{- if (index $v $nf).enabled }}
 - {{ $nf }}
 {{- end }}
