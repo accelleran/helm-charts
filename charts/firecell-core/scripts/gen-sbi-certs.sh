@@ -17,17 +17,24 @@
 # tls.cert_key_path = <nf>.key, tls.ca_path = ca.crt (cs L3-05-1).
 #
 # SANs per NF: DNS:<nf>, DNS:<nf>.<domain> (when -d is given), and each -i
-# address. Run it again with -f to replace existing files.
+# address. With -p PREFIX also DNS:<PREFIX><nf> (and .<domain>), and each -a
+# NF=HOST adds DNS:HOST (and .<domain>) to that NF: the host names the NFs dial
+# must be in the certificate (libcurl / cs http_client check the host). The
+# firecell-core chart's Services are oai-<nf>, the Rx-N5 IWF's ims-rx-n5-iwf:
+#   gen-sbi-certs.sh -p oai- -a rx-n5-iwf=ims-rx-n5-iwf -d <ns>.svc.cluster.local
+# Run it again with -f to replace existing files.
 #
 # Not for production: the CA key sits beside the certificates.
 set -euo pipefail
 
 usage() {
   cat <<EOF
-Usage: $0 [-o OUT_DIR] [-n "amf smf ..."] [-d DOMAIN] [-i IP]... [-t DAYS] [-f]
+Usage: $0 [-o OUT_DIR] [-n "amf smf ..."] [-d DOMAIN] [-p PREFIX] [-a NF=HOST]... [-i IP]... [-t DAYS] [-f]
   -o  output directory (default ./sbi-certs)
-  -n  NF names (default: amf smf upf ausf udm udr pcf nrf nssf nef eir udsf)
+  -n  NF names (default: amf smf upf ausf udm udr pcf nrf nssf nef eir udsf rx-n5-iwf)
   -d  DNS suffix added as a second SAN, e.g. firecell-core.svc.cluster.local
+  -p  prefix: also DNS:<PREFIX><nf>, e.g. oai- for the firecell-core Services
+  -a  NF=HOST: also DNS:HOST in that NF's certificate (repeatable)
   -i  IP address SAN added to every NF certificate (repeatable)
   -t  validity in days (default 365)
   -f  overwrite existing files
@@ -35,16 +42,20 @@ EOF
 }
 
 OUT_DIR=./sbi-certs
-NFS="amf smf upf ausf udm udr pcf nrf nssf nef eir udsf"
+NFS="amf smf upf ausf udm udr pcf nrf nssf nef eir udsf rx-n5-iwf"
 DOMAIN=""
+PREFIX=""
+ALIASES=()
 IPS=()
 DAYS=365
 FORCE=0
-while getopts "o:n:d:i:t:fh" opt; do
+while getopts "o:n:d:p:a:i:t:fh" opt; do
   case "$opt" in
     o) OUT_DIR=$OPTARG ;;
     n) NFS=$OPTARG ;;
     d) DOMAIN=$OPTARG ;;
+    p) PREFIX=$OPTARG ;;
+    a) ALIASES+=("$OPTARG") ;;
     i) IPS+=("$OPTARG") ;;
     t) DAYS=$OPTARG ;;
     f) FORCE=1 ;;
@@ -58,6 +69,17 @@ command -v openssl >/dev/null || { echo "openssl not found" >&2; exit 1; }
 for n in $NFS; do
   [[ $n =~ ^[a-z0-9-]+$ ]] || { echo "bad NF name: $n" >&2; exit 2; }
 done
+[[ -z $PREFIX || $PREFIX =~ ^[a-z0-9-]+$ ]] || { echo "-p: bad prefix: $PREFIX" >&2; exit 2; }
+for a in "${ALIASES[@]}"; do
+  [[ $a =~ ^[a-z0-9-]+=[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]] || { echo "-a: use NF=HOST: $a" >&2; exit 2; }
+done
+
+# DNS:<name> and, with -d, DNS:<name>.<domain>
+dns_sans() {
+  printf ',DNS:%s' "$1"
+  [[ -n $DOMAIN ]] && printf ',DNS:%s.%s' "$1" "$DOMAIN"
+  return 0
+}
 
 mkdir -p "$OUT_DIR"
 umask 077
@@ -77,8 +99,12 @@ openssl req -x509 -new -key "$OUT_DIR/ca.key" -sha256 -days "$DAYS" \
 
 # One certificate per NF
 for nf in $NFS; do
-  san="DNS:$nf"
-  [[ -n $DOMAIN ]] && san="$san,DNS:$nf.$DOMAIN"
+  san=$(dns_sans "$nf")
+  [[ -n $PREFIX ]] && san="$san$(dns_sans "$PREFIX$nf")"
+  for a in "${ALIASES[@]}"; do
+    [[ ${a%%=*} == "$nf" ]] && san="$san$(dns_sans "${a#*=}")"
+  done
+  san=${san#,}
   for ip in "${IPS[@]}"; do san="$san,IP:$ip"; done
   ext=$(mktemp)
   cat >"$ext" <<EOF
