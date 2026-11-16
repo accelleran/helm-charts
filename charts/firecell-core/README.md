@@ -395,6 +395,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.resources.limits.memory | string | `"256Mi"` |  |
 | ims.resources.requests.cpu | string | `"100m"` |  |
 | ims.resources.requests.memory | string | `"128Mi"` |  |
+| ims.rxN5Iwf.allowedPeers | string | `""` |  |
 | ims.rxN5Iwf.diameterPort | int | `3868` |  |
 | ims.rxN5Iwf.enabled | bool | `false` |  |
 | ims.rxN5Iwf.epcDomain | string | `""` |  |
@@ -404,6 +405,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.rxN5Iwf.logLevel | string | `"INFO"` |  |
 | ims.rxN5Iwf.notifyPort | int | `8080` |  |
 | ims.rxN5Iwf.notifyUri | string | `""` |  |
+| ims.rxN5Iwf.nrf.nfInstanceId | string | `""` |  |
+| ims.rxN5Iwf.nrf.register | bool | `false` |  |
+| ims.rxN5Iwf.nrf.uri | string | `""` |  |
 | ims.rxN5Iwf.state.maxAgeS | int | `86400` |  |
 | ims.rxN5Iwf.state.size | string | `"64Mi"` |  |
 | ims.rxN5Iwf.state.storageClassName | string | `"local-path"` |  |

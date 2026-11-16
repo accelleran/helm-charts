@@ -346,11 +346,39 @@ HostNetwork IMS (Kamailio/Cx): set ims.mysqlHost to a node/external IP — Clust
 {{- end }}
 
 {{/*
+coreConfig.mcc / mnc as the digit strings the IMS images check (MCC ^[0-9]{3}$, MNC ^[0-9]{2,3}$).
+values.yaml quotes them; a number (--set coreConfig.mnc=1, or an unquoted value in a values file)
+has lost its leading zeros, so it is padded: MCC to 3 digits, MNC to 2 (1 -> "01", 123 -> "123").
+Anything else fails the render.
+*/}}
+{{- define "firecell-5gc.mcc" -}}
+{{- $v := .Values.coreConfig.mcc | default "001" -}}
+{{- if or (kindIs "float64" $v) (kindIs "int64" $v) (kindIs "int" $v) -}}
+{{- $v = printf "%03d" (int $v) -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]{3}$" (toString $v)) -}}
+{{- fail (printf "coreConfig.mcc must be 3 digits, quoted (got %v)" $v) -}}
+{{- end -}}
+{{- $v -}}
+{{- end }}
+
+{{- define "firecell-5gc.mnc" -}}
+{{- $v := .Values.coreConfig.mnc | default "01" -}}
+{{- if or (kindIs "float64" $v) (kindIs "int64" $v) (kindIs "int" $v) -}}
+{{- $v = printf "%02d" (int $v) -}}
+{{- end -}}
+{{- if not (regexMatch "^[0-9]{2,3}$" (toString $v)) -}}
+{{- fail (printf "coreConfig.mnc must be 2 or 3 digits, quoted (got %v)" $v) -}}
+{{- end -}}
+{{- $v -}}
+{{- end }}
+
+{{/*
 IMS SIP domain from PLMN (999/99 -> ims.mnc099.mcc999.3gppnetwork.org).
 */}}
 {{- define "firecell-5gc.imsDomain" -}}
-{{- $mcc := .Values.coreConfig.mcc | default "001" -}}
-{{- $mnc := .Values.coreConfig.mnc | default "01" -}}
+{{- $mcc := include "firecell-5gc.mcc" . -}}
+{{- $mnc := include "firecell-5gc.mnc" . -}}
 {{- if eq (len $mnc) 3 -}}
 ims.mnc{{ $mnc }}.mcc{{ $mcc }}.3gppnetwork.org
 {{- else -}}
@@ -365,9 +393,9 @@ Kamailio CSCF common env (UDR MySQL).
 - name: COMPONENT_NAME
   value: {{ .component | quote }}
 - name: MCC
-  value: {{ .root.Values.coreConfig.mcc | default "001" | quote }}
+  value: {{ include "firecell-5gc.mcc" .root | quote }}
 - name: MNC
-  value: {{ .root.Values.coreConfig.mnc | default "01" | quote }}
+  value: {{ include "firecell-5gc.mnc" .root | quote }}
 - name: MYSQL_HOST
   value: {{ .root.Values.ims.mysqlHost | default (printf "mysql.%s.svc.cluster.local" .root.Values.global.namespace) | quote }}
 # The root password is used at start only (schema + account), then unset by the
@@ -416,9 +444,9 @@ Call with (dict "root" $ "mode" "provision|serve|all" "imsDomain" <domain>).
 - name: CX_GATEWAY_PORT
   value: {{ $v.ims.cxGateway.port | default "3868" | quote }}
 - name: MCC
-  value: {{ $v.coreConfig.mcc | default "001" | quote }}
+  value: {{ include "firecell-5gc.mcc" .root | quote }}
 - name: MNC
-  value: {{ $v.coreConfig.mnc | default "01" | quote }}
+  value: {{ include "firecell-5gc.mnc" .root | quote }}
 - name: IMS_DOMAIN
   value: {{ .imsDomain | quote }}
 - name: CX_SOT
@@ -711,6 +739,33 @@ volumes and mounts of an NF container. All empty when both are off.
 - {{ $nf }}
 {{- end }}
 {{- end }}
+{{- if include "firecell-5gc.rxN5IwfEnabled" . }}
+- rx-n5-iwf
+{{- end }}
+{{- end }}
+
+{{/* "true" when the Rx-N5 IWF is rendered (Kamailio IMS with ims.rxN5Iwf.enabled), else empty. */}}
+{{- define "firecell-5gc.rxN5IwfEnabled" -}}
+{{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.rxN5Iwf.enabled -}}
+true
+{{- end -}}
+{{- end }}
+
+{{/*
+nfInstanceId of the Rx-N5 IWF at the NRF: ims.rxN5Iwf.nrf.nfInstanceId, else a UUID version 4
+derived from the namespace, so it stays the same across restarts and upgrades (the IWF draws a
+new random one at every start without it). The NRF checks the version 4 form (validate_uuid).
+*/}}
+{{- define "firecell-5gc.rxN5IwfNfInstanceId" -}}
+{{- with .Values.ims.rxN5Iwf.nrf.nfInstanceId -}}
+{{- . -}}
+{{- else -}}
+{{- $h := sha256sum (printf "%s/ims-rx-n5-iwf" .Values.global.namespace) -}}
+{{- $c := substr 16 17 $h -}}
+{{- $variant := "b" -}}
+{{- if contains $c "0123" }}{{ $variant = "8" }}{{ else if contains $c "4567" }}{{ $variant = "9" }}{{ else if contains $c "89ab" }}{{ $variant = "a" }}{{ end -}}
+{{- printf "%s-%s-4%s-%s%s-%s" (substr 0 8 $h) (substr 8 12 $h) (substr 13 16 $h) $variant (substr 17 20 $h) (substr 20 32 $h) -}}
+{{- end -}}
 {{- end }}
 
 {{/* dict: ctx (root), nf */}}

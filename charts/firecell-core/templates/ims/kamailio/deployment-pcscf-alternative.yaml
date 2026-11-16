@@ -72,6 +72,20 @@ spec:
             # false drops FORCE_RTPRELAY (the image default is true).
             - name: RTPENGINE_ENABLED
               value: {{ ternary "true" "false" (.Values.ims.rtpengine.enabled | default false) | quote }}
+            {{- if .Values.global.sbi.tls.enabled }}
+            # The core's SBI security (cn5g-ims 2991677): read only to warn that the P-CSCF
+            # restoration request is cleartext without a token.
+            - name: SBI_TLS_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.global.sbi.oauth2.enabled }}
+            - name: SBI_OAUTH2_ENABLED
+              value: "true"
+            {{- end }}
+            # Its own Diameter identity (cn5g-ims L8-P-4): the IWF keeps one connection per
+            # Origin-Host, so the first P-CSCF's pcscf.<IMS domain> would replace each other.
+            - name: PCSCF_DIAMETER_HOST
+              value: {{ printf "pcscf-alternative.%s" (include "firecell-5gc.imsDomain" .) | quote }}
             # P-CSCF restoration (cn5g-ims L4-A9-5): a terminating INVITE with X-Failed-PCSCF makes
             # this P-CSCF POST pcscf-restoration to the PCF. It does not use Rx.
             - name: PCSCF_RESTORE_ENABLED
