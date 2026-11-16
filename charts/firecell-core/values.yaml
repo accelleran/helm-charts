@@ -1531,7 +1531,8 @@ coreConfig:
     # OAI key: smf.location_api_root (cn5g-smf #49). apiRoot the SMF puts in the Location of a
     # created SM context, e.g. "http://oai-smf:8080", so the AMF keeps a URI that outlives the SMF pod
     # (TS 29.502 6.1.3.2.3.1, TS 29.500 6.10.4). Empty = SMF default (its listen address).
-    # Only with one SMF, or several that share the SM contexts through UDSF.
+    # Only with one SMF, or several that share the SM contexts through UDSF. With global.sbi.tls
+    # it must be https://, e.g. "https://oai-smf:8080" (the render fails otherwise).
     locationApiRoot: ""
     enableUsageReporting: "no"
     # OAI key: enable_dl_pdr_in_pfcp_session_establishment (per-UPF under smf.upfs[].config)
