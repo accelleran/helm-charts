@@ -467,7 +467,8 @@ eir:
     # Lab profile. FIXME(spec, TS 29.511 6.1.7.3 / TS 29.500 6.7.3): the AMF sends no
     # OAuth2 access token until feature 05 is on, so the equipment-status check is let in
     # without one (allowAnonymous). The two tokens are lab placeholders for the client
-    # lists; replace them in site values.
+    # lists; replace them in site values. With authProfile commercial, provToken must have
+    # at least 32 characters (the render fails otherwise): the EIR ignores shorter ones.
     authProfile: lab
     allowAnonymous: true
     checkToken: "lab-amf-token"
