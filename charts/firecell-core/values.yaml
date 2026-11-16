@@ -35,12 +35,9 @@ global:
   # NRF; OAuth2 needs nef.config.nrf.register (the render fails without it). Its image must be a
   # build with Pistache SSL (cn5g-nef NEF_PISTACHE_SSL), else the NEF exits with TLS on. With
   # requireClientCert an AF calling the NEF needs a client certificate from the SBI CA.
-  # FIXME(limitation), NEF with TLS: (1) the notificationUri the NEF gives the AMF is
-  # https://<NEF pod IP>:<sbiPort> (cn5g-nef nef_config::get_nf_event_notify_url) and the AMF checks
-  # the host against the NEF certificate (cs http_client VerifyHost), which names oai-nef only, so
-  # AMF event notifications to the NEF fail until the NEF puts a host name there; (2) with
-  # nef.config.nrf.discoverAmf the discovered AMF is dialled by IP (cn5g-nef 113084c7): use the
-  # static peer (discoverAmf false).
+  # The NEF gives the AMF its notification URI with the host name oai-nef (NEF_HOSTNAME).
+  # FIXME(limitation), NEF with TLS: with nef.config.nrf.discoverAmf the discovered AMF is dialled
+  # by IP (cn5g-nef 113084c7): use the static peer (discoverAmf false).
   sbi:
     tls:
       enabled: false
