@@ -222,14 +222,30 @@ amf:
   {{- end }}
   {{- with $v.coreConfig.amf.handover }}
   {{- if hasKey . "sourceReleaseDelayMs" }}
+  {{- $d := toString .sourceReleaseDelayMs }}
+  {{- if or (not (regexMatch "^[0-9]{1,4}$" $d)) (gt (int $d) 5000) }}
+  {{- fail (printf "coreConfig.amf.handover.sourceReleaseDelayMs must be 0 to 5000 (got %v)" .sourceReleaseDelayMs) }}
+  {{- end }}
   handover:
     source_release_delay_ms: {{ .sourceReleaseDelayMs }}
   {{- end }}
   {{- end }}
   {{- with $v.coreConfig.amf.nasTimers }}
-  {{- if .t3512Min }}
+  {{- if and (hasKey . "t3512Min") (not (kindIs "invalid" .t3512Min)) }}
+  {{- /* Only values exact in GPRS Timer 3 (TS 24.008 10.5.7.4a): n x 1 min, 10 min, 1 h or
+         10 h with n 1..31, as cn5g-amf encode_t3512_minutes; the AMF refuses others at start. */}}
+  {{- $t := toString .t3512Min }}
+  {{- $ok := false }}
+  {{- if regexMatch "^[0-9]{1,5}$" $t }}
+  {{- range $u := list 1 10 60 600 }}
+  {{- if and (gt (int $t) 0) (eq (mod (int $t) $u) 0) (le (div (int $t) $u) 31) }}{{ $ok = true }}{{ end }}
+  {{- end }}
+  {{- end }}
+  {{- if not $ok }}
+  {{- fail (printf "coreConfig.amf.nasTimers.t3512Min must be exact in GPRS Timer 3: 1..31, or n x 10 / 60 / 600 minutes with n 1..31 (got %v)" .t3512Min) }}
+  {{- end }}
   nas_timers:
-    t3512_min: {{ .t3512Min }}
+    t3512_min: {{ $t }}
   {{- end }}
   {{- end }}
   {{- with $v.coreConfig.amf.eir }}
@@ -239,6 +255,9 @@ amf:
     enabled: {{ .enabled }}
     {{- end }}
     {{- if .enforcementMode }}
+    {{- if not (has .enforcementMode (list "permissive" "strict")) }}
+    {{- fail (printf "coreConfig.amf.eir.enforcementMode must be permissive or strict (got %q)" (toString .enforcementMode)) }}
+    {{- end }}
     enforcement_mode: {{ .enforcementMode }}
     {{- end }}
   {{- end }}
@@ -251,8 +270,11 @@ amf:
   {{- end }}
   {{- with $v.coreConfig.amf.callTrace }}
   {{- $prof := or .ngranTraceId .tceIpv4 .interfacesToTrace .traceDepth }}
-  {{- if or $prof .autoStartSupi }}
+  {{- if or $prof .autoStartSupi (hasKey . "enabled") }}
   call_trace:
+    {{- if hasKey . "enabled" }}
+    enabled: {{ .enabled }}
+    {{- end }}
     {{- if $prof }}
     profile:
       {{- with .ngranTraceId }}

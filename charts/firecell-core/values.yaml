@@ -1376,7 +1376,9 @@ coreConfig:
     # MCC 001 / MNC 01: 00F110) and tceIpv4 = the Trace Collection Entity (not in
     # 192.0.2.0/24, the documentation range). interfacesToTrace is the Interfaces To Trace
     # byte (AMF default 0x80), traceDepth a string (AMF default "minimum"); autoStartSupi
-    # starts a trace for that SUPI at registration. Keys are written only when set.
+    # starts a trace for that SUPI at registration. enabled (AMF default true) is the seed of
+    # the FCAPS switch callTraceEnabled (cn5g-amf L5-FS-AMF amf.call_trace.enabled): false = no
+    # Trace Start even with a profile. Keys are written only when set.
     callTrace: {}
     #  ngranTraceId: "00F1100000010001"
     #  tceIpv4: "10.0.0.10"
