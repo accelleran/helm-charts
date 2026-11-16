@@ -1308,6 +1308,17 @@ coreConfig:
     # UDM and the SMF with RAT type NR, as before the feature, not NR_REDCAP.
     redcap: {}
     #  enabled: true
+    # NR extended idle mode DRX (cn5g-amf amf.edrx; TS 24.501 5.3.16), seeds of the FCAPS
+    # switches edrxEnabled, edrxRedcapOnly and edrxMaxCycleMs. Each key is rendered only when
+    # set; the AMF defaults are enabled false, redcapOnly true, maxCycleMs 10240. enabled: the
+    # AMF accepts a UE's Requested extended DRX parameters, capped at maxCycleMs (2560, 5120 or
+    # 10240 ms, cycles without a Paging Time Window; the render fails on other values, as the
+    # AMF refuses them), and pages the UE with that cycle. redcapOnly: only UEs with a RedCap
+    # Indication (and redcap.enabled on).
+    edrx: {}
+    #  enabled: false
+    #  redcapOnly: true
+    #  maxCycleMs: 10240
     # UE-AMBR the AMF sends to the gNB when neither the PCF nor the subscription
     # (am-data) gives one (cn5g-amf amf.ue_ambr_default). TS 29.571 BitRate strings,
     # at most 4000000000000 bps (TS 38.413 9.3.1.4); the AMF refuses other values at

@@ -199,6 +199,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.amf.callTrace | object | `{}` |  |
 | coreConfig.amf.amPolicy.enabled | bool | `false` |  |
 | coreConfig.amf.emergencySupport | bool | `false` |  |
+| coreConfig.amf.edrx | object | `{}` |  |
 | coreConfig.amf.eir.enabled | bool | `true` |  |
 | coreConfig.amf.eir.enforcementMode | string | `"permissive"` |  |
 | coreConfig.amf.enableIms | string | `"yes"` |  |

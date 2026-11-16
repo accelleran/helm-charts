@@ -190,6 +190,25 @@ amf:
     enabled: {{ .enabled }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.amf.edrx }}
+  {{- if hasKey . "maxCycleMs" }}
+  {{- if not (has (toString .maxCycleMs) (list "2560" "5120" "10240")) }}
+  {{- fail (printf "coreConfig.amf.edrx.maxCycleMs must be 2560, 5120 or 10240 (got %v)" .maxCycleMs) }}
+  {{- end }}
+  {{- end }}
+  {{- if or (hasKey . "enabled") (hasKey . "redcapOnly") (hasKey . "maxCycleMs") }}
+  edrx:
+    {{- if hasKey . "enabled" }}
+    enabled: {{ .enabled }}
+    {{- end }}
+    {{- if hasKey . "redcapOnly" }}
+    redcap_only: {{ .redcapOnly }}
+    {{- end }}
+    {{- if hasKey . "maxCycleMs" }}
+    max_cycle_ms: {{ int .maxCycleMs }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   {{- with $v.coreConfig.amf.ueAmbrDefault }}
   {{- if or .uplink .downlink }}
   ue_ambr_default:
