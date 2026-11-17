@@ -216,6 +216,13 @@ udsf:
     limits:
       memory: 512Mi
       cpu: 1000m
+  # FIXME(limitation) (applies to every <nf>.fcaps block; Lane 5, F18-N3): with fcaps.enabled false (the default)
+  # an FCAPS-built NF image still serves its MnS on :9091, but only on the pod IP: no container or Service port is
+  # declared, and no FCAPS_CM_DATASTORE / cm-state volume is mounted, so a CM PATCH lands in the container's
+  # writable layer (/var/lib/firecell/cm/cm.json, if writable at NF start) and is lost on any container
+  # restart (crash or pod replacement): the switch then reads its chart value again (lab F18, 17 Nov: after an
+  # AMF exit-139 restart in the same pod the MnS answered persistedIntentVersion 0, was 2). Set
+  # <nf>.fcaps.enabled true for a reachable, persistent MnS.
   fcaps:
     enabled: false
     mnsPort: 9091
