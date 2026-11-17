@@ -559,12 +559,14 @@ nef:
       amf: {hostname: oai-amf, port: 8080, http2Port: 8080}
       smf: {hostname: oai-smf, port: 8080, http2Port: 8080}
       udm: {hostname: oai-udm, port: 8080, http2Port: 8080}
-    # Optional NRF use (cn5g-nef L1-12-5): register the NEF, and find the AMF through the NRF
-    # (else the AMF above). Both off by default; the NRF is passed to the NEF only when one is on.
+    # NRF use (cn5g-nef L1-12-5): register the NEF, and find the AMF through the NRF (else the
+    # AMF above). register is on by default: global.sbi.oauth2 needs it (the NRF gives the NEF
+    # access tokens only when it is registered; the render fails otherwise). discoverAmf is
+    # off. The NRF is passed to the NEF only when one of them is on.
     nrf:
       hostname: oai-nrf
       port: 8080
-      register: false
+      register: true
       discoverAmf: false
 
 # --- AMF (Access and Mobility Management Function) ---
