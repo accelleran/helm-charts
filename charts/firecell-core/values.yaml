@@ -43,8 +43,12 @@ global:
   # build with Pistache SSL (cn5g-nef NEF_PISTACHE_SSL), else the NEF exits with TLS on. With
   # requireClientCert an AF calling the NEF needs a client certificate from the SBI CA.
   # The NEF gives the AMF its notification URI with the host name oai-nef (NEF_HOSTNAME).
-  # FIXME(limitation), NEF with TLS: with nef.config.nrf.discoverAmf the discovered AMF is dialled
-  # by IP (cn5g-nef 113084c7): use the static peer (discoverAmf false).
+  # NEF with TLS and nef.config.nrf.discoverAmf: the NEF dials the discovered AMF by the fqdn of
+  # its NF profile (cn5g-nef nef_nrf.hpp amf_event_exposure_url), and an AMF with TLS registers
+  # fqdn = its SBI host name, oai-amf here (cn5g-amf generate_amf_profile, R1 A-26), which its
+  # certificate carries. So discovery works with TLS when both are rc-02 feature wave images
+  # (from the code; not run on the lab). An AMF profile without an fqdn (an older AMF image) is
+  # skipped, and the NEF falls back to the static AMF peer (nef.config.peers.amf).
   sbi:
     tls:
       enabled: false
@@ -469,7 +473,9 @@ eir:
     # Lab profile. FIXME(spec, TS 29.511 6.1.7.3 / TS 29.500 6.7.3): the AMF sends no
     # OAuth2 access token until feature 05 is on, so the equipment-status check is let in
     # without one (allowAnonymous). The two tokens are lab placeholders for the client
-    # lists; replace them in site values.
+    # lists; replace them in site values. authProfile commercial (the render fails otherwise,
+    # as the EIR would at start): allowAnonymous false, healthHttp1Port 0, global.sbi.tls and
+    # global.sbi.oauth2 on, and a provToken of at least 32 characters (the EIR ignores shorter).
     authProfile: lab
     allowAnonymous: true
     checkToken: "lab-amf-token"
@@ -1340,6 +1346,10 @@ coreConfig:
     #  nonCagUeRejectCause: 7
     # NID of the SNPN: written into the AMF plmn_support_list entry when set (11
     # hex digits, first digit 0-2, cn5g-amf NID_REGEX). Empty: no nid is written.
+    # FIXME(limitation): the chart renders one plmn_support_list entry, and nid goes
+    # onto it, so setting nid makes the AMF SNPN-only (no public PLMN entry). Public
+    # PLMN + SNPN on one AMF (SNPN-CAG HLD HD14: a second entry with the same PLMN ID
+    # and TAC plus the nid) cannot be expressed here; it needs a hand-edited AMF config.
     nid: ""
     # NR RedCap (cn5g-amf amf.redcap), seed of the FCAPS switch redcapEnabled. The key
     # is rendered only when set; the AMF default is true, and the setting only matters
@@ -1487,9 +1497,9 @@ coreConfig:
     enableUdsf: "yes"
     # 5MBS (TS 23.247): the co-located MB-SMF of the SMF (cn5g-smf smf.mbs; "SMF and MB-SMF may be
     # co-located"), multicast sessions preconfigured here ("can be pre-configured in the network").
-    # Off by default, no sessions. enabled true lets a UE join a session in a PDU Session
-    # Modification (the SMF checks mbsAllowed with the UDM, mbs-data); radio delivery is not done
-    # yet (FIXME(limitation) T1 in cn5g-smf). sessions is passed to the SMF as written, with its
+    # Off by default, no sessions. enabled true lets a UE join or leave a session in a PDU Session
+    # Establishment Request or a PDU Session Modification Request (the SMF checks mbsAllowed with
+    # the UDM, mbs-data); radio delivery is not done yet (FIXME(limitation) T1 in cn5g-smf). sessions is passed to the SMF as written, with its
     # own key names (snake_case), one entry per multicast session:
     #   - tmgi: {service_id: "000001", mcc: "001", mnc: "01"}   # service_id: 6 hex digits
     #     ssm: {source: 10.0.0.1, group: 232.1.1.1}             # optional
@@ -1533,7 +1543,8 @@ coreConfig:
     # OAI key: smf.location_api_root (cn5g-smf #49). apiRoot the SMF puts in the Location of a
     # created SM context, e.g. "http://oai-smf:8080", so the AMF keeps a URI that outlives the SMF pod
     # (TS 29.502 6.1.3.2.3.1, TS 29.500 6.10.4). Empty = SMF default (its listen address).
-    # Only with one SMF, or several that share the SM contexts through UDSF.
+    # Only with one SMF, or several that share the SM contexts through UDSF. With global.sbi.tls
+    # it must be https://, e.g. "https://oai-smf:8080" (the render fails otherwise).
     locationApiRoot: ""
     enableUsageReporting: "no"
     # OAI key: enable_dl_pdr_in_pfcp_session_establishment (per-UPF under smf.upfs[].config)
