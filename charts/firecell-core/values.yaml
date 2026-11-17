@@ -1821,6 +1821,10 @@ hooks:
   postFlight:
     enabled: true
     image: ""
+    # Image of the post-flight container that reads the Kubernetes API (AMF NGAP endpoint,
+    # SMF PFCP log). It needs an HTTP client that completes TLS with the API server (curl);
+    # busybox wget fails against k3s. Empty: the chart's MySQL image.
+    apiImage: ""
     backoffLimit: 1
     timeoutSeconds: 300
     retries: 30
