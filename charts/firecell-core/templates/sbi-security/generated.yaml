@@ -1,0 +1,112 @@
+{{- /* SBI TLS certificates and the OAuth2 key pair made by Helm itself (global.sbi.tls.source helm,
+       global.sbi.oauth2.keySource helm), so that an install needs no PKI prepared beforehand.
+       All of them are in this one file: every NF Secret's ca.crt must come from the same CA.
+       On an upgrade, lookup reads the Secrets of the running release and keeps them: the CA and
+       an NF certificate are reused as they are, a new NF (enabled later) gets a certificate
+       signed by the existing CA, and the public key is always derived from the signing key in
+       use. helm template and a client-side dry run cannot look up, so every such render makes
+       new keys. */}}
+{{- $sbi := .Values.global.sbi }}
+{{- $ns := .Values.global.namespace }}
+{{- if and $sbi.tls.enabled (eq $sbi.tls.source "helm") }}
+{{- $prefix := $sbi.tls.secretPrefix }}
+{{- $days := int ($sbi.tls.helm.certDays | default 825) }}
+{{- $caName := printf "%s-ca" $prefix }}
+{{- $caSecret := lookup "v1" "Secret" $ns $caName }}
+{{- $caKept := and $caSecret $caSecret.data (hasKey $caSecret.data "tls.crt") (hasKey $caSecret.data "tls.key") }}
+{{- $ca := dict }}
+{{- if $caKept }}
+{{- $ca = buildCustomCert (index $caSecret.data "tls.crt") (index $caSecret.data "tls.key") }}
+{{- else }}
+{{- /* RSA 2048 (Sprig genCA / genSignedCert). Not ECDSA: NF images built before cs 36fab3d8
+       fail the TLS handshake with an EC certificate (curl-gnutls certificate-info bug). */}}
+{{- $ca = genCA "firecell-core-sbi-ca" (int ($sbi.tls.helm.caDays | default 3650)) }}
+{{- end }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $caName }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $ca.Cert | b64enc }}
+  tls.key: {{ $ca.Key | b64enc }}
+{{- range $nf := (include "firecell-5gc.sbiNfs" . | fromYamlArray) }}
+{{- $name := printf "%s-%s" $prefix $nf }}
+{{- $old := lookup "v1" "Secret" $ns $name }}
+{{- $data := dict }}
+{{- if and $caKept $old $old.data (hasKey $old.data "tls.crt") (hasKey $old.data "tls.key") }}
+{{- $data = dict "tls.crt" (index $old.data "tls.crt") "tls.key" (index $old.data "tls.key") }}
+{{- else }}
+{{- $svc := include "firecell-5gc.sbiCertService" (dict "ctx" $ "nf" $nf) }}
+{{- $names := include "firecell-5gc.sbiCertDnsNames" (dict "ctx" $ "nf" $nf) | fromYamlArray }}
+{{- /* Server and client authentication: each NF is both on the SBI (mutual TLS). */}}
+{{- $cert := genSignedCert $svc nil $names $days $ca }}
+{{- $data = dict "tls.crt" ($cert.Cert | b64enc) "tls.key" ($cert.Key | b64enc) }}
+{{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+    app: {{ include "firecell-5gc.sbiCertService" (dict "ctx" $ "nf" $nf) }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ index $data "tls.crt" }}
+  tls.key: {{ index $data "tls.key" }}
+  ca.crt: {{ $ca.Cert | b64enc }}
+{{- end }}
+{{- end }}
+{{- if and $sbi.oauth2.enabled (eq $sbi.oauth2.keySource "helm") }}
+{{- $old := lookup "v1" "Secret" $ns $sbi.oauth2.signingKeySecret }}
+{{- $key := "" }}
+{{- if and $old $old.data (hasKey $old.data "signing-key.pem") }}
+{{- $key = index $old.data "signing-key.pem" | b64dec }}
+{{- else }}
+{{- /* ES256: an EC P-256 key (Sprig genPrivateKey "ecdsa"). */}}
+{{- $key = genPrivateKey "ecdsa" }}
+{{- end }}
+{{- /* The public key the NFs read (PEM_read_PUBKEY: a SubjectPublicKeyInfo) is derived here:
+       an EC private key (SEC1 or PKCS#8, as Go and OpenSSL write it) for P-256 ends with the
+       public key BIT STRING 03 42 00 04||X||Y. The SubjectPublicKeyInfo is the fixed P-256
+       header followed by that point. */}}
+{{- $der := regexReplaceAll "(?s)-----[A-Z ]+-----|\\s" $key "" | b64dec }}
+{{- $n := len $der }}
+{{- if or (lt $n 68) (not (contains ("KoZIzj0DAQc=" | b64dec) $der)) (ne (substr (int (sub $n 68)) (int (sub $n 65)) $der | b64enc) "A0IA") (ne (substr (int (sub $n 65)) (int (sub $n 64)) $der | b64enc) "BA==") }}
+{{- fail (printf "global.sbi.oauth2: the signing key in Secret %s is not an EC P-256 key with its public key (ES256 needs P-256)" $sbi.oauth2.signingKeySecret) }}
+{{- end }}
+{{- $spki := print ("MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgA=" | b64dec) (substr (int (sub $n 65)) $n $der) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $sbi.oauth2.signingKeySecret }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-nrf
+type: Opaque
+data:
+  signing-key.pem: {{ $key | b64enc }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $sbi.oauth2.publicKeySecret }}
+  namespace: {{ $ns }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  public-key.pem: |
+    -----BEGIN PUBLIC KEY-----
+    {{- range regexFindAll ".{1,64}" ($spki | b64enc) -1 }}
+    {{ . }}
+    {{- end }}
+    -----END PUBLIC KEY-----
+{{- end }}
