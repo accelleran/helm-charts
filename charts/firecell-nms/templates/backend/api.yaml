@@ -63,6 +63,9 @@ spec:
           env:
             {{- include "firecell-nms.backend.env" . | nindent 12 }}
             {{- include "firecell-nms.acs.clientEnv" . | nindent 12 }}
+            {{- with include "firecell-nms.backend.authEnv" . }}
+            {{- . | nindent 12 }}
+            {{- end }}
           ports:
             - {name: http, containerPort: 8080}
           startupProbe:
@@ -83,6 +86,9 @@ spec:
             - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
             {{- include "firecell-nms.acs.clientMount" . | nindent 12 }}
+            {{- with include "firecell-nms.backend.authMounts" . }}
+            {{- . | nindent 12 }}
+            {{- end }}
       volumes:
         - name: kubeconfig
           configMap:
@@ -90,6 +96,9 @@ spec:
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}
         {{- include "firecell-nms.acs.clientVolume" . | nindent 8 }}
+        {{- with include "firecell-nms.backend.authVolumes" . }}
+        {{- . | nindent 8 }}
+        {{- end }}
 ---
 # The API, the FCAPS notification receiver and the Grafana alert webhook
 # (/api/alarms/webhook) all listen here.

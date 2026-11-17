@@ -151,7 +151,61 @@ backend:
     qosMaxRules: 4
     # -- Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires
     # networkPolicy.enabled: the backend does not check tokens on this path.
+    # Superseded by backend.auth (JWT mode); the two cannot both be on.
     trustGatewayHeaders: false
+
+  # --- Zitadel identity (JWT mode) ---
+  # The API validates the Zitadel access token oauth2-proxy forwards
+  # (X-Forwarded-Access-Token) or a caller sends (Authorization: Bearer):
+  # signature, issuer, project audience and client, then introspects it for
+  # the current roles. Only the API pods get these settings and keys.
+  auth:
+    # -- Turn JWT mode on. Cannot be combined with backend.config.trustGatewayHeaders.
+    enabled: false
+    # -- Zitadel issuer, e.g. `https://auth.<domain>`. Required when enabled.
+    issuer: ""
+    # -- Signing keys. Empty: `<issuer>/oauth/v2/keys`.
+    jwksUrl: ""
+    # -- ConfigMap holding the ids Zitadel only knows at runtime, under the keys
+    # `project-id`, `client-ids-json`, `introspection-client-id`,
+    # `users-org-id`, `project-org-id`, `project-grant-id`. The Flux recipe's
+    # OIDC ensure loop writes it. A value set below wins over the ConfigMap.
+    configMap: ""
+    # -- Zitadel project id the token audience must contain.
+    projectId: ""
+    # -- Client ids (azp) whose tokens are accepted, e.g. the oauth2-proxy app.
+    clientIds: []
+    introspection:
+      # -- Client id of the API app that introspects tokens.
+      clientId: ""
+      # -- Secret with that app's Zitadel JSON key. Required when enabled.
+      existingSecret: ""
+      key: key.json
+      # -- Seconds one token's introspection answer is reused.
+      cacheSeconds: 15
+    # -- Secret with the CA that signs Zitadel's certificate (the Gateway's),
+    # key `caBundle.key`. Empty: the system trust store.
+    caBundle:
+      existingSecret: ""
+      key: ca.crt
+    # -- Revealing the OP needs a sign-in at most this many seconds old.
+    # 0: no check.
+    opRevealMaxAuthAgeSeconds: 0
+    # User management (/api/admin/users) through a Users-org service account.
+    userManagement:
+      # -- Turn the user screens on. Needs auth.enabled.
+      enabled: false
+      # -- Zitadel API base URL. Empty: the issuer.
+      apiUrl: ""
+      # -- Users organisation id. Empty: from auth.configMap.
+      usersOrgId: ""
+      # -- Organisation that owns the project (Firecell). Empty: from auth.configMap.
+      projectOrgId: ""
+      # -- Project grant to the Users organisation. Empty: from auth.configMap.
+      projectGrantId: ""
+      # -- Secret with the service account's Zitadel JSON key. Required when enabled.
+      existingSecret: ""
+      key: key.json
 
   # -- Extra environment (EnvVar list) for the API, worker and control plane,
   # e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL.

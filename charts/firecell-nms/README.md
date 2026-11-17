@@ -162,6 +162,18 @@ Bootstrap seeds the catalogue only when it is empty: `backend.config.seedDnnsJso
 
 ## 5. Gateway Identity
 
+### JWT mode (`backend.auth`)
+
+With `backend.auth.enabled=true` the API validates the Zitadel access token itself: oauth2-proxy forwards it as `X-Forwarded-Access-Token` (`pass_access_token`), machine callers send `Authorization: Bearer`. The API checks the signature against Zitadel's keys, the issuer, the project audience (`projectId`) and the client (`clientIds`, the `azp` claim), then introspects the token with its own API app (`introspection`) for the current roles. A forged `X-Forwarded-User` is ignored in this mode, so it cannot be combined with `backend.config.trustGatewayHeaders` (the render fails).
+
+- The ids Zitadel only knows at runtime can come from a ConfigMap (`backend.auth.configMap`, keys `project-id`, `client-ids-json`, `introspection-client-id`, `users-org-id`, `project-org-id`, `project-grant-id`). The Flux recipe's OIDC ensure loop writes it. A value set in `backend.auth` wins.
+- `backend.auth.introspection.existingSecret` holds the introspection app's Zitadel JSON key, `backend.auth.caBundle.existingSecret` the CA of Zitadel's certificate when it is not in the system trust store.
+- `backend.auth.userManagement` turns on `/api/admin/users`: the API manages Users-organisation accounts with the service account key in `userManagement.existingSecret`.
+- Only the `nms-api` pods get these settings and keys.
+- Roles are the five NMS roles (`basic_viewer`, `ot_manager`, `it_manager`, `si`, `super_admin`); each includes the ones below it. The installed `operator` key ranks as `si`, `viewer` as `basic_viewer`. See the backend's `docs/identity-and-preferences.md`.
+
+### Header mode (`backend.config.trustGatewayHeaders`)
+
 Behind oauth2-proxy, set `backend.config.trustGatewayHeaders=true` and `networkPolicy.enabled=true` (the first without the second fails the render). The backend then believes `X-Forwarded-User` / `-Groups` without checking a token, so the NetworkPolicies decide who can send them:
 
 - `nms-api`: port 8080 from `nms-front`, oauth2-proxy (`app.kubernetes.io/name: <networkPolicy.oauth2ProxyLabel>`), every pod in `rbac.coreNamespace` (NFs post FCAPS notifications without a token) and `networkPolicy.extraFrom`. Add the Grafana that posts alerts and the platform monitor there.
@@ -171,8 +183,8 @@ Anything else that connects to `nms-front` or `nms-api` directly, such as a read
 
 Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object whose keys are the role names, which is the shape of Zitadel's project roles claim (`urn:zitadel:iam:org:project:roles`), for example `{"operator": {"<org-id>": "<domain>"}}`:
 
-- Reads need only an authenticated user. Writes need the `operator` role.
-- A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
+- Reads need only an authenticated user. Each write needs its lowest NMS role (as in JWT mode); the installed `operator` key ranks as `si`.
+- A missing, empty or malformed header means no roles, so every write answers 403, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
 ## 6. Support Logs
@@ -236,6 +248,25 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.api.resources.limits.memory | string | `"1Gi"` |  |
 | backend.api.resources.requests.cpu | string | `"100m"` |  |
 | backend.api.resources.requests.memory | string | `"256Mi"` |  |
+| backend.auth.caBundle | object | `{"existingSecret":"","key":"ca.crt"}` | Secret with the CA that signs Zitadel's certificate (the Gateway's), key `caBundle.key`. Empty: the system trust store. |
+| backend.auth.clientIds | list | `[]` | Client ids (azp) whose tokens are accepted, e.g. the oauth2-proxy app. |
+| backend.auth.configMap | string | `""` | ConfigMap holding the ids Zitadel only knows at runtime, under the keys `project-id`, `client-ids-json`, `introspection-client-id`, `users-org-id`, `project-org-id`, `project-grant-id`. The Flux recipe's OIDC ensure loop writes it. A value set below wins over the ConfigMap. |
+| backend.auth.enabled | bool | `false` | Turn JWT mode on. Cannot be combined with backend.config.trustGatewayHeaders. |
+| backend.auth.introspection.cacheSeconds | int | `15` | Seconds one token's introspection answer is reused. |
+| backend.auth.introspection.clientId | string | `""` | Client id of the API app that introspects tokens. |
+| backend.auth.introspection.existingSecret | string | `""` | Secret with that app's Zitadel JSON key. Required when enabled. |
+| backend.auth.introspection.key | string | `"key.json"` |  |
+| backend.auth.issuer | string | `""` | Zitadel issuer, e.g. `https://auth.<domain>`. Required when enabled. |
+| backend.auth.jwksUrl | string | `""` | Signing keys. Empty: `<issuer>/oauth/v2/keys`. |
+| backend.auth.opRevealMaxAuthAgeSeconds | int | `0` | Revealing the OP needs a sign-in at most this many seconds old. 0: no check. |
+| backend.auth.projectId | string | `""` | Zitadel project id the token audience must contain. |
+| backend.auth.userManagement.apiUrl | string | `""` | Zitadel API base URL. Empty: the issuer. |
+| backend.auth.userManagement.enabled | bool | `false` | Turn the user screens on. Needs auth.enabled. |
+| backend.auth.userManagement.existingSecret | string | `""` | Secret with the service account's Zitadel JSON key. Required when enabled. |
+| backend.auth.userManagement.key | string | `"key.json"` |  |
+| backend.auth.userManagement.projectGrantId | string | `""` | Project grant to the Users organisation. Empty: from auth.configMap. |
+| backend.auth.userManagement.projectOrgId | string | `""` | Organisation that owns the project (Firecell). Empty: from auth.configMap. |
+| backend.auth.userManagement.usersOrgId | string | `""` | Users organisation id. Empty: from auth.configMap. |
 | backend.config.allowedWsOriginsJson | string | `"[]"` | JSON string array of allowed WebSocket origins. |
 | backend.config.cmConfigMapKey | string | `"cm.json"` |  |
 | backend.config.defaultPlmn | string | `"00101"` |  |
@@ -249,7 +280,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.config.seedDnnsJson | string | `"[{\"dnn\":\"oai\",\"ipv4Subnet\":\"12.1.1.0/25\",\"pduSessionType\":\"IPV4\"},{\"dnn\":\"ims\",\"ipv4Subnet\":\"14.1.1.0/25\",\"pduSessionType\":\"IPV4V6\"}]"` | Level-1 "Data network" instances the bootstrap seeds on an EMPTY catalogue, in the order of firecell-core `coreConfig.dnns` (the order numbers the instances, and the SMF and UPF number their DNNs the same way). The default is firecell-core's default. Change both together. Empty keeps the backend's built-in seed (a DNN called "default"). |
 | backend.config.seedSliceJson | string | `"{\"sst\":1,\"sd\":\"000001\"}"` | The first slice the bootstrap seeds: firecell-core's default `coreConfig.nssai[0]` and the RAN charts' `gnb.slices[0]`. |
 | backend.config.southboundTimeoutSeconds | int | `6` |  |
-| backend.config.trustGatewayHeaders | bool | `false` | Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires networkPolicy.enabled: the backend does not check tokens on this path. |
+| backend.config.trustGatewayHeaders | bool | `false` | Believe X-Forwarded-User / -Groups from oauth2-proxy. Requires networkPolicy.enabled: the backend does not check tokens on this path. Superseded by backend.auth (JWT mode); the two cannot both be on. |
 | backend.controlPlane.minReadySeconds | int | `20` | Seconds the control plane must stay up before it counts as available (its probes only check that the process lives). |
 | backend.controlPlane.resources.limits.cpu | string | `"1"` |  |
 | backend.controlPlane.resources.limits.memory | string | `"1Gi"` |  |
