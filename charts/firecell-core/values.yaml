@@ -1786,6 +1786,10 @@ nms:
   namespace: firecell-nms
 
 # --- Helm Lifecycle Hooks (Standalone Atomic Install / Upgrade / Uninstall) ---
+# FIXME(limitation): preFlight.enabled, postFlight.enabled and postDelete.enabled cannot switch a
+# hook off: the templates read them with "| default true", and Sprig's default treats false as
+# empty (pre-existing). With hooks.enabled true all three are rendered; hooks.enabled false
+# switches all of them off.
 hooks:
   enabled: true
   preFlight:
