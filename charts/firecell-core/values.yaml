@@ -1671,10 +1671,11 @@ coreConfig:
     # subscription has traceData naming the PCF, the PCF writes the AM and SM policy messages
     # of its associations as JSON lines to <dir>/<traceRef>_<TRSR>.jsonl. Empty (default): the
     # key is not written, the PCF uses its own defaults and no volume is added. Setting any
-    # key writes pcf.trace and mounts an emptyDir at dir, because the image has no
-    # /openair-pcf/trace and the PCF does not create the directory (without it the PCF logs
-    # "Trace record not written"). The files are lost when the pod restarts and are collected
-    # with kubectl cp; they are not sent to a Trace Collection Entity (FIXME in the PCF).
+    # key writes pcf.trace and mounts an emptyDir at dir. The PCF creates dir itself when it
+    # is missing (cn5g-pcf 87c85c6, pcf_trace.cpp append_line); the emptyDir keeps the
+    # records off the container's root file system. The files are lost when the pod restarts
+    # and are collected with kubectl cp; they are not sent to a Trace Collection Entity (FIXME
+    # in the PCF).
     # dir: an absolute path (default /openair-pcf/trace); maxSessions: Trace Sessions at a
     # time, 1 or more (PCF default 100).
     trace: {}
