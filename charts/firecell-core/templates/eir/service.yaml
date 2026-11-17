@@ -16,10 +16,10 @@ spec:
       port: {{ .Values.eir.config.listenPort }}
       targetPort: {{ .Values.eir.config.listenPort }}
       protocol: TCP
-    {{- if gt (int .Values.eir.config.healthHttp1Port) 0 }}
+    {{- if gt (int (include "firecell-5gc.eirHealthPort" .)) 0 }}
     - name: health
-      port: {{ .Values.eir.config.healthHttp1Port }}
-      targetPort: {{ .Values.eir.config.healthHttp1Port }}
+      port: {{ include "firecell-5gc.eirHealthPort" . }}
+      targetPort: {{ include "firecell-5gc.eirHealthPort" . }}
       protocol: TCP
     {{- end }}
     {{- if .Values.eir.fcaps.enabled }}

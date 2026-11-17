@@ -496,16 +496,28 @@ eir:
     healthHttp1Port: 8081
     # Empty: coreConfig.database.name.
     mysqlDatabase: ""
-    # Lab profile. FIXME(spec, TS 29.511 6.1.7.3 / TS 29.500 6.7.3): the AMF sends no
-    # OAuth2 access token until feature 05 is on, so the equipment-status check is let in
-    # without one (allowAnonymous). The two tokens are lab placeholders for the client
-    # lists; replace them in site values. authProfile commercial (the render fails otherwise,
-    # as the EIR would at start): allowAnonymous false, healthHttp1Port 0, global.sbi.tls and
-    # global.sbi.oauth2 on, and a provToken of at least 32 characters (the EIR ignores shorter).
-    authProfile: lab
+    # authProfile auto (default): commercial when global.sbi.tls and global.sbi.oauth2 are
+    # both on, else lab.
+    # - commercial: the EIR checks the NRF's access tokens (ES256 JWT, scope n5g-eir-eic,
+    #   audience 5G_EIR) with the NRF public key. Under auto, allowAnonymous is taken as false
+    #   and healthHttp1Port as 0 (the EIR's own commercial rules; the readiness probe then
+    #   checks the SBI port). provToken: empty = a 48-character token made by the chart and
+    #   kept in Secret oai-eir-prov-token (key token) for the provisioning client; an upgrade
+    #   keeps it (lookup), but helm template and a GitOps render make a new one each time: set
+    #   provToken (32 characters or more) there. The provisioning client must speak HTTP/2 over
+    #   TLS with a client certificate from the SBI CA, plus this Bearer token; the NMS-NG does
+    #   not yet (see global.sbi).
+    # - lab: static tokens only. FIXME(spec, TS 29.511 6.1.7.3 / TS 29.500 6.7.3): the
+    #   equipment-status check is let in without a token (allowAnonymous), and an NRF access
+    #   token from the AMF is refused (401), which the AMF treats as "EIR unavailable". The
+    #   tokens are lab placeholders; provToken empty = "lab-nms-prov-token".
+    # - commercial set explicitly: the render fails (as the EIR would at start) unless
+    #   allowAnonymous false, healthHttp1Port 0, global.sbi.tls and global.sbi.oauth2 on, and
+    #   a provToken of 32 characters or more if set.
+    authProfile: auto
     allowAnonymous: true
     checkToken: "lab-amf-token"
-    provToken: "lab-nms-prov-token"
+    provToken: ""
     # NFRegister at the NRF. Empty nrfNfmUrl: http://oai-nrf:<nrf.sbiPort>/nnrf-nfm/v1.
     # Empty advertiseApiRoot: http://oai-eir.<namespace>.svc.cluster.local:<listenPort>.
     nrfEnabled: true

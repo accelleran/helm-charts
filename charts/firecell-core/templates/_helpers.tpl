@@ -759,6 +759,33 @@ calls the NSSF with the shared http_version.
 {{- end -}}
 {{- end }}
 
+{{/*
+The EIR's effective auth profile: eir.config.authProfile, with auto (the default) resolved to
+commercial when global.sbi.tls and global.sbi.oauth2 are both on, else lab. The commercial profile
+checks the NRF's access tokens (JWT); the lab profile knows only its static tokens and answers 401
+to the AMF's NRF token.
+*/}}
+{{- define "firecell-5gc.eirProfile" -}}
+{{- $p := .Values.eir.config.authProfile | default "auto" -}}
+{{- if eq $p "auto" -}}
+{{- ternary "commercial" "lab" (and .Values.global.sbi.tls.enabled .Values.global.sbi.oauth2.enabled) -}}
+{{- else if has $p (list "lab" "commercial") -}}
+{{- $p -}}
+{{- else -}}
+{{- fail (printf "eir.config.authProfile must be auto, lab or commercial (got %q)" $p) -}}
+{{- end -}}
+{{- end }}
+
+{{/* The EIR's cleartext health port: 0 when authProfile auto resolves to commercial (the EIR
+serves none there), else eir.config.healthHttp1Port. */}}
+{{- define "firecell-5gc.eirHealthPort" -}}
+{{- if and (eq (.Values.eir.config.authProfile | default "auto") "auto") (eq (include "firecell-5gc.eirProfile" .) "commercial") -}}
+0
+{{- else -}}
+{{- .Values.eir.config.healthHttp1Port -}}
+{{- end -}}
+{{- end }}
+
 {{/* "true" when the Rx-N5 IWF is rendered (Kamailio IMS with ims.rxN5Iwf.enabled), else empty. */}}
 {{- define "firecell-5gc.rxN5IwfEnabled" -}}
 {{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.rxN5Iwf.enabled -}}
