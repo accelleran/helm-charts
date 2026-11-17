@@ -768,6 +768,37 @@ new random one at every start without it). The NRF checks the version 4 form (va
 {{- end -}}
 {{- end }}
 
+{{/* dict: ctx (root), nf. The Service an NF's SBI certificate is issued for (its commonName). */}}
+{{- define "firecell-5gc.sbiCertService" -}}
+{{- if eq .nf "udsf" -}}
+{{- .ctx.Values.udsf.serviceName | default "oai-udsf" -}}
+{{- else if eq .nf "rx-n5-iwf" -}}
+ims-rx-n5-iwf
+{{- else -}}
+{{- printf "oai-%s" .nf -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+dict: ctx (root), nf. The DNS names of an NF's SBI certificate (a YAML list): the Service in its
+short and namespace forms. The NFs dial the UDSF by udsf.host (shared config nfs.udsf.host), which
+may differ from the Service name: it must be in the certificate too.
+*/}}
+{{- define "firecell-5gc.sbiCertDnsNames" -}}
+{{- $ns := .ctx.Values.global.namespace -}}
+{{- $svc := include "firecell-5gc.sbiCertService" . -}}
+{{- $names := list $svc -}}
+{{- if and (eq .nf "udsf") .ctx.Values.udsf.host (ne .ctx.Values.udsf.host $svc) -}}
+{{- $names = append $names .ctx.Values.udsf.host -}}
+{{- end -}}
+{{- range $n := $names }}
+- {{ $n }}
+- {{ $n }}.{{ $ns }}
+- {{ $n }}.{{ $ns }}.svc
+- {{ $n }}.{{ $ns }}.svc.cluster.local
+{{- end }}
+{{- end }}
+
 {{/* dict: ctx (root), nf */}}
 {{- define "firecell-5gc.sbiSecurityMounts" -}}
 {{- $sbi := .ctx.Values.global.sbi -}}
