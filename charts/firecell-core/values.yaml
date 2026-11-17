@@ -572,10 +572,17 @@ nef:
     # false: a new subscription is refused with 403; existing ones stay.
     monitoringEventEnabled: true
     interfaceName: eth0
-    # The NEF's own HTTP/1.1 and HTTP/2 ports (image defaults 80 and 8080).
+    # The NEF's own HTTP/1.1 and HTTP/2 ports (image defaults 80 and 8080). sbiPort is the T8 API
+    # for AFs (HTTP/1.1). sbiHttp2Port also carries the AMF's (SMF's, UDM's) event notifications
+    # when the NEF gives an HTTP/2 callback URI: with global.sbi.tls (h2 only on that port) or
+    # USE_HTTP2 (cn5g-nef c2176392, Lane 1). The Service exposes both. FIXME(limitation): an HTTP
+    # request over TLS to sbiPort crashes the NEF (cn5g-nef, pre-existing; Lane 1): the probes run
+    # the image's healthcheck.sh (a process check), never HTTP to sbiPort.
     sbiPort: 80
     sbiHttp2Port: 8080
-    # yes: the NEF calls its peers over HTTP/2 (USE_HTTP2). This chart's NFs speak HTTP/1.1.
+    # yes: the NEF calls its peers over HTTP/2 and gives them its HTTP/2 callback URI (USE_HTTP2).
+    # Also yes when coreConfig.httpVersion is 2, so that it matches the peers in cleartext; with
+    # global.sbi.tls the NEF uses HTTP/2 whatever this says. This chart's default is HTTP/1.1.
     useHttp2: false
     # Peers, by Service name; the NEF resolves them when it starts. Port is the HTTP/1.1
     # port, as the other NFs of this chart use it (8080 with coreConfig.httpVersion 1).
