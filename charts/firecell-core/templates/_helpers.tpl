@@ -510,6 +510,24 @@ Call with (dict "root" $ "name" <volume> "withRoot" bool "keys" (list ...)).
 {{/*
 Namespace of the firecell-nms release.
 */}}
+{{/*
+"true" when the chart renders the NMS SBI client certificate (Secret nms.sbiClientCert.secretName in
+nms.namespace, templates/sbi-security/generated.yaml): global.sbi.tls on with source helm,
+nms.sbiClientCert.enabled, and the NMS namespace exists (lookup). The Secret cannot be created in a
+namespace that does not exist, and the core install must not fail for it: it is skipped, NOTES.txt
+says so, and a helm upgrade after the NMS namespace exists renders it. helm template and a client
+dry run cannot look up, so they never render it.
+*/}}
+{{- define "firecell-5gc.nmsSbiClientCertRendered" -}}
+{{- $sbi := .Values.global.sbi -}}
+{{- $c := (.Values.nms).sbiClientCert | default dict -}}
+{{- if and $sbi.tls.enabled (eq $sbi.tls.source "helm") $c.enabled -}}
+{{- if lookup "v1" "Namespace" "" (include "firecell-5gc.nmsNamespace" .) -}}
+true
+{{- end -}}
+{{- end -}}
+{{- end }}
+
 {{- define "firecell-5gc.nmsNamespace" -}}
 {{- required "nms.namespace is required" (.Values.nms).namespace -}}
 {{- end }}

@@ -1784,6 +1784,18 @@ nms:
   # -- Namespace of the firecell-nms release: the RBAC subject, and the
   # namespace networkPolicies.allowNmsNamespace admits.
   namespace: firecell-nms
+  # -- SBI client certificate for the NMS-NG (mutual TLS to the PCF, UDR, NRF and AMF): with
+  # global.sbi.tls.source helm, the chart signs CN firecell-nms with its CA and writes Secret
+  # secretName (tls.crt, tls.key, ca.crt) into the NMS namespace; an upgrade keeps it (lookup).
+  # Only if that namespace exists: else it is skipped, NOTES says so, and a helm upgrade after
+  # the NMS namespace exists adds it (helm template never renders it: no lookup there).
+  # source secrets: make it yourself (gen-sbi-certs.sh, then a Secret in the NMS namespace).
+  # FIXME(limitation): source certManager has no NMS certificate: the chart's Issuer is
+  # namespaced (sbi-ca in the core namespace), and an NMS Certificate would need a
+  # ClusterIssuer backed by the CA.
+  sbiClientCert:
+    enabled: true
+    secretName: sbi-tls-nms
 
 # --- Helm Lifecycle Hooks (Standalone Atomic Install / Upgrade / Uninstall) ---
 # FIXME(limitation): preFlight.enabled, postFlight.enabled and postDelete.enabled cannot switch a
