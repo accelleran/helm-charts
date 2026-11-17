@@ -41,8 +41,12 @@ global:
   # build with Pistache SSL (cn5g-nef NEF_PISTACHE_SSL), else the NEF exits with TLS on. With
   # requireClientCert an AF calling the NEF needs a client certificate from the SBI CA.
   # The NEF gives the AMF its notification URI with the host name oai-nef (NEF_HOSTNAME).
-  # FIXME(limitation), NEF with TLS: with nef.config.nrf.discoverAmf the discovered AMF is dialled
-  # by IP (cn5g-nef 113084c7): use the static peer (discoverAmf false).
+  # NEF with TLS and nef.config.nrf.discoverAmf: the NEF dials the discovered AMF by the fqdn of
+  # its NF profile (cn5g-nef nef_nrf.hpp amf_event_exposure_url), and an AMF with TLS registers
+  # fqdn = its SBI host name, oai-amf here (cn5g-amf generate_amf_profile, R1 A-26), which its
+  # certificate carries. So discovery works with TLS when both are rc-02 feature wave images
+  # (from the code; not run on the lab). An AMF profile without an fqdn (an older AMF image) is
+  # skipped, and the NEF falls back to the static AMF peer (nef.config.peers.amf).
   sbi:
     tls:
       enabled: false
