@@ -1344,6 +1344,10 @@ coreConfig:
     #  nonCagUeRejectCause: 7
     # NID of the SNPN: written into the AMF plmn_support_list entry when set (11
     # hex digits, first digit 0-2, cn5g-amf NID_REGEX). Empty: no nid is written.
+    # FIXME(limitation): the chart renders one plmn_support_list entry, and nid goes
+    # onto it, so setting nid makes the AMF SNPN-only (no public PLMN entry). Public
+    # PLMN + SNPN on one AMF (SNPN-CAG HLD HD14: a second entry with the same PLMN ID
+    # and TAC plus the nid) cannot be expressed here; it needs a hand-edited AMF config.
     nid: ""
     # NR RedCap (cn5g-amf amf.redcap), seed of the FCAPS switch redcapEnabled. The key
     # is rendered only when set; the AMF default is true, and the setting only matters
