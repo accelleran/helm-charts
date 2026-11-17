@@ -242,6 +242,23 @@ spec:
                 fail "Service ${_svc}:${_port} (${_desc}) is not reachable after ${RETRIES} attempts"
               }
 
+              wait_tcp_addr() {
+                _addr="$1"
+                _port="$2"
+                _desc="$3"
+                _try=0
+                echo "[post-flight] Checking ${_addr}:${_port} (${_desc})..."
+                while [ "${_try}" -lt "${RETRIES}" ]; do
+                  if tcp_probe "${_addr}" "${_port}"; then
+                    echo "[post-flight]   OK: ${_addr}:${_port} is reachable"
+                    return 0
+                  fi
+                  _try=$((_try + 1))
+                  sleep "${INTERVAL}"
+                done
+                fail "${_addr}:${_port} (${_desc}) is not reachable after ${RETRIES} attempts"
+              }
+
               wait_dns_service() {
                 _svc="$1"
                 _desc="$2"
@@ -293,7 +310,27 @@ spec:
               wait_tcp_service "{{ .Values.udsf.serviceName | default "oai-udsf" }}" "{{ .Values.udsf.sbiPort | default 8080 }}" "UDSF SBI"
               {{- end }}
               {{- if .Values.ims.enabled }}
+              {{- if eq (.Values.ims.engine | default "kamailio") "asterisk" }}
               wait_tcp_service "ims" "5060" "Asterisk IMS SIP"
+              {{- else }}
+              {{- /* Kamailio IMS: each CSCF (and the Cx gateway) listens on its ims.<x>.ip, not on the
+                     node address its headless Service resolves to (hostNetwork), so the address is
+                     probed. Without an ip the Service name is probed. */}}
+              {{- $cscfs := list
+                    (dict "svc" "ims-pcscf" "ip" (.Values.ims.pcscf.ip | default .Values.coreConfig.ims.pcscfIpv4) "port" (.Values.ims.pcscf.bindPort | default 5060) "desc" "IMS P-CSCF SIP")
+                    (dict "svc" "ims-icscf" "ip" .Values.ims.icscf.ip "port" (.Values.ims.icscf.bindPort | default 4060) "desc" "IMS I-CSCF SIP")
+                    (dict "svc" "ims-scscf" "ip" .Values.ims.scscf.ip "port" (.Values.ims.scscf.bindPort | default 6060) "desc" "IMS S-CSCF SIP") }}
+              {{- if .Values.ims.cxGateway.enabled }}
+              {{- $cscfs = append $cscfs (dict "svc" "ims-cx-gateway" "ip" .Values.ims.cxGateway.ip "port" (.Values.ims.cxGateway.port | default 3868) "desc" "IMS Cx gateway Diameter") }}
+              {{- end }}
+              {{- range $c := $cscfs }}
+              {{- if $c.ip }}
+              wait_tcp_addr "{{ $c.ip }}" "{{ $c.port }}" "{{ $c.desc }}"
+              {{- else }}
+              wait_tcp_service "{{ $c.svc }}" "{{ $c.port }}" "{{ $c.desc }}"
+              {{- end }}
+              {{- end }}
+              {{- end }}
               {{- end }}
               {{- if .Values.extDn.enabled }}
               wait_dns_service "oai-ext-dn" "External Data Network"
