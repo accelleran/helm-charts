@@ -734,7 +734,7 @@ volumes and mounts of an NF container. All empty when both are off.
 */}}
 {{- define "firecell-5gc.sbiNfs" -}}
 {{- $v := .Values -}}
-{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" "nef" -}}
+{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" "nef" "nssf" -}}
 {{- if (index $v $nf).enabled }}
 - {{ $nf }}
 {{- end }}
@@ -742,6 +742,21 @@ volumes and mounts of an NF container. All empty when both are off.
 {{- if include "firecell-5gc.rxN5IwfEnabled" . }}
 - rx-n5-iwf
 {{- end }}
+{{- end }}
+
+{{/*
+The NSSF port the AMF dials (shared config nfs.nssf): nssf.config.http2Port with TLS or OAuth2 (the
+NSSF then serves HTTP/2 only) or with coreConfig.httpVersion 2, else nssf.config.http1Port. The AMF
+calls the NSSF with the shared http_version.
+*/}}
+{{- define "firecell-5gc.nssfAmfPort" -}}
+{{- $sbi := .Values.global.sbi -}}
+{{- $cfg := .Values.nssf.config -}}
+{{- if or $sbi.tls.enabled $sbi.oauth2.enabled (eq (int .Values.coreConfig.httpVersion) 2) -}}
+{{- $cfg.http2Port -}}
+{{- else -}}
+{{- $cfg.http1Port -}}
+{{- end -}}
 {{- end }}
 
 {{/* "true" when the Rx-N5 IWF is rendered (Kamailio IMS with ims.rxN5Iwf.enabled), else empty. */}}

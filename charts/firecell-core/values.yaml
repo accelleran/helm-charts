@@ -583,6 +583,58 @@ nef:
       register: true
       discoverAmf: false
 
+# --- NSSF (Network Slice Selection Function, cn5g-nssf) ---
+# Off by default: the cn5g-nssf image is not published yet. Nnssf_NSSelection (TS 29.531) for
+# the AMF with coreConfig.amf.enableNssf "yes". The AMF asks the NSSF only (from the AMF code,
+# not lab-run): at registration, when it cannot serve the UE's requested / subscribed S-NSSAIs
+# (AMF reallocation), and, with coreConfig.amf.enableSmfSelection "yes", for the NRF that finds
+# the SMF of a PDU session. The chart writes the NSSF's libconfig file and slice file itself (a
+# ConfigMap) and starts oai_nssf directly: the image's entrypoint.py template has no TLS or
+# OAuth2 group. The NSSF has no FCAPS MnS (no MnS port).
+nssf:
+  enabled: false
+  image: cn5g-nssf
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
+  imageOverride: ""
+  priorityClassName: firecell-prio-normal
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  config:
+    # Empty: coreConfig.logLevel.
+    logLevel: ""
+    interfaceName: eth0
+    # The NSSF serves HTTP/1.1 on http1Port and HTTP/2 on http2Port (image defaults 80 and
+    # 8080). The AMF calls http1Port with coreConfig.httpVersion 1, else http2Port. With
+    # global.sbi.tls or global.sbi.oauth2 the NSSF serves HTTP/2 only (cn5g-nssf: TLS and the
+    # token check are in the HTTP/2 server), and the AMF calls http2Port.
+    http1Port: 80
+    http2Port: 8080
+    # The NSSF serves /nnssf-nsselection/<apiVersion>; the AMF is given the same version
+    # (TS 29.531: v2; the AMF built-in default v1 does not match the NSSF default v2).
+    apiVersion: v2
+    # Registration at the NRF (cn5g-nssf L4-NSSF-NRF, SUPPORTED_FEATURES.REGISTER_NRF; NSSF
+    # default no). On by default: the NRF issues the AMF an access token for nnssf-nsselection
+    # only for a registered NSSF, so global.sbi.oauth2 needs register true (the render fails
+    # otherwise). The NSSF dials the NRF by its Service name oai-nrf (the NRF certificate
+    # carries it) on port (empty: nrf.sbiPort).
+    nrf:
+      register: true
+      port: ""
+    # The slice file (etc/nssf_slice_config.yaml of cn5g-nssf, TS 29.531 data model). Empty:
+    # generated from coreConfig: one TA (mcc, mnc, tac, written as the AMF sends it: decimal)
+    # with coreConfig.nssai, each S-NSSAI on the chart's NRF, and this AMF's set
+    # (mcc-mnc-amfRegionId-amfSetId) as the target AMF set. Set it to a map with the
+    # "configuration" key of that file to replace all of it; the NSSF needs nsiInfoList,
+    # taInfoList and amfInfoList in it.
+    sliceConfig: {}
+
 # --- AMF (Access and Mobility Management Function) ---
 amf:
   enabled: true
@@ -1452,6 +1504,9 @@ coreConfig:
     #  traceDepth: minimum
     #  autoStartSupi: imsi-001010000000002
     enableSimpleScenario: "no"
+    # "yes": the AMF uses the NSSF (amf.support_features_options.enable_nssf); needs
+    # nssf.enabled, which gives the AMF the NSSF peer (shared config nfs.nssf). The render
+    # fails without it.
     enableNssf: "no"
     enableSmfSelection: "no"
     releaseAllPduSessions: "no"
