@@ -510,6 +510,24 @@ Call with (dict "root" $ "name" <volume> "withRoot" bool "keys" (list ...)).
 {{/*
 Namespace of the firecell-nms release.
 */}}
+{{/*
+"true" when the chart renders the NMS SBI client certificate (Secret nms.sbiClientCert.secretName in
+nms.namespace, templates/sbi-security/generated.yaml): global.sbi.tls on with source helm,
+nms.sbiClientCert.enabled, and the NMS namespace exists (lookup). The Secret cannot be created in a
+namespace that does not exist, and the core install must not fail for it: it is skipped, NOTES.txt
+says so, and a helm upgrade after the NMS namespace exists renders it. helm template and a client
+dry run cannot look up, so they never render it.
+*/}}
+{{- define "firecell-5gc.nmsSbiClientCertRendered" -}}
+{{- $sbi := .Values.global.sbi -}}
+{{- $c := (.Values.nms).sbiClientCert | default dict -}}
+{{- if and $sbi.tls.enabled (eq $sbi.tls.source "helm") $c.enabled -}}
+{{- if lookup "v1" "Namespace" "" (include "firecell-5gc.nmsNamespace" .) -}}
+true
+{{- end -}}
+{{- end -}}
+{{- end }}
+
 {{- define "firecell-5gc.nmsNamespace" -}}
 {{- required "nms.namespace is required" (.Values.nms).namespace -}}
 {{- end }}
@@ -734,7 +752,7 @@ volumes and mounts of an NF container. All empty when both are off.
 */}}
 {{- define "firecell-5gc.sbiNfs" -}}
 {{- $v := .Values -}}
-{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" "nef" -}}
+{{- range $nf := list "amf" "smf" "upf" "ausf" "udm" "udr" "pcf" "nrf" "udsf" "eir" "nef" "nssf" -}}
 {{- if (index $v $nf).enabled }}
 - {{ $nf }}
 {{- end }}
@@ -742,6 +760,48 @@ volumes and mounts of an NF container. All empty when both are off.
 {{- if include "firecell-5gc.rxN5IwfEnabled" . }}
 - rx-n5-iwf
 {{- end }}
+{{- end }}
+
+{{/*
+The NSSF port the AMF dials (shared config nfs.nssf): nssf.config.http2Port with TLS or OAuth2 (the
+NSSF then serves HTTP/2 only) or with coreConfig.httpVersion 2, else nssf.config.http1Port. The AMF
+calls the NSSF with the shared http_version.
+*/}}
+{{- define "firecell-5gc.nssfAmfPort" -}}
+{{- $sbi := .Values.global.sbi -}}
+{{- $cfg := .Values.nssf.config -}}
+{{- if or $sbi.tls.enabled $sbi.oauth2.enabled (eq (int .Values.coreConfig.httpVersion) 2) -}}
+{{- $cfg.http2Port -}}
+{{- else -}}
+{{- $cfg.http1Port -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+The EIR's effective auth profile: eir.config.authProfile, with auto (the default) resolved to
+commercial when global.sbi.tls and global.sbi.oauth2 are both on, else lab. The commercial profile
+checks the NRF's access tokens (JWT); the lab profile knows only its static tokens and answers 401
+to the AMF's NRF token.
+*/}}
+{{- define "firecell-5gc.eirProfile" -}}
+{{- $p := .Values.eir.config.authProfile | default "auto" -}}
+{{- if eq $p "auto" -}}
+{{- ternary "commercial" "lab" (and .Values.global.sbi.tls.enabled .Values.global.sbi.oauth2.enabled) -}}
+{{- else if has $p (list "lab" "commercial") -}}
+{{- $p -}}
+{{- else -}}
+{{- fail (printf "eir.config.authProfile must be auto, lab or commercial (got %q)" $p) -}}
+{{- end -}}
+{{- end }}
+
+{{/* The EIR's cleartext health port: 0 when authProfile auto resolves to commercial (the EIR
+serves none there), else eir.config.healthHttp1Port. */}}
+{{- define "firecell-5gc.eirHealthPort" -}}
+{{- if and (eq (.Values.eir.config.authProfile | default "auto") "auto") (eq (include "firecell-5gc.eirProfile" .) "commercial") -}}
+0
+{{- else -}}
+{{- .Values.eir.config.healthHttp1Port -}}
+{{- end -}}
 {{- end }}
 
 {{/* "true" when the Rx-N5 IWF is rendered (Kamailio IMS with ims.rxN5Iwf.enabled), else empty. */}}
