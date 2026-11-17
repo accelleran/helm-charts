@@ -328,6 +328,9 @@ amf:
 smf:
   ue_mtu: {{ $v.coreConfig.smf.ueMtu }}
   {{- with $v.coreConfig.smf.locationApiRoot }}
+  {{- if and $v.global.sbi.tls.enabled (not (hasPrefix "https://" .)) }}
+  {{- fail (printf "coreConfig.smf.locationApiRoot must start with https:// with global.sbi.tls.enabled: the AMF calls it over TLS (got %q)" .) }}
+  {{- end }}
   location_api_root: {{ . | quote }}
   {{- end }}
   {{- with $v.coreConfig.smf.mbs }}
