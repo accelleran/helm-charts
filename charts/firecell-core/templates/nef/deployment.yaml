@@ -62,8 +62,11 @@ spec:
             - name: {{ upper $peer }}_HTTP2_PORT
               value: {{ $p.http2Port | quote }}
             {{- end }}
+            {{- /* yes also with coreConfig.httpVersion 2: in cleartext the NEF's callback URI for
+                   the AMF (and SMF, UDM) is on its HTTP/2 port only with USE_HTTP2, and must match
+                   the HTTP version the peers speak (cn5g-nef c2176392, Lane 1). */}}
             - name: USE_HTTP2
-              value: {{ ternary "yes" "no" $cfg.useHttp2 | quote }}
+              value: {{ ternary "yes" "no" (or $cfg.useHttp2 (eq (int .Values.coreConfig.httpVersion) 2)) | quote }}
             {{- if $nrfOn }}
             # The NRF block of nef.conf is written when a host is set, and the entrypoint
             # resolves it at start: only with REGISTER_NRF / DISCOVER_AMF, so a NEF without

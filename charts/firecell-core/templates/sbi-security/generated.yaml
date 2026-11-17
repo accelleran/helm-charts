@@ -61,6 +61,36 @@ data:
   tls.key: {{ index $data "tls.key" }}
   ca.crt: {{ $ca.Cert | b64enc }}
 {{- end }}
+{{- if include "firecell-5gc.nmsSbiClientCertRendered" . }}
+{{- /* The NMS client certificate (Lane 2, NMS-SBI-TLS-DESIGN.md): signed by the same CA, put
+       straight into the NMS namespace for the NMS-NG to mount. CN firecell-nms, no SAN (a
+       client certificate; Sprig genSignedCert sets server and client auth). Kept like the NF
+       certificates: reused while the CA is kept. */}}
+{{- $nmsNs := include "firecell-5gc.nmsNamespace" . }}
+{{- $name := .Values.nms.sbiClientCert.secretName | default "sbi-tls-nms" }}
+{{- $old := lookup "v1" "Secret" $nmsNs $name }}
+{{- $data := dict }}
+{{- if and $caKept $old $old.data (hasKey $old.data "tls.crt") (hasKey $old.data "tls.key") }}
+{{- $data = dict "tls.crt" (index $old.data "tls.crt") "tls.key" (index $old.data "tls.key") }}
+{{- else }}
+{{- $cert := genSignedCert "firecell-nms" nil nil $days $ca }}
+{{- $data = dict "tls.crt" ($cert.Cert | b64enc) "tls.key" ($cert.Key | b64enc) }}
+{{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  namespace: {{ $nmsNs }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: firecell-nms
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ index $data "tls.crt" }}
+  tls.key: {{ index $data "tls.key" }}
+  ca.crt: {{ $ca.Cert | b64enc }}
+{{- end }}
 {{- end }}
 {{- if and $sbi.oauth2.enabled (eq $sbi.oauth2.keySource "helm") }}
 {{- $old := lookup "v1" "Secret" $ns $sbi.oauth2.signingKeySecret }}

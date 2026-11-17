@@ -498,16 +498,28 @@ eir:
     healthHttp1Port: 8081
     # Empty: coreConfig.database.name.
     mysqlDatabase: ""
-    # Lab profile. FIXME(spec, TS 29.511 6.1.7.3 / TS 29.500 6.7.3): the AMF sends no
-    # OAuth2 access token until feature 05 is on, so the equipment-status check is let in
-    # without one (allowAnonymous). The two tokens are lab placeholders for the client
-    # lists; replace them in site values. authProfile commercial (the render fails otherwise,
-    # as the EIR would at start): allowAnonymous false, healthHttp1Port 0, global.sbi.tls and
-    # global.sbi.oauth2 on, and a provToken of at least 32 characters (the EIR ignores shorter).
-    authProfile: lab
+    # authProfile auto (default): commercial when global.sbi.tls and global.sbi.oauth2 are
+    # both on, else lab.
+    # - commercial: the EIR checks the NRF's access tokens (ES256 JWT, scope n5g-eir-eic,
+    #   audience 5G_EIR) with the NRF public key. Under auto, allowAnonymous is taken as false
+    #   and healthHttp1Port as 0 (the EIR's own commercial rules; the readiness probe then
+    #   checks the SBI port). provToken: empty = a 48-character token made by the chart and
+    #   kept in Secret oai-eir-prov-token (key token) for the provisioning client; an upgrade
+    #   keeps it (lookup), but helm template and a GitOps render make a new one each time: set
+    #   provToken (32 characters or more) there. The provisioning client must speak HTTP/2 over
+    #   TLS with a client certificate from the SBI CA, plus this Bearer token; the NMS-NG does
+    #   not yet (see global.sbi).
+    # - lab: static tokens only. FIXME(spec, TS 29.511 6.1.7.3 / TS 29.500 6.7.3): the
+    #   equipment-status check is let in without a token (allowAnonymous), and an NRF access
+    #   token from the AMF is refused (401), which the AMF treats as "EIR unavailable". The
+    #   tokens are lab placeholders; provToken empty = "lab-nms-prov-token".
+    # - commercial set explicitly: the render fails (as the EIR would at start) unless
+    #   allowAnonymous false, healthHttp1Port 0, global.sbi.tls and global.sbi.oauth2 on, and
+    #   a provToken of 32 characters or more if set.
+    authProfile: auto
     allowAnonymous: true
     checkToken: "lab-amf-token"
-    provToken: "lab-nms-prov-token"
+    provToken: ""
     # NFRegister at the NRF. Empty nrfNfmUrl: http://oai-nrf:<nrf.sbiPort>/nnrf-nfm/v1.
     # Empty advertiseApiRoot: http://oai-eir.<namespace>.svc.cluster.local:<listenPort>.
     nrfEnabled: true
@@ -562,10 +574,17 @@ nef:
     # false: a new subscription is refused with 403; existing ones stay.
     monitoringEventEnabled: true
     interfaceName: eth0
-    # The NEF's own HTTP/1.1 and HTTP/2 ports (image defaults 80 and 8080).
+    # The NEF's own HTTP/1.1 and HTTP/2 ports (image defaults 80 and 8080). sbiPort is the T8 API
+    # for AFs (HTTP/1.1). sbiHttp2Port also carries the AMF's (SMF's, UDM's) event notifications
+    # when the NEF gives an HTTP/2 callback URI: with global.sbi.tls (h2 only on that port) or
+    # USE_HTTP2 (cn5g-nef c2176392, Lane 1). The Service exposes both. FIXME(limitation): an HTTP
+    # request over TLS to sbiPort crashes the NEF (cn5g-nef, pre-existing; Lane 1): the probes run
+    # the image's healthcheck.sh (a process check), never HTTP to sbiPort.
     sbiPort: 80
     sbiHttp2Port: 8080
-    # yes: the NEF calls its peers over HTTP/2 (USE_HTTP2). This chart's NFs speak HTTP/1.1.
+    # yes: the NEF calls its peers over HTTP/2 and gives them its HTTP/2 callback URI (USE_HTTP2).
+    # Also yes when coreConfig.httpVersion is 2, so that it matches the peers in cleartext; with
+    # global.sbi.tls the NEF uses HTTP/2 whatever this says. This chart's default is HTTP/1.1.
     useHttp2: false
     # Peers, by Service name; the NEF resolves them when it starts. Port is the HTTP/1.1
     # port, as the other NFs of this chart use it (8080 with coreConfig.httpVersion 1).
@@ -584,6 +603,58 @@ nef:
       port: 8080
       register: true
       discoverAmf: false
+
+# --- NSSF (Network Slice Selection Function, cn5g-nssf) ---
+# Off by default: the cn5g-nssf image is not published yet. Nnssf_NSSelection (TS 29.531) for
+# the AMF with coreConfig.amf.enableNssf "yes". The AMF asks the NSSF only (from the AMF code,
+# not lab-run): at registration, when it cannot serve the UE's requested / subscribed S-NSSAIs
+# (AMF reallocation), and, with coreConfig.amf.enableSmfSelection "yes", for the NRF that finds
+# the SMF of a PDU session. The chart writes the NSSF's libconfig file and slice file itself (a
+# ConfigMap) and starts oai_nssf directly: the image's entrypoint.py template has no TLS or
+# OAuth2 group. The NSSF has no FCAPS MnS (no MnS port).
+nssf:
+  enabled: false
+  image: cn5g-nssf
+  # Used as-is with imageRegistry. Empty: global.pkgVersion.
+  imageTag: ""
+  # Full image reference, winning over registry + image + tag composition.
+  imageOverride: ""
+  priorityClassName: firecell-prio-normal
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+  config:
+    # Empty: coreConfig.logLevel.
+    logLevel: ""
+    interfaceName: eth0
+    # The NSSF serves HTTP/1.1 on http1Port and HTTP/2 on http2Port (image defaults 80 and
+    # 8080). The AMF calls http1Port with coreConfig.httpVersion 1, else http2Port. With
+    # global.sbi.tls or global.sbi.oauth2 the NSSF serves HTTP/2 only (cn5g-nssf: TLS and the
+    # token check are in the HTTP/2 server), and the AMF calls http2Port.
+    http1Port: 80
+    http2Port: 8080
+    # The NSSF serves /nnssf-nsselection/<apiVersion>; the AMF is given the same version
+    # (TS 29.531: v2; the AMF built-in default v1 does not match the NSSF default v2).
+    apiVersion: v2
+    # Registration at the NRF (cn5g-nssf L4-NSSF-NRF, SUPPORTED_FEATURES.REGISTER_NRF; NSSF
+    # default no). On by default: the NRF issues the AMF an access token for nnssf-nsselection
+    # only for a registered NSSF, so global.sbi.oauth2 needs register true (the render fails
+    # otherwise). The NSSF dials the NRF by its Service name oai-nrf (the NRF certificate
+    # carries it) on port (empty: nrf.sbiPort).
+    nrf:
+      register: true
+      port: ""
+    # The slice file (etc/nssf_slice_config.yaml of cn5g-nssf, TS 29.531 data model). Empty:
+    # generated from coreConfig: one TA (mcc, mnc, tac, written as the AMF sends it: decimal)
+    # with coreConfig.nssai, each S-NSSAI on the chart's NRF, and this AMF's set
+    # (mcc-mnc-amfRegionId-amfSetId) as the target AMF set. Set it to a map with the
+    # "configuration" key of that file to replace all of it; the NSSF needs nsiInfoList,
+    # taInfoList and amfInfoList in it.
+    sliceConfig: {}
 
 # --- AMF (Access and Mobility Management Function) ---
 amf:
@@ -1454,6 +1525,9 @@ coreConfig:
     #  traceDepth: minimum
     #  autoStartSupi: imsi-001010000000002
     enableSimpleScenario: "no"
+    # "yes": the AMF uses the NSSF (amf.support_features_options.enable_nssf); needs
+    # nssf.enabled, which gives the AMF the NSSF peer (shared config nfs.nssf). The render
+    # fails without it.
     enableNssf: "no"
     enableSmfSelection: "no"
     releaseAllPduSessions: "no"
@@ -1673,10 +1747,11 @@ coreConfig:
     # subscription has traceData naming the PCF, the PCF writes the AM and SM policy messages
     # of its associations as JSON lines to <dir>/<traceRef>_<TRSR>.jsonl. Empty (default): the
     # key is not written, the PCF uses its own defaults and no volume is added. Setting any
-    # key writes pcf.trace and mounts an emptyDir at dir, because the image has no
-    # /openair-pcf/trace and the PCF does not create the directory (without it the PCF logs
-    # "Trace record not written"). The files are lost when the pod restarts and are collected
-    # with kubectl cp; they are not sent to a Trace Collection Entity (FIXME in the PCF).
+    # key writes pcf.trace and mounts an emptyDir at dir. The PCF creates dir itself when it
+    # is missing (cn5g-pcf 87c85c6, pcf_trace.cpp append_line); the emptyDir keeps the
+    # records off the container's root file system. The files are lost when the pod restarts
+    # and are collected with kubectl cp; they are not sent to a Trace Collection Entity (FIXME
+    # in the PCF).
     # dir: an absolute path (default /openair-pcf/trace); maxSessions: Trace Sessions at a
     # time, 1 or more (PCF default 100).
     trace: {}
@@ -1718,8 +1793,24 @@ nms:
   # -- Namespace of the firecell-nms release: the RBAC subject, and the
   # namespace networkPolicies.allowNmsNamespace admits.
   namespace: firecell-nms
+  # -- SBI client certificate for the NMS-NG (mutual TLS to the PCF, UDR, NRF and AMF): with
+  # global.sbi.tls.source helm, the chart signs CN firecell-nms with its CA and writes Secret
+  # secretName (tls.crt, tls.key, ca.crt) into the NMS namespace; an upgrade keeps it (lookup).
+  # Only if that namespace exists: else it is skipped, NOTES says so, and a helm upgrade after
+  # the NMS namespace exists adds it (helm template never renders it: no lookup there).
+  # source secrets: make it yourself (gen-sbi-certs.sh, then a Secret in the NMS namespace).
+  # FIXME(limitation): source certManager has no NMS certificate: the chart's Issuer is
+  # namespaced (sbi-ca in the core namespace), and an NMS Certificate would need a
+  # ClusterIssuer backed by the CA.
+  sbiClientCert:
+    enabled: true
+    secretName: sbi-tls-nms
 
 # --- Helm Lifecycle Hooks (Standalone Atomic Install / Upgrade / Uninstall) ---
+# FIXME(limitation): preFlight.enabled, postFlight.enabled and postDelete.enabled cannot switch a
+# hook off: the templates read them with "| default true", and Sprig's default treats false as
+# empty (pre-existing). With hooks.enabled true all three are rendered; hooks.enabled false
+# switches all of them off.
 hooks:
   enabled: true
   preFlight:

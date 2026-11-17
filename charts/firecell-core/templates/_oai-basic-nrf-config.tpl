@@ -111,6 +111,15 @@ nfs:
       api_version: v1
       interface_name: {{ if $hostNet }}{{ $stub }}{{ else }}eth0{{ end }}
   {{- end }}
+  {{- if $v.nssf.enabled }}
+  {{- /* The AMF reads it with amf.support_features_options.enable_nssf (coreConfig.amf.enableNssf). */}}
+  nssf:
+    host: {{ include "firecell-5gc.oaiSbiHost" (dict "ctx" $ctx "name" "oai-nssf" "clusterDNS" $useClusterDNS) }}
+    sbi:
+      port: {{ include "firecell-5gc.nssfAmfPort" $ctx }}
+      api_version: {{ $v.nssf.config.apiVersion }}
+      interface_name: {{ if $hostNet }}{{ $stub }}{{ else }}eth0{{ end }}
+  {{- end }}
   pcf:
     host: {{ include "firecell-5gc.oaiSbiHost" (dict "ctx" $ctx "name" "oai-pcf" "clusterDNS" $useClusterDNS) }}
     sbi:
@@ -155,6 +164,9 @@ snssais:
 {{- end }}
 
 ############## NF-specific configuration
+{{- if and (has (lower (toString $v.coreConfig.amf.enableNssf)) (list "yes" "true" "on")) (not $v.nssf.enabled) }}
+{{- fail "coreConfig.amf.enableNssf needs nssf.enabled true: the chart gives the AMF the NSSF peer (shared config nfs.nssf) only with the NSSF block, else the AMF calls its built-in default oai-nssf:80 with API v1" }}
+{{- end }}
 amf:
   amf_name: {{ $v.coreConfig.amf.name | quote }}
   support_features_options:

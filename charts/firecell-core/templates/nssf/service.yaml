@@ -1,0 +1,29 @@
+{{- if .Values.nssf.enabled }}
+{{- $cfg := .Values.nssf.config }}
+{{- $sbi := .Values.global.sbi }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-nssf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-nssf
+    tier: core-network
+spec:
+  type: ClusterIP
+  ports:
+    {{- /* With TLS or OAuth2 the NSSF does not start its HTTP/1 server. */}}
+    {{- if not (or $sbi.tls.enabled $sbi.oauth2.enabled) }}
+    - name: http1
+      port: {{ $cfg.http1Port }}
+      targetPort: {{ $cfg.http1Port }}
+      protocol: TCP
+    {{- end }}
+    - name: http2
+      port: {{ $cfg.http2Port }}
+      targetPort: {{ $cfg.http2Port }}
+      protocol: TCP
+  selector:
+    app: oai-nssf
+{{- end }}
