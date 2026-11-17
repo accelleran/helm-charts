@@ -311,7 +311,9 @@ spec:
 
               # 2. Verify NRF NF-instance registrations (/nnrf-nfm/v1/nf-instances)
               {{- if and .Values.nrf.enabled (eq (.Values.coreConfig.registerNf | default "yes") "yes") ($post.verifyNrfRegistrations | default true) }}
+              {{- if not .Values.global.sbi.tls.enabled }}
               echo "[post-flight] Verifying NF registrations in NRF (http://oai-nrf:8080/nnrf-nfm/v1/nf-instances)..."
+              {{- end }}
               EXPECTED_NFS=""
               {{- if .Values.udr.enabled }}
               EXPECTED_NFS="${EXPECTED_NFS} udr:UDR"
@@ -331,6 +333,31 @@ spec:
               {{- if .Values.smf.enabled }}
               EXPECTED_NFS="${EXPECTED_NFS} smf:SMF"
               {{- end }}
+{{- if .Values.global.sbi.tls.enabled }}
+
+              # SBI TLS (global.sbi.tls): the NRF serves HTTP/2 over TLS and wants a client
+              # certificate (and with OAuth2 a token), which this busybox hook has not got. So
+              # only the SBI ports of the NFs are checked, not their NRF registrations.
+              echo "[post-flight] SBI TLS on: NRF registrations not read (the hook has no SBI client certificate); checking the NF SBI ports..."
+              _try=0
+              SBI_OK=0
+              while [ "${_try}" -lt "${RETRIES}" ]; do
+                MISSING=""
+                for entry in ${EXPECTED_NFS}; do
+                  nf="${entry%%:*}"
+                  tcp_probe "oai-${nf}.${NS}.svc.cluster.local" 8080 || MISSING="${MISSING} oai-${nf}(sbi)"
+                done
+                if [ -z "${MISSING}" ]; then
+                  SBI_OK=1
+                  echo "[post-flight]   OK: SBI port open for:${EXPECTED_NFS}"
+                  break
+                fi
+                _try=$((_try + 1))
+                echo "[post-flight]   Waiting for NF SBI ports (${_try}/${RETRIES}, missing:${MISSING})..."
+                sleep "${INTERVAL}"
+              done
+              [ "${SBI_OK}" -eq 1 ] || fail "NF SBI ports not open (missing:${MISSING})"
+{{- else }}
 
               _try=0
               NRF_OK=0
@@ -361,6 +388,7 @@ spec:
                 sleep "${INTERVAL}"
               done
               [ "${NRF_OK}" -eq 1 ] || fail "NRF registration verification failed (missing:${MISSING:-all}, response: ${NRF_JSON:-empty})"
+              {{- end }}
               {{- end }}
 
               # 3. Verify AMF NGAP SCTP 38412 Service/Endpoints and SMF -> UPF PFCP association via Kubernetes API

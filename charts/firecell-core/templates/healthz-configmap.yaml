@@ -71,6 +71,12 @@ data:
     if [ -z "${REACHABLE_IP}" ]; then
       exit 1
     fi
+{{- if .Values.global.sbi.tls.enabled }}
+
+    # 4. Skipped with SBI TLS (global.sbi.tls): the SBI port serves HTTP/2 over TLS and wants a
+    # client certificate, which a plain wget/curl here has not got. The TCP checks above are
+    # the check (what the TLS lab run of 17 Nov used: HEALTH_PATH emptied).
+{{- else }}
 
     # 4. Verify HTTP SBI endpoint responds (2xx/3xx/4xx) if HEALTH_PATH is configured
     Path="${HEALTH_PATH}"
@@ -90,5 +96,6 @@ data:
         esac
       fi
     fi
+{{- end }}
 
     exit 0
