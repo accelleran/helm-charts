@@ -24,8 +24,19 @@ global:
 
   # SBI security (TS 29.500 5.1: "all 3GPP NFs shall support TLS and TLS shall be used within a
   # PLMN if network security is not provided by other means"; TS 33.501 13.1.0 mutual TLS; TS 29.500
-  # 6.7.3 OAuth2 access tokens). Both are off by default and then nothing below is rendered. They
-  # are the operator's choice (TS 33.501 13.1.0 NOTE 2); cn5g-common-src tls / oauth2 blocks.
+  # 6.7.3 OAuth2 access tokens). Both are on by default (user decision, 17 Nov), with the
+  # certificates and the OAuth2 key pair made by the chart (tls.source helm, oauth2.keySource
+  # helm): a plain install needs no PKI. They remain the operator's choice (TS 33.501 13.1.0
+  # NOTE 2): enabled false renders nothing below. cn5g-common-src tls / oauth2 blocks.
+  # FIXME(limitation): the NMS-NG (firecell-nms chart) calls the PCF provisioning API and the
+  # UDR (nudr-dr) over cleartext HTTP/1.1 with no client certificate and no token. With TLS on,
+  # both refuse it (each NF serves one TLS-only SBI port; no cleartext listener exists); with
+  # OAuth2 on, the UDR refuses it even without TLS (nudr-dr checks tokens; the PCF provisioning
+  # routes do not). NMS provisioning therefore fails with these defaults until the NMS speaks
+  # HTTP/2 over TLS with a client certificate from the SBI CA (and gets tokens for the UDR), or
+  # the PCF and UDR get a cleartext provisioning listener (NF code change).
+  # With TLS on, the healthz sidecars check the SBI port by TCP only, and the post-flight hook
+  # checks the NF SBI ports instead of reading the NRF registrations (no client certificate).
   #
   # TLS on: the NFs serve and call the SBI over HTTP/2 with TLS, so http_version is written as 2
   # whatever coreConfig.httpVersion says (the NFs refuse TLS with HTTP/1). Each NF mounts the
@@ -51,7 +62,7 @@ global:
   # skipped, and the NEF falls back to the static AMF peer (nef.config.peers.amf).
   sbi:
     tls:
-      enabled: false
+      enabled: true
       # Mutual TLS: a client must present a certificate the CA verifies. verifyPeer: the NFs verify
       # the server certificate of the NFs they call.
       requireClientCert: true
@@ -61,18 +72,34 @@ global:
       # them. Run gen-sbi-certs.sh with -p oai- -a rx-n5-iwf=ims-rx-n5-iwf: the NFs dial each
       # other by the Service names (oai-<nf>), and the peer certificate must carry them. certManager: the chart creates a self-signed CA Issuer, the CA, a CA Issuer and one
       # Certificate per NF (cert-manager must be installed).
-      source: secrets
+      # helm: the chart makes the CA (Secret <secretPrefix>-ca) and one certificate per NF itself,
+      # RSA 2048, server and client auth, the same host names as certManager. An upgrade keeps
+      # them (lookup); a new NF gets a certificate from the same CA. helm template and a
+      # client-side dry run cannot look up, so each of those renders new keys (a GitOps tool
+      # that renders with helm template rotates the PKI at every sync: use secrets or
+      # certManager there). The certificates are not renewed: delete the Secrets and upgrade
+      # (all NFs restart) before certDays run out. A test PKI, as gen-sbi-certs.sh.
+      source: helm
       secretPrefix: sbi-tls
+      # certManager issues ECDSA P-256 keys: NF images built before cs 36fab3d8 fail the TLS
+      # handshake with them (curl-gnutls certificate-info bug); helm and the lab runs use RSA.
       certManager:
         duration: 8760h
         renewBefore: 720h
+      helm:
+        caDays: 3650
+        certDays: 825
     # OAuth2 access tokens (TS 29.500 6.7.3, TS 33.501 13.4.1): the NRF signs them with ES256
     # (EC P-256), the producers check them with its public key. Two Secrets, made by
     # scripts/gen-sbi-certs.sh: signingKeySecret (key signing-key.pem, mounted in the NRF only) and
     # publicKeySecret (key public-key.pem, mounted in every NF; they all read the shared config).
     # The NFs refuse OAuth2 with http_version 1, so OAuth2 needs TLS on and HTTP/2.
     oauth2:
-      enabled: false
+      enabled: true
+      # secrets: the two Secrets exist already (gen-sbi-certs.sh). helm: the chart makes the EC
+      # P-256 signing key and derives the public key from it; an upgrade keeps the key (lookup;
+      # not with helm template, see tls.source helm).
+      keySource: helm
       signingKeySecret: nrf-oauth2-signing-key
       publicKeySecret: nrf-oauth2-public-key
       # Seconds before expiry at which an NF fetches a new token (0..3600; NF default 30).
@@ -421,14 +448,15 @@ ausf:
     seedConfigPath: /openair-ausf/etc/config.yaml
 
 # --- EIR (5G Equipment Identity Register, cn5g-eir) ---
-# Off by default: the cn5g-eir image is not published yet. The AMF finds the EIR through
+# On by default (user decision, 17 Nov). The image must be pullable as imageRegistry/cn5g-eir:
+# <imageTag or pkgVersion>, else set imageOverride. The AMF finds the EIR through
 # the NRF (the EIR registers itself) and checks the PEI at registration: see
 # coreConfig.amf.eir. Config keys follow cn5g-eir configs/eir.yaml. The EIR creates its
 # two tables (equipment_bindings, audit_events) in the chart's MySQL database at start, so
 # there is no SQL to load. MySQL host, user, password and database come from
 # coreConfig.database.
 eir:
-  enabled: false
+  enabled: true
   image: cn5g-eir
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -491,13 +519,15 @@ eir:
     peiSupiBindingCheck: true
 
 # --- NEF (Network Exposure Function, cn5g-nef) ---
-# Off by default: the cn5g-nef image is not published yet. Monitoring events (TS 29.122
+# On by default (user decision, 17 Nov). The image must be pullable as imageRegistry/cn5g-nef:
+# <imageTag or pkgVersion>, else set imageOverride; with global.sbi.tls it must be a build with
+# Pistache SSL (see global.sbi). Monitoring events (TS 29.122
 # 4.4.2) through the AMF's Namf_EventExposure. The image renders etc/nef.conf from the
 # environment at start, so config holds the placeholders of that file (see cn5g-nef README,
 # "Environment Variables"). Only the AMF is used for the monitoring events; the SMF and UDM
 # entries are read by the NEF but not used by this feature.
 nef:
-  enabled: false
+  enabled: true
   image: cn5g-nef
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -545,12 +575,14 @@ nef:
       amf: {hostname: oai-amf, port: 8080, http2Port: 8080}
       smf: {hostname: oai-smf, port: 8080, http2Port: 8080}
       udm: {hostname: oai-udm, port: 8080, http2Port: 8080}
-    # Optional NRF use (cn5g-nef L1-12-5): register the NEF, and find the AMF through the NRF
-    # (else the AMF above). Both off by default; the NRF is passed to the NEF only when one is on.
+    # NRF use (cn5g-nef L1-12-5): register the NEF, and find the AMF through the NRF (else the
+    # AMF above). register is on by default: global.sbi.oauth2 needs it (the NRF gives the NEF
+    # access tokens only when it is registered; the render fails otherwise). discoverAmf is
+    # off. The NRF is passed to the NEF only when one of them is on.
     nrf:
       hostname: oai-nrf
       port: 8080
-      register: false
+      register: true
       discoverAmf: false
 
 # --- AMF (Access and Mobility Management Function) ---
