@@ -1487,9 +1487,9 @@ coreConfig:
     enableUdsf: "yes"
     # 5MBS (TS 23.247): the co-located MB-SMF of the SMF (cn5g-smf smf.mbs; "SMF and MB-SMF may be
     # co-located"), multicast sessions preconfigured here ("can be pre-configured in the network").
-    # Off by default, no sessions. enabled true lets a UE join a session in a PDU Session
-    # Modification (the SMF checks mbsAllowed with the UDM, mbs-data); radio delivery is not done
-    # yet (FIXME(limitation) T1 in cn5g-smf). sessions is passed to the SMF as written, with its
+    # Off by default, no sessions. enabled true lets a UE join or leave a session in a PDU Session
+    # Establishment Request or a PDU Session Modification Request (the SMF checks mbsAllowed with
+    # the UDM, mbs-data); radio delivery is not done yet (FIXME(limitation) T1 in cn5g-smf). sessions is passed to the SMF as written, with its
     # own key names (snake_case), one entry per multicast session:
     #   - tmgi: {service_id: "000001", mcc: "001", mnc: "01"}   # service_id: 6 hex digits
     #     ssm: {source: 10.0.0.1, group: 232.1.1.1}             # optional
