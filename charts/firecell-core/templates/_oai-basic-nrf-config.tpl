@@ -178,6 +178,9 @@ amf:
     enable_udsf: {{ $v.coreConfig.amf.enableUdsf | default "no" }}
   relative_capacity: {{ $v.coreConfig.amf.relativeCapacity }}
   statistics_timer_interval: {{ $v.coreConfig.amf.statisticsTimerInterval }}
+  {{- if hasKey $v.coreConfig.amf "sbiCallbackUseHost" }}
+  sbi_callback_use_host: {{ $v.coreConfig.amf.sbiCallbackUseHost }}
+  {{- end }}
   emergency_support: {{ $v.coreConfig.amf.emergencySupport }}
   {{- with $v.coreConfig.amf.paging }}
   {{- if hasKey . "fanoutMultiGnb" }}

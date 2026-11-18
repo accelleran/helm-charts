@@ -1440,6 +1440,13 @@ coreConfig:
     name: "OAI-AMF"
     relativeCapacity: 30
     statisticsTimerInterval: 20
+    # cn5g-amf amf.sbi_callback_use_host (amf #106): every callback URI the AMF hands out
+    # (PCF AM policy notificationUri, UDM deregCallbackUri, SMF SM context status URI,
+    # Namf_EventExposure, UDSF callbackReference) uses nfs.amf.host, the AMF Service name,
+    # instead of the pod's SBI address, so a pod replacement does not strand the peers.
+    # For TLS-off installs; TLS on already uses the host. Absent or false: the AMF's
+    # old behaviour. AMF images without #106 ignore the key.
+    sbiCallbackUseHost: true
     emergencySupport: false
     # AMF paging (cn5g-amf amf.paging). fanoutMultiGnb: page an idle UE on every gNB
     # serving its registration area, not only the last serving gNB. The AMF built-in
