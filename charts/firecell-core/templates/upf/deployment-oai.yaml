@@ -571,9 +571,9 @@ spec:
               value: {{ printf "/sys/fs/bpf/%s" $appName | quote }}
             - name: UPF_XDP_ATTACH_MODE
               value: {{ coalesce $inst.xdpAttachMode $.Values.upf.xdpAttachMode "auto" | quote }}
-            {{- if $fcapsOn }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" $fcaps.datastore.mountPath $fcaps.datastore.file | quote }}
+            {{- if $fcapsOn }}
             {{- with $fcaps.seedConfigPath }}
             - name: FCAPS_SEED_CONFIG
               value: {{ . | quote }}
@@ -630,13 +630,11 @@ spec:
             {{- end }}
             - name: bpf-fs
               mountPath: /sys/fs/bpf
-            {{- if $fcapsOn }}
             - name: cm-state
               mountPath: {{ $fcaps.datastore.mountPath }}
-              {{- if eq ($fcaps.intentMode | default "configmap") "configmap" }}
+              {{- if and $fcapsOn (eq ($fcaps.intentMode | default "configmap") "configmap") }}
               readOnly: true
               {{- end }}
-            {{- end }}
           securityContext:
             privileged: true
             capabilities:
@@ -738,9 +736,12 @@ spec:
           hostPath:
             path: /sys/fs/bpf
             type: Directory
-        {{- if $fcapsOn }}
         - name: cm-state
-          {{- if eq ($fcaps.intentMode | default "configmap") "configmap" }}
+          {{- if not $fcapsOn }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq ($fcaps.intentMode | default "configmap") "configmap" }}
           # Mounted as a directory on purpose. A ConfigMap mounted through
           # subPath is NEVER refreshed by kubelet, which would silently make
           # every change require a pod restart and defeat the HOT path.
@@ -751,7 +752,6 @@ spec:
           persistentVolumeClaim:
             claimName: {{ printf "%s-cm-state" $appName }}
           {{- end }}
-        {{- end }}
         {{- include "firecell-5gc.healthzVolume" $ | nindent 8 }}
       {{- with $.Values.global.imagePullSecrets }}
       imagePullSecrets:

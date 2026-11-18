@@ -78,10 +78,8 @@ spec:
             {{- end }}
             - name: MONITORING_EVENT_ENABLED
               value: {{ ternary "yes" "no" $cfg.monitoringEventEnabled | quote }}
-            {{- if .Values.nef.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.nef.fcaps.datastore.mountPath .Values.nef.fcaps.datastore.file | quote }}
-            {{- end }}
             - name: REGISTER_NRF
               value: {{ ternary "yes" "no" $cfg.nrf.register | quote }}
             - name: DISCOVER_AMF
@@ -124,19 +122,15 @@ spec:
               containerPort: {{ .Values.nef.fcaps.mnsPort }}
               protocol: TCP
             {{- end }}
-          {{- if or .Values.nef.fcaps.enabled (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "nef")) }}
           volumeMounts:
-            {{- if .Values.nef.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.nef.fcaps.datastore.mountPath }}
-              {{- if eq .Values.nef.fcaps.intentMode "configmap" }}
+              {{- if and .Values.nef.fcaps.enabled (eq .Values.nef.fcaps.intentMode "configmap") }}
               readOnly: true
               {{- end }}
-            {{- end }}
             {{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "nef")) }}
             {{- . | nindent 12 }}
             {{- end }}
-          {{- end }}
           resources:
             {{- toYaml $nef.resources | nindent 12 }}
           # The image HEALTHCHECK script.
@@ -154,11 +148,13 @@ spec:
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 5
-      {{- if or .Values.nef.fcaps.enabled (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "nef")) }}
       volumes:
-        {{- if .Values.nef.fcaps.enabled }}
         - name: cm-state
-          {{- if eq .Values.nef.fcaps.intentMode "configmap" }}
+          {{- if not .Values.nef.fcaps.enabled }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq .Values.nef.fcaps.intentMode "configmap" }}
           # A directory, not a subPath: kubelet never refreshes a ConfigMap mounted through subPath.
           configMap:
             name: {{ .Values.nef.fcaps.intentConfigMap.name }}
@@ -167,11 +163,9 @@ spec:
           persistentVolumeClaim:
             claimName: oai-nef-cm-state
           {{- end }}
-        {{- end }}
         {{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "nef")) }}
         {{- . | nindent 8 }}
         {{- end }}
-      {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

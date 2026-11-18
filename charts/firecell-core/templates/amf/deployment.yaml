@@ -47,9 +47,9 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}
-            {{- if .Values.amf.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.amf.fcaps.datastore.mountPath .Values.amf.fcaps.datastore.file | quote }}
+            {{- if .Values.amf.fcaps.enabled }}
             {{- with .Values.amf.fcaps.seedConfigPath }}
             - name: FCAPS_SEED_CONFIG
               value: {{ . | quote }}
@@ -69,13 +69,11 @@ spec:
             - name: common-config
               mountPath: {{ .Values.amf.configMountPath }}
               subPath: basic_nrf_config_ebpf_qos.yaml
-            {{- if .Values.amf.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.amf.fcaps.datastore.mountPath }}
-              {{- if eq .Values.amf.fcaps.intentMode "configmap" }}
+              {{- if and .Values.amf.fcaps.enabled (eq .Values.amf.fcaps.intentMode "configmap") }}
               readOnly: true
               {{- end }}
-            {{- end }}
           resources:
             {{- toYaml .Values.amf.resources | nindent 12 }}
           readinessProbe:
@@ -95,9 +93,12 @@ spec:
         - name: common-config
           configMap:
             name: firecell-common-config
-        {{- if .Values.amf.fcaps.enabled }}
         - name: cm-state
-          {{- if eq .Values.amf.fcaps.intentMode "configmap" }}
+          {{- if not .Values.amf.fcaps.enabled }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq .Values.amf.fcaps.intentMode "configmap" }}
           # Mounted as a directory on purpose. A ConfigMap mounted through
           # subPath is NEVER refreshed by kubelet, which would silently make
           # every change require a pod restart and defeat the HOT path.
@@ -108,7 +109,6 @@ spec:
           persistentVolumeClaim:
             claimName: oai-amf-cm-state
           {{- end }}
-        {{- end }}
         {{- include "firecell-5gc.healthzVolume" . | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:

@@ -139,9 +139,9 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}
-            {{- if .Values.smf.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.smf.fcaps.datastore.mountPath .Values.smf.fcaps.datastore.file | quote }}
+            {{- if .Values.smf.fcaps.enabled }}
             {{- with .Values.smf.fcaps.seedConfigPath }}
             - name: FCAPS_SEED_CONFIG
               value: {{ . | quote }}
@@ -169,13 +169,11 @@ spec:
             - name: common-config
               mountPath: {{ .Values.smf.configMountPath }}
               subPath: {{ if $smfHostNet }}basic_nrf_config_ebpf_smf_hostnet.yaml{{ else }}basic_nrf_config_ebpf_qos.yaml{{ end }}
-            {{- if .Values.smf.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.smf.fcaps.datastore.mountPath }}
-              {{- if eq .Values.smf.fcaps.intentMode "configmap" }}
+              {{- if and .Values.smf.fcaps.enabled (eq .Values.smf.fcaps.intentMode "configmap") }}
               readOnly: true
               {{- end }}
-            {{- end }}
           resources:
             {{- toYaml .Values.smf.resources | nindent 12 }}
           {{- $smfHealthPort := .Values.smf.healthPort | default (ternary 9099 9090 $smfHostNet) }}
@@ -196,9 +194,12 @@ spec:
         - name: common-config
           configMap:
             name: firecell-common-config
-        {{- if .Values.smf.fcaps.enabled }}
         - name: cm-state
-          {{- if eq .Values.smf.fcaps.intentMode "configmap" }}
+          {{- if not .Values.smf.fcaps.enabled }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq .Values.smf.fcaps.intentMode "configmap" }}
           # Mounted as a directory on purpose. A ConfigMap mounted through
           # subPath is NEVER refreshed by kubelet, which would silently make
           # every change require a pod restart and defeat the HOT path.
@@ -209,7 +210,6 @@ spec:
           persistentVolumeClaim:
             claimName: oai-smf-cm-state
           {{- end }}
-        {{- end }}
         {{- include "firecell-5gc.healthzVolume" . | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:

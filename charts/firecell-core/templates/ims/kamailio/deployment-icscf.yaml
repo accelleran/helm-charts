@@ -41,6 +41,9 @@ spec:
             {{- include "firecell-5gc.kamailioCommonEnv" (dict "root" . "component" "icscf") | nindent 12 }}
             - name: ICSCF_IP
               value: {{ $icscfIp | quote }}
+            # SIP listen port (udp and tcp); the P-CSCFs send REGISTER to it (cn5g-ims #7)
+            - name: ICSCF_PORT
+              value: {{ .Values.ims.icscf.bindPort | default 4060 | quote }}
             - name: SCSCF_IP
               value: {{ $scscfIp | quote }}
             {{- if .Values.ims.cxGateway.enabled }}
