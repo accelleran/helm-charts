@@ -37,9 +37,9 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}
-            {{- if .Values.udm.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.udm.fcaps.datastore.mountPath .Values.udm.fcaps.datastore.file | quote }}
+            {{- if .Values.udm.fcaps.enabled }}
             {{- with .Values.udm.fcaps.seedConfigPath }}
             - name: FCAPS_SEED_CONFIG
               value: {{ . | quote }}
@@ -67,13 +67,11 @@ spec:
               mountPath: /openair-udm/etc/suci-{{ .id }}.pem
               subPath: suci-{{ .id }}.pem
             {{- end }}
-            {{- if .Values.udm.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.udm.fcaps.datastore.mountPath }}
-              {{- if eq .Values.udm.fcaps.intentMode "configmap" }}
+              {{- if and .Values.udm.fcaps.enabled (eq .Values.udm.fcaps.intentMode "configmap") }}
               readOnly: true
               {{- end }}
-            {{- end }}
           resources:
             {{- toYaml .Values.udm.resources | nindent 12 }}
           readinessProbe:
@@ -96,9 +94,12 @@ spec:
         - name: udm-suci-key
           configMap:
             name: oai-udm-config
-        {{- if .Values.udm.fcaps.enabled }}
         - name: cm-state
-          {{- if eq .Values.udm.fcaps.intentMode "configmap" }}
+          {{- if not .Values.udm.fcaps.enabled }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq .Values.udm.fcaps.intentMode "configmap" }}
           # Mounted as a directory on purpose. A ConfigMap mounted through
           # subPath is NEVER refreshed by kubelet, which would silently make
           # every change require a pod restart and defeat the HOT path.
@@ -109,7 +110,6 @@ spec:
           persistentVolumeClaim:
             claimName: oai-udm-cm-state
           {{- end }}
-        {{- end }}
         {{- include "firecell-5gc.healthzVolume" . | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:

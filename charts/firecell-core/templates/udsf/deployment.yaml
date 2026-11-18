@@ -62,9 +62,9 @@ spec:
             - name: TLS_REQUIRE_CLIENT_CERT
               value: {{ ternary "true" "false" .Values.global.sbi.tls.requireClientCert | quote }}
             {{- end }}
-            {{- if .Values.udsf.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.udsf.fcaps.datastore.mountPath .Values.udsf.fcaps.datastore.file | quote }}
+            {{- if .Values.udsf.fcaps.enabled }}
             {{- with .Values.udsf.fcaps.seedConfigPath }}
             - name: FCAPS_SEED_CONFIG
               value: {{ . | quote }}
@@ -93,30 +93,28 @@ spec:
             periodSeconds: 10
             failureThreshold: 6
           {{- $sbiMounts := include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "udsf") }}
-          {{- if or .Values.udsf.fcaps.enabled $sbiMounts }}
           volumeMounts:
-            {{- if .Values.udsf.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.udsf.fcaps.datastore.mountPath }}
-              {{- if eq .Values.udsf.fcaps.intentMode "configmap" }}
+              {{- if and .Values.udsf.fcaps.enabled (eq .Values.udsf.fcaps.intentMode "configmap") }}
               readOnly: true
               {{- end }}
-            {{- end }}
             {{- with $sbiMounts }}
             {{- . | nindent 12 }}
             {{- end }}
-          {{- end }}
           resources:
             {{- toYaml .Values.udsf.resources | nindent 12 }}
       {{- $sbiVolumes := include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "udsf") }}
-      {{- if or .Values.udsf.fcaps.enabled $sbiVolumes }}
       volumes:
         {{- with $sbiVolumes }}
         {{- . | nindent 8 }}
         {{- end }}
-        {{- if .Values.udsf.fcaps.enabled }}
         - name: cm-state
-          {{- if eq .Values.udsf.fcaps.intentMode "configmap" }}
+          {{- if not .Values.udsf.fcaps.enabled }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq .Values.udsf.fcaps.intentMode "configmap" }}
           # A directory, not a subPath: kubelet never refreshes a ConfigMap
           # mounted through subPath, which would make every change need a pod
           # restart and defeat the HOT path.
@@ -127,8 +125,6 @@ spec:
           persistentVolumeClaim:
             claimName: oai-udsf-cm-state
           {{- end }}
-        {{- end }}
-      {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

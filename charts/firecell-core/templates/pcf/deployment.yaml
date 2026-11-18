@@ -40,9 +40,9 @@ spec:
           env:
             - name: TZ
               value: {{ .Values.global.timezone }}
-            {{- if .Values.pcf.fcaps.enabled }}
             - name: FCAPS_CM_DATASTORE
               value: {{ printf "%s/%s" .Values.pcf.fcaps.datastore.mountPath .Values.pcf.fcaps.datastore.file | quote }}
+            {{- if .Values.pcf.fcaps.enabled }}
             {{- with .Values.pcf.fcaps.seedConfigPath }}
             - name: FCAPS_SEED_CONFIG
               value: {{ . | quote }}
@@ -62,13 +62,11 @@ spec:
             - name: common-config
               mountPath: {{ .Values.pcf.configMountPath }}
               subPath: basic_nrf_config_ebpf_qos.yaml
-            {{- if .Values.pcf.fcaps.enabled }}
             - name: cm-state
               mountPath: {{ .Values.pcf.fcaps.datastore.mountPath }}
-              {{- if eq .Values.pcf.fcaps.intentMode "configmap" }}
+              {{- if and .Values.pcf.fcaps.enabled (eq .Values.pcf.fcaps.intentMode "configmap") }}
               readOnly: true
               {{- end }}
-            {{- end }}
             {{- with .Values.coreConfig.pcf.trace }}
             # Trace record files (pcf.trace.dir): the image has no such directory and the PCF
             # does not create it.
@@ -94,9 +92,12 @@ spec:
         - name: common-config
           configMap:
             name: firecell-common-config
-        {{- if .Values.pcf.fcaps.enabled }}
         - name: cm-state
-          {{- if eq .Values.pcf.fcaps.intentMode "configmap" }}
+          {{- if not .Values.pcf.fcaps.enabled }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq .Values.pcf.fcaps.intentMode "configmap" }}
           # Mounted as a directory on purpose. A ConfigMap mounted through
           # subPath is NEVER refreshed by kubelet, which would silently make
           # every change require a pod restart and defeat the HOT path.
@@ -107,7 +108,6 @@ spec:
           persistentVolumeClaim:
             claimName: oai-pcf-cm-state
           {{- end }}
-        {{- end }}
         {{- if .Values.coreConfig.pcf.trace }}
         # Lost when the pod restarts, like the Trace Sessions themselves (they are in memory).
         - name: trace
