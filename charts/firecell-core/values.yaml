@@ -1253,6 +1253,9 @@ ims:
   icscf:
     ip: "192.168.31.206"
     hostNetwork: true
+    # SIP port of the I-CSCF (ICSCF_PORT of the I-CSCF and of the P-CSCFs, cn5g-ims #7): it listens
+    # on ip:bindPort and the P-CSCF sends REGISTER there. An IMS image before cn5g-ims 8b131c8
+    # ignores ICSCF_PORT and keeps 4060.
     bindPort: 4060
   scscf:
     ip: "192.168.31.207"

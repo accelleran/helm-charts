@@ -61,6 +61,10 @@ spec:
               value: {{ $pcscfIp | quote }}
             - name: ICSCF_IP
               value: {{ $icscfIp | quote }}
+            # REGISTER goes to ICSCF_IP:ICSCF_PORT, the I-CSCF provisioned in the P-CSCF (TS 24.229
+            # 5.2.2.1 NOTE 15; cn5g-ims #7): no IMS DNS SRV record needed
+            - name: ICSCF_PORT
+              value: {{ .Values.ims.icscf.bindPort | default 4060 | quote }}
             - name: SCSCF_IP
               value: {{ $scscfIp | quote }}
             - name: UPF_N6_GW
