@@ -1,12 +1,12 @@
-# Pin rc02-aa sandbox images (replace SHAs after build).
-# Example: oai-amf:rc02-aa-9d09f619a505
+# rc02-aa sandbox image pins (local tags; build before deploy)
+# Format: <nf>:rc02-aa-<sha12>
 amf:
-  imageOverride: ""
+  imageOverride: "oai-amf:rc02-aa-24907e94030d"
 smf:
-  imageOverride: ""
+  imageOverride: "oai-smf:rc02-aa-c105c198e591"
 nrf:
-  imageOverride: ""
+  imageOverride: "oai-nrf:rc02-aa-8997719f684a"
 upf:
-  oaiImageOverride: ""
+  oaiImageOverride: "oai-upf:rc02-aa-5f52581d50dc"
 udsf:
-  imageOverride: ""
+  imageOverride: "cn5g-udsf:rc02-aa-4809e2e9fb78"
