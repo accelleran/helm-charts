@@ -1,0 +1,31 @@
+Mode-2 CP lab test — SSH=firecell@192.168.30.36 NS=firecell-core suites=0,1
+Report: /tmp/mode2-cp-lab-20261118-180450
+
+=== Suite 0 — Offline ===
+  PASS  T0.1 — pytest tests/aa via /home/firecell/workspace/remote-gh-rc02-aa/helm-charts/charts/firecell-core/.venv-aa/bin/python
+
+=== Suite 1 — Baseline ===
+  PASS  T1.1 — amf-0@fc-ha-a amf-1@fc-ha-b
+  PASS  T1.2 — both use oai-amf:full-aa-d2335ae
+  PASS  T1.3 — VIPs 192.168.30.205/192.168.30.204 eps=10.1.28.115/10.1.85.165
+  PASS  T1.4 — ports=[80/TCP 8080/TCP ] vip=192.168.30.202
+  PASS  T1.5 — ordinals oai-amf-0/1 present (pointer=ordinal+1 by chart)
+  PASS  T1.6 — udsf=3 redis=1 enable_hits=6
+  PASS  T1.7 — smf.replicas=2 (1=CP-only Mode-2, 2=compose)
+  PASS  T1.8 — oai-upf pool ready=2
+
+Mode-2 CP lab results 2026-11-18T18:05:03+01:00
+SSH=firecell@192.168.30.36 suites=0,1
+PASS=9 FAIL=0 SKIP=0
+
+T0.1|PASS|pytest tests/aa via /home/firecell/workspace/remote-gh-rc02-aa/helm-charts/charts/firecell-core/.venv-aa/bin/python
+T1.1|PASS|amf-0@fc-ha-a amf-1@fc-ha-b
+T1.2|PASS|both use oai-amf:full-aa-d2335ae
+T1.3|PASS|VIPs 192.168.30.205/192.168.30.204 eps=10.1.28.115/10.1.85.165
+T1.4|PASS|ports=[80/TCP 8080/TCP ] vip=192.168.30.202
+T1.5|PASS|ordinals oai-amf-0/1 present (pointer=ordinal+1 by chart)
+T1.6|PASS|udsf=3 redis=1 enable_hits=6
+T1.7|PASS|smf.replicas=2 (1=CP-only Mode-2, 2=compose)
+T1.8|PASS|oai-upf pool ready=2
+
+Wrote /tmp/mode2-cp-lab-20261118-180450/results.txt and /tmp/mode2-cp-lab-20261118-180450/results.md

@@ -1,0 +1,12 @@
+# Sandbox helpers for feat/rc02-active-active (firecell-core AA).
+CHART ?= charts/firecell-core
+
+.PHONY: test-aa test-mode2-cp helm-mode2-render
+test-aa:
+	python3 -m pytest $(CHART)/tests/aa -q --tb=line
+
+helm-mode2-render:
+	helm template fc $(CHART) -n firecell-core -f $(CHART)/examples/values-fc-ha-mode2.yaml >/dev/null
+
+test-mode2-cp:
+	$(CHART)/scripts/mode2-cp-lab-test.sh --suite all

@@ -30,3 +30,16 @@ mysql / UDSF / PXC / UPF×2 are incomplete.
 
 See `charts/firecell-core/scripts/mode2-cp-lab-test.sh` and `make test-mode2-cp`
 notes in that script header (release name `firecell-core`).
+
+## Lab harness
+
+```bash
+# Offline chart contracts
+make -f Makefile.rc02-aa test-aa
+
+# Live Mode-2 on fc-ha (SSH). Suites 2/3 delete AMF/UDSF/redis pods briefly.
+MODE2_AMF_IMAGE=<live-amf-image-substr> \
+  charts/firecell-core/scripts/mode2-cp-lab-test.sh --suite all
+```
+
+See `examples/lab-results/` for the 2026-11-18 sandbox run.

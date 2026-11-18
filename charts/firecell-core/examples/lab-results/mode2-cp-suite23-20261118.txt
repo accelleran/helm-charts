@@ -1,0 +1,31 @@
+Mode-2 CP lab test — SSH=firecell@192.168.30.36 NS=firecell-core suites=2,3
+Report: /tmp/mode2-cp-lab-20261118-180511
+
+=== Suite 2 — CP failover ===
+  PASS  T2.1 — survivor ready; ep1=10.1.85.165; restored 3/3
+  PASS  T2.2 — survivor ready; ep0=10.1.28.71; restored 3/3
+  PASS  T2.3 — udsf recovered; redis ok; no AMF crashloop
+  PASS  T2.4 — redis+udsf recovered; no AMF crashloop
+  PASS  T2.5 — 2/2 restored; VIPs stable 192.168.30.205/192.168.30.204
+  PASS  T2.6 — cordoned fc-ha-a; survivor ready; amf-0->pending:Pending
+  PASS  T2.7 — both AMFs Ready after uncordon/recover
+
+=== Suite 3 — SBI soft-HA ===
+  PASS  T3.1 — ausf_ready_pods=3 nrf=2
+  PASS  T3.2 — udm_ready_pods=3
+
+Mode-2 CP lab results 2026-11-18T18:09:27+01:00
+SSH=firecell@192.168.30.36 suites=2,3
+PASS=9 FAIL=0 SKIP=0
+
+T2.1|PASS|survivor ready; ep1=10.1.85.165; restored 3/3
+T2.2|PASS|survivor ready; ep0=10.1.28.71; restored 3/3
+T2.3|PASS|udsf recovered; redis ok; no AMF crashloop
+T2.4|PASS|redis+udsf recovered; no AMF crashloop
+T2.5|PASS|2/2 restored; VIPs stable 192.168.30.205/192.168.30.204
+T2.6|PASS|cordoned fc-ha-a; survivor ready; amf-0->pending:Pending
+T2.7|PASS|both AMFs Ready after uncordon/recover
+T3.1|PASS|ausf_ready_pods=3 nrf=2
+T3.2|PASS|udm_ready_pods=3
+
+Wrote /tmp/mode2-cp-lab-20261118-180511/results.txt and /tmp/mode2-cp-lab-20261118-180511/results.md
