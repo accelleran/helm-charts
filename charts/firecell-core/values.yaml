@@ -1447,6 +1447,13 @@ coreConfig:
     # For TLS-off installs; TLS on already uses the host. Absent or false: the AMF's
     # old behaviour. AMF images without #106 ignore the key.
     sbiCallbackUseHost: true
+    # cn5g-amf amf.rrc_inactive_assistance (amf #120): send the Core Network Assistance
+    # Information for RRC INACTIVE (TS 38.413 9.3.1.15) in INITIAL CONTEXT SETUP, HANDOVER
+    # REQUEST, PATH SWITCH REQUEST ACKNOWLEDGE and UE CONTEXT MODIFICATION, so an NG-RAN that
+    # supports RRC_INACTIVE may use it. false: the IE is not sent. Seeds the AMF's FCAPS HOT
+    # switch rrcInactiveAssistanceEnabled, which a CM PATCH can change at run time. Removing
+    # the key leaves the AMF default (on). AMF images without #120 ignore the key.
+    rrcInactiveAssistance: true
     emergencySupport: false
     # AMF paging (cn5g-amf amf.paging). fanoutMultiGnb: page an idle UE on every gNB
     # serving its registration area, not only the last serving gNB. The AMF built-in

@@ -181,6 +181,9 @@ amf:
   {{- if hasKey $v.coreConfig.amf "sbiCallbackUseHost" }}
   sbi_callback_use_host: {{ $v.coreConfig.amf.sbiCallbackUseHost }}
   {{- end }}
+  {{- if hasKey $v.coreConfig.amf "rrcInactiveAssistance" }}
+  rrc_inactive_assistance: {{ $v.coreConfig.amf.rrcInactiveAssistance }}
+  {{- end }}
   emergency_support: {{ $v.coreConfig.amf.emergencySupport }}
   {{- with $v.coreConfig.amf.paging }}
   {{- if hasKey . "fanoutMultiGnb" }}
