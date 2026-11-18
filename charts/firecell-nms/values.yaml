@@ -121,6 +121,16 @@ backend:
     # Empty: the ping routes answer 503.
     extdnProbe: ""
 
+  branding:
+    # -- ConfigMap where the NMS keeps the site's logos and colours (CM
+    # console Branding, /api/branding); the console's sidebar reads them
+    # through the API, and the Flux recipe's OIDC ensure loop copies them to
+    # Zitadel's sign-in pages. The chart never creates it, so upgrades keep
+    # it. nms-api may get, update and delete it, and create ConfigMaps in the
+    # namespace (Kubernetes cannot narrow create by name). Empty turns the
+    # feature off.
+    configMap: nms-branding
+
   config:
     # -- JSON string array of allowed WebSocket origins.
     allowedWsOriginsJson: "[]"
