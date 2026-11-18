@@ -242,6 +242,23 @@ spec:
                 fail "Service ${_svc}:${_port} (${_desc}) is not reachable after ${RETRIES} attempts"
               }
 
+              wait_tcp_addr() {
+                _addr="$1"
+                _port="$2"
+                _desc="$3"
+                _try=0
+                echo "[post-flight] Checking ${_addr}:${_port} (${_desc})..."
+                while [ "${_try}" -lt "${RETRIES}" ]; do
+                  if tcp_probe "${_addr}" "${_port}"; then
+                    echo "[post-flight]   OK: ${_addr}:${_port} is reachable"
+                    return 0
+                  fi
+                  _try=$((_try + 1))
+                  sleep "${INTERVAL}"
+                done
+                fail "${_addr}:${_port} (${_desc}) is not reachable after ${RETRIES} attempts"
+              }
+
               wait_dns_service() {
                 _svc="$1"
                 _desc="$2"
@@ -293,7 +310,27 @@ spec:
               wait_tcp_service "{{ .Values.udsf.serviceName | default "oai-udsf" }}" "{{ .Values.udsf.sbiPort | default 8080 }}" "UDSF SBI"
               {{- end }}
               {{- if .Values.ims.enabled }}
+              {{- if eq (.Values.ims.engine | default "kamailio") "asterisk" }}
               wait_tcp_service "ims" "5060" "Asterisk IMS SIP"
+              {{- else }}
+              {{- /* Kamailio IMS: each CSCF (and the Cx gateway) listens on its ims.<x>.ip, not on the
+                     node address its headless Service resolves to (hostNetwork), so the address is
+                     probed. Without an ip the Service name is probed. */}}
+              {{- $cscfs := list
+                    (dict "svc" "ims-pcscf" "ip" (.Values.ims.pcscf.ip | default .Values.coreConfig.ims.pcscfIpv4) "port" (.Values.ims.pcscf.bindPort | default 5060) "desc" "IMS P-CSCF SIP")
+                    (dict "svc" "ims-icscf" "ip" .Values.ims.icscf.ip "port" (.Values.ims.icscf.bindPort | default 4060) "desc" "IMS I-CSCF SIP")
+                    (dict "svc" "ims-scscf" "ip" .Values.ims.scscf.ip "port" (.Values.ims.scscf.bindPort | default 6060) "desc" "IMS S-CSCF SIP") }}
+              {{- if .Values.ims.cxGateway.enabled }}
+              {{- $cscfs = append $cscfs (dict "svc" "ims-cx-gateway" "ip" .Values.ims.cxGateway.ip "port" (.Values.ims.cxGateway.port | default 3868) "desc" "IMS Cx gateway Diameter") }}
+              {{- end }}
+              {{- range $c := $cscfs }}
+              {{- if $c.ip }}
+              wait_tcp_addr "{{ $c.ip }}" "{{ $c.port }}" "{{ $c.desc }}"
+              {{- else }}
+              wait_tcp_service "{{ $c.svc }}" "{{ $c.port }}" "{{ $c.desc }}"
+              {{- end }}
+              {{- end }}
+              {{- end }}
               {{- end }}
               {{- if .Values.extDn.enabled }}
               wait_dns_service "oai-ext-dn" "External Data Network"
@@ -391,27 +428,79 @@ spec:
               {{- end }}
               {{- end }}
 
-              # 3. Verify AMF NGAP SCTP 38412 Service/Endpoints and SMF -> UPF PFCP association via Kubernetes API
+              echo "=================================================================="
+              echo "[post-flight] All control-plane & service checks PASSED."
+              echo "=================================================================="
+        - name: k8s-api-verify
+          {{- /* The Kubernetes API checks need an HTTP client that completes TLS with the API
+                 server. busybox wget does not with k3s (TLS alert 47, lab 17 Nov), so this
+                 container defaults to the chart's MySQL image (curl; already used by this Job's
+                 mysql-schema-verify). It runs beside service-and-nrf-verify; the Job passes
+                 when both pass. */}}
+          image: {{ $post.apiImage | default (.Values.mysql.imageOverride | default (printf "%s/%s" .Values.global.imageRegistry .Values.mysql.image)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              NS="{{ .Values.global.namespace }}"
+              RETRIES="{{ $post.retries | default 30 }}"
+              INTERVAL="{{ $post.intervalSeconds | default 4 }}"
+
+              fail() {
+                echo "[post-flight] FATAL: $*" >&2
+                exit 1
+              }
+
+              k8s_get() {
+                _path="$1"
+                _token="$2"
+                _api="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT:-443}${_path}"
+                if command -v curl >/dev/null 2>&1; then
+                  curl -sk --fail --max-time 5 -H "Authorization: Bearer ${_token}" "${_api}" 2>/dev/null
+                elif command -v wget >/dev/null 2>&1 && wget --no-check-certificate --header="Authorization: Bearer ${_token}" -q -T 5 -O - "${_api}" 2>/dev/null; then
+                  return 0
+                elif command -v python3 >/dev/null 2>&1; then
+                  python3 -c 'import ssl,sys,urllib.request; ctx=ssl._create_unverified_context(); req=urllib.request.Request(sys.argv[1],headers={"Authorization":"Bearer "+sys.argv[2]}); sys.stdout.write(urllib.request.urlopen(req,context=ctx,timeout=5).read().decode())' "${_api}" "${_token}" 2>/dev/null
+                else
+                  return 1
+                fi
+              }
+
+              # 3. AMF NGAP SCTP 38412 endpoint and SMF -> UPF PFCP association, via the Kubernetes API
               TOKEN_FILE="/var/run/secrets/kubernetes.io/serviceaccount/token"
               [ -r "${TOKEN_FILE}" ] || fail "ServiceAccount token not found at ${TOKEN_FILE}"
               [ -n "${KUBERNETES_SERVICE_HOST:-}" ] || fail "KUBERNETES_SERVICE_HOST is not set"
               TOKEN=$(cat "${TOKEN_FILE}")
 
               {{- if .Values.amf.enabled }}
-              echo "[post-flight] Verifying AMF NGAP SCTP port 38412 Endpoints..."
+              # EndpointSlices (discovery.k8s.io/v1): the v1 Endpoints API is deprecated since
+              # Kubernetes 1.33. Endpoints only where the EndpointSlice list does not answer.
+              echo "[post-flight] Verifying AMF NGAP SCTP port 38412 (EndpointSlices of Service oai-amf)..."
               _try=0
               AMF_EP_OK=0
+              AMF_EP_JSON=""
               while [ "${_try}" -lt "${RETRIES}" ]; do
-                AMF_EP_JSON=$(k8s_get "/api/v1/namespaces/${NS}/endpoints/oai-amf" "${TOKEN}" || true)
-                if echo "${AMF_EP_JSON}" | grep -q '"addresses"' && echo "${AMF_EP_JSON}" | grep -qE '"port":[[:space:]]*38412'; then
-                  AMF_EP_OK=1
-                  break
+                AMF_EP_JSON=$(k8s_get "/apis/discovery.k8s.io/v1/namespaces/${NS}/endpointslices?labelSelector=kubernetes.io%2Fservice-name%3Doai-amf" "${TOKEN}" || true)
+                if echo "${AMF_EP_JSON}" | grep -qE '"kind":[[:space:]]*"EndpointSliceList"'; then
+                  if echo "${AMF_EP_JSON}" | grep -qE '"port":[[:space:]]*38412' && echo "${AMF_EP_JSON}" | grep -qE '"ready":[[:space:]]*true'; then
+                    AMF_EP_OK=1
+                    break
+                  fi
+                else
+                  AMF_EP_JSON=$(k8s_get "/api/v1/namespaces/${NS}/endpoints/oai-amf" "${TOKEN}" || true)
+                  if echo "${AMF_EP_JSON}" | grep -q '"addresses"' && echo "${AMF_EP_JSON}" | grep -qE '"port":[[:space:]]*38412'; then
+                    AMF_EP_OK=1
+                    break
+                  fi
                 fi
                 _try=$((_try + 1))
                 sleep "${INTERVAL}"
               done
-              [ "${AMF_EP_OK}" -eq 1 ] || fail "oai-amf Endpoints do not expose NGAP SCTP port 38412"
-              echo "[post-flight]   OK: oai-amf Endpoints expose NGAP SCTP port 38412"
+              [ -n "${AMF_EP_JSON}" ] || fail "no answer from the Kubernetes API at ${KUBERNETES_SERVICE_HOST} (the hook image needs an HTTP client that completes TLS with the API server)"
+              [ "${AMF_EP_OK}" -eq 1 ] || fail "oai-amf has no ready endpoint with NGAP SCTP port 38412"
+              echo "[post-flight]   OK: oai-amf has a ready endpoint with NGAP SCTP port 38412"
               {{- end }}
 
               {{- if and .Values.smf.enabled .Values.upf.enabled ($post.verifyPfcpAssociation | default true) }}
@@ -437,9 +526,7 @@ spec:
               [ "${PFCP_OK}" -eq 1 ] || fail "SMF did not establish PFCP N4 association with UPF within timeout"
               {{- end }}
 
-              echo "=================================================================="
-              echo "[post-flight] All control-plane & service checks PASSED."
-              echo "=================================================================="
+              echo "[post-flight] Kubernetes API checks PASSED."
       {{- if .Values.mysql.enabled }}
       volumes:
         - name: init-scripts
