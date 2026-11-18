@@ -9,7 +9,7 @@ metadata:
     app: oai-ausf
     tier: core-network
 spec:
-  replicas: 1
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.ausf.replicas) }}
   selector:
     matchLabels:
       app: oai-ausf
@@ -26,6 +26,7 @@ spec:
         {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
     spec:
       priorityClassName: {{ .Values.ausf.priorityClassName }}
+      {{- include "firecell-5gc.haScheduling" (dict "ctx" . "app" "oai-ausf" "replicas" .Values.ausf.replicas) | nindent 6 }}
       initContainers:
         {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
       containers:

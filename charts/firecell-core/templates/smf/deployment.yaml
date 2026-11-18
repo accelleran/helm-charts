@@ -1,4 +1,4 @@
-{{- if .Values.smf.enabled }}
+{{- if and .Values.smf.enabled (ne (.Values.smf.kind | default "Deployment") "StatefulSet") }}
 {{- $smfHostNet := .Values.smf.hostNetwork | default false }}
 {{- $smfPfcpMac := .Values.smf.hostPfcpMacvlan | default "smf-n4-mac" }}
 {{- $smfPfcpIP := coalesce .Values.smf.hostPfcpIP .Values.smf.n4IP "" }}
@@ -14,7 +14,7 @@ metadata:
     app: oai-smf
     tier: core-network
 spec:
-  replicas: 1
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.smf.replicas) }}
   progressDeadlineSeconds: {{ .Values.smf.progressDeadlineSeconds | default 1200 }}
   selector:
     matchLabels:
@@ -41,6 +41,7 @@ spec:
         {{- end }}
     spec:
       priorityClassName: {{ .Values.smf.priorityClassName }}
+      {{- include "firecell-5gc.haScheduling" (dict "ctx" . "app" "oai-smf" "replicas" .Values.smf.replicas) | nindent 6 }}
       {{- if $smfHostNet }}
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet

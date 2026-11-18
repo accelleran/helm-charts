@@ -1,0 +1,9 @@
+# SMF×2 after OP-4. Layer after Mode-2 / datastore / pxc-nrf.
+# N4: hostPfcpIPBase + ordinal (smf-0=.120, smf-1=.121).
+ha:
+  hardAntiAffinity: true
+
+smf:
+  replicas: 2
+  kind: StatefulSet
+  hostPfcpIPBase: "192.168.30.120"

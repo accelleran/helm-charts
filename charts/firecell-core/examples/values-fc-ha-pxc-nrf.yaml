@@ -1,0 +1,17 @@
+# PXC + NRF×2 MySQL profile store. Layer after Mode-2 / datastore-ha.
+mysql:
+  enabled: false
+
+coreConfig:
+  database:
+    host: firecell-pxc-haproxy.firecell-db.svc.cluster.local
+    port: 3306
+    user: oai
+    password: oaipxc
+    name: oai_db
+  nrf:
+    profileStore: mysql
+
+nrf:
+  replicas: 2
+  backingStore: shared

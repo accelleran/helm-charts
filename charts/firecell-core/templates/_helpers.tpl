@@ -899,3 +899,148 @@ may differ from the Service name: it must be in the certificate too.
 {{- end }}
 {{- end }}
 
+
+{{/*
+[active-active] Pod anti-affinity. Soft by default; hard when .hard is true (Mode-2).
+Usage: {{ include "firecell-5gc.podAntiAffinity" (dict "app" "oai-udr" "hard" false) | nindent 6 }}
+*/}}
+{{- define "firecell-5gc.podAntiAffinity" -}}
+{{- $app := .app -}}
+{{- $hard := .hard | default false -}}
+affinity:
+  podAntiAffinity:
+    {{- if $hard }}
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app: {{ $app }}
+        topologyKey: kubernetes.io/hostname
+    {{- else }}
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app: {{ $app }}
+    {{- end }}
+{{- end -}}
+
+{{/*
+[active-active] Topology spread.
+Usage: {{ include "firecell-5gc.topologySpread" (dict "app" "oai-udr" "hard" false) | nindent 6 }}
+*/}}
+{{- define "firecell-5gc.topologySpread" -}}
+{{- $app := .app -}}
+{{- $hard := .hard | default false -}}
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: {{ if $hard }}DoNotSchedule{{ else }}ScheduleAnyway{{ end }}
+    labelSelector:
+      matchLabels:
+        app: {{ $app }}
+{{- end -}}
+
+{{/*
+[active-active] Combined HA scheduling (anti-affinity + topology spread).
+Emitted only when ha.enabled AND replicas > 1.
+Usage: {{ include "firecell-5gc.haScheduling" (dict "ctx" . "app" "oai-udr" "replicas" .Values.udr.replicas) | nindent 6 }}
+*/}}
+{{- define "firecell-5gc.haScheduling" -}}
+{{- $replicas := .replicas | default 1 -}}
+{{- $hard := .ctx.Values.ha.hardAntiAffinity | default false -}}
+{{- if and (.ctx.Values.ha.enabled | default false) (gt (int $replicas) 1) -}}
+{{ include "firecell-5gc.podAntiAffinity" (dict "app" .app "hard" $hard) }}
+{{ include "firecell-5gc.topologySpread" (dict "app" .app "hard" $hard) }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+[active-active] Effective replica count: honours .Values.<nf>.replicas only when
+ha.enabled; otherwise pins to 1 so the default single-node render is unchanged.
+Usage: replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.udr.replicas) }}
+*/}}
+{{- define "firecell-5gc.replicas" -}}
+{{- if .ctx.Values.ha.enabled | default false -}}
+{{- .replicas | default 1 -}}
+{{- else -}}
+1
+{{- end -}}
+{{- end -}}
+
+{{/*
+[active-active] T-NRF-2: multi-replica NRF requires shared MySQL profile store.
+*/}}
+{{- define "firecell-5gc.validateNrfHa" -}}
+{{- if .Values.nrf.enabled -}}
+{{- $replicas := int (include "firecell-5gc.replicas" (dict "ctx" . "replicas" (.Values.nrf.replicas | default 1))) -}}
+{{- $store := .Values.coreConfig.nrf.profileStore | default "memory" | toString | lower -}}
+{{- if and (gt $replicas 1) (ne $store "mysql") -}}
+{{- fail "nrf.replicas>1 requires coreConfig.nrf.profileStore=mysql (T-NRF-2). Set profileStore: mysql before scaling NRF." -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+[active-active] T-FULL-1 / T-FULL-10: fail-closed full A-A composition.
+*/}}
+{{- define "firecell-5gc.validateFullAa" -}}
+{{- if .Values.ha.fullActiveActive | default false -}}
+{{- if not (.Values.ha.enabled | default false) -}}
+{{- fail "T-FULL-1: ha.fullActiveActive requires ha.enabled=true." -}}
+{{- end -}}
+{{- $amfN := int (include "firecell-5gc.replicas" (dict "ctx" . "replicas" (.Values.amf.replicas | default 1))) -}}
+{{- $smfN := int (include "firecell-5gc.replicas" (dict "ctx" . "replicas" (.Values.smf.replicas | default 1))) -}}
+{{- $nrfN := int (include "firecell-5gc.replicas" (dict "ctx" . "replicas" (.Values.nrf.replicas | default 1))) -}}
+{{- $n2ips := .Values.network.amfN2ExternalIPs | default list -}}
+{{- $store := .Values.coreConfig.nrf.profileStore | default "memory" | toString | lower -}}
+{{- $amfUdsf := .Values.coreConfig.amf.enableUdsf | default "no" | toString | lower -}}
+{{- $smfUdsf := .Values.coreConfig.smf.enableUdsf | default "no" | toString | lower -}}
+{{- $upfN := len (.Values.upf.instances | default list) -}}
+{{- if lt $amfN 2 -}}
+{{- fail "T-FULL-1: full A-A requires amf.replicas>=2 (Mode-2)." -}}
+{{- end -}}
+{{- if not (.Values.amf.n2.perReplicaVip | default false) -}}
+{{- fail "T-FULL-1: full A-A requires amf.n2.perReplicaVip=true." -}}
+{{- end -}}
+{{- if lt (len $n2ips) $amfN -}}
+{{- fail "T-FULL-1: full A-A requires network.amfN2ExternalIPs length >= amf.replicas." -}}
+{{- end -}}
+{{- if lt $smfN 2 -}}
+{{- fail "T-FULL-1: full A-A requires smf.replicas>=2." -}}
+{{- end -}}
+{{- if lt $nrfN 2 -}}
+{{- fail "T-FULL-1: full A-A requires nrf.replicas>=2." -}}
+{{- end -}}
+{{- if ne $store "mysql" -}}
+{{- fail "T-FULL-1: full A-A requires coreConfig.nrf.profileStore=mysql." -}}
+{{- end -}}
+{{- if not .Values.udsf.enabled -}}
+{{- fail "T-FULL-1: full A-A requires udsf.enabled=true." -}}
+{{- end -}}
+{{- if ne $amfUdsf "yes" -}}
+{{- fail "T-FULL-1: full A-A requires coreConfig.amf.enableUdsf=yes." -}}
+{{- end -}}
+{{- if ne $smfUdsf "yes" -}}
+{{- fail "T-FULL-1: full A-A requires coreConfig.smf.enableUdsf=yes." -}}
+{{- end -}}
+{{- if .Values.mysql.enabled -}}
+{{- fail "T-FULL-1: full A-A requires mysql.enabled=false (PXC, not chart MySQL)." -}}
+{{- end -}}
+{{- if lt $upfN 2 -}}
+{{- fail "T-FULL-1: full A-A requires upf.instances length >= 2." -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+[T-AMF-3] Per-replica NGAP MetalLB VIPs. Returns "true" or empty.
+*/}}
+{{- define "firecell-5gc.amfPerReplicaN2Vip" -}}
+{{- $replicas := int (include "firecell-5gc.replicas" (dict "ctx" . "replicas" (.Values.amf.replicas | default 1))) -}}
+{{- $ips := .Values.network.amfN2ExternalIPs | default list -}}
+{{- if and .Values.amf.enabled (.Values.amf.n2.perReplicaVip | default false) (.Values.ha.enabled | default false) (gt $replicas 1) (ge (len $ips) $replicas) -}}
+true
+{{- end -}}
+{{- end -}}

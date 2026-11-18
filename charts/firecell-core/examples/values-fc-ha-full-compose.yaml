@@ -1,0 +1,6 @@
+# Layer LAST. Keep fullActiveActive false until kill matrix + PDU resume pass.
+ha:
+  enabled: true
+  mode: active-active
+  fullActiveActive: false
+  hardAntiAffinity: true

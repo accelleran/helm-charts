@@ -1,0 +1,53 @@
+# fc-ha-a/b/c — Mode-2 NGAP TNL load balancing (CP slice) for firecell-core.
+# True multi-TNLA AMF (not shared-VIP failover). Do NOT set ha.fullActiveActive.
+#
+# VIP plan: SBI shared .202; N2 AMF-0=.205, AMF-1=.204, AMF-2=.206
+
+ha:
+  enabled: true
+  mode: active-active
+  fullActiveActive: false
+  hardAntiAffinity: true
+  legacyLabelFailover: false
+  legacySidecar: false
+
+amf:
+  replicas: 3
+  kind: StatefulSet
+  n2:
+    perReplicaVip: true
+
+smf:
+  replicas: 1
+  kind: Deployment
+
+udr:  { replicas: 3 }
+udm:  { replicas: 3 }
+ausf: { replicas: 3 }
+pcf:  { replicas: 3 }
+
+nrf:
+  replicas: 1
+  backingStore: single
+
+udsf:
+  enabled: true
+
+network:
+  amfExternalIP: "192.168.30.202"
+  amfN2ExternalIPs:
+    - "192.168.30.205"
+    - "192.168.30.204"
+    - "192.168.30.206"
+  metallb:
+    enabled: false
+    cp:
+      poolRange: "192.168.30.200-192.168.30.215"
+      l2Interface: eno8303
+
+coreConfig:
+  amf:
+    enableUdsf: "yes"
+    enableSmfSelection: "yes"
+  smf:
+    enableUdsf: "yes"

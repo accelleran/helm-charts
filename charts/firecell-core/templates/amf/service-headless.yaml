@@ -1,0 +1,30 @@
+{{- if and .Values.amf.enabled (eq (.Values.amf.kind | default "Deployment") "StatefulSet") (include "firecell-5gc.amfPerReplicaN2Vip" .) }}
+# [active-active] T-AMF-3: headless Service for stable per-pod DNS.
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-amf-headless
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-amf
+    tier: core-network
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - name: sbi
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: ngap
+      port: 38412
+      targetPort: 38412
+      protocol: SCTP
+  selector:
+    app: oai-amf
+{{- end }}

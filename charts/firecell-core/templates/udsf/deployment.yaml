@@ -1,4 +1,5 @@
 {{- if .Values.udsf.enabled }}
+{{- $redisHost := .Values.udsf.redis.host | default "udsf-redis" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +10,7 @@ metadata:
     app: {{ .Values.udsf.serviceName }}
     tier: udsf
 spec:
-  replicas: 1
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.udsf.replicas) }}
   selector:
     matchLabels:
       app: {{ .Values.udsf.serviceName }}
@@ -23,6 +24,7 @@ spec:
         firecell.io/role: core-nf
         role: active
     spec:
+      {{- include "firecell-5gc.haScheduling" (dict "ctx" . "app" .Values.udsf.serviceName "replicas" .Values.udsf.replicas) | nindent 6 }}
       initContainers:
         - name: wait-for-redis
           image: {{ .Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry) }}
@@ -32,7 +34,7 @@ spec:
             - -c
             - |
               echo "Waiting for udsf-redis..."
-              until nc -z udsf-redis {{ .Values.udsf.redis.port }}; do
+              until nc -z {{ $redisHost }} {{ .Values.udsf.redis.port }}; do
                 echo "Redis not reachable, retrying in 3s..."
                 sleep 3
               done
@@ -45,7 +47,7 @@ spec:
             - name: TZ
               value: {{ .Values.global.timezone }}
             - name: DB_HOST
-              value: udsf-redis
+              value: {{ $redisHost }}
             - name: DB_PORT
               value: {{ .Values.udsf.redis.port | quote }}
             - name: PORT

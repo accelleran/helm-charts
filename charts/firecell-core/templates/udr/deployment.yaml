@@ -9,7 +9,7 @@ metadata:
     app: oai-udr
     tier: core-network
 spec:
-  replicas: 1
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.udr.replicas) }}
   selector:
     matchLabels:
       app: oai-udr
@@ -26,6 +26,7 @@ spec:
         {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
     spec:
       priorityClassName: {{ .Values.udr.priorityClassName }}
+      {{- include "firecell-5gc.haScheduling" (dict "ctx" . "app" "oai-udr" "replicas" .Values.udr.replicas) | nindent 6 }}
       initContainers:
         {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
         {{- if .Values.udr.waitForMysql }}

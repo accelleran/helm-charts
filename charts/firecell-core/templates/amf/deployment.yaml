@@ -1,4 +1,4 @@
-{{- if .Values.amf.enabled }}
+{{- if and .Values.amf.enabled (ne (.Values.amf.kind | default "Deployment") "StatefulSet") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,7 +9,7 @@ metadata:
     app: oai-amf
     tier: core-network
 spec:
-  replicas: 1
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.amf.replicas) }}
   selector:
     matchLabels:
       app: oai-amf

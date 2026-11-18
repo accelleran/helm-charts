@@ -1,0 +1,226 @@
+{{- if and .Values.smf.enabled (eq (.Values.smf.kind | default "Deployment") "StatefulSet") }}
+{{- $smfPfcpIPBase := .Values.smf.hostPfcpIPBase | default "" }}
+{{- $smfHostNet := .Values.smf.hostNetwork | default false }}
+{{- $smfPfcpMac := .Values.smf.hostPfcpMacvlan | default "smf-n4-mac" }}
+{{- $smfPfcpIP := coalesce .Values.smf.hostPfcpIP .Values.smf.n4IP "" }}
+{{- $smfPfcpParent := coalesce .Values.smf.pfcpParentInterface .Values.smf.multus.masterInterface "eno1" }}
+{{- $smfMultus := and (not $smfHostNet) .Values.smf.multus.enabled .Values.smf.n4IP }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: oai-smf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: oai-smf
+    tier: core-network
+spec:
+  serviceName: oai-smf
+  podManagementPolicy: Parallel
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.smf.replicas) }}
+  selector:
+    matchLabels:
+      app: oai-smf
+  updateStrategy:
+    {{- if $smfHostNet }}
+    type: OnDelete
+    {{- else }}
+    type: RollingUpdate
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        app: oai-smf
+        tier: core-network
+        firecell.io/role: core-nf
+        role: active
+      annotations:
+        {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
+        {{- if $smfMultus }}
+        k8s.v1.cni.cncf.io/networks: '[{"name":"{{ .Values.smf.multus.nadName }}","namespace":"{{ .Values.global.namespace }}"}]'
+        {{- end }}
+    spec:
+      priorityClassName: {{ .Values.smf.priorityClassName }}
+      {{- include "firecell-5gc.haScheduling" (dict "ctx" . "app" "oai-smf" "replicas" .Values.smf.replicas) | nindent 6 }}
+      {{- if $smfHostNet }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      initContainers:
+        {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
+        {{- if .Values.udsf.enabled }}
+        {{- include "firecell-5gc.waitForUdsf" . | nindent 8 }}
+        {{- end }}
+        {{- if and $smfHostNet $smfPfcpMac (or $smfPfcpIP $smfPfcpIPBase) }}
+        - name: pfcp-macvlan-init
+          image: {{ .Values.global.busyboxImage | default (printf "%s/busybox:stable" .Values.global.imageRegistry) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            privileged: true
+            capabilities:
+              add: [NET_ADMIN]
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              ORD="${POD_NAME##*-}"
+              _PARENT="{{ $smfPfcpParent }}"
+              _MAC="{{ $smfPfcpMac }}"
+              {{- if $smfPfcpIPBase }}
+              _BASE="{{ $smfPfcpIPBase }}"
+              _PREFIX="${_BASE%.*}"; _LAST="${_BASE##*.}"
+              _IP="${_PREFIX}.$((_LAST + ORD))"
+              {{- else }}
+              _IP="{{ $smfPfcpIP }}"
+              {{- end }}
+              echo "[smf-pfcp-init] ${POD_NAME:-} macvlan ${_MAC} on ${_PARENT} @ ${_IP}/32"
+              if ip link show "${_MAC}" >/dev/null 2>&1; then
+                _mode=$(ip -d link show "${_MAC}" 2>/dev/null | awk '/macvlan mode/{print $3; exit}')
+                if [ -n "${_mode}" ] && [ "${_mode}" != "bridge" ]; then
+                  echo "[smf-pfcp-init] ${_MAC} mode=${_mode}, recreating as bridge"
+                  ip link del "${_MAC}"
+                fi
+              fi
+              if ! ip link show "${_MAC}" >/dev/null 2>&1; then
+                ip link add "${_MAC}" link "${_PARENT}" type macvlan mode bridge
+              fi
+              ip addr flush dev "${_MAC}" 2>/dev/null || true
+              ip addr add "${_IP}/32" dev "${_MAC}" 2>/dev/null || true
+              ip link set "${_MAC}" up
+              # BusyBox ip has no -br; must not fail init (set -e).
+              ip addr show dev "${_MAC}" || true
+              echo "[smf-pfcp-init] done"
+        {{- end }}
+      containers:
+        - name: smf
+          image: {{ .Values.smf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.smf.image "imageTag" .Values.smf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          {{- if and (not (.Values.upf.hostNetwork | default false)) ((.Values.upf.multus).enabled | default false) .Values.upf.n3IP }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              UPF_POD_IP=""
+              for _i in $(seq 1 30); do
+                UPF_POD_IP=$(getent hosts oai-upf-pod.{{ .Values.global.namespace }}.svc.cluster.local | awk '{print $1; exit}')
+                [ -n "${UPF_POD_IP}" ] && break
+                sleep 1
+              done
+              if [ -n "${UPF_POD_IP}" ]; then
+                echo "[smf-init] resolved oai-upf pod IP ${UPF_POD_IP}; injecting n3_local_ipv4={{ .Values.upf.n3IP }} entry (KI-1)"
+                awk -v ip="${UPF_POD_IP}" -v n3="{{ .Values.upf.n3IP }}" '
+                  { print }
+                  /n3_local_ipv4:/ && !done {
+                    print "    - host: " ip
+                    print "      port: 8805"
+                    print "      config:"
+                    print "        enable_upf_wo_nf_discovery: yes"
+                    print "        enable_usage_reporting: no"
+                    print "        enable_dl_pdr_in_pfcp_session_establishment: yes"
+                    print "        n3_local_ipv4: " n3
+                    done = 1
+                  }
+                ' {{ .Values.smf.configMountPath }} > /tmp/smf-config.yaml
+              else
+                cp {{ .Values.smf.configMountPath }} /tmp/smf-config.yaml
+              fi
+              # Watchdog: detect if oai-upf pod restarts and receives a new pod IP.
+              # When UPF pod IP changes, restart SMF so it re-resolves and injects the new IP.
+              (
+                OLD_IP="${UPF_POD_IP}"
+                while true; do
+                  sleep 5
+                  CUR_IP=$(getent hosts oai-upf-pod.{{ .Values.global.namespace }}.svc.cluster.local 2>/dev/null | awk '{print $1; exit}')
+                  if [ -n "${CUR_IP}" ] && [ "${CUR_IP}" != "${OLD_IP}" ]; then
+                    echo "[smf-watchdog] oai-upf pod IP changed (${OLD_IP} -> ${CUR_IP}), restarting SMF to rebind n3_local_ipv4"
+                    kill -TERM 1 2>/dev/null || pkill -TERM oai_smf 2>/dev/null || exit 1
+                  fi
+                done
+              ) &
+              exec /openair-smf/bin/oai_smf -c /tmp/smf-config.yaml -o
+          {{- else }}
+          command:
+            {{- toYaml .Values.smf.command | nindent 12 }}
+          {{- end }}
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone }}
+            - name: FCAPS_CM_DATASTORE
+              value: {{ printf "%s/%s" .Values.smf.fcaps.datastore.mountPath .Values.smf.fcaps.datastore.file | quote }}
+            {{- if .Values.smf.fcaps.enabled }}
+            {{- with .Values.smf.fcaps.seedConfigPath }}
+            - name: FCAPS_SEED_CONFIG
+              value: {{ . | quote }}
+            {{- end }}
+            {{- end }}
+          {{- if not $smfHostNet }}
+          ports:
+            {{- toYaml .Values.smf.ports | nindent 12 }}
+            {{- if include "firecell-5gc.ipv6UserPlane" . }}
+            # IPv6 user plane: N4-u GTP-U endpoint (RS/NS in, RA/NA out via the UPF).
+            - name: n4u
+              containerPort: {{ include "firecell-5gc.smfN4uPort" . }}
+              protocol: UDP
+            {{- end }}
+            {{- if .Values.smf.fcaps.enabled }}
+            - name: mns
+              containerPort: {{ .Values.smf.fcaps.mnsPort }}
+              protocol: TCP
+            {{- end }}
+          {{- end }}
+          volumeMounts:
+{{- with (include "firecell-5gc.sbiSecurityMounts" (dict "ctx" . "nf" "smf")) }}
+{{ . | indent 12 }}
+{{- end }}
+            - name: common-config
+              mountPath: {{ .Values.smf.configMountPath }}
+              subPath: {{ if $smfHostNet }}basic_nrf_config_ebpf_smf_hostnet.yaml{{ else }}basic_nrf_config_ebpf_qos.yaml{{ end }}
+            - name: cm-state
+              mountPath: {{ .Values.smf.fcaps.datastore.mountPath }}
+              {{- if and .Values.smf.fcaps.enabled (eq .Values.smf.fcaps.intentMode "configmap") }}
+              readOnly: true
+              {{- end }}
+          resources:
+            {{- toYaml .Values.smf.resources | nindent 12 }}
+          {{- $smfHealthPort := .Values.smf.healthPort | default (ternary 9099 9090 $smfHostNet) }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $smfHealthPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 5
+            timeoutSeconds: 3
+          {{- include "firecell-5gc.nfLivenessProbe" (dict "healthPort" $smfHealthPort "initialDelaySeconds" 45 "periodSeconds" 10 "failureThreshold" 8 "timeoutSeconds" 5) | nindent 10 }}
+        {{- include "firecell-5gc.healthzSidecar" (dict "Values" .Values "nfName" "smf" "healthPath" "/nsmf-pdusession/v1/health" "healthPort" $smfHealthPort "omitContainerPort" $smfHostNet) | nindent 8 }}
+      volumes:
+{{- with (include "firecell-5gc.sbiSecurityVolumes" (dict "ctx" . "nf" "smf")) }}
+{{ . | indent 8 }}
+{{- end }}
+        - name: common-config
+          configMap:
+            name: firecell-common-config
+        - name: cm-state
+          {{- if not .Values.smf.fcaps.enabled }}
+          # fcaps off: the image may still serve MnS. Keep its CM datastore across a
+          # container restart (helm-charts #1914); a new pod still starts empty.
+          emptyDir: {}
+          {{- else if eq .Values.smf.fcaps.intentMode "configmap" }}
+          # Mounted as a directory on purpose. A ConfigMap mounted through
+          # subPath is NEVER refreshed by kubelet, which would silently make
+          # every change require a pod restart and defeat the HOT path.
+          configMap:
+            name: {{ .Values.smf.fcaps.intentConfigMap.name }}
+            optional: {{ .Values.smf.fcaps.intentConfigMap.optional }}
+          {{- else }}
+          # STS multi-replica: avoid shared PVC; prefer intentMode=configmap.
+          emptyDir: {}
+          {{- end }}
+        {{- include "firecell-5gc.healthzVolume" . | nindent 8 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

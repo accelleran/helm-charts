@@ -309,11 +309,20 @@ amf:
   {{- end }}
   {{- end }}
   served_guami_list:
+  {{- if eq ($v.amf.kind | default "Deployment") "StatefulSet" }}
+    # [active-active] Per-ordinal amf_pointer; STS init substitutes __AMF_POINTER__.
+    - mcc: {{ $v.coreConfig.mcc }}
+      mnc: {{ $v.coreConfig.mnc }}
+      amf_region_id: {{ $v.coreConfig.amf.amfRegionId | quote }}
+      amf_set_id: {{ $v.coreConfig.amf.amfSetId | quote }}
+      amf_pointer: "__AMF_POINTER__"
+  {{- else }}
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}
       amf_region_id: {{ $v.coreConfig.amf.amfRegionId | quote }}
       amf_set_id: {{ $v.coreConfig.amf.amfSetId | quote }}
       amf_pointer: {{ $v.coreConfig.amf.amfPointer | quote }}
+  {{- end }}
   plmn_support_list:
     - mcc: {{ $v.coreConfig.mcc }}
       mnc: {{ $v.coreConfig.mnc }}

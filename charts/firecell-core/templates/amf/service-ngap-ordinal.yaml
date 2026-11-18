@@ -1,0 +1,33 @@
+{{- if include "firecell-5gc.amfPerReplicaN2Vip" . }}
+{{- $replicas := int (include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.amf.replicas)) -}}
+{{- $ips := .Values.network.amfN2ExternalIPs -}}
+{{- range $ord := until $replicas }}
+{{- $vip := index $ips $ord }}
+---
+# [active-active] T-AMF-3: dedicated NGAP SCTP VIP for oai-amf-{{ $ord }} (gNB TNLA).
+apiVersion: v1
+kind: Service
+metadata:
+  name: oai-amf-{{ $ord }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" $ | nindent 4 }}
+    app: oai-amf
+    tier: core-network
+    firecell.io/amf-ordinal: "{{ $ord }}"
+  annotations:
+    metallb.universe.tf/address-pool: firecell-cp-pool
+    metallb.universe.tf/loadBalancerIPs: {{ $vip | quote }}
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+    - name: ngap
+      port: 38412
+      targetPort: 38412
+      protocol: SCTP
+  selector:
+    app: oai-amf
+    statefulset.kubernetes.io/pod-name: oai-amf-{{ $ord }}
+{{- end }}
+{{- end }}

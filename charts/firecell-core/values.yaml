@@ -112,6 +112,17 @@ namespace:
   create: false
   keepOnUninstall: true
 
+# --- Active-active / HA (off by default; Mode-2 and full compose via examples/) ---
+# When ha.enabled is false, firecell-5gc.replicas pins every NF to 1 so the default
+# single-node render is unchanged. Mode-2 / full-compose overlays set ha.enabled.
+ha:
+  enabled: false
+  mode: active-standby   # active-standby | active-active
+  fullActiveActive: false
+  hardAntiAffinity: false
+  legacyLabelFailover: false
+  legacySidecar: false
+
 # --- Network / MetalLB ---
 # MetalLB is optional. templates/metallb-pool.yaml is rendered only when
 # metallb.enabled is true (AMF/ACS LoadBalancer VIPs for an off-cluster gNB).
@@ -146,6 +157,8 @@ network:
 
   # External IPs — always override from sites/*/site.yaml generated values
   amfExternalIP: "192.0.2.101"
+  # Mode-2: one NGAP MetalLB VIP per AMF ordinal (requires amf.n2.perReplicaVip).
+  amfN2ExternalIPs: []
   acsExternalIP: "192.0.2.102"
   upfExternalIP: "198.51.100.101"
 
@@ -183,6 +196,7 @@ mysql:
 # --- UDSF (Unstructured Data Storage Function) + Redis backing store ---
 udsf:
   enabled: true
+  replicas: 1
   image: cn5g-udsf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -196,6 +210,9 @@ udsf:
   sbiPort: 8080
   healthPath: /nudsf-data-mgmt/v1/healthz
   redis:
+    # When false, skip in-chart udsf-redis and point UDSF at redis.host (Sentinel/HAProxy).
+    embedded: true
+    host: udsf-redis
     image: redis:7-alpine
     # Full image reference, winning over the verbatim image above.
     # Same escape hatch every workload has: without it a registry mirror
@@ -246,6 +263,9 @@ udsf:
 # --- NRF (NF Repository Function) ---
 nrf:
   enabled: true
+  replicas: 1
+  # single | shared — informational; profileStore=mysql is the real gate for NRF×2.
+  backingStore: single
   image: cn5g-nrf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -293,6 +313,7 @@ nrf:
 # --- UDR (Unified Data Repository) ---
 udr:
   enabled: true
+  replicas: 1
   image: cn5g-udr
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -343,6 +364,7 @@ udr:
 # --- UDM (Unified Data Management) ---
 udm:
   enabled: true
+  replicas: 1
   image: cn5g-udm
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -407,6 +429,7 @@ udm:
 # --- AUSF (Authentication Server Function) ---
 ausf:
   enabled: true
+  replicas: 1
   image: cn5g-ausf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -663,6 +686,13 @@ nssf:
 # --- AMF (Access and Mobility Management Function) ---
 amf:
   enabled: true
+  # Controller kind. Deployment is the product default. Mode-2 overlays set
+  # StatefulSet so each ordinal owns a unique amf_pointer / N2 VIP.
+  kind: Deployment
+  replicas: 1
+  n2:
+    # Per-replica NGAP VIPs (T-AMF-3). Requires ha.enabled and network.amfN2ExternalIPs.
+    perReplicaVip: false
   image: cn5g-amf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -738,6 +768,8 @@ amf:
 # --- SMF (Session Management Function) ---
 smf:
   enabled: true
+  kind: Deployment
+  replicas: 1
   image: cn5g-smf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -799,6 +831,8 @@ smf:
   sbiClusterIP: "10.42.0.1"
   hostPfcpMacvlan: smf-n4-mac
   hostPfcpIP: ""
+  # StatefulSet + ha.enabled: ordinal N gets last-octet = base + N (unique PFCP IP).
+  hostPfcpIPBase: ""
   pfcpParentInterface: ""
   fcaps:
     enabled: false
@@ -833,6 +867,7 @@ smf:
 # --- PCF (Policy Control Function) ---
 pcf:
   enabled: true
+  replicas: 1
   image: cn5g-pcf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
   imageTag: ""
@@ -1711,6 +1746,8 @@ coreConfig:
 
   # NRF configuration
   nrf:
+    # memory (default) | mysql — required mysql when nrf.replicas>1 / full A-A.
+    profileStore: memory
     heartbeat: 50
     suspendedNfInterval: 120
 

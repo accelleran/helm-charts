@@ -9,7 +9,7 @@ metadata:
     app: oai-nrf
     tier: core-network
 spec:
-  replicas: 1
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.nrf.replicas) }}
   selector:
     matchLabels:
       app: oai-nrf
@@ -26,6 +26,7 @@ spec:
         {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
     spec:
       priorityClassName: {{ .Values.nrf.priorityClassName }}
+      {{- include "firecell-5gc.haScheduling" (dict "ctx" . "app" "oai-nrf" "replicas" .Values.nrf.replicas) | nindent 6 }}
       containers:
         - name: nrf
           image: {{ .Values.nrf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.nrf.image "imageTag" .Values.nrf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

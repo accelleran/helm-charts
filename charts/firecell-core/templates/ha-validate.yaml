@@ -1,0 +1,2 @@
+{{- include "firecell-5gc.validateNrfHa" . -}}
+{{- include "firecell-5gc.validateFullAa" . -}}

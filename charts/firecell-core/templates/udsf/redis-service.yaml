@@ -1,4 +1,4 @@
-{{- if .Values.udsf.enabled }}
+{{- if and .Values.udsf.enabled (.Values.udsf.redis.embedded | default true) }}
 apiVersion: v1
 kind: Service
 metadata:

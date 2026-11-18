@@ -9,7 +9,7 @@ metadata:
     app: oai-pcf
     tier: core-network
 spec:
-  replicas: 1
+  replicas: {{ include "firecell-5gc.replicas" (dict "ctx" . "replicas" .Values.pcf.replicas) }}
   selector:
     matchLabels:
       app: oai-pcf
@@ -26,6 +26,7 @@ spec:
         {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
     spec:
       priorityClassName: {{ .Values.pcf.priorityClassName }}
+      {{- include "firecell-5gc.haScheduling" (dict "ctx" . "app" "oai-pcf" "replicas" .Values.pcf.replicas) | nindent 6 }}
       initContainers:
         {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
         {{- if .Values.pcf.waitForMysql }}
