@@ -66,15 +66,29 @@ data:
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
-        # Device Performance charts query VictoriaMetrics PromQL here
-        # (/metrics-api/query_range -> /api/v1/query_range).
-        location ^~ /metrics-api/ {
-            proxy_pass {{ trimSuffix "/" $metricsUrl }}/api/v1/;
+        # Device Performance charts query VictoriaMetrics PromQL here:
+        # /metrics-api/query and /metrics-api/query_range -> /api/v1/query(_range).
+        # Only these two read paths. VictoriaMetrics has no auth of its own, and the
+        # rest of /api/v1/ writes and deletes (import, write, admin/tsdb/delete_series):
+        # a written nms_alarm_active series would raise an alarm through Grafana.
+        location = /metrics-api/query {
+            proxy_pass {{ trimSuffix "/" $metricsUrl }}/api/v1/query;
             proxy_http_version 1.1;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        location = /metrics-api/query_range {
+            proxy_pass {{ trimSuffix "/" $metricsUrl }}/api/v1/query_range;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        location ^~ /metrics-api/ {
+            return 404;
         }
 
 {{- if .Values.front.grafanaUrl }}

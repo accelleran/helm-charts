@@ -194,6 +194,8 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 
 `nms-front` answers 404 for `/api/alarms/webhook` and `/api/fcaps/`: Grafana and the NFs post to the `nms-api` Service directly, and a browser has no reason to reach them, so a signed-in user cannot inject an alarm through the gateway.
 
+`/metrics-api/` forwards only `/metrics-api/query` and `/metrics-api/query_range` (the Device Performance charts) to VictoriaMetrics; every other path under it is 404. VictoriaMetrics has no authentication of its own, and the rest of its `/api/v1/` writes and deletes: a written `nms_alarm_active` series would raise an alarm through Grafana, and `admin/tsdb/delete_series` would erase PM history.
+
 These are created by the installer, never by the chart, and mounted with `optional: true`, so a release without them starts unchanged:
 
 | Object | Default name | Mounted into | Effect |
