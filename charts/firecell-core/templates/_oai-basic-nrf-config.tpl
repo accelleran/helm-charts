@@ -398,6 +398,42 @@ smf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.smf.n4Restore }}
+  {{- /* cn5g-smf #79 smf.n4_restore: pacing of the N4 restore per UPF after a PFCP
+         (re)association. A key is written only when it is set (SMF defaults: 64, 500, yes).
+         The SMF refuses values out of range at start, so the render fails on them. */}}
+  {{- /* Whole numbers (firecell-5gc.wholeNumber: a YAML-file float64 or a --set int64);
+         $mif / $rate stay "" when the key is not set. */}}
+  {{- $mif := "" }}
+  {{- if and (hasKey . "maxInFlightPerUpf") (not (kindIs "invalid" .maxInFlightPerUpf)) }}
+  {{- $mif = include "firecell-5gc.wholeNumber" .maxInFlightPerUpf }}
+  {{- if or (not $mif) (lt (int64 $mif) 0) (gt (int64 $mif) 100000) }}
+  {{- fail (printf "coreConfig.smf.n4Restore.maxInFlightPerUpf must be a whole number 0 to 100000 (got %#v, a %s)" .maxInFlightPerUpf (kindOf .maxInFlightPerUpf)) }}
+  {{- end }}
+  {{- end }}
+  {{- $rate := "" }}
+  {{- if and (hasKey . "ratePerUpf") (not (kindIs "invalid" .ratePerUpf)) }}
+  {{- $rate = include "firecell-5gc.wholeNumber" .ratePerUpf }}
+  {{- if or (not $rate) (lt (int64 $rate) 0) (gt (int64 $rate) 1000000) }}
+  {{- fail (printf "coreConfig.smf.n4Restore.ratePerUpf must be a whole number 0 to 1000000 (got %#v, a %s)" .ratePerUpf (kindOf .ratePerUpf)) }}
+  {{- end }}
+  {{- end }}
+  {{- if and (hasKey . "activeFirst") (not (kindIs "bool" .activeFirst)) }}
+  {{- fail (printf "coreConfig.smf.n4Restore.activeFirst must be true or false (got %v)" .activeFirst) }}
+  {{- end }}
+  {{- if or $mif $rate (hasKey . "activeFirst") }}
+  n4_restore:
+    {{- if $mif }}
+    max_in_flight_per_upf: {{ $mif }}
+    {{- end }}
+    {{- if $rate }}
+    rate_per_upf: {{ $rate }}
+    {{- end }}
+    {{- if hasKey . "activeFirst" }}
+    active_first: {{ .activeFirst }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   support_features:
     use_local_subscription_info: {{ $v.coreConfig.smf.useLocalSubscriptionInfo }}
     use_local_pcc_rules: {{ $v.coreConfig.smf.useLocalPccRules }}

@@ -259,6 +259,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.smf.handover.dataForwarding | string | `"direct_and_indirect"` |  |
 | coreConfig.smf.handover.endMarker | bool | `true` |  |
 | coreConfig.smf.handover.indirectForwardingTimerMs | int | `2000` |  |
+| coreConfig.smf.n4Restore.activeFirst | bool | `true` | cn5g-smf #79 smf.n4_restore.active_first: after a PFCP (re)association, restore the sessions with an active user plane first (TS 23.527 4.3.2). |
+| coreConfig.smf.n4Restore.maxInFlightPerUpf | int | `64` | smf.n4_restore.max_in_flight_per_upf, 0..100000: N4 restores at once per UPF. 0: no bound (rollback to the unpaced restore). Not measured on a UPF. |
+| coreConfig.smf.n4Restore.ratePerUpf | int | `500` | smf.n4_restore.rate_per_upf, 0..1000000: N4 restores started per second per UPF. 0: no bound (rollback). Not measured on a UPF. |
 | coreConfig.smf.enableUsageReporting | string | `"no"` |  |
 | coreConfig.smf.mbs.enabled | bool | `false` |  |
 | coreConfig.smf.mbs.sessions | list | `[]` |  |

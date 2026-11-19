@@ -899,3 +899,17 @@ may differ from the Service name: it must be in the certificate too.
 {{- end }}
 {{- end }}
 
+
+{{- /*
+  A whole number from values as a decimal string, or "" when it is not one.
+  Values from a YAML file are float64 (1000000 prints as 1e+06 through
+  toString), --set gives int64: both are accepted when they have no fractional
+  part. Strings, booleans and fractions give "".
+*/ -}}
+{{- define "firecell-5gc.wholeNumber" -}}
+{{- if or (kindIs "int" .) (kindIs "int64" .) -}}
+{{- int64 . -}}
+{{- else if and (kindIs "float64" .) (eq (float64 (int64 .)) .) -}}
+{{- int64 . -}}
+{{- end -}}
+{{- end }}

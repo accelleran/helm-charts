@@ -1657,6 +1657,18 @@ coreConfig:
       endMarker: true
       dataForwarding: direct_and_indirect
       indirectForwardingTimerMs: 2000
+    # Paced N4 restore after a PFCP (re)association with a UPF (cn5g-smf #79,
+    # smf.n4_restore; TS 23.527 4.3.2: the SMF prioritizes the sessions to restore and
+    # controls the load on the UPF). Per UPF: at most maxInFlightPerUpf restores at once
+    # (0..100000), at most ratePerUpf restores per second (0..1000000), sessions with an
+    # active user plane first when activeFirst is true. 0 for maxInFlightPerUpf or ratePerUpf:
+    # no bound (the restore all at once of SMF images before #79; the rollback). The
+    # defaults (64, 500, true; the SMF's own) are not measured on a UPF. SMF images
+    # without #79 ignore the block. The render fails on a value the SMF would refuse.
+    n4Restore:
+      maxInFlightPerUpf: 64
+      ratePerUpf: 500
+      activeFirst: true
     # PDU session type switches (cn5g-smf smf.support_features), the seeds of the FCAPS
     # switches ipv6PduEnabled and ethernetPduEnabled. A key is written only when it is
     # set, so the SMF defaults apply: enableIpv6Pdu yes, enableEthernetPdu no.
