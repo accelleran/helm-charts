@@ -709,6 +709,24 @@ Context: .Values.upf.
 {{- end }}
 
 {{/*
+cn5g-upf upf.gtpu_error_indication_restart_holdoff_s (accelleran/cn5g-upf#68): the seconds
+after the UPF start without GTP-U Error Indication for a G-PDU that matches no PDR (TS 23.527
+4.3.2), 0..3600, 0 = none. Written only when set; unset: the UPF default 60. The UPF does not
+start outside 0..3600, so the render fails first; a whole number only (firecell-5gc.wholeNumber:
+a YAML-file float64 or a --set int64). Called with the upf values map.
+*/}}
+{{- define "firecell-5gc.upfGtpuEiRestartHoldoff" -}}
+{{- $raw := .gtpuErrorIndicationRestartHoldoffS -}}
+{{- if not (or (kindIs "invalid" $raw) (eq (toString $raw) "")) }}
+{{- $n := include "firecell-5gc.wholeNumber" $raw }}
+{{- if or (not $n) (lt (int64 $n) 0) (gt (int64 $n) 3600) }}
+{{- fail (printf "upf.gtpuErrorIndicationRestartHoldoffS must be a whole number 0 to 3600 (got %#v, a %s)" $raw (kindOf $raw)) }}
+{{- end }}
+  gtpu_error_indication_restart_holdoff_s: {{ $n }}
+{{- end }}
+{{- end }}
+
+{{/*
 PCF AM policy Service Area Restriction (cn5g-pcf am_policy[.supi.<supi>].serv_area_res,
 TS 29.571 ServiceAreaRestriction): restriction_type and a list of TACs. The PCF refuses
 anything else at start, so the render fails first. dict: d (the values map), where (its

@@ -727,6 +727,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.fcaps.mnsPort | int | `9091` |  |
 | upf.fcaps.notifyIntervalSec | int | `5` |  |
 | upf.fcaps.seedConfigPath | string | `"/openair-upf/etc/config.yaml"` |  |
+| upf.gtpuErrorIndicationRestartHoldoffS | int or `""` (unset) | `""` | cn5g-upf upf.gtpu_error_indication_restart_holdoff_s (accelleran/cn5g-upf#68), 0..3600: seconds after the UPF start without GTP-U Error Indication for a G-PDU that matches no PDR (TS 23.527 4.3.2), both datapaths; 0 = none. Unset: not written, the UPF default 60. Outside 0..3600 or not a whole number: the render fails. |
 | upf.hostNetwork | bool | `true` |  |
 | upf.hostPfcpIP | string | `""` |  |
 | upf.hostPfcpMacvlan | string | `""` |  |

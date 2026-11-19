@@ -729,6 +729,7 @@ upf:
         {{- end }}
     {{- end }}
   remote_n6_gw: {{ $v.upf.remoteN6Gw | default "127.0.0.1" | quote }}
+  {{- include "firecell-5gc.upfGtpuEiRestartHoldoff" $v.upf }}
   upf_slice_list:
   {{- range $v.coreConfig.nssai }}
     - nssai:

@@ -992,6 +992,13 @@ upf:
   # an SMF older than v6.0 rc-02 P20 (a new Recovery Time Stamp in every Heartbeat) talks to
   # this UPF, e.g. during a mixed-version upgrade or an SMF rollback.
   deleteSessionsOnSmfRestart: ""
+  # OAI UPF (cn5g-upf upf.gtpu_error_indication_restart_holdoff_s, accelleran/cn5g-upf#68):
+  # seconds after the UPF start in which it sends no GTP-U Error Indication for a G-PDU that
+  # matches no PDR (TS 23.527 4.3.2), both datapaths; 0..3600, 0 = none. "" (unset): not
+  # written, the UPF default 60. Set it longer than the time the SMF needs to restore all
+  # PFCP sessions of this UPF (with coreConfig.smf.n4Restore: about sessions / ratePerUpf).
+  # A UPF image without accelleran/cn5g-upf#68 ignores it.
+  gtpuErrorIndicationRestartHoldoffS: ""
   # OAI UPF only: Layer-2 Ethernet PDU sessions (cn5g-upf support_features.enable_eth_pdu).
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).

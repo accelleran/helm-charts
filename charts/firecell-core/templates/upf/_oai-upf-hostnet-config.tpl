@@ -152,6 +152,7 @@ upf:
     max_sdf_filters_per_pdu_session: 8
 {{- end }}
   remote_n6_gw: {{ $n6gw | quote }}
+  {{- include "firecell-5gc.upfGtpuEiRestartHoldoff" $v.upf }}
   upf_info:
     sNssaiUpfInfoList:
     {{- range $v.coreConfig.nssai }}
