@@ -265,6 +265,8 @@ The following table lists the configurable parameters of the Firecell Core chart
 | coreConfig.smf.enableUsageReporting | string | `"no"` |  |
 | coreConfig.smf.mbs.enabled | bool | `false` |  |
 | coreConfig.smf.mbs.sessions | list | `[]` |  |
+| coreConfig.smf.sbiServerThreads | int | `2` |  |
+| coreConfig.smf.sbiWorkerThreads | int | `8` |  |
 | coreConfig.smf.ueMtu | int | `1452` |  |
 | coreConfig.smf.useLocalPccRules | string | `"no"` |  |
 | coreConfig.smf.useLocalSubscriptionInfo | string | `"no"` |  |

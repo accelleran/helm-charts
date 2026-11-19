@@ -345,6 +345,23 @@ amf:
 
 smf:
   ue_mtu: {{ $v.coreConfig.smf.ueMtu }}
+  {{- /* cn5g-smf D3b smf.sbi_server_threads / sbi_worker_threads (defaults 2 / 8). The SMF
+         reads them with yaml-cpp as<int>, which throws on a fraction, a string or 1e+06, so
+         the render fails on anything but a whole number (firecell-5gc.wholeNumber: a
+         YAML-file float64 or a --set int64) in the int range (as<int> throws outside it).
+         A whole number in that range but outside 1..64 is written as given: the SMF takes
+         it to the nearest bound and warns. Unset or null: the default. */}}
+  {{- range $k := list (list "sbiServerThreads" "sbi_server_threads" 2) (list "sbiWorkerThreads" "sbi_worker_threads" 8) }}
+  {{- $raw := index $v.coreConfig.smf (index $k 0) }}
+  {{- $n := toString (index $k 2) }}
+  {{- if not (kindIs "invalid" $raw) }}
+  {{- $n = include "firecell-5gc.wholeNumber" $raw }}
+  {{- if or (not $n) (lt (int64 $n) -2147483648) (gt (int64 $n) 2147483647) }}
+  {{- fail (printf "coreConfig.smf.%s must be a whole number; the SMF uses 1 to 64 (got %#v, a %s)" (index $k 0) $raw (kindOf $raw)) }}
+  {{- end }}
+  {{- end }}
+  {{ index $k 1 }}: {{ $n }}
+  {{- end }}
   {{- with $v.coreConfig.smf.locationApiRoot }}
   {{- if and $v.global.sbi.tls.enabled (not (hasPrefix "https://" .)) }}
   {{- fail (printf "coreConfig.smf.locationApiRoot must start with https:// with global.sbi.tls.enabled: the AMF calls it over TLS (got %q)" .) }}

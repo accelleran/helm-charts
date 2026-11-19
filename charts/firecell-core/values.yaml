@@ -1731,6 +1731,15 @@ coreConfig:
         linkAddress: ""        # link_address, selects the server's prefix pool
         allocateTimeoutS: ""   # allocate_timeout_s, 1..30 [2]
         sendRelease: ""        # send_release, "yes"/"no" [yes]
+    # smf.sbi_server_threads: HTTP/2 io threads (or Pistache threads with
+    # HTTP/1) of the SMF's SBI server. Read at start-up; 1..64, a value outside
+    # is taken to the nearest bound (warning in the SMF log). Needs a cn5g-smf
+    # image with the key (rc-02 D3b); older images ignore it.
+    sbiServerThreads: 2
+    # smf.sbi_worker_threads: worker threads that run the PDU session starts,
+    # sharded by SUPI. Read at start-up; 1..64, as above. Both must be whole
+    # numbers: the render fails on a fraction or a string.
+    sbiWorkerThreads: 8
 
   # SBI HTTP client timeout (ms) — default OAI is 3000; raise on busy labs to avoid NRF heartbeat false failures
   httpRequestTimeoutMs: 10000
