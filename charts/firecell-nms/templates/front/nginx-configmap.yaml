@@ -28,6 +28,16 @@ data:
         add_header X-XSS-Protection "1; mode=block" always;
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 
+        # Machine-to-machine ingest is not for browsers: Grafana and the NFs post to
+        # the nms-api Service directly. The gateway answers 404, so a signed-in user
+        # cannot inject an alarm (a longer ^~ prefix wins over /api/ below).
+        location ^~ /api/alarms/webhook {
+            return 404;
+        }
+        location ^~ /api/fcaps/ {
+            return 404;
+        }
+
         # API proxy — route all API calls to the backend k8s Service
         location ^~ /api/ {
             proxy_pass {{ $backendUrl }};

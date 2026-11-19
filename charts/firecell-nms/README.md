@@ -189,6 +189,20 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
+### 5.1 Alarm ingest and the optional secrets
+
+`nms-front` answers 404 for `/api/alarms/webhook` and `/api/fcaps/`: Grafana and the NFs post to the `nms-api` Service directly, and a browser has no reason to reach them, so a signed-in user cannot inject an alarm through the gateway.
+
+These are created by the installer, never by the chart, and mounted with `optional: true`, so a release without them starts unchanged:
+
+| Object | Default name | Mounted into | Effect |
+|---|---|---|---|
+| Secret, key `token` | `backend.alarmWebhookToken.secretName` (`nms-alarm-webhook-token`) | nms-api, `/var/run/secrets/nms/alarm-webhook/token` | While the file exists every webhook post needs `Authorization: Bearer <token>` (one token per line, for rotation); the backend reads it again without a restart. Grafana's contact point must send the same token. |
+| ConfigMap | `backend.snmp.sealingPublicConfigMap` (`nms-sealing-public`) | nms-api and the control plane, `/etc/firecell-nms/sealing-public` | Public keys that seal the SNMPv3 credentials. |
+| Secret | `backend.snmp.sealingPrivateSecret` (`nms-sealing-private`) | the control plane only, `/var/run/secrets/nms/sealing` | Private sealing keys and the SNMP engine ID suffix. |
+
+The files are mode 0440 with the pod's fsGroup. `backend.snmp.northbound` (off) switches the SNMPv3 northbound module on.
+
 ## 6. Support Logs
 
 The backend builds support bundles from the per-node log stores, which the [`logs` stage of the Firecell platform](https://github.com/accelleran/galaxy/tree/fcdevelop/firecell-6-flux/recipe/logs) runs (VictoriaLogs and vlagent on every node):
@@ -245,6 +259,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | acs.southbound.loadBalancerIP | string | `""` | When set, fc-acs-southbound is a LoadBalancer on this address (loadBalancerIP and the Cilium LB-IPAM annotation) instead of a NodePort. |
 | acs.southbound.nodePort | int | `30547` | NodePort of fc-acs-southbound when loadBalancerIP is empty. |
 | acs.southbound.plainHttp | bool | `true` | Open the plain-HTTP listener (port 7548) for CPE that cannot do TLS; each device must still be allowed to use it in the ACS. False sets FC_ACS_SOUTHBOUND_HTTP_PORT to 0 and exposes no port 7548. |
+| backend.alarmWebhookToken.secretName | string | `"nms-alarm-webhook-token"` | Secret with key `token` (one token per line, for rotation). |
 | backend.api.replicas | int | `2` | API replicas (at least 2). |
 | backend.api.resources.limits.cpu | string | `"1"` |  |
 | backend.api.resources.limits.memory | string | `"1Gi"` |  |
@@ -296,6 +311,10 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.image.tag | string | `"6.0.0"` | Image tag. |
 | backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the check-schema, migrate, bootstrap and wait-for-schema init containers. |
 | backend.progressDeadlineSeconds | int | `1200` | Rollout deadline of the API and worker Deployments. New pods wait for the old control plane to stop and the migration to finish, so it must exceed terminationGracePeriodSeconds plus the migration time. Keep the Helm / HelmRelease timeout above it. |
+| backend.snmp.enterpriseOid | string | `"1.3.6.1.4.1.32473"` | Enterprise OID root of the MIB and the SNMP engine ID. The default is RFC 5612's documentation number, for development; a release sets its PEN. |
+| backend.snmp.northbound | bool | `false` | The module: off sends nothing, opens no socket and offers no settings. |
+| backend.snmp.sealingPrivateSecret | string | `"nms-sealing-private"` | Secret with the private sealing key(s) and the SNMP engine ID suffix, mounted into the control plane only. |
+| backend.snmp.sealingPublicConfigMap | string | `"nms-sealing-public"` | ConfigMap with the public sealing key(s), mounted into nms-api and the control plane. |
 | backend.terminationGracePeriodSeconds | int | `660` | Longer than the backend's slowest lifecycle operation (600s), so workers and the control plane can finish in-flight work after SIGTERM. On an image change the new control plane, and so the migration, starts only after the old one has stopped: up to this long. |
 | backend.worker.minReadySeconds | int | `20` | Seconds a new worker must stay up before it counts as available (its probes only check that the process lives). |
 | backend.worker.replicas | int | `1` | Worker replicas (at least 1). |
