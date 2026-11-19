@@ -1,6 +1,6 @@
 # firecell-nms
 
-![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 6.0.0](https://img.shields.io/badge/AppVersion-6.0.0-informational?style=flat-square)
+![Version: 0.2.1](https://img.shields.io/badge/Version-0.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 6.0.0](https://img.shields.io/badge/AppVersion-6.0.0-informational?style=flat-square)
 
 Firecell NMS — frontend, backend and VictoriaMetrics
 
@@ -168,12 +168,27 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
+### 5.1 Alarm ingest and the optional secrets
+
+`nms-front` answers 404 for `/api/alarms/webhook` and `/api/fcaps/`: Grafana and the NFs post to the `nms-api` Service directly, and a browser has no reason to reach them, so a signed-in user cannot inject an alarm through the gateway.
+
+These are created by the installer, never by the chart, and mounted with `optional: true`, so a release without them starts unchanged:
+
+| Object | Default name | Mounted into | Effect |
+|---|---|---|---|
+| Secret, key `token` | `backend.alarmWebhookToken.secretName` (`nms-alarm-webhook-token`) | nms-api, `/var/run/secrets/nms/alarm-webhook/token` | While the file exists every webhook post needs `Authorization: Bearer <token>` (one token per line, for rotation); the backend reads it again without a restart. Grafana's contact point must send the same token. |
+| ConfigMap | `backend.snmp.sealingPublicConfigMap` (`nms-sealing-public`) | nms-api and the control plane, `/etc/firecell-nms/sealing-public` | Public keys that seal the SNMPv3 credentials. |
+| Secret | `backend.snmp.sealingPrivateSecret` (`nms-sealing-private`) | the control plane only, `/var/run/secrets/nms/sealing` | Private sealing keys and the SNMP engine ID suffix. |
+
+The files are mode 0440 with the pod's fsGroup. `backend.snmp.northbound` (off) switches the SNMPv3 northbound module on.
+
 ## 6. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| backend.alarmWebhookToken.secretName | string | `"nms-alarm-webhook-token"` | Secret with key `token` (one token per line, for rotation). |
 | backend.api.replicas | int | `2` | API replicas (at least 2). |
 | backend.api.resources.limits.cpu | string | `"1"` |  |
 | backend.api.resources.limits.memory | string | `"1Gi"` |  |
@@ -198,11 +213,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.controlPlane.resources.limits.memory | string | `"1Gi"` |  |
 | backend.controlPlane.resources.requests.cpu | string | `"100m"` |  |
 | backend.controlPlane.resources.requests.memory | string | `"256Mi"` |  |
-| backend.database.image | object | `{"digest":"","registry":"docker.io","repository":"library/mysql","tag":"8.4.10"}` | Backend MySQL image. |
+| backend.database.image | object | `{"digest":"","registry":"docker.io","repository":"library/mysql","tag":"8.4.13"}` | Backend MySQL image. |
 | backend.database.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | backend.database.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | backend.database.image.repository | string | `"library/mysql"` | Image repository path, including the org (kept when the registry is rewritten). |
-| backend.database.image.tag | string | `"8.4.10"` | MySQL image tag. |
+| backend.database.image.tag | string | `"8.4.13"` | MySQL image tag. |
 | backend.database.name | string | `"firecell_nms"` | Database the backend uses; `database-url` must name it. |
 | backend.database.resources.limits.cpu | string | `"2"` |  |
 | backend.database.resources.limits.memory | string | `"2Gi"` |  |
@@ -224,6 +239,10 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.image.tag | string | `"6.0.0"` | Image tag. |
 | backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the check-schema, migrate, bootstrap and wait-for-schema init containers. |
 | backend.progressDeadlineSeconds | int | `1200` | Rollout deadline of the API and worker Deployments. New pods wait for the old control plane to stop and the migration to finish, so it must exceed terminationGracePeriodSeconds plus the migration time. Keep the Helm / HelmRelease timeout above it. |
+| backend.snmp.enterpriseOid | string | `"1.3.6.1.4.1.32473"` | Enterprise OID root of the MIB and the SNMP engine ID. The default is RFC 5612's documentation number, for development; a release sets its PEN. |
+| backend.snmp.northbound | bool | `false` | The module: off sends nothing, opens no socket and offers no settings. |
+| backend.snmp.sealingPrivateSecret | string | `"nms-sealing-private"` | Secret with the private sealing key(s) and the SNMP engine ID suffix, mounted into the control plane only. |
+| backend.snmp.sealingPublicConfigMap | string | `"nms-sealing-public"` | ConfigMap with the public sealing key(s), mounted into nms-api and the control plane. |
 | backend.terminationGracePeriodSeconds | int | `660` | Longer than the backend's slowest lifecycle operation (600s), so workers and the control plane can finish in-flight work after SIGTERM. On an image change the new control plane, and so the migration, starts only after the old one has stopped: up to this long. |
 | backend.worker.minReadySeconds | int | `20` | Seconds a new worker must stay up before it counts as available (its probes only check that the process lives). |
 | backend.worker.replicas | int | `1` | Worker replicas (at least 1). |
@@ -274,4 +293,4 @@ The following table lists the configurable parameters of the firecell-nms chart 
 There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 
 ----------------------------------------------
-Autogenerated from chart metadata using [helm-docs v1.11.0](https://github.com/norwoodj/helm-docs/releases/v1.11.0)
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

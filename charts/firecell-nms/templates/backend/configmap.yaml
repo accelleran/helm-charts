@@ -19,6 +19,8 @@ data:
   {{- with $be.endpoints.extdnProbe }}
   FIRECELL_NMS_NG_EXTDN_PROBE_URL: {{ . | quote }}
   {{- end }}
+  FIRECELL_NMS_NG_SNMP_NORTHBOUND: {{ $be.snmp.northbound | toString | quote }}
+  FIRECELL_NMS_NG_SNMP_ENTERPRISE_OID: {{ $be.snmp.enterpriseOid | quote }}
   FIRECELL_NMS_NG_ALLOWED_WS_ORIGINS_JSON: {{ $be.config.allowedWsOriginsJson | quote }}
   FIRECELL_NMS_NG_DEFAULT_SNSSAIS_JSON: {{ $be.config.defaultSnssaisJson | quote }}
   FIRECELL_NMS_NG_DEFAULT_PLMN: {{ $be.config.defaultPlmn | quote }}
