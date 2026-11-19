@@ -172,6 +172,8 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 
 `nms-front` answers 404 for `/api/alarms/webhook` and `/api/fcaps/`: Grafana and the NFs post to the `nms-api` Service directly, and a browser has no reason to reach them, so a signed-in user cannot inject an alarm through the gateway.
 
+`/metrics-api/` forwards only `/metrics-api/query` and `/metrics-api/query_range` (the Device Performance charts) to VictoriaMetrics; every other path under it is 404. VictoriaMetrics has no authentication of its own, and the rest of its `/api/v1/` writes and deletes: a written `nms_alarm_active` series would raise an alarm through Grafana, and `admin/tsdb/delete_series` would erase PM history.
+
 These are created by the installer, never by the chart, and mounted with `optional: true`, so a release without them starts unchanged:
 
 | Object | Default name | Mounted into | Effect |
@@ -259,7 +261,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | front.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | front.image.repository | string | `"accelleran/nms-frontend"` | Image repository path, including the org (kept when the registry is rewritten). |
 | front.image.tag | string | `"6.0.0"` | Image tag. |
-| front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics. |
+| front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/query and /metrics-api/query_range -> <metricsUrl>/api/v1/query(_range); every other /metrics-api/ path is 404). Empty: the in-chart VictoriaMetrics. |
 | front.resources.limits.cpu | string | `"200m"` |  |
 | front.resources.limits.memory | string | `"128Mi"` |  |
 | front.resources.requests.cpu | string | `"50m"` |  |
