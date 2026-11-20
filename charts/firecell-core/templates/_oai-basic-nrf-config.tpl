@@ -178,6 +178,12 @@ amf:
     enable_udsf: {{ $v.coreConfig.amf.enableUdsf | default "no" }}
   relative_capacity: {{ $v.coreConfig.amf.relativeCapacity }}
   statistics_timer_interval: {{ $v.coreConfig.amf.statisticsTimerInterval }}
+  {{- if hasKey $v.coreConfig.amf "sbiCallbackUseHost" }}
+  sbi_callback_use_host: {{ $v.coreConfig.amf.sbiCallbackUseHost }}
+  {{- end }}
+  {{- if hasKey $v.coreConfig.amf "rrcInactiveAssistance" }}
+  rrc_inactive_assistance: {{ $v.coreConfig.amf.rrcInactiveAssistance }}
+  {{- end }}
   emergency_support: {{ $v.coreConfig.amf.emergencySupport }}
   {{- with $v.coreConfig.amf.paging }}
   {{- if hasKey . "fanoutMultiGnb" }}
@@ -339,6 +345,23 @@ amf:
 
 smf:
   ue_mtu: {{ $v.coreConfig.smf.ueMtu }}
+  {{- /* cn5g-smf D3b smf.sbi_server_threads / sbi_worker_threads (defaults 2 / 8). The SMF
+         reads them with yaml-cpp as<int>, which throws on a fraction, a string or 1e+06, so
+         the render fails on anything but a whole number (firecell-5gc.wholeNumber: a
+         YAML-file float64 or a --set int64) in the int range (as<int> throws outside it).
+         A whole number in that range but outside 1..64 is written as given: the SMF takes
+         it to the nearest bound and warns. Unset or null: the default. */}}
+  {{- range $k := list (list "sbiServerThreads" "sbi_server_threads" 2) (list "sbiWorkerThreads" "sbi_worker_threads" 8) }}
+  {{- $raw := index $v.coreConfig.smf (index $k 0) }}
+  {{- $n := toString (index $k 2) }}
+  {{- if not (kindIs "invalid" $raw) }}
+  {{- $n = include "firecell-5gc.wholeNumber" $raw }}
+  {{- if or (not $n) (lt (int64 $n) -2147483648) (gt (int64 $n) 2147483647) }}
+  {{- fail (printf "coreConfig.smf.%s must be a whole number; the SMF uses 1 to 64 (got %#v, a %s)" (index $k 0) $raw (kindOf $raw)) }}
+  {{- end }}
+  {{- end }}
+  {{ index $k 1 }}: {{ $n }}
+  {{- end }}
   {{- with $v.coreConfig.smf.locationApiRoot }}
   {{- if and $v.global.sbi.tls.enabled (not (hasPrefix "https://" .)) }}
   {{- fail (printf "coreConfig.smf.locationApiRoot must start with https:// with global.sbi.tls.enabled: the AMF calls it over TLS (got %q)" .) }}
@@ -392,6 +415,42 @@ smf:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- with $v.coreConfig.smf.n4Restore }}
+  {{- /* cn5g-smf #79 smf.n4_restore: pacing of the N4 restore per UPF after a PFCP
+         (re)association. A key is written only when it is set (SMF defaults: 64, 500, yes).
+         The SMF refuses values out of range at start, so the render fails on them. */}}
+  {{- /* Whole numbers (firecell-5gc.wholeNumber: a YAML-file float64 or a --set int64);
+         $mif / $rate stay "" when the key is not set. */}}
+  {{- $mif := "" }}
+  {{- if and (hasKey . "maxInFlightPerUpf") (not (kindIs "invalid" .maxInFlightPerUpf)) }}
+  {{- $mif = include "firecell-5gc.wholeNumber" .maxInFlightPerUpf }}
+  {{- if or (not $mif) (lt (int64 $mif) 0) (gt (int64 $mif) 100000) }}
+  {{- fail (printf "coreConfig.smf.n4Restore.maxInFlightPerUpf must be a whole number 0 to 100000 (got %#v, a %s)" .maxInFlightPerUpf (kindOf .maxInFlightPerUpf)) }}
+  {{- end }}
+  {{- end }}
+  {{- $rate := "" }}
+  {{- if and (hasKey . "ratePerUpf") (not (kindIs "invalid" .ratePerUpf)) }}
+  {{- $rate = include "firecell-5gc.wholeNumber" .ratePerUpf }}
+  {{- if or (not $rate) (lt (int64 $rate) 0) (gt (int64 $rate) 1000000) }}
+  {{- fail (printf "coreConfig.smf.n4Restore.ratePerUpf must be a whole number 0 to 1000000 (got %#v, a %s)" .ratePerUpf (kindOf .ratePerUpf)) }}
+  {{- end }}
+  {{- end }}
+  {{- if and (hasKey . "activeFirst") (not (kindIs "bool" .activeFirst)) }}
+  {{- fail (printf "coreConfig.smf.n4Restore.activeFirst must be true or false (got %v)" .activeFirst) }}
+  {{- end }}
+  {{- if or $mif $rate (hasKey . "activeFirst") }}
+  n4_restore:
+    {{- if $mif }}
+    max_in_flight_per_upf: {{ $mif }}
+    {{- end }}
+    {{- if $rate }}
+    rate_per_upf: {{ $rate }}
+    {{- end }}
+    {{- if hasKey . "activeFirst" }}
+    active_first: {{ .activeFirst }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
   support_features:
     use_local_subscription_info: {{ $v.coreConfig.smf.useLocalSubscriptionInfo }}
     use_local_pcc_rules: {{ $v.coreConfig.smf.useLocalPccRules }}
@@ -429,7 +488,7 @@ smf:
   {{- end }}
   {{- end }}
   {{- else }}
-    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else }}oai-upf{{ end }}
+    - host: {{ include "firecell-5gc.upfPfcpHost" $v }}
       port: 8805
       state: "ACTIVE"
       n3_interface: {{ $v.upf.n3Interface | default "eth0" | quote }}
@@ -483,7 +542,7 @@ smf:
   {{- end }}
   {{- end }}
   {{- else }}
-    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else }}oai-upf{{ end }}
+    - host: {{ include "firecell-5gc.upfPfcpHost" $v }}
       port: 8805
       config:
         enable_upf_wo_nf_discovery: {{ $v.coreConfig.smf.enableUpfWoNfDiscovery | default "yes" }}
@@ -670,6 +729,10 @@ upf:
         {{- end }}
     {{- end }}
   remote_n6_gw: {{ $v.upf.remoteN6Gw | default "127.0.0.1" | quote }}
+  {{- include "firecell-5gc.upfGtpuEiRestartHoldoff" $v.upf }}
+  {{- with include "firecell-5gc.upfPfcpNodeIdFqdn" $v }}
+  pfcp_node_id_fqdn: {{ . | quote }}
+  {{- end }}
   upf_slice_list:
   {{- range $v.coreConfig.nssai }}
     - nssai:
