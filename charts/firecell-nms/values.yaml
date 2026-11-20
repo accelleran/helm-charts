@@ -193,7 +193,7 @@ victoriaMetrics:
     # -- Image repository path, including the org (kept when the registry is rewritten).
     repository: victoriametrics/victoria-metrics
     # -- VictoriaMetrics image tag.
-    tag: v1.93.4
+    tag: v1.93.16
     # -- Optional. When set, used as registry/repository@digest instead of :tag.
     digest: ""
   # -- Size of PVC nms-vm-data.
