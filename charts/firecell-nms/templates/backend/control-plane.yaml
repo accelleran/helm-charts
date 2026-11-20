@@ -46,7 +46,7 @@ spec:
       annotations:
         {{- include "firecell-nms.backend.checksum" . | nindent 8 }}
     spec:
-      serviceAccountName: nms
+      serviceAccountName: nms-control-plane
       securityContext:
         {{- include "firecell-nms.backend.podSecurityContext" . | nindent 8 }}
       terminationGracePeriodSeconds: {{ $be.terminationGracePeriodSeconds }}

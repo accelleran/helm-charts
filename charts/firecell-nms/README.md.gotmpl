@@ -101,6 +101,9 @@ subjects:
   - kind: ServiceAccount
     name: nms
     namespace: <nms-namespace>
+  - kind: ServiceAccount
+    name: nms-control-plane
+    namespace: <nms-namespace>
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -125,9 +128,14 @@ subjects:
   - kind: ServiceAccount
     name: nms
     namespace: <nms-namespace>
+  - kind: ServiceAccount
+    name: nms-control-plane
+    namespace: <nms-namespace>
 ```
 
 Until a chart carries these, the NMS sees no pods in that namespace (element readiness is unknown), and its CM writes, support bundles and lifecycle operations there fail with Forbidden.
+
+The control plane runs as its own ServiceAccount, `nms-control-plane`; nms-api and nms-worker run as `nms`. Both accounts are bound in the core and RAN namespaces. In the NMS namespace only `nms-control-plane` has a Role: it can create Secrets (Kubernetes cannot narrow `create` by name) and read the one Secret `nms-snmp-keys`. The control plane creates that Secret, immutable, the first time the SNMP northbound module is switched on: the private sealing keys and the SNMP engine ID suffix. nms-api seals the SNMP credentials with the public key in the database, and cannot read the private key.
 
 ## 3. Installation
 
