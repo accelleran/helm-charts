@@ -488,7 +488,7 @@ smf:
   {{- end }}
   {{- end }}
   {{- else }}
-    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else }}oai-upf{{ end }}
+    - host: {{ include "firecell-5gc.upfPfcpHost" $v }}
       port: 8805
       state: "ACTIVE"
       n3_interface: {{ $v.upf.n3Interface | default "eth0" | quote }}
@@ -542,7 +542,7 @@ smf:
   {{- end }}
   {{- end }}
   {{- else }}
-    - host: {{ if $v.upf.pfcpHost }}{{ $v.upf.pfcpHost }}{{ else }}oai-upf{{ end }}
+    - host: {{ include "firecell-5gc.upfPfcpHost" $v }}
       port: 8805
       config:
         enable_upf_wo_nf_discovery: {{ $v.coreConfig.smf.enableUpfWoNfDiscovery | default "yes" }}
@@ -730,6 +730,9 @@ upf:
     {{- end }}
   remote_n6_gw: {{ $v.upf.remoteN6Gw | default "127.0.0.1" | quote }}
   {{- include "firecell-5gc.upfGtpuEiRestartHoldoff" $v.upf }}
+  {{- with include "firecell-5gc.upfPfcpNodeIdFqdn" $v }}
+  pfcp_node_id_fqdn: {{ . | quote }}
+  {{- end }}
   upf_slice_list:
   {{- range $v.coreConfig.nssai }}
     - nssai:

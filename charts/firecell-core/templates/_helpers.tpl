@@ -727,6 +727,42 @@ a YAML-file float64 or a --set int64). Called with the upf values map.
 {{- end }}
 
 {{/*
+cn5g-upf upf.pfcp_node_id_fqdn (accelleran/cn5g-upf#67): the PFCP Node ID of the UPF as an FQDN (TS 29.244
+5.8.1), also its NRF profile fqdn. Unset or "": not written, the Node ID is the N4 IPv4 address (as before).
+The SMF compares the Node ID with its upfs[].host / upf_pool[].host exactly, so the SMF side renders the
+same string (firecell-5gc.upfPfcpHost); the SMF resolves it for N4, so it has to resolve to the UPF's N4
+address. Only for the single UPF (not upf.instances[]), and upf.pfcpHost must be unset or the same string.
+The UPF does not start on a value its PFCP encoder cannot carry, so the render fails first: 3 to 253
+characters, labels of 1 to 63 letters, digits or '-' (not at either end), last label not all digits (so no
+IPv4 address; IPv6 fails the character set). Called with the root values ($v).
+*/}}
+{{- define "firecell-5gc.upfPfcpNodeIdFqdn" -}}
+{{- $f := toString (.upf.pfcpNodeIdFqdn | default "") -}}
+{{- if $f }}
+{{- if .upf.instances }}
+{{- fail "upf.pfcpNodeIdFqdn is for the single UPF; with upf.instances[] it is not supported" }}
+{{- end }}
+{{- if and .upf.pfcpHost (ne (toString .upf.pfcpHost) $f) }}
+{{- fail (printf "upf.pfcpHost (%s) must be unset or equal to upf.pfcpNodeIdFqdn (%s): the SMF matches the Node ID with that host" .upf.pfcpHost $f) }}
+{{- end }}
+{{- $label := "[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?" }}
+{{- if or (lt (len $f) 3) (gt (len $f) 253) (not (regexMatch (printf "^%s(\\.%s)*$" $label $label) $f)) (regexMatch "(^|\\.)[0-9]+$" $f) }}
+{{- fail (printf "upf.pfcpNodeIdFqdn %q is not an FQDN the UPF accepts: 3 to 253 characters, labels of 1 to 63 letters, digits or '-' (not at either end), last label not all digits" $f) }}
+{{- end }}
+{{- $f -}}
+{{- end }}
+{{- end }}
+
+{{/*
+The SMF's host for the single UPF (smf.upf_pool[].host, smf.upfs[].host): upf.pfcpNodeIdFqdn when set
+(the SMF matches the Node ID with it), else upf.pfcpHost, else oai-upf (as before).
+*/}}
+{{- define "firecell-5gc.upfPfcpHost" -}}
+{{- $f := include "firecell-5gc.upfPfcpNodeIdFqdn" . -}}
+{{- if $f }}{{ $f }}{{ else if .upf.pfcpHost }}{{ .upf.pfcpHost }}{{ else }}oai-upf{{ end -}}
+{{- end }}
+
+{{/*
 PCF AM policy Service Area Restriction (cn5g-pcf am_policy[.supi.<supi>].serv_area_res,
 TS 29.571 ServiceAreaRestriction): restriction_type and a list of TACs. The PCF refuses
 anything else at start, so the render fails first. dict: d (the values map), where (its

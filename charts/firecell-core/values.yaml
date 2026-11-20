@@ -999,6 +999,14 @@ upf:
   # PFCP sessions of this UPF (with coreConfig.smf.n4Restore: about sessions / ratePerUpf).
   # A UPF image without accelleran/cn5g-upf#68 ignores it.
   gtpuErrorIndicationRestartHoldoffS: ""
+  # OAI UPF (cn5g-upf upf.pfcp_node_id_fqdn, accelleran/cn5g-upf#67): the PFCP Node ID of the UPF as an
+  # FQDN (TS 29.244 5.8.1), also its NRF profile fqdn. "" (unset): not written, the Node ID is the N4 IPv4
+  # address. When set, the SMF's upf_pool[].host and upfs[].host become the same string (the SMF compares
+  # the Node ID exactly and resolves the name for N4, so it must resolve to the UPF's N4 address), and
+  # upf.pfcpHost must be unset or equal. Single UPF only (not upf.instances[]). Needs a UPF and an SMF with
+  # FQDN Node ID support; an older UPF ignores the key and sends its IPv4 address, which the SMF then
+  # does not match. The render fails on a value the UPF refuses.
+  pfcpNodeIdFqdn: ""
   # OAI UPF only: Layer-2 Ethernet PDU sessions (cn5g-upf support_features.enable_eth_pdu).
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
