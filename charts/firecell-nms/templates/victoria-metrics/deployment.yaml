@@ -8,6 +8,15 @@ metadata:
     app: nms-victoria-metrics
 spec:
   replicas: 1
+  # One pod on a ReadWriteOnce volume, and VictoriaMetrics locks its data
+  # directory: a rolling update starts the new pod beside the old one, the new
+  # pod cannot take the lock and crash-loops, and the old one is never stopped.
+  # Recreate stops the old pod first (a short gap in writes and queries).
+  # rollingUpdate: null removes the defaulted field on an upgrade of an existing
+  # release; the API server refuses Recreate while it is still set.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: nms-victoria-metrics
@@ -30,6 +39,9 @@ spec:
             - --retentionPeriod={{ .Values.victoriaMetrics.retentionPeriod }}
             - --maxLabelsPerTimeseries={{ .Values.victoriaMetrics.maxLabelsPerTimeseries }}
             - --maxConcurrentInserts={{ .Values.victoriaMetrics.maxConcurrentInserts }}
+            {{- with .Values.victoriaMetrics.searchLatencyOffset }}
+            - --search.latencyOffset={{ . }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8430

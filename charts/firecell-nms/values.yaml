@@ -201,6 +201,12 @@ victoriaMetrics:
   retentionPeriod: 7d
   maxLabelsPerTimeseries: 50
   maxConcurrentInserts: 16
+  # -- How far back from now a query stops (VictoriaMetrics -search.latencyOffset).
+  # Empty: VictoriaMetrics' default, 30s, which hides the newest 30 s of samples
+  # from every query, so every Grafana alarm rule sees a change about 30 s late.
+  # The NMS writes its samples directly (no scrape delay), so a few seconds are
+  # enough; the installer sets it (for example "5s").
+  searchLatencyOffset: ""
   resources:
     requests:
       memory: 256Mi
