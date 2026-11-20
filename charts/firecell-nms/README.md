@@ -189,21 +189,13 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
-### 5.1 Alarm ingest and the optional secrets
+### 5.1 Alarm ingest and the webhook token
 
 `nms-front` answers 404 for `/api/alarms/webhook` and `/api/fcaps/`: Grafana and the NFs post to the `nms-api` Service directly, and a browser has no reason to reach them, so a signed-in user cannot inject an alarm through the gateway.
 
 `/metrics-api/` forwards only `/metrics-api/query` and `/metrics-api/query_range` (the Device Performance charts) to VictoriaMetrics; every other path under it is 404. VictoriaMetrics has no authentication of its own, and the rest of its `/api/v1/` writes and deletes: a written `nms_alarm_active` series would raise an alarm through Grafana, and `admin/tsdb/delete_series` would erase PM history.
 
-These are created by the installer, never by the chart, and mounted with `optional: true`, so a release without them starts unchanged:
-
-| Object | Default name | Mounted into | Effect |
-|---|---|---|---|
-| Secret, key `token` | `backend.alarmWebhookToken.secretName` (`nms-alarm-webhook-token`) | nms-api, `/var/run/secrets/nms/alarm-webhook/token` | While the file exists every webhook post needs `Authorization: Bearer <token>` (one token per line, for rotation); the backend reads it again without a restart. Grafana's contact point must send the same token. |
-| ConfigMap | `backend.snmp.sealingPublicConfigMap` (`nms-sealing-public`) | nms-api and the control plane, `/etc/firecell-nms/sealing-public` | Public keys that seal the SNMPv3 credentials. |
-| Secret | `backend.snmp.sealingPrivateSecret` (`nms-sealing-private`) | the control plane only, `/var/run/secrets/nms/sealing` | Private sealing keys and the SNMP engine ID suffix. |
-
-The files are mode 0440 with the pod's fsGroup. `backend.snmp.northbound` (off) switches the SNMPv3 northbound module on.
+The alarm webhook token Secret (`backend.alarmWebhookToken.secretName`, default `nms-alarm-webhook-token`, key `token`) is created by the installer, never by the chart. It is mounted into nms-api only, at `/var/run/secrets/nms/alarm-webhook/token` (mode 0440 with the pod's fsGroup), with `optional: true`, so a release without it starts unchanged and the webhook takes posts without a token. Once the file exists every webhook post needs `Authorization: Bearer <token>` (one token per line, for rotation); the backend reads it again without a restart. Grafana's contact point must send the same token.
 
 ## 6. Support Logs
 
@@ -313,10 +305,6 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.image.tag | string | `"6.0.0"` | Image tag. |
 | backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the check-schema, migrate, bootstrap and wait-for-schema init containers. |
 | backend.progressDeadlineSeconds | int | `1200` | Rollout deadline of the API and worker Deployments. New pods wait for the old control plane to stop and the migration to finish, so it must exceed terminationGracePeriodSeconds plus the migration time. Keep the Helm / HelmRelease timeout above it. |
-| backend.snmp.enterpriseOid | string | `"1.3.6.1.4.1.32473"` | Enterprise OID root of the MIB and the SNMP engine ID. The default is RFC 5612's documentation number, for development; a release sets its PEN. |
-| backend.snmp.northbound | bool | `false` | The module: off sends nothing, opens no socket and offers no settings. |
-| backend.snmp.sealingPrivateSecret | string | `"nms-sealing-private"` | Secret with the private sealing key(s) and the SNMP engine ID suffix, mounted into the control plane only. |
-| backend.snmp.sealingPublicConfigMap | string | `"nms-sealing-public"` | ConfigMap with the public sealing key(s), mounted into nms-api and the control plane. |
 | backend.terminationGracePeriodSeconds | int | `660` | Longer than the backend's slowest lifecycle operation (600s), so workers and the control plane can finish in-flight work after SIGTERM. On an image change the new control plane, and so the migration, starts only after the old one has stopped: up to this long. |
 | backend.worker.minReadySeconds | int | `20` | Seconds a new worker must stay up before it counts as available (its probes only check that the process lives). |
 | backend.worker.replicas | int | `1` | Worker replicas (at least 1). |

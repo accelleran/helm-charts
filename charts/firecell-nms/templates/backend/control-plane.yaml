@@ -96,10 +96,6 @@ spec:
             {{- include "firecell-nms.backend.env" . | nindent 12 }}
             {{- /* Supervision of TR-069 devices, the PM collector and the TR-069 sync ask the ACS from here. */}}
             {{- include "firecell-nms.acs.clientEnv" . | nindent 12 }}
-            - name: FIRECELL_NMS_NG_SEALING_PUBLIC_DIR
-              value: {{ include "firecell-nms.backend.sealingPublicDir" . | quote }}
-            - name: FIRECELL_NMS_NG_SEALING_PRIVATE_DIR
-              value: {{ include "firecell-nms.backend.sealingPrivateDir" . | quote }}
           readinessProbe:
             exec:
               command: ["python", "-c", "import os; os.kill(1, 0)"]
@@ -115,12 +111,6 @@ spec:
             - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
             {{- include "firecell-nms.acs.clientMount" . | nindent 12 }}
-            - name: sealing-public
-              mountPath: {{ include "firecell-nms.backend.sealingPublicDir" . }}
-              readOnly: true
-            - name: sealing-private
-              mountPath: {{ include "firecell-nms.backend.sealingPrivateDir" . }}
-              readOnly: true
       volumes:
         - name: kubeconfig
           configMap:
@@ -128,13 +118,3 @@ spec:
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}
         {{- include "firecell-nms.acs.clientVolume" . | nindent 8 }}
-        - name: sealing-public
-          configMap:
-            name: {{ $be.snmp.sealingPublicConfigMap }}
-            optional: true
-            defaultMode: 0444
-        - name: sealing-private
-          secret:
-            secretName: {{ $be.snmp.sealingPrivateSecret }}
-            optional: true
-            defaultMode: 0440

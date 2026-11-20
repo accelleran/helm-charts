@@ -55,20 +55,6 @@ backend:
     # -- Secret with key `token` (one token per line, for rotation).
     secretName: nms-alarm-webhook-token
 
-  # SNMPv3 northbound alarm export. The keys are created by the installer, per
-  # site, only when missing; both mounts are optional.
-  snmp:
-    # -- The module: off sends nothing, opens no socket and offers no settings.
-    northbound: false
-    # -- Enterprise OID root of the MIB and the SNMP engine ID. The default is
-    # RFC 5612's documentation number, for development; a release sets its PEN.
-    enterpriseOid: "1.3.6.1.4.1.32473"
-    # -- ConfigMap with the public sealing key(s), mounted into nms-api and the control plane.
-    sealingPublicConfigMap: nms-sealing-public
-    # -- Secret with the private sealing key(s) and the SNMP engine ID suffix,
-    # mounted into the control plane only.
-    sealingPrivateSecret: nms-sealing-private
-
   api:
     # -- API replicas (at least 2).
     replicas: 2
