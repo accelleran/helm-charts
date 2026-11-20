@@ -1,0 +1,45 @@
+# The v6.0 rc-02 integration images on GHCR, one tag per NF: v6.x-rc-02-<integration/v6.x-rc-02 commit>.
+# Layer it on top of your site values:
+#
+#   helm upgrade --install firecell-core ./charts/firecell-core -n firecell-core \
+#     -f <site values> -f examples/values-rc02-ghcr.yaml
+#
+# The GHCR packages are private. Create the pull secret in the release namespace first:
+#   kubectl -n firecell-core create secret docker-registry ghcr-regcred \
+#     --docker-server=ghcr.io --docker-username=<user> --docker-password=<token with read:packages>
+
+global:
+  imageRegistry: ghcr.io/accelleran
+  imagePullSecrets:
+    - name: ghcr-regcred
+
+amf:
+  imageTag: v6.x-rc-02-96af256e
+# smf: the tag follows after the SMF common-src pin bump; until then the chart default applies.
+nrf:
+  imageTag: v6.x-rc-02-b0249ac3
+pcf:
+  imageTag: v6.x-rc-02-0f90e1c1
+ausf:
+  imageTag: v6.x-rc-02-ace10f15
+udr:
+  imageTag: v6.x-rc-02-a7e27baf
+udm:
+  imageTag: v6.x-rc-02-55045c46
+nssf:
+  imageTag: v6.x-rc-02-42d8eef4
+nef:
+  imageTag: v6.x-rc-02-fb7add44
+upf:
+  oaiImageTag: v6.x-rc-02-238ca215
+# The newest rc-02 tags published for these NFs:
+eir:
+  imageTag: v6.x-rc-02-d6ecb0d2
+udsf:
+  imageTag: v6.x-rc-02-a7ca93e8
+ims:
+  imageTag: v6.x-rc-02-d381516b          # kamailio-ims
+  rxN5Iwf:
+    imageTag: v6.x-rc-02-d381516b        # rx-n5-iwf
+  cxGateway:
+    imageTag: v6.x-rc-02-d381516b        # ims-cx-gateway
