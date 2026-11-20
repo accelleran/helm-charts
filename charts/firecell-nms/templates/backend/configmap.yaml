@@ -32,6 +32,9 @@ data:
   {{- with $be.config.seedSliceJson }}
   FIRECELL_NMS_NG_SEED_SLICE_JSON: {{ . | quote }}
   {{- end }}
+  {{- with $be.config.siteId }}
+  FIRECELL_NMS_NG_SITE_ID: {{ . | quote }}
+  {{- end }}
   FIRECELL_NMS_NG_CM_NAMESPACE: {{ required "rbac.coreNamespace is required" .Values.rbac.coreNamespace | quote }}
   FIRECELL_NMS_NG_CM_CONFIGMAP_KEY: {{ $be.config.cmConfigMapKey | quote }}
   {{- with .Values.rbac.ranNamespace }}

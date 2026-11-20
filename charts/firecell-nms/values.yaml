@@ -132,6 +132,11 @@ backend:
     configMap: nms-branding
 
   config:
+    # -- The site's id in every alarm's managed object (`SubNetwork=<site id>`, the
+    # alarm identity the OSS sees): the installer's inventory name. The backend
+    # stores it once, at the first start, and never changes it; a later value is
+    # ignored. Empty: the network's name at the first start.
+    siteId: ""
     # -- JSON string array of allowed WebSocket origins.
     allowedWsOriginsJson: "[]"
     # -- JSON object array of extra S-NSSAIs given to new subscribers.
