@@ -31,7 +31,7 @@ From a checkout of this repository, use the chart paths instead: `helm install r
 Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig`.
 
 ### 2.1 NMS Access
-With `nms.rbac` (the default), the release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs here:
+With `nms.rbac` (the default), the release grants ServiceAccounts `nms` and `nms-control-plane` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs here:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: pod reads.
 - Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for `cu-cp` and `cu-up`, so the NMS can restart, stop and start them.

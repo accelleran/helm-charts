@@ -8,6 +8,59 @@ metadata:
     app.kubernetes.io/component: backend
 automountServiceAccountToken: true
 ---
+# The control plane's own account. It has what `nms` has in the core and RAN
+# namespaces (the core, CU and DU charts bind both accounts), and, alone, the
+# SNMP key Secret below: nms-api and nms-worker keep `nms` and cannot read it.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nms-control-plane
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-control-plane
+automountServiceAccountToken: true
+---
+# The SNMP northbound key Secret: the control plane creates it, once, the first
+# time the module is switched on (sealing key pair and engine ID suffix), as an
+# immutable Secret, and reads it afterwards. Kubernetes cannot narrow `create`
+# by resourceNames, so the account may create any Secret in this namespace,
+# but it can read only this one; it never updates or patches it (a rotation is
+# a new Secret).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nms-control-plane-snmp-keys
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-control-plane
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["nms-snmp-keys"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nms-control-plane-snmp-keys
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nms-control-plane
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nms-control-plane-snmp-keys
+subjects:
+  - kind: ServiceAccount
+    name: nms-control-plane
+    namespace: {{ .Release.Namespace }}
+---
 # Grants nothing until the core chart binds it in coreNamespace, together
 # with its own Role on its Deployments (see the README). The name carries the
 # release namespace, which the binding charts already need for the subject.
