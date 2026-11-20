@@ -1510,10 +1510,14 @@ coreConfig:
     # UE-AMBR the AMF sends to the gNB when neither the PCF nor the subscription
     # (am-data) gives one (cn5g-amf amf.ue_ambr_default). TS 29.571 BitRate strings,
     # at most 4000000000000 bps (TS 38.413 9.3.1.4); the AMF refuses other values at
-    # start. 1 Gbps is the AMF default, so this block does not change behaviour as is.
+    # start. The chart sets 10 Gbps, not the AMF default of 1 Gbps: the NMS does not
+    # provision subscribedUeAmbr in the am-data, so this default is the UE-AMBR of
+    # every UE, and the gNB enforces it (1 Gbps capped a UE's DL at about 975 Mbit/s,
+    # accelleran/cn5g-amf#135). The Session-AMBR of each PDU session still applies.
+    # "1 Gbps" here restores the AMF default.
     ueAmbrDefault:
-      uplink: "1 Gbps"
-      downlink: "1 Gbps"
+      uplink: "10 Gbps"
+      downlink: "10 Gbps"
     # N2 handover (cn5g-amf amf.handover). sourceReleaseDelayMs, seed of the FCAPS switch
     # hoSourceReleaseDelayMs (0..5000 ms, AMF default 1000): how long after the Handover Notify the
     # AMF releases the source RAN's UE context, so that forwarded packets can still arrive; 0
