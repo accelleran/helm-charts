@@ -994,6 +994,21 @@ upf:
   # an SMF older than v6.0 rc-02 P20 (a new Recovery Time Stamp in every Heartbeat) talks to
   # this UPF, e.g. during a mixed-version upgrade or an SMF rollback.
   deleteSessionsOnSmfRestart: ""
+  # OAI UPF (cn5g-upf upf.gtpu_error_indication_restart_holdoff_s, accelleran/cn5g-upf#68):
+  # seconds after the UPF start in which it sends no GTP-U Error Indication for a G-PDU that
+  # matches no PDR (TS 23.527 4.3.2), both datapaths; 0..3600, 0 = none. "" (unset): not
+  # written, the UPF default 60. Set it longer than the time the SMF needs to restore all
+  # PFCP sessions of this UPF (with coreConfig.smf.n4Restore: about sessions / ratePerUpf).
+  # A UPF image without accelleran/cn5g-upf#68 ignores it.
+  gtpuErrorIndicationRestartHoldoffS: ""
+  # OAI UPF (cn5g-upf upf.pfcp_node_id_fqdn, accelleran/cn5g-upf#67): the PFCP Node ID of the UPF as an
+  # FQDN (TS 29.244 5.8.1), also its NRF profile fqdn. "" (unset): not written, the Node ID is the N4 IPv4
+  # address. When set, the SMF's upf_pool[].host and upfs[].host become the same string (the SMF compares
+  # the Node ID exactly and resolves the name for N4, so it must resolve to the UPF's N4 address), and
+  # upf.pfcpHost must be unset or equal. Single UPF only (not upf.instances[]). Needs a UPF and an SMF with
+  # FQDN Node ID support; an older UPF ignores the key and sends its IPv4 address, which the SMF then
+  # does not match. The render fails on a value the UPF refuses.
+  pfcpNodeIdFqdn: ""
   # OAI UPF only: Layer-2 Ethernet PDU sessions (cn5g-upf support_features.enable_eth_pdu).
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
@@ -1442,6 +1457,20 @@ coreConfig:
     name: "OAI-AMF"
     relativeCapacity: 30
     statisticsTimerInterval: 20
+    # cn5g-amf amf.sbi_callback_use_host (amf #106): every callback URI the AMF hands out
+    # (PCF AM policy notificationUri, UDM deregCallbackUri, SMF SM context status URI,
+    # Namf_EventExposure, UDSF callbackReference) uses nfs.amf.host, the AMF Service name,
+    # instead of the pod's SBI address, so a pod replacement does not strand the peers.
+    # For TLS-off installs; TLS on already uses the host. Absent or false: the AMF's
+    # old behaviour. AMF images without #106 ignore the key.
+    sbiCallbackUseHost: true
+    # cn5g-amf amf.rrc_inactive_assistance (amf #120): send the Core Network Assistance
+    # Information for RRC INACTIVE (TS 38.413 9.3.1.15) in INITIAL CONTEXT SETUP, HANDOVER
+    # REQUEST, PATH SWITCH REQUEST ACKNOWLEDGE and UE CONTEXT MODIFICATION, so an NG-RAN that
+    # supports RRC_INACTIVE may use it. false: the IE is not sent. Seeds the AMF's FCAPS HOT
+    # switch rrcInactiveAssistanceEnabled, which a CM PATCH can change at run time. Removing
+    # the key leaves the AMF default (on). AMF images without #120 ignore the key.
+    rrcInactiveAssistance: true
     emergencySupport: false
     # AMF paging (cn5g-amf amf.paging). fanoutMultiGnb: page an idle UE on every gNB
     # serving its registration area, not only the last serving gNB. The AMF built-in
@@ -1645,6 +1674,18 @@ coreConfig:
       endMarker: true
       dataForwarding: direct_and_indirect
       indirectForwardingTimerMs: 2000
+    # Paced N4 restore after a PFCP (re)association with a UPF (cn5g-smf #79,
+    # smf.n4_restore; TS 23.527 4.3.2: the SMF prioritizes the sessions to restore and
+    # controls the load on the UPF). Per UPF: at most maxInFlightPerUpf restores at once
+    # (0..100000), at most ratePerUpf restores per second (0..1000000), sessions with an
+    # active user plane first when activeFirst is true. 0 for maxInFlightPerUpf or ratePerUpf:
+    # no bound (the restore all at once of SMF images before #79; the rollback). The
+    # defaults (64, 500, true; the SMF's own) are not measured on a UPF. SMF images
+    # without #79 ignore the block. The render fails on a value the SMF would refuse.
+    n4Restore:
+      maxInFlightPerUpf: 64
+      ratePerUpf: 500
+      activeFirst: true
     # PDU session type switches (cn5g-smf smf.support_features), the seeds of the FCAPS
     # switches ipv6PduEnabled and ethernetPduEnabled. A key is written only when it is
     # set, so the SMF defaults apply: enableIpv6Pdu yes, enableEthernetPdu no.
@@ -1707,6 +1748,15 @@ coreConfig:
         linkAddress: ""        # link_address, selects the server's prefix pool
         allocateTimeoutS: ""   # allocate_timeout_s, 1..30 [2]
         sendRelease: ""        # send_release, "yes"/"no" [yes]
+    # smf.sbi_server_threads: HTTP/2 io threads (or Pistache threads with
+    # HTTP/1) of the SMF's SBI server. Read at start-up; 1..64, a value outside
+    # is taken to the nearest bound (warning in the SMF log). Needs a cn5g-smf
+    # image with the key (rc-02 D3b); older images ignore it.
+    sbiServerThreads: 2
+    # smf.sbi_worker_threads: worker threads that run the PDU session starts,
+    # sharded by SUPI. Read at start-up; 1..64, as above. Both must be whole
+    # numbers: the render fails on a fraction or a string.
+    sbiWorkerThreads: 8
 
   # SBI HTTP client timeout (ms) — default OAI is 3000; raise on busy labs to avoid NRF heartbeat false failures
   httpRequestTimeoutMs: 10000
