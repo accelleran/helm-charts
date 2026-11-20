@@ -69,12 +69,10 @@ nms-config ConfigMap.
 {{- end }}
 
 {{/*
-Mounted secrets and keys (all optional). The files are root-owned with the pod's
-fsGroup (10001), so 0440 lets the backend user read them and nobody else.
+Where the optional alarm webhook token Secret is mounted. The file is root-owned
+with the pod's fsGroup (10001), so 0440 lets the backend user read it and nobody else.
 */}}
 {{- define "firecell-nms.backend.alarmWebhookTokenDir" -}}/var/run/secrets/nms/alarm-webhook{{- end }}
-{{- define "firecell-nms.backend.sealingPublicDir" -}}/etc/firecell-nms/sealing-public{{- end }}
-{{- define "firecell-nms.backend.sealingPrivateDir" -}}/var/run/secrets/nms/sealing{{- end }}
 
 {{/*
 Rolls the backend pods when the rendered configuration changes: config and
