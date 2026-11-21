@@ -16,7 +16,7 @@ global:
 amf:
   imageTag: v6.x-rc-02-f985f309
 smf:
-  imageTag: v6.x-rc-02-7155ae18
+  imageTag: v6.x-rc-02-3aca3170
 nrf:
   imageTag: v6.x-rc-02-1d130774
 pcf:
@@ -34,7 +34,7 @@ nef:
 upf:
   oaiImageTag: v6.x-rc-02-31eeb618
 eir:
-  imageTag: v6.x-rc-02-24274755
+  imageTag: v6.x-rc-02-66ea8c4c
 udsf:
   imageTag: v6.x-rc-02-a7ca93e8
 ims:
