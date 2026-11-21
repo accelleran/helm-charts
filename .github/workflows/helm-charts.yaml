@@ -32,7 +32,7 @@ jobs:
       charts_to_test: ${{ steps.list-charts.outputs.charts_to_test }}
       charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
       # renovate: github_repository=helm/helm versioning=semver extract_version=^v(?<version>.*)$
-      helm_version: 4.3.1
+      helm_version: 4.3.2
     timeout-minutes: 2
     steps:
       - name: Expose variables
