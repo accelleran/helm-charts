@@ -14,32 +14,32 @@ global:
     - name: ghcr-regcred
 
 amf:
-  imageTag: v6.x-rc-02-96af256e
-# smf: the tag follows after the SMF common-src pin bump; until then the chart default applies.
+  imageTag: v6.x-rc-02-f985f309
+smf:
+  imageTag: v6.x-rc-02-7155ae18
 nrf:
-  imageTag: v6.x-rc-02-b0249ac3
+  imageTag: v6.x-rc-02-1d130774
 pcf:
-  imageTag: v6.x-rc-02-0f90e1c1
+  imageTag: v6.x-rc-02-26c302d3
 ausf:
-  imageTag: v6.x-rc-02-ace10f15
+  imageTag: v6.x-rc-02-61491d71
 udr:
-  imageTag: v6.x-rc-02-a7e27baf
+  imageTag: v6.x-rc-02-775aa976
 udm:
-  imageTag: v6.x-rc-02-55045c46
+  imageTag: v6.x-rc-02-54d302a9
 nssf:
-  imageTag: v6.x-rc-02-42d8eef4
+  imageTag: v6.x-rc-02-d9f7b4ad
 nef:
-  imageTag: v6.x-rc-02-fb7add44
+  imageTag: v6.x-rc-02-643513b8
 upf:
-  oaiImageTag: v6.x-rc-02-238ca215
-# The newest rc-02 tags published for these NFs:
+  oaiImageTag: v6.x-rc-02-31eeb618
 eir:
-  imageTag: v6.x-rc-02-d6ecb0d2
+  imageTag: v6.x-rc-02-24274755
 udsf:
   imageTag: v6.x-rc-02-a7ca93e8
 ims:
-  imageTag: v6.x-rc-02-d381516b          # kamailio-ims
+  imageTag: v6.x-rc-02-0535d42f          # kamailio-ims
   rxN5Iwf:
-    imageTag: v6.x-rc-02-d381516b        # rx-n5-iwf
+    imageTag: v6.x-rc-02-0535d42f        # rx-n5-iwf
   cxGateway:
-    imageTag: v6.x-rc-02-d381516b        # ims-cx-gateway
+    imageTag: v6.x-rc-02-0535d42f        # ims-cx-gateway
