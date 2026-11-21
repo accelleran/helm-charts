@@ -3,10 +3,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cu-cp
+  name: {{ include "firecell-cu.cuCpName" . }}
   namespace: {{ include "firecell-cu.namespace" . }}
   labels:
-    app: cu-cp
+    app: {{ include "firecell-cu.cuCpName" . }}
     {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-cp") | nindent 4 }}
 spec:
   replicas: 1
@@ -15,11 +15,11 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: cu-cp
+      app: {{ include "firecell-cu.cuCpName" . }}
   template:
     metadata:
       labels:
-        app: cu-cp
+        app: {{ include "firecell-cu.cuCpName" . }}
         {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-cp") | nindent 8 }}
       annotations:
         checksum/config: {{ include "firecell-cu.cuCpConfig" . | sha256sum }}
@@ -90,13 +90,13 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: cu-cp-config
+            name: {{ include "firecell-cu.cuCpName" . }}-config
         - name: logs
           emptyDir: {}
         {{- if $c.o1.enabled }}
         - name: o1-state
           hostPath:
-            path: {{ $c.o1.statePath | default "/var/lib/firecell/ocudu/cu-cp" }}
+            path: {{ include "firecell-cu.statePath" (dict "path" $c.o1.statePath "name" (include "firecell-cu.cuCpName" .)) }}
             type: DirectoryOrCreate
         {{- end }}
 {{- end }}

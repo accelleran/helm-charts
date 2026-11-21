@@ -2,7 +2,7 @@ firecell-cu {{ .Chart.Version }} installed as "{{ .Release.Name }}" in namespace
 
 Components:
 {{- if .Values.cuCp.enabled }}
-  cu-cp   N2 -> {{ .Values.amf.addr }}:{{ .Values.amf.port }}, F1/E1 Service {{ .Values.cuCpService.name }}
+  cu-cp   N2 -> {{ .Values.amf.addr }}:{{ .Values.amf.port }}, F1/E1 Service {{ include "firecell-cu.cuCpName" . }}
 {{- end }}
 {{- if .Values.cuUp.enabled }}
   cu-up   E1 -> {{ include "firecell-cu.cuCpAddress" . }}

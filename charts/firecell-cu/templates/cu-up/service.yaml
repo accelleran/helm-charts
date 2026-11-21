@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cu-up
+  name: {{ include "firecell-cu.cuUpName" . }}
   namespace: {{ include "firecell-cu.namespace" . }}
   labels:
     {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 4 }}
@@ -10,7 +10,7 @@ spec:
   # NETCONF for the NMS, and nothing else: the CU-UP dials E1 out to the
   # CU-CP, and N3 and F1-U bind interfaces of their own.
   selector:
-    app: cu-up
+    app: {{ include "firecell-cu.cuUpName" . }}
   ports:
     - name: netconf
       port: 830

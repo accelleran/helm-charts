@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.cuCpService.name }}
+  name: {{ include "firecell-cu.cuCpName" . }}
   namespace: {{ include "firecell-cu.namespace" . }}
   labels:
     {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-cp") | nindent 4 }}
@@ -13,7 +13,7 @@ spec:
   clusterIP: None
   publishNotReadyAddresses: true
   selector:
-    app: cu-cp
+    app: {{ include "firecell-cu.cuCpName" . }}
   ports:
     - name: e1ap
       port: 38462

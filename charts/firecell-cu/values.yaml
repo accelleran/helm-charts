@@ -28,6 +28,8 @@ gnb:
   plmn: "00101"
   # -- Tracking area code.
   tac: 1
+  # -- RAN node name the CU-CP sends in NG Setup (the AMF lists gNBs by it). Empty: the CU-CP name (cuCpService.name).
+  ranNodeName: ""
   # -- Slices. sst/sd go to the CU-CP TAI slice list (schedCfg is only read by firecell-du).
   slices:
     - sst: 1
@@ -65,7 +67,7 @@ cuCp:
     restartOnColdCommit: false
     # -- netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info.
     netconfVerbosity: warning
-    # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp.
+    # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Empty uses /var/lib/firecell/ocudu/<cuCpService.name>, so a second gNB with another name gets its own; the same name in two namespaces on one node still needs a path here.
     statePath: ""
     ueContext:
       # -- Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty.
@@ -106,12 +108,16 @@ cuCp:
 
 # Headless Service in front of CU-CP. DUs (F1-C) and CU-UP (E1) resolve it.
 cuCpService:
-  # -- Service name. firecell-du defaults its cuCpAddress to cu-cp.<namespace>.
+  # -- CU-CP name: Service, Deployment, pod label, ConfigMap prefix and default O1 state directory.
+  # firecell-du defaults its cuCpAddress to cu-cp.<namespace>. A second gNB takes another name
+  # (e.g. cu-cp2), in the same namespace or another one.
   name: cu-cp
 
 cuUp:
   # -- Deploy CU-UP.
   enabled: true
+  # -- CU-UP name: Deployment, pod label, NETCONF Service, ConfigMap and NAD prefix and default O1 state directory.
+  name: cu-up
   image: ""
   nodeSelector: {}
   tolerations: []
@@ -128,7 +134,7 @@ cuUp:
     restartOnColdCommit: false
     # -- netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info.
     netconfVerbosity: warning
-    # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up.
+    # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Empty uses /var/lib/firecell/ocudu/<cuUp.name>; the same name in two namespaces on one node still needs a path here.
     statePath: ""
   # -- RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off.
   rpsCpus: ""
