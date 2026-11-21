@@ -104,7 +104,7 @@ udsf:
   sbiPort: 8080
   healthPath: /nudsf-data-mgmt/v1/healthz
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     # Full image reference, winning over the verbatim image above.
     # Same escape hatch every workload has: without it a registry mirror
     # or retag cannot be named.
