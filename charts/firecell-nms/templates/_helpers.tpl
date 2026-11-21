@@ -176,3 +176,113 @@ Usage: include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-fo
   resources:
     {{- toYaml .root.Values.backend.initResources | nindent 4 }}
 {{- end }}
+
+{{/*
+One auth setting: the value when set, else a key of backend.auth.configMap.
+Usage: include "firecell-nms.backend.authValue" (list . "OIDC_PROJECT_ID" .Values.backend.auth.projectId "project-id")
+*/}}
+{{- define "firecell-nms.backend.authValue" -}}
+{{- $root := index . 0 }}
+{{- $name := index . 1 }}
+{{- $value := index . 2 }}
+{{- $key := index . 3 }}
+{{- $cm := $root.Values.backend.auth.configMap }}
+- name: FIRECELL_NMS_NG_{{ $name }}
+{{- if $value }}
+  value: {{ $value | quote }}
+{{- else if $cm }}
+  valueFrom:
+    configMapKeyRef:
+      name: {{ $cm }}
+      key: {{ $key }}
+{{- else }}
+{{- fail (printf "backend.auth: set the value for FIRECELL_NMS_NG_%s or backend.auth.configMap" $name) }}
+{{- end }}
+{{- end }}
+
+{{/*
+JWT-mode environment of the API container (backend.auth). Empty when off.
+*/}}
+{{- define "firecell-nms.backend.authEnv" -}}
+{{- $auth := .Values.backend.auth }}
+{{- if $auth.enabled }}
+{{- if .Values.backend.config.trustGatewayHeaders }}
+{{- fail "backend.auth.enabled and backend.config.trustGatewayHeaders cannot both be on: the API validates the Zitadel token instead of believing the gateway headers" }}
+{{- end }}
+- name: FIRECELL_NMS_NG_OIDC_ISSUER_URL
+  value: {{ required "backend.auth.issuer is required when backend.auth.enabled" $auth.issuer | quote }}
+{{- with $auth.jwksUrl }}
+- name: FIRECELL_NMS_NG_OIDC_JWKS_URL
+  value: {{ . | quote }}
+{{- end }}
+{{- include "firecell-nms.backend.authValue" (list . "OIDC_PROJECT_ID" $auth.projectId "project-id") }}
+{{- include "firecell-nms.backend.authValue" (list . "OIDC_CLIENT_IDS_JSON" (ternary ($auth.clientIds | toJson) "" (gt (len $auth.clientIds) 0)) "client-ids-json") }}
+{{- include "firecell-nms.backend.authValue" (list . "OIDC_INTROSPECTION_CLIENT_ID" $auth.introspection.clientId "introspection-client-id") }}
+- name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_KEY_FILE
+  value: /etc/firecell-nms/oidc/introspection/{{ $auth.introspection.key }}
+- name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_CACHE_SECONDS
+  value: {{ $auth.introspection.cacheSeconds | quote }}
+{{- if $auth.caBundle.existingSecret }}
+- name: FIRECELL_NMS_NG_OIDC_CA_FILE
+  value: /etc/firecell-nms/oidc/ca/{{ $auth.caBundle.key }}
+{{- end }}
+- name: FIRECELL_NMS_NG_OP_REVEAL_MAX_AUTH_AGE_SECONDS
+  value: {{ $auth.opRevealMaxAuthAgeSeconds | quote }}
+{{- $um := $auth.userManagement }}
+{{- if $um.enabled }}
+- name: FIRECELL_NMS_NG_ZITADEL_API_URL
+  value: {{ $um.apiUrl | default $auth.issuer | quote }}
+{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_USERS_ORG_ID" $um.usersOrgId "users-org-id") }}
+{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_PROJECT_ORG_ID" $um.projectOrgId "project-org-id") }}
+{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_PROJECT_GRANT_ID" $um.projectGrantId "project-grant-id") }}
+- name: FIRECELL_NMS_NG_ZITADEL_SERVICE_ACCOUNT_KEY_FILE
+  value: /etc/firecell-nms/oidc/user-manager/{{ $um.key }}
+{{- end }}
+{{- else if $auth.userManagement.enabled }}
+{{- fail "backend.auth.userManagement.enabled needs backend.auth.enabled" }}
+{{- end }}
+{{- end }}
+
+{{/*
+Mounts and volumes for backend.auth, API container only.
+*/}}
+{{- define "firecell-nms.backend.authMounts" -}}
+{{- $auth := .Values.backend.auth }}
+{{- if $auth.enabled }}
+- {name: oidc-introspection, mountPath: /etc/firecell-nms/oidc/introspection, readOnly: true}
+{{- if $auth.caBundle.existingSecret }}
+- {name: oidc-ca, mountPath: /etc/firecell-nms/oidc/ca, readOnly: true}
+{{- end }}
+{{- if $auth.userManagement.enabled }}
+- {name: oidc-user-manager, mountPath: /etc/firecell-nms/oidc/user-manager, readOnly: true}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "firecell-nms.backend.authVolumes" -}}
+{{- $auth := .Values.backend.auth }}
+{{- if $auth.enabled }}
+- name: oidc-introspection
+  secret:
+    secretName: {{ required "backend.auth.introspection.existingSecret is required when backend.auth.enabled" $auth.introspection.existingSecret }}
+    defaultMode: 0440
+    items:
+      - {key: {{ $auth.introspection.key }}, path: {{ $auth.introspection.key }}}
+{{- if $auth.caBundle.existingSecret }}
+- name: oidc-ca
+  secret:
+    secretName: {{ $auth.caBundle.existingSecret }}
+    defaultMode: 0444
+    items:
+      - {key: {{ $auth.caBundle.key }}, path: {{ $auth.caBundle.key }}}
+{{- end }}
+{{- if $auth.userManagement.enabled }}
+- name: oidc-user-manager
+  secret:
+    secretName: {{ required "backend.auth.userManagement.existingSecret is required when backend.auth.userManagement.enabled" $auth.userManagement.existingSecret }}
+    defaultMode: 0440
+    items:
+      - {key: {{ $auth.userManagement.key }}, path: {{ $auth.userManagement.key }}}
+{{- end }}
+{{- end }}
+{{- end }}
