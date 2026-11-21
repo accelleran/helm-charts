@@ -1,0 +1,15 @@
+{{- $profiles := include "firecell-node-logs.profiles" . | fromJson -}}
+firecell-node-logs {{ .Chart.Version }} installed as "{{ .Release.Name }}" in namespace {{ .Release.Namespace }}.
+
+Store profiles (node label {{ include "firecell-node-logs.profileLabel" . }}; "{{ .Values.defaultProfile }}" also runs on unlabelled nodes):
+{{- range $name := keys $profiles | sortAlpha }}
+{{- $p := index $profiles $name }}
+  vlogs-node-{{ $name }}: {{ $p.env | toJson }}
+{{- end }}
+
+vlagent writes to {{ include "firecell-node-logs.localStoreUrl" . }}
+{{- if .Values.centralCopy.enabled }} and {{ .Values.centralCopy.url }}{{ end }}.
+
+Check:
+  kubectl -n {{ .Release.Namespace }} get daemonsets,pods -o wide
+  kubectl -n {{ .Release.Namespace }} get endpointslices -l kubernetes.io/service-name=vlogs-node -o wide

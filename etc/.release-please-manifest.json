@@ -16,5 +16,6 @@
   "charts/firecell-core": "0.2.0",
   "charts/firecell-cu": "0.2.0",
   "charts/firecell-du": "0.2.0",
-  "charts/cbrs-domain-proxy": "0.1.0"
+  "charts/cbrs-domain-proxy": "0.1.0",
+  "charts/firecell-node-logs": "0.1.0"
 }

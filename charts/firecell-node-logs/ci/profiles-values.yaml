@@ -1,0 +1,25 @@
+# A third profile with a percentage limit, small switched off, and a copy to
+# a central store.
+profiles:
+  small:
+    enabled: false
+  large:
+    enabled: true
+    retentionPeriod: 2w
+    diskLimit:
+      kind: percent
+      value: 80
+    resources:
+      requests: {cpu: 50m, memory: 128Mi}
+      limits: {cpu: "1", memory: 1Gi}
+collect:
+  extraFields:
+    site: ci
+centralCopy:
+  enabled: true
+  url: http://central-logs.example.invalid:9428/insert/native
+networkPolicy:
+  extraFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring

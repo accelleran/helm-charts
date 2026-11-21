@@ -42,6 +42,15 @@ data:
   FIRECELL_NMS_NG_QOS_RECONCILE_INTERVAL: {{ $be.config.qosReconcileIntervalSeconds | quote }}
   FIRECELL_NMS_NG_QOS_MAX_RULES: {{ $be.config.qosMaxRules | quote }}
   FIRECELL_NMS_NG_TRUST_GATEWAY_HEADERS: {{ $be.config.trustGatewayHeaders | quote }}
+  {{- with .Values.supportLogs }}
+  FIRECELL_NMS_NG_LOG_STORE_NAMESPACE: {{ .logStore.namespace | quote }}
+  FIRECELL_NMS_NG_LOG_STORE_SERVICE: {{ .logStore.service | quote }}
+  FIRECELL_NMS_NG_LOG_STORE_PORT: {{ .logStore.port | quote }}
+  FIRECELL_NMS_NG_BUNDLE_DIR: {{ .bundles.dir | quote }}
+  FIRECELL_NMS_NG_BUNDLE_STORE_MAX_BYTES: {{ .bundles.storeMaxBytes | int64 | quote }}
+  FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP: {{ .retention.configMap | quote }}
+  FIRECELL_NMS_NG_LOG_RETENTION_CONFIGMAP_NAMESPACE: {{ .retention.configMapNamespace | quote }}
+  {{- end }}
   KUBECONFIG: /etc/firecell-nms/kubeconfig/config
 ---
 apiVersion: v1

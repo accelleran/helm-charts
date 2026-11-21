@@ -1,0 +1,118 @@
+{{- $va := .Values.vlagent }}
+{{- $state := trimSuffix "/" $va.hostPath }}
+{{- include "firecell-node-logs.checkResources" (dict "resources" $va.resources "name" "vlagent.resources") }}
+{{- $urls := list (include "firecell-node-logs.localStoreUrl" .) }}
+{{- if .Values.centralCopy.enabled }}
+{{- $central := .Values.centralCopy.url | required "firecell-node-logs: centralCopy.url is required when centralCopy.enabled" }}
+{{- if not (hasSuffix "/insert/native" $central) }}
+{{- fail (printf "firecell-node-logs: centralCopy.url %q must end with /insert/native" $central) }}
+{{- end }}
+{{- $urls = append $urls $central }}
+{{- end }}
+# Collects the stdout of every container on its node from the kubelet's
+# log files and sends it to the store on the same node only (and, with
+# centralCopy, to the central store).
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vlagent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" . | nindent 4 }}
+    app.kubernetes.io/name: vlagent
+    app.kubernetes.io/component: collector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vlagent
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vlagent
+        app.kubernetes.io/component: collector
+        app.kubernetes.io/part-of: firecell-node-logs
+    spec:
+      serviceAccountName: vlagent
+      automountServiceAccountToken: true
+      enableServiceLinks: false
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: vlagent
+          image: {{ include "firecell-node-logs.image" (dict "global" .Values.global "image" $va.image "name" "vlagent.image") | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args:
+            - -kubernetesCollector
+            - -kubernetesCollector.logsPath=/var/log/containers
+            - -kubernetesCollector.checkpointsPath={{ $state }}/checkpoints.json
+            {{- with .Values.collect.excludeFilter }}
+            - {{ printf "-kubernetesCollector.excludeFilter=%s" . | quote }}
+            {{- end }}
+            {{- with .Values.collect.extraFields }}
+            - {{ printf "-kubernetesCollector.extraFields=%s" (toJson .) | quote }}
+            {{- end }}
+            - -tmpDataPath={{ $state }}
+            - -remoteWrite.tmpDataPath={{ $state }}/buffer
+            {{- range $urls }}
+            - -remoteWrite.url={{ . }}
+            {{- end }}
+            {{- /* One value per URL: each destination has its own buffer. */}}
+            {{- range $urls }}
+            - -remoteWrite.maxDiskUsagePerURL={{ $va.maxDiskUsagePerURL }}
+            {{- end }}
+            {{- with $va.memoryAllowedBytes }}
+            - -memory.allowedBytes={{ . }}
+            {{- end }}
+            - -httpListenAddr=:9429
+            {{- range $va.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          ports:
+            - {name: http, containerPort: 9429, protocol: TCP}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            {{- toYaml $va.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml $va.securityContext | nindent 12 }}
+          volumeMounts:
+            - {name: pods, mountPath: /var/log/pods, readOnly: true}
+            - {name: containers, mountPath: /var/log/containers, readOnly: true}
+            - {name: state, mountPath: {{ $state }}}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: pods
+          hostPath:
+            path: /var/log/pods
+            type: Directory
+        - name: containers
+          hostPath:
+            path: /var/log/containers
+            type: Directory
+        - name: state
+          hostPath:
+            path: {{ $state }}
+            type: DirectoryOrCreate
+        - {name: tmp, emptyDir: {}}

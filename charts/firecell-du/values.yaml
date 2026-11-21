@@ -340,18 +340,27 @@ extraConfig:
       ofh:
         enable_busy_waiting: true
   log:
-    filename: /tmp/logs/ocudu_du.log
+    # stdout, so the node's log collector (firecell-node-logs) keeps the DU
+    # log across pod restarts. A file under /tmp/logs (an emptyDir, which
+    # still holds the pcaps and the M-plane log) is lost with the pod.
+    filename: stdout
     all_level: warning
     du_level: info
     f1ap_level: info
-    mac_level: info
+    # warning (ocudu's own default): at info the MAC and scheduler log every
+    # PDU and every skipped slot, about 2.8 GB an hour with 10 UEs on lab .39,
+    # which would fill the node log store in hours. Raise it through the NMS
+    # (Log verbosity (RAN), DU MAC) while investigating.
+    mac_level: warning
     rlc_level: warning
     f1u_level: info
     gtpu_level: warning
     hex_max_size: 0
     high_latency_diagnostics_enabled: false
   metrics:
-    autostart_stdout_metrics: true
+    # Off: with the log on stdout, the per-second console metrics table would
+    # fill the node's log store. The NMS already gets these metrics over O1 PM.
+    autostart_stdout_metrics: false
     enable_log: false
     # enable_sched is generated from o1.ueMetrics (true when per-UE PM is on); set it here to override.
     layers:

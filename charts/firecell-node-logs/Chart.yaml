@@ -1,0 +1,15 @@
+apiVersion: v2
+name: firecell-node-logs
+description: Firecell per-node log stores - a VictoriaLogs store and a vlagent
+  collector on every Kubernetes node, queried by the NMS on demand
+type: application
+version: 0.1.0
+appVersion: "v1.53.0"
+keywords:
+  - logs
+  - victorialogs
+  - vlagent
+  - firecell
+maintainers:
+  - name: Firecell
+    email: support@firecell.io

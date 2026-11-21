@@ -1,0 +1,119 @@
+{{- /*
+One store DaemonSet per enabled profile. A node runs the profile its
+firecell.io/log-profile label names; defaultProfile runs on every node
+whose label names no other enabled profile (or that has no label), so each
+node gets exactly one store and vlogs-local always has one local endpoint.
+*/}}
+{{- $profiles := include "firecell-node-logs.profiles" . | fromJson }}
+{{- $label := include "firecell-node-logs.profileLabel" . }}
+{{- $port := include "firecell-node-logs.storePort" . }}
+{{- range $name := keys $profiles | sortAlpha }}
+{{- $p := index $profiles $name }}
+{{- $others := without (keys $profiles | sortAlpha) $name }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vlogs-node-{{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "firecell-node-logs.labels" $ | nindent 4 }}
+    app.kubernetes.io/name: vlogs-node
+    app.kubernetes.io/component: store
+    {{ $label }}: {{ $name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vlogs-node
+      {{ $label }}: {{ $name }}
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vlogs-node
+        app.kubernetes.io/component: store
+        app.kubernetes.io/part-of: firecell-node-logs
+        {{ $label }}: {{ $name }}
+      annotations:
+        checksum/retention: {{ toJson $p.env | sha256sum }}
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: {{ $.Values.store.terminationGracePeriodSeconds }}
+      {{- with $.Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $p.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or (ne $name (toString $.Values.defaultProfile)) $others }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  {{- if eq $name (toString $.Values.defaultProfile) }}
+                  # NotIn also matches nodes without the label.
+                  - {key: {{ $label }}, operator: NotIn, values: {{ toJson $others }}}
+                  {{- else }}
+                  - {key: {{ $label }}, operator: In, values: [{{ $name }}]}
+                  {{- end }}
+      {{- end }}
+      {{- with $.Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: vlogs
+          image: {{ include "firecell-node-logs.image" (dict "global" $.Values.global "image" $.Values.store.image "name" "store.image") | quote }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          args:
+            - -envflag.enable
+            - -storageDataPath=/storage
+            - -httpListenAddr=:{{ $port }}
+            {{- range $.Values.store.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: vlogs-node-{{ $name }}-env
+          ports:
+            - {name: http, containerPort: {{ $port }}, protocol: TCP}
+          readinessProbe:
+            httpGet: {path: /health, port: http}
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /health, port: http}
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            {{- toYaml $p.resources | nindent 12 }}
+          securityContext:
+            # The image runs as root and the host directory belongs to root.
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - {name: storage, mountPath: /storage}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: storage
+          hostPath:
+            path: {{ printf "%s/%s" (trimSuffix "/" $.Values.store.hostPath) $name }}
+            type: DirectoryOrCreate
+        - {name: tmp, emptyDir: {}}
+{{- end }}

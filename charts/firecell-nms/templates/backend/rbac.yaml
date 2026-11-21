@@ -1,3 +1,8 @@
+# No rule in this file grants anything on Secrets, and none may: the
+# backend, and so every support bundle, must never be able to read
+# credentials (security audit requirement). Release history comes from
+# Flux HelmRelease status and the charts' release-info ConfigMaps, never
+# from Helm's release Secrets.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -30,9 +35,12 @@ rules:
     verbs: ["get"]
   # Intent ConfigMap names come from the runtime inventory. Kubernetes does
   # not permit resourceNames on create, so access stays namespace-scoped.
+  # list: support bundles also collect the namespace's ConfigMaps, the
+  # charts' release-info ConfigMaps among them.
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "create", "update", "patch"]
+    verbs: ["get", "list", "create", "update", "patch"]
+  {{- include "firecell-nms.backend.supportReadRules" . | nindent 2 }}
 ---
 # Bound in ranNamespace by every CU-CP, CU-UP and DU chart, each with its own
 # Role on its Deployments. Pods are read so the lifecycle can follow the
@@ -48,3 +56,86 @@ rules:
   - apiGroups: [""]
     resources: ["pods", "pods/status"]
     verbs: ["get", "list", "watch"]
+  # Support bundles read bounded pod logs when no node log store has them.
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  # Support bundles collect the namespace's ConfigMaps, the charts'
+  # release-info ConfigMaps among them. Read-only: the RAN has no intent
+  # ConfigMaps.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+  {{- include "firecell-nms.backend.supportReadRules" . | nindent 2 }}
+---
+# Support bundles record the nodes (capacity, conditions, labels) and map
+# each pod to the log store of its node. Nodes are cluster-scoped, so the
+# chart binds this one itself.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nms-nodes-{{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nms-nodes-{{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nms-nodes-{{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ .Release.Namespace }}
+---
+# The NMS's own namespace. Support bundles read it like the core and RAN
+# ones: its pods and their logs (when no node log store answers), events,
+# workloads and ConfigMaps, the NMS chart's release-info among them.
+# Read-only, and nothing on Secrets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nms-self
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list"]
+  {{- include "firecell-nms.backend.supportReadRules" . | nindent 2 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nms-self
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nms-self
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ .Release.Namespace }}

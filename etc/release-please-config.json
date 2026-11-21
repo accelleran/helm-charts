@@ -85,6 +85,10 @@
     "charts/cbrs-domain-proxy": {
       "component": "cbrs-domain-proxy",
       "package-name": "cbrs-domain-proxy"
+    },
+    "charts/firecell-node-logs": {
+      "component": "firecell-node-logs",
+      "package-name": "firecell-node-logs"
     }
   }
 }
