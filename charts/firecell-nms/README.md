@@ -1,6 +1,6 @@
 # firecell-nms
 
-![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 6.0.0](https://img.shields.io/badge/AppVersion-6.0.0-informational?style=flat-square)
+![Version: 0.2.1](https://img.shields.io/badge/Version-0.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 6.0.0](https://img.shields.io/badge/AppVersion-6.0.0-informational?style=flat-square)
 
 Firecell NMS — frontend, backend and VictoriaMetrics
 
@@ -168,12 +168,21 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
+### 5.1 Alarm ingest and the webhook token
+
+`nms-front` answers 404 for `/api/alarms/webhook` and `/api/fcaps/`: Grafana and the NFs post to the `nms-api` Service directly, and a browser has no reason to reach them, so a signed-in user cannot inject an alarm through the gateway.
+
+`/metrics-api/` forwards only `/metrics-api/query` and `/metrics-api/query_range` (the Device Performance charts) to VictoriaMetrics; every other path under it is 404. VictoriaMetrics has no authentication of its own, and the rest of its `/api/v1/` writes and deletes: a written `nms_alarm_active` series would raise an alarm through Grafana, and `admin/tsdb/delete_series` would erase PM history.
+
+The alarm webhook token Secret (`backend.alarmWebhookToken.secretName`, default `nms-alarm-webhook-token`, key `token`) is created by the installer, never by the chart. It is mounted into nms-api only, at `/var/run/secrets/nms/alarm-webhook/token` (mode 0440 with the pod's fsGroup), with `optional: true`, so a release without it starts unchanged and the webhook takes posts without a token. Once the file exists every webhook post needs `Authorization: Bearer <token>` (one token per line, for rotation); the backend reads it again without a restart. Grafana's contact point must send the same token.
+
 ## 6. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| backend.alarmWebhookToken.secretName | string | `"nms-alarm-webhook-token"` | Secret with key `token` (one token per line, for rotation). |
 | backend.api.replicas | int | `2` | API replicas (at least 2). |
 | backend.api.resources.limits.cpu | string | `"1"` |  |
 | backend.api.resources.limits.memory | string | `"1Gi"` |  |
@@ -198,11 +207,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.controlPlane.resources.limits.memory | string | `"1Gi"` |  |
 | backend.controlPlane.resources.requests.cpu | string | `"100m"` |  |
 | backend.controlPlane.resources.requests.memory | string | `"256Mi"` |  |
-| backend.database.image | object | `{"digest":"","registry":"docker.io","repository":"library/mysql","tag":"8.4.10"}` | Backend MySQL image. |
+| backend.database.image | object | `{"digest":"","registry":"docker.io","repository":"library/mysql","tag":"8.4.13"}` | Backend MySQL image. |
 | backend.database.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | backend.database.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | backend.database.image.repository | string | `"library/mysql"` | Image repository path, including the org (kept when the registry is rewritten). |
-| backend.database.image.tag | string | `"8.4.10"` | MySQL image tag. |
+| backend.database.image.tag | string | `"8.4.13"` | MySQL image tag. |
 | backend.database.name | string | `"firecell_nms"` | Database the backend uses; `database-url` must name it. |
 | backend.database.resources.limits.cpu | string | `"2"` |  |
 | backend.database.resources.limits.memory | string | `"2Gi"` |  |
@@ -240,7 +249,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | front.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | front.image.repository | string | `"accelleran/nms-frontend"` | Image repository path, including the org (kept when the registry is rewritten). |
 | front.image.tag | string | `"6.0.0"` | Image tag. |
-| front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics. |
+| front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/query and /metrics-api/query_range -> <metricsUrl>/api/v1/query(_range); every other /metrics-api/ path is 404). Empty: the in-chart VictoriaMetrics. |
 | front.resources.limits.cpu | string | `"200m"` |  |
 | front.resources.limits.memory | string | `"128Mi"` |  |
 | front.resources.requests.cpu | string | `"50m"` |  |
@@ -274,4 +283,4 @@ The following table lists the configurable parameters of the firecell-nms chart 
 There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 
 ----------------------------------------------
-Autogenerated from chart metadata using [helm-docs v1.11.0](https://github.com/norwoodj/helm-docs/releases/v1.11.0)
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)
