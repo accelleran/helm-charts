@@ -273,6 +273,20 @@ udm:
       cpu: 2000m
   # SUCI decryption private key — REQUIRED via overlay (see values-lab-insecure-defaults.yaml for lab demo key)
   suciKey: ""
+  # -- More SUCI home network profiles, next to the one from coreConfig.udm.suci* (TS 33.501 Annex C.3).
+  # Each entry: `id` = the home network public key ID the UE sends (the UDM has no fallback when it
+  # matches no profile), `scheme` = 1 (Profile A, X25519) or 2 (Profile B, P-256), `key` = PKCS#8 PEM
+  # private key. Each key is stored in ConfigMap oai-udm-config as suci-<id>.pem (like suciKey) and
+  # mounted at /openair-udm/etc/suci-<id>.pem. Empty (default): only the single profile, as before.
+  # Example:
+  #   extraSuciProfiles:
+  #     - id: 11
+  #       scheme: 1
+  #       key: |
+  #         -----BEGIN PRIVATE KEY-----
+  #         ...
+  #         -----END PRIVATE KEY-----
+  extraSuciProfiles: []
   fcaps:
     enabled: false
     mnsPort: 9091
@@ -654,6 +668,10 @@ upf:
   # Default no — set true only when SMF/UE use Ethernet PDU; does not remove XDP "ETH PDU"
   # fallback trace strings (see cn5g-upf UserPlaneComponent / pfcp_session_lookup_xdp_kernel).
   oaiEnableEthPdu: false
+  # OAI UPF: framed routing (cn5g-upf support_features.enable_fr). When true the UPF
+  # matches downlink traffic to the Framed-Route prefixes the SMF signals for a PDU
+  # session (TS 29.244 Framed-Route IE). Default off.
+  enableFramedRouting: false
   # Optional overrides for hostnet ConfigMap (see docs/developer/oai-upf-ebpf-hostnet.md)
   oaiHostNet:
     stubInterface: ""            # Else sbiInterface, else eno8303
@@ -782,6 +800,26 @@ ims:
       limits:
         memory: 128Mi
         cpu: 200m
+  # MySQL accounts of the IMS (Kamailio CSCFs and Cx gateway; cn5g-ims rc-02
+  # images, which create and re-password their accounts on every start).
+  credentials:
+    # Name of an existing Secret with keys cx-db-password and
+    # kamailio-db-password. Empty: the chart creates ims-db-credentials.
+    existingSecret: ""
+    # Empty: 32 random alphanumerics, generated once and kept on upgrade.
+    # The Kamailio password must match [A-Za-z0-9._~-]{1,64}.
+    cxDbPassword: ""
+    kamailioDbPassword: ""
+  # Host part of the pyhss/pcscf/icscf/scscf MySQL accounts: the client address
+  # MySQL sees (with hostNetwork CSCFs usually the node IP; check
+  # information_schema.processlist). Empty keeps the images' default '%' (any
+  # host). Accounts left with another host part are not dropped by the images
+  # (they log a WARN with the DROP USER to run); see cxGateway.dropWildcardAccount.
+  dbAccountHost: ""
+  # Refuse legacy default passwords and an empty Cx peer allow-list
+  # (CX_STRICT_SECURITY / FIRECELL_STRICT_SECRETS). Off: warnings only.
+  # Switch on last, once credentials, dbAccountHost and allowedPeers are set.
+  strictSecrets: false
   # Kamailio CSCFs — hostNetwork IPs must exist on the node before Ready.
   ueImsSubnet: "14.1.1.0/25"
   upfN6Gateway: ""
@@ -813,6 +851,18 @@ ims:
     imageTag: latest
     # udr = oai_db SoT (Cx-on-UDR); legacy = pyHSS DB + seed
     cxSot: udr
+    # split: an init container with CX_MODE=provision (MySQL root password:
+    # databases, account, grants, self-check) then CX_MODE=serve without root.
+    # all: one container does both (root password stays in the serving pod).
+    # Both need a cn5g-ims rc-02 gateway image; older images ignore CX_MODE.
+    mode: split
+    # CX_DIAMETER_ALLOWED_PEERS: IPs/CIDRs of the I-CSCF and S-CSCF as the
+    # gateway sees them (comma separated). Empty: every host that reaches
+    # ip:port (the gateway logs a WARN; strictSecrets refuses it).
+    allowedPeers: ""
+    # Drop a leftover 'pyhss'@'%' account at provisioning. Set it once, in the
+    # same upgrade that first sets a restricted ims.dbAccountHost.
+    dropWildcardAccount: false
     resources:
       requests:
         memory: 256Mi
@@ -950,7 +1000,9 @@ fcAcsAgent:
 
 # --- 5G Core Configuration (injected into shared ConfigMap) ---
 coreConfig:
-  logLevel: debug
+  # debug dumps key material (Kamf, KNASint, NAS cipher keys, XRES, ...) from
+  # the OAI NFs; use it only for troubleshooting.
+  logLevel: info
   registerNf: "yes"
   httpVersion: 1
 
@@ -965,6 +1017,11 @@ coreConfig:
     relativeCapacity: 30
     statisticsTimerInterval: 20
     emergencySupport: false
+    # AMF paging (cn5g-amf amf.paging). fanoutMultiGnb: page an idle UE on every gNB
+    # serving its registration area, not only the last serving gNB. The AMF built-in
+    # default is false when the key is absent; cn5g-amf etc/config.yaml sets true.
+    paging:
+      fanoutMultiGnb: true
     enableSimpleScenario: "no"
     enableNssf: "no"
     enableSmfSelection: "no"
@@ -976,10 +1033,13 @@ coreConfig:
     amfPointer: "01"
     supportedIntegrityAlgorithms:
       - "NIA2"
+    # The AMF selects the first algorithm in this list that the UE supports, so the
+    # order is the preference. NEA0 (null ciphering) last: it is chosen only for a UE
+    # that supports nothing else.
     supportedEncryptionAlgorithms:
-      - "NEA0"
-      - "NEA1"
       - "NEA2"
+      - "NEA1"
+      - "NEA0"
 
   # NSSAI / Slices
   nssai:
@@ -1013,6 +1073,11 @@ coreConfig:
     useLocalPccRules: "no"
     enableQer: "yes"
     enableUdsf: "yes"
+    # OAI key: smf.location_api_root (cn5g-smf #49). apiRoot the SMF puts in the Location of a
+    # created SM context, e.g. "http://oai-smf:8080", so the AMF keeps a URI that outlives the SMF pod
+    # (TS 29.502 6.1.3.2.3.1, TS 29.500 6.10.4). Empty = SMF default (its listen address).
+    # Only with one SMF, or several that share the SM contexts through UDSF.
+    locationApiRoot: ""
     enableUsageReporting: "no"
     # OAI key: enable_dl_pdr_in_pfcp_session_establishment (per-UPF under smf.upfs[].config)
     enableDlPdrInPfcpSessionEstablishment: "yes"

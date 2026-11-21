@@ -14,7 +14,14 @@ spec:
     matchLabels:
       app: oai-amf
   strategy:
+    {{- if or .Values.udsf.enabled (eq (.Values.coreConfig.amf.enableUdsf | default "no" | toString | lower) "yes") }}
+    # With UDSF, a surge pod would write the same UDSF records as the old pod (and, once
+    # amf.instanceName is set, carry the same NF instance ID).
+    # One replica on SCTP drops N2 at the switch either way, so RollingUpdate buys no continuity.
+    type: Recreate
+    {{- else }}
     type: RollingUpdate
+    {{- end }}
   template:
     metadata:
       labels:
