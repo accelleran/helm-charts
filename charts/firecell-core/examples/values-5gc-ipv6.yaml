@@ -1,0 +1,55 @@
+# IPv6 / IPv4v6 PDU sessions (v6.0 IPv6 user plane): layer on the site values, after
+# values-5gc-common.yaml. Addresses are documentation examples (RFC 3849, RFC 5737):
+# replace them with the site's.
+# Usage:
+#   helm upgrade --install firecell-5gc ./charts/firecell-core -n firecell-core \
+#     -f examples/values-5gc-common.yaml \
+#     -f examples/values-5gc-ipv6.yaml
+#
+# A DNN with ipv6Prefix turns the IPv6 user plane on: the SMF ipv6 block, the CP relay
+# (RS/RA over N4-u, UDP 2152) on the SMF and on every UPF that serves an IPv6 DNN, the SMF
+# N4-u port and NetworkPolicy, and the UPF N6 IPv6 setup. Rendering fails when such a UPF
+# has N4 on its N3 interface or address. The DN router must route each UE IPv6 pool to
+# upf.n6Ipv6Cidr's address (no NAT66); NOTES prints the routes.
+
+coreConfig:
+  dnns:
+    - dnn: "oai"
+      pduSessionType: "IPV4V6"
+      ipv4Subnet: "12.1.1.0/25"
+      # One /64 per PDU session from this pool (length 0..64).
+      ipv6Prefix: "2001:db8:1::/48"
+    - dnn: "ims"
+      pduSessionType: "IPV4V6"
+      ipv4Subnet: "14.1.1.0/25"
+    # The /64 from an external DHCPv6 server instead (needs smf.ipv6.dhcpv6 below, else
+    # every IPv6 session of the DNN is rejected with #26):
+    # - dnn: "v6dhcp"
+    #   pduSessionType: "IPV6"
+    #   ipv4Subnet: "15.1.1.0/25"
+    #   ipAllocationMode: dhcp
+  dns:
+    primaryIpv4: "8.8.8.8"
+    secondaryIpv4: "8.8.8.8"
+    primaryIpv6: "2001:4860:4860::8888"
+    secondaryIpv6: "2001:4860:4860::8844"
+  smf:
+    ipv6:
+      # Empty keys keep the SMF defaults (values.yaml lists them). The N4-u address
+      # defaults to the SMF N4 address: give the SMF a stable one (smf.multus.enabled +
+      # smf.n4IP, or smf.hostNetwork + smf.hostPfcpIP), see NOTES.
+      ra:
+        rdnss: "yes"
+      # dhcpv6:
+      #   primaryServer: "2001:db8:ffff::547"
+      #   linkAddress: "2001:db8:2::1"
+
+upf:
+  # N4 on its own macvlan and address (N4 and N3 shall not share an IP address).
+  hostPfcpMacvlan: upf-n4-mac
+  hostPfcpIP: "192.0.2.21"
+  pfcpHost: "192.0.2.21"
+  # N6 IPv6 address and next hop: on n6Interface for a hostNetwork UPF; for a Multus UPF the
+  # address goes into the n6 NetworkAttachment next to multus.n6.ip.
+  n6Ipv6Cidr: "2001:db8:6::2/64"
+  remoteN6GwIpv6: "2001:db8:6::1"
