@@ -72,7 +72,7 @@ spec:
           port: 80
 {{- if .Values.acs.enabled }}
 ---
-# fc-acs: its northbound API (8080) for the NMS API and workers only; CWMP
+# fc-acs: its northbound API (8080) for the NMS API, workers and control plane only; CWMP
 # (7547, and 7548 for plain HTTP) from anywhere, since CPE connect from outside the cluster.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -96,6 +96,9 @@ spec:
         - podSelector:
             matchLabels:
               app: nms-worker
+        - podSelector:
+            matchLabels:
+              app: nms-control-plane
       ports:
         - protocol: TCP
           port: 8080
