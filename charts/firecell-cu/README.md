@@ -61,7 +61,7 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 | cuCp.o1.ueContext.enabled | bool | `true` | Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty. |
 | cuCp.o1.ueContext.maxUes | int | `256` | Maximum published UE entries. |
 | cuCp.o1.ueContext.measReport.intervalMs | int | `1024` | Report interval in ms (120, 240, 480, 640, 1024 or 2048). Must stay below ocudu's ue_meas_max_age_ms (3000), or every report is dropped as stale. |
-| cuCp.o1.ueContext.measReport.sectorIds | list | `[]` | cell.sectorId of every DU cell on this CU-CP. Each gets a periodic serving-cell measurement report so ue-context carries RSRP/RSRQ/SINR. Empty sends no reports (the three panels stay empty). NCI = gnb.gnbId << (36 - gnb.gnbIdBitLength) \| sectorId. |
+| cuCp.o1.ueContext.measReport.sectorIds | list | `[]` | cell.sectorId of every DU cell on this CU-CP. Each gets a periodic serving-cell measurement report so ue-context carries RSRP/RSRQ/SINR. Empty sends no reports (the three panels stay empty). NCI = gnb.gnbId << (36 - gnb.gnbIdBitLength) | sectorId. |
 | cuCp.requestPduSessionTimeout | int | `15` | Seconds the CU-CP waits for PDU session setup before releasing the UE. |
 | cuCp.resources | object | `{}` |  |
 | cuCp.tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |
@@ -104,7 +104,7 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 | nms.rbac | bool | `true` | Let the NMS read pods here, and restart, stop and start the cu-cp and cu-up Deployments. |
 
 ## 5. Maintenance & Troubleshooting
-- CU-CP and CU-UP log to stdout (`log.filename: stdout` in `cuCp.extraConfig` and `cuUp.extraConfig`): read them with `kubectl logs deploy/cu-cp -c ocucp` and `kubectl logs deploy/cu-up -c ocuup`, and the node's log store ([`firecell-node-logs`](../firecell-node-logs)) keeps them across restarts. Set `filename` to a path under `/tmp/logs` to log to a file again; that directory is an emptyDir, emptied with the pod, and still holds the pcaps.
+- CU-CP and CU-UP log to stdout (`log.filename: stdout` in `cuCp.extraConfig` and `cuUp.extraConfig`): read them with `kubectl logs deploy/cu-cp -c ocucp` and `kubectl logs deploy/cu-up -c ocuup`, and the node's log store (the [`logs` stage of the Firecell platform](https://github.com/accelleran/galaxy/tree/fcdevelop/firecell-6-flux/recipe/logs)) keeps them across restarts. Set `filename` to a path under `/tmp/logs` to log to a file again; that directory is an emptyDir, emptied with the pod, and still holds the pcaps.
 - If CU-CP and CU-UP restart together, CU-UP can time out on its first E1 connect and restart once. That restart is expected.
 - CU-UP starts `min(cuUp.nofThreads, len(cuUp.cpus) - 3)` pool workers, so a 4-CPU `cuUp.cpus` gives one worker. Give it at least `nofThreads + 3` CPUs.
 - Restarting CU-CP drops every DU's F1 association; the DUs reconnect on their own.

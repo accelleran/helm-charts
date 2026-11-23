@@ -169,8 +169,8 @@ rbac:
   ranNamespace: ""
 
 # --- Support logs and bundles ---
-# A worker builds support bundles from the per-node log stores of the
-# firecell-node-logs chart, in scratch space of its own, and keeps the
+# A worker builds support bundles from the per-node log stores (the logs
+# stage of the Firecell platform, galaxy), in scratch space of its own, and keeps the
 # finished archive in the NMS database, from which any API replica streams
 # it. API and worker pods therefore spread over nodes freely.
 #
@@ -180,7 +180,7 @@ rbac:
 # support bundles justify today.
 supportLogs:
   logStore:
-    # -- Namespace of the firecell-node-logs release.
+    # -- Namespace of the per-node log stores.
     namespace: firecell-logs
     # -- Headless Service of the stores; the backend reads its EndpointSlices
     # to find the store of each node.
@@ -188,8 +188,8 @@ supportLogs:
     # -- Port of every store.
     port: 9428
   retention:
-    # -- ConfigMap the backend writes store retention overrides to (Flux
-    # merges it into the firecell-node-logs HelmRelease values).
+    # -- ConfigMap the backend writes store retention overrides to (the
+    # platform's logs stage substitutes it into the store flags).
     configMap: firecell-node-logs-overrides
     # -- Namespace of that ConfigMap.
     configMapNamespace: flux-system
