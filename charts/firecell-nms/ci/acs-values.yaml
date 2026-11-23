@@ -1,0 +1,8 @@
+# CI values for ct lint: fc-acs on a LoadBalancer address, with the
+# NetworkPolicies that let it reach the NMS API.
+acs:
+  enabled: true
+  southbound:
+    loadBalancerIP: 192.0.2.10
+networkPolicy:
+  enabled: true
