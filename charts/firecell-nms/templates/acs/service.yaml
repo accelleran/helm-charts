@@ -38,7 +38,9 @@ spec:
   {{- if $sb.loadBalancerIP }}
   type: LoadBalancer
   loadBalancerIP: {{ $sb.loadBalancerIP | quote }}
-  externalTrafficPolicy: Cluster
+  # Local, as for the NodePort: SNAT to the node address would put every CPE
+  # behind one source address.
+  externalTrafficPolicy: Local
   {{- else }}
   type: NodePort
   externalTrafficPolicy: Local

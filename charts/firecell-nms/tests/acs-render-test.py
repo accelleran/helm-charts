@@ -122,7 +122,7 @@ def test_enabled():
 
     info = find(docs, "ConfigMap", "t-release-info")
     images = json.loads(info["data"]["release.json"])["images"]
-    check(images.get("fc-acs/fc-acs") == "docker.io/accelleran/fc-acs:6.0.0", "release-info lists the fc-acs image")
+    check(images.get("fc-acs/fc-acs") == "docker.io/accelleran/nms-fc-acs:6.0.0", "release-info lists the fc-acs image")
 
 
 def test_load_balancer():
@@ -131,7 +131,7 @@ def test_load_balancer():
     check(sb["spec"]["type"] == "LoadBalancer", "southbound is a LoadBalancer when loadBalancerIP is set")
     check(sb["spec"].get("loadBalancerIP") == "192.0.2.10", "loadBalancerIP set")
     check(sb["metadata"].get("annotations", {}).get("lbipam.cilium.io/ips") == "192.0.2.10", "Cilium LB-IPAM annotation set")
-    check(sb["spec"]["externalTrafficPolicy"] == "Cluster", "LoadBalancer uses externalTrafficPolicy Cluster")
+    check(sb["spec"]["externalTrafficPolicy"] == "Local", "LoadBalancer keeps externalTrafficPolicy Local")
     ports = sorted(p["port"] for p in sb["spec"]["ports"])
     check(ports == [7547, 7548], f"LoadBalancer carries 7547 and 7548 (got {ports})")
     check(all("nodePort" not in p for p in sb["spec"]["ports"]), "no fixed nodePort on the LoadBalancer")

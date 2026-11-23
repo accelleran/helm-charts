@@ -206,7 +206,7 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 
 - **Environment.** Besides the three above, `FC_ACS_LOG_LEVEL` (`acs.logLevel`), `FC_ACS_SOUTHBOUND_HTTP_PORT` (7548, or 0 when `acs.southbound.plainHttp` is false) and `FC_ACS_NMS_URL` (the `nms-api` Service, where fc-acs posts faults to the FCAPS ingest).
 - **Ports and probes.** `southbound` 7547 (CWMP), `southbound-http` 7548 (plain HTTP for CPE that cannot do TLS, each one allowed in the ACS itself; only with `acs.southbound.plainHttp`) and `northbound` 8080 (API; liveness `GET /api/v1/health`, readiness `GET /api/v1/ready`). One replica, replaced with `Recreate`.
-- **Southbound Service.** `fc-acs-southbound` is a NodePort on `acs.southbound.nodePort` (30547) and, for plain HTTP, `acs.southbound.httpNodePort` (30548) with `externalTrafficPolicy: Local`, so fc-acs sees the CPE address. With `acs.southbound.loadBalancerIP` set it is a LoadBalancer on that address (`loadBalancerIP` and the Cilium LB-IPAM annotation `lbipam.cilium.io/ips`) with `externalTrafficPolicy: Cluster`.
+- **Southbound Service.** `fc-acs-southbound` is a NodePort on `acs.southbound.nodePort` (30547) and, for plain HTTP, `acs.southbound.httpNodePort` (30548) with `externalTrafficPolicy: Local`, so fc-acs sees the CPE address. With `acs.southbound.loadBalancerIP` set it is a LoadBalancer on that address (`loadBalancerIP` and the Cilium LB-IPAM annotation `lbipam.cilium.io/ips`) with `externalTrafficPolicy: Local` too: on the single-node appliance the announcing node holds the pod, and the ACS rate-limits by source address, so the CPE address must not be rewritten to the node address.
 - **NetworkPolicies.** With `networkPolicy.enabled`, fc-acs accepts 8080 from the `nms-api` and `nms-worker` pods only and 7547 (and 7548 with `acs.southbound.plainHttp`) from anywhere, and the `nms-api` policy admits fc-acs on 8080.
 
 ## 8. Configuration Parameters
@@ -216,10 +216,10 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | acs.enabled | bool | `false` | Deploy fc-acs (Deployment, Services fc-acs and fc-acs-southbound, Secret fc-acs). |
-| acs.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/fc-acs","tag":"6.0.0"}` | fc-acs image. |
+| acs.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-fc-acs","tag":"6.0.0"}` | fc-acs image. |
 | acs.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | acs.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
-| acs.image.repository | string | `"accelleran/fc-acs"` | Image repository path, including the org (kept when the registry is rewritten). |
+| acs.image.repository | string | `"accelleran/nms-fc-acs"` | Image repository path, including the org (kept when the registry is rewritten). |
 | acs.image.tag | string | `"6.0.0"` | Image tag. |
 | acs.logLevel | string | `"info"` | Log level of fc-acs (FC_ACS_LOG_LEVEL). |
 | acs.resources.limits.cpu | string | `"1"` |  |
