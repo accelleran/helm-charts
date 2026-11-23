@@ -31,10 +31,34 @@ Image for a component. Pass (dict "root" $ "image" <override>).
 {{- end }}
 
 {{/*
+CU-CP name: its Deployment, pod label, ConfigMap prefix and the Service DUs
+and the CU-UP resolve (cuCpService.name), so the NMS restarts the workload
+it registered. A second gNB takes another name, in the same namespace too.
+*/}}
+{{- define "firecell-cu.cuCpName" -}}
+{{- .Values.cuCpService.name | default "cu-cp" -}}
+{{- end }}
+
+{{/*
+CU-UP name: Deployment, pod label, NETCONF Service, ConfigMap and NAD prefix.
+*/}}
+{{- define "firecell-cu.cuUpName" -}}
+{{- .Values.cuUp.name | default "cu-up" -}}
+{{- end }}
+
+{{/*
+O1 state directory on the node. Pass (dict "path" <override> "name" <workload name>).
+Defaults per workload name: two gNBs never share an overlay.
+*/}}
+{{- define "firecell-cu.statePath" -}}
+{{- .path | default (printf "/var/lib/firecell/ocudu/%s" .name) -}}
+{{- end }}
+
+{{/*
 E1 target address for CU-UP.
 */}}
 {{- define "firecell-cu.cuCpAddress" -}}
-{{- .Values.cuUp.cuCpAddress | default (printf "%s.%s.svc.cluster.local" .Values.cuCpService.name (include "firecell-cu.namespace" .)) -}}
+{{- .Values.cuUp.cuCpAddress | default (printf "%s.%s.svc.cluster.local" (include "firecell-cu.cuCpName" .) (include "firecell-cu.namespace" .)) -}}
 {{- end }}
 
 {{/*

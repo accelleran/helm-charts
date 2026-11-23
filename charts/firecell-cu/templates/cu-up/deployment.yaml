@@ -5,10 +5,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cu-up
+  name: {{ include "firecell-cu.cuUpName" . }}
   namespace: {{ include "firecell-cu.namespace" . }}
   labels:
-    app: cu-up
+    app: {{ include "firecell-cu.cuUpName" . }}
     {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 4 }}
 spec:
   replicas: 1
@@ -17,20 +17,20 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: cu-up
+      app: {{ include "firecell-cu.cuUpName" . }}
   template:
     metadata:
       labels:
-        app: cu-up
+        app: {{ include "firecell-cu.cuUpName" . }}
         {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 8 }}
       annotations:
         checksum/config: {{ include "firecell-cu.cuUpConfig" . | sha256sum }}
         {{- $nets := list }}
         {{- if $c.n3.enabled }}
-        {{- $nets = append $nets (dict "name" "cu-up-n3" "namespace" (include "firecell-cu.namespace" .)) }}
+        {{- $nets = append $nets (dict "name" (printf "%s-n3" (include "firecell-cu.cuUpName" .)) "namespace" (include "firecell-cu.namespace" .)) }}
         {{- end }}
         {{- if dig "network" "enabled" false ($c.f1u | default dict) }}
-        {{- $nets = append $nets (dict "name" "cu-up-f1u" "namespace" (include "firecell-cu.namespace" .) "interface" "f1u0") }}
+        {{- $nets = append $nets (dict "name" (printf "%s-f1u" (include "firecell-cu.cuUpName" .)) "namespace" (include "firecell-cu.namespace" .) "interface" "f1u0") }}
         {{- end }}
         {{- with $nets }}
         k8s.v1.cni.cncf.io/networks: {{ toJson . | quote }}
@@ -130,13 +130,13 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: cu-up-config
+            name: {{ include "firecell-cu.cuUpName" . }}-config
         - name: logs
           emptyDir: {}
         {{- if $o1.enabled }}
         - name: o1-state
           hostPath:
-            path: {{ $o1.statePath | default "/var/lib/firecell/ocudu/cu-up" }}
+            path: {{ include "firecell-cu.statePath" (dict "path" $o1.statePath "name" (include "firecell-cu.cuUpName" .)) }}
             type: DirectoryOrCreate
         {{- end }}
 {{- end }}

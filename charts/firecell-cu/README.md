@@ -12,8 +12,8 @@ CU-CP over F1 through the headless Service `cuCpService.name`.
 ### 1.1 Components
 | Component | Objects | Notes |
 |-----------|---------|-------|
-| CU-CP | Deployment/ConfigMap `cu-cp`, headless Service `cu-cp` (SCTP F1-C 38472, E1 38462) | N2 towards `amf.addr` |
-| CU-UP | Deployment/ConfigMap `cu-up`, NAD `cu-up-n3` | N3 on a macvlan when `cuUp.n3.enabled` |
+| CU-CP | Deployment, headless Service and pod label `cuCpService.name` (default `cu-cp`), ConfigMap `<name>-config` (SCTP F1-C 38472, E1 38462) | N2 towards `amf.addr` |
+| CU-UP | Deployment, Service and pod label `cuUp.name` (default `cu-up`), ConfigMap `<name>-config`, NAD `<name>-n3` | N3 on a macvlan when `cuUp.n3.enabled` |
 
 ## 2. Install
 ```bash
@@ -29,11 +29,30 @@ From a checkout of this repository, use the chart paths instead: `helm install r
 `cu-cp.<namespace>.svc.cluster.local` without further configuration.
 Any Ocudu YAML key can be added through `cuCp.extraConfig` and `cuUp.extraConfig`.
 
+### 2.0 A second gNB
+Each CU release is one gNB. A second one, on the same core and in the same namespace or another,
+needs its own names, gNB-ID and N3 address; the O1 state directories follow the names:
+
+```yaml
+gnb:
+  gnbId: 2
+cuCpService:
+  name: cu-cp2      # its DUs: cuCpAddress cu-cp2.<namespace>.svc.cluster.local, gnb.gnbId 2
+cuUp:
+  name: cu-up2
+  n3:
+    cidr: 10.3.0.6/24
+```
+
+The AMF lists it as `cu-cp2` (`gnb.ranNodeName`). Two releases with the same names in two
+namespaces on one node would share `/var/lib/firecell/ocudu/<name>`: set `cuCp.o1.statePath` and
+`cuUp.o1.statePath` then.
+
 ### 2.1 NMS Access
 With `nms.rbac` (the default), the release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs here:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: pod reads.
-- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for `cu-cp` and `cu-up`, so the NMS can restart, stop and start them.
+- Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the CU-CP and CU-UP Deployments (`cuCpService.name`, `cuUp.name`), so the NMS can restart, stop and start them.
 
 The NMS and the CU can be installed in either order: the bindings grant nothing until the NMS's ServiceAccount and ClusterRole exist.
 
@@ -56,7 +75,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuCp.o1.enabled | bool | `false` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
 | cuCp.o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | cuCp.o1.restartOnColdCommit | bool | `false` |  |
-| cuCp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp. |
+| cuCp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Empty uses /var/lib/firecell/ocudu/<cuCpService.name>, so a second gNB with another name gets its own; the same name in two namespaces on one node still needs a path here. |
 | cuCp.o1.ueContext.enabled | bool | `true` | Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty. |
 | cuCp.o1.ueContext.maxUes | int | `256` | Maximum published UE entries. |
 | cuCp.o1.ueContext.measReport.intervalMs | int | `1024` | Report interval in ms (120, 240, 480, 640, 1024 or 2048). Must stay below ocudu's ue_meas_max_age_ms (3000), or every report is dropped as stale. |
@@ -65,7 +84,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuCp.requestPduSessionTimeout | int | `15` | Seconds the CU-CP waits for PDU session setup before releasing the UE. |
 | cuCp.resources | object | `{}` |  |
 | cuCp.tolerations | list | `[]` | Tolerations override (defaults to global.tolerations). |
-| cuCpService.name | string | `"cu-cp"` | Service name. firecell-du defaults its cuCpAddress to cu-cp.<namespace>. |
+| cuCpService.name | string | `"cu-cp"` | CU-CP name: Service, Deployment, pod label, ConfigMap prefix and default O1 state directory. firecell-du defaults its cuCpAddress to cu-cp.<namespace>. A second gNB takes another name (e.g. cu-cp2), in the same namespace or another one. |
 | cuUp.cpus | string | `""` | CPU list for taskset. Empty runs unpinned. |
 | cuUp.cuCpAddress | string | `""` | E1 target. Empty resolves to <cuCpService.name>.<namespace>.svc.cluster.local. |
 | cuUp.enabled | bool | `true` | Deploy CU-UP. |
@@ -79,12 +98,13 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | cuUp.n3.enabled | bool | `true` | Attach a macvlan for N3. When false, N3 binds the pod IP. |
 | cuUp.n3.mac | string | `""` | Fixed MAC for the N3 macvlan (keeps the UPF neighbour entry valid). Empty lets CNI pick. |
 | cuUp.n3.master | string | `"eth1"` | Host parent interface (macvlan) or Linux bridge name (bridge, e.g. br-n3). |
+| cuUp.name | string | `"cu-up"` | CU-UP name: Deployment, pod label, NETCONF Service, ConfigMap and NAD prefix and default O1 state directory. |
 | cuUp.nodeSelector | object | `{}` |  |
 | cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
 | cuUp.o1.enabled | bool | `false` | NETCONF (netopeer2) on the CU-UP, so the NMS registers and manages it over O1. Needs an image whose ocuup carries the O1 service; renders Service cu-up:830. |
 | cuUp.o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | cuUp.o1.restartOnColdCommit | bool | `false` |  |
-| cuUp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up. |
+| cuUp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Empty uses /var/lib/firecell/ocudu/<cuUp.name>; the same name in two namespaces on one node still needs a path here. |
 | cuUp.o1.yangSearchPath | string | `"/usr/local/yang"` |  |
 | cuUp.rpsCpus | string | `""` | RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off. |
 | cuUp.resources | object | `{}` |  |
@@ -98,6 +118,7 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 | gnb.gnbId | int | `1` | gNB-ID. |
 | gnb.gnbIdBitLength | int | `22` | gNB-ID length in bits. |
 | gnb.plmn | string | `"00101"` | Serving PLMN (MCC+MNC). |
+| gnb.ranNodeName | string | `""` | RAN node name the CU-CP sends in NG Setup (the AMF lists gNBs by it). Empty: the CU-CP name (cuCpService.name). |
 | gnb.slices | list | `[{"schedCfg":{"max_prb_policy_ratio":100,"min_prb_policy_ratio":15,"priority":10},"sd":1,"sst":1}]` | Slices. sst/sd go to the CU-CP TAI slice list (schedCfg is only read by firecell-du). |
 | gnb.tac | int | `1` | Tracking area code. |
 | nms.namespace | string | `"firecell-nms"` | Namespace of the firecell-nms release. |
