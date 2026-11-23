@@ -35,4 +35,9 @@ subjects:
   - kind: ServiceAccount
     name: nms
     namespace: {{ $nmsNs }}
+  # The control plane runs as its own account (firecell-nms): it writes the
+  # allowlist and restarts the Domain Proxy.
+  - kind: ServiceAccount
+    name: nms-control-plane
+    namespace: {{ $nmsNs }}
 {{- end }}

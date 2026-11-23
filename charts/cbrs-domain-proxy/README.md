@@ -48,7 +48,7 @@ every CBSD register again and drops its Grants. A new release with the same name
 from scratch, delete them by hand.
 
 ### 2.2 NMS Access
-With `nms.rbac` (the default), the release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms)
+With `nms.rbac` (the default), the release grants ServiceAccounts `nms` and `nms-control-plane` of the [`firecell-nms`](../firecell-nms)
 release in `nms.namespace` get and patch on Deployment `<release>` (restart) and on ConfigMap `<release>-allowlist`,
 by name only.
 
