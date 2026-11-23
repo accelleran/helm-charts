@@ -181,10 +181,17 @@ acs:
   resources:
     requests: {cpu: 100m, memory: 256Mi}
     limits: {cpu: "1", memory: 512Mi}
-  # Service fc-acs-southbound, where CPE reach the ACS (CWMP, port 7547).
+  # Service fc-acs-southbound, where CPE reach the ACS (CWMP, port 7547,
+  # and plain HTTP on 7548).
   southbound:
     # -- NodePort of fc-acs-southbound when loadBalancerIP is empty.
     nodePort: 30547
+    # -- Open the plain-HTTP listener (port 7548) for CPE that cannot do
+    # TLS; each device must still be allowed to use it in the ACS. False
+    # sets FC_ACS_SOUTHBOUND_HTTP_PORT to 0 and exposes no port 7548.
+    plainHttp: true
+    # -- NodePort of the plain-HTTP listener when loadBalancerIP is empty.
+    httpNodePort: 30548
     # -- When set, fc-acs-southbound is a LoadBalancer on this address
     # (loadBalancerIP and the Cilium LB-IPAM annotation) instead of a NodePort.
     loadBalancerIP: ""

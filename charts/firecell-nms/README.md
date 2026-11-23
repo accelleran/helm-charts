@@ -35,7 +35,7 @@ Names are fixed, not derived from the release name, so other releases can rely o
 | `nms-db` | 3306 | Backend MySQL |
 | `nms-victoria-metrics` | 8430 | VictoriaMetrics (Prometheus API) |
 | `fc-acs` | 8080 | ACS northbound API, for the NMS (only with `acs.enabled`) |
-| `fc-acs-southbound` | 7547 | CWMP for the CPE: NodePort `acs.southbound.nodePort` (30547), or a LoadBalancer on `acs.southbound.loadBalancerIP` (only with `acs.enabled`) |
+| `fc-acs-southbound` | 7547, 7548 | CWMP for the CPE, and plain HTTP on 7548 with `acs.southbound.plainHttp`: NodePorts `acs.southbound.nodePort` (30547) and `acs.southbound.httpNodePort` (30548), or a LoadBalancer on `acs.southbound.loadBalancerIP` (only with `acs.enabled`) |
 
 ## 2. Before Installation
 
@@ -202,12 +202,12 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 | `database-password` | Password of MySQL user `acs` (32 random characters). |
 | `database-url` | `mysql+pymysql://acs:<database-password>@nms-db:3306/firecell_acs`, as `FC_ACS_DATABASE_URL`. |
 | `northbound-token` | Token of the northbound API (32 random characters), mounted at `/etc/fc-acs/secrets/northbound-token` (`FC_ACS_NORTHBOUND_TOKEN_FILE`). |
-| `credential-key` | Credential key of fc-acs (48 random characters), mounted at `/etc/fc-acs/secrets/credential-key` (`FC_ACS_CREDENTIAL_KEY_FILE`). |
+| `credential-key` | Key that encrypts device credentials and the TLS private key at rest in the ACS database. Losing it means re-bootstrapping every device's credentials. 48 random characters, mounted at `/etc/fc-acs/secrets/credential-key` (`FC_ACS_CREDENTIAL_KEY_FILE`). |
 
-- **Environment.** Besides the three above, `FC_ACS_LOG_LEVEL` (`acs.logLevel`) and `FC_ACS_NMS_URL` (the `nms-api` Service, where fc-acs posts faults to the FCAPS ingest).
-- **Ports and probes.** `southbound` 7547 (CWMP) and `northbound` 8080 (API; liveness `GET /api/v1/health`, readiness `GET /api/v1/ready`). One replica, replaced with `Recreate`.
-- **Southbound Service.** `fc-acs-southbound` is a NodePort on `acs.southbound.nodePort` (30547) with `externalTrafficPolicy: Local`, so fc-acs sees the CPE address. With `acs.southbound.loadBalancerIP` set it is a LoadBalancer on that address (`loadBalancerIP` and the Cilium LB-IPAM annotation `lbipam.cilium.io/ips`) with `externalTrafficPolicy: Cluster`.
-- **NetworkPolicies.** With `networkPolicy.enabled`, fc-acs accepts 8080 from the `nms-api` and `nms-worker` pods only and 7547 from anywhere, and the `nms-api` policy admits fc-acs on 8080.
+- **Environment.** Besides the three above, `FC_ACS_LOG_LEVEL` (`acs.logLevel`), `FC_ACS_SOUTHBOUND_HTTP_PORT` (7548, or 0 when `acs.southbound.plainHttp` is false) and `FC_ACS_NMS_URL` (the `nms-api` Service, where fc-acs posts faults to the FCAPS ingest).
+- **Ports and probes.** `southbound` 7547 (CWMP), `southbound-http` 7548 (plain HTTP for CPE that cannot do TLS, each one allowed in the ACS itself; only with `acs.southbound.plainHttp`) and `northbound` 8080 (API; liveness `GET /api/v1/health`, readiness `GET /api/v1/ready`). One replica, replaced with `Recreate`.
+- **Southbound Service.** `fc-acs-southbound` is a NodePort on `acs.southbound.nodePort` (30547) and, for plain HTTP, `acs.southbound.httpNodePort` (30548) with `externalTrafficPolicy: Local`, so fc-acs sees the CPE address. With `acs.southbound.loadBalancerIP` set it is a LoadBalancer on that address (`loadBalancerIP` and the Cilium LB-IPAM annotation `lbipam.cilium.io/ips`) with `externalTrafficPolicy: Cluster`.
+- **NetworkPolicies.** With `networkPolicy.enabled`, fc-acs accepts 8080 from the `nms-api` and `nms-worker` pods only and 7547 (and 7548 with `acs.southbound.plainHttp`) from anywhere, and the `nms-api` policy admits fc-acs on 8080.
 
 ## 8. Configuration Parameters
 
@@ -226,8 +226,10 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | acs.resources.limits.memory | string | `"512Mi"` |  |
 | acs.resources.requests.cpu | string | `"100m"` |  |
 | acs.resources.requests.memory | string | `"256Mi"` |  |
+| acs.southbound.httpNodePort | int | `30548` | NodePort of the plain-HTTP listener when loadBalancerIP is empty. |
 | acs.southbound.loadBalancerIP | string | `""` | When set, fc-acs-southbound is a LoadBalancer on this address (loadBalancerIP and the Cilium LB-IPAM annotation) instead of a NodePort. |
 | acs.southbound.nodePort | int | `30547` | NodePort of fc-acs-southbound when loadBalancerIP is empty. |
+| acs.southbound.plainHttp | bool | `true` | Open the plain-HTTP listener (port 7548) for CPE that cannot do TLS; each device must still be allowed to use it in the ACS. False sets FC_ACS_SOUTHBOUND_HTTP_PORT to 0 and exposes no port 7548. |
 | backend.api.replicas | int | `2` | API replicas (at least 2). |
 | backend.api.resources.limits.cpu | string | `"1"` |  |
 | backend.api.resources.limits.memory | string | `"1Gi"` |  |

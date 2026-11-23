@@ -17,7 +17,8 @@ spec:
   ports:
     - {name: northbound, port: 8080, targetPort: northbound}
 ---
-# Where CPE reach the ACS (CWMP over HTTP). A NodePort by default, keeping
+# Where CPE reach the ACS: CWMP on 7547, and plain HTTP on 7548 with
+# acs.southbound.plainHttp. A NodePort by default, keeping
 # the client address (Local); a LoadBalancer on acs.southbound.loadBalancerIP
 # when set.
 apiVersion: v1
@@ -51,4 +52,13 @@ spec:
       {{- if not $sb.loadBalancerIP }}
       nodePort: {{ $sb.nodePort }}
       {{- end }}
+    {{- if $sb.plainHttp }}
+    # Plain HTTP, for CPE that cannot do TLS.
+    - name: southbound-http
+      port: 7548
+      targetPort: southbound-http
+      {{- if not $sb.loadBalancerIP }}
+      nodePort: {{ $sb.httpNodePort }}
+      {{- end }}
+    {{- end }}
 {{- end }}
