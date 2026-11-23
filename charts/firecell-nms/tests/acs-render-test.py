@@ -137,6 +137,27 @@ def test_load_balancer():
     check(all("nodePort" not in p for p in sb["spec"]["ports"]), "no fixed nodePort on the LoadBalancer")
 
 
+def test_nms_gets_the_acs_url_and_token():
+    docs = render("acs.enabled=true")
+    for name in ("nms-api", "nms-worker"):
+        pod = find(docs, "Deployment", name)["spec"]["template"]["spec"]
+        main = pod["containers"][0]
+        env = {e["name"]: e.get("value") for e in main.get("env", [])}
+        check(env.get("FIRECELL_NMS_NG_ACS_URL") == "http://fc-acs:8080", f"{name}: FIRECELL_NMS_NG_ACS_URL")
+        check(env.get("FIRECELL_NMS_NG_ACS_TOKEN_FILE") == "/etc/firecell-nms/acs/northbound-token",
+              f"{name}: FIRECELL_NMS_NG_ACS_TOKEN_FILE")
+        vol = next((v for v in pod["volumes"] if v["name"] == "acs-token"), None)
+        check(vol is not None and vol["secret"]["secretName"] == "fc-acs"
+              and [i["key"] for i in vol["secret"]["items"]] == ["northbound-token"],
+              f"{name}: only the northbound token is mounted from Secret fc-acs")
+        mount = next((m for m in main["volumeMounts"] if m["name"] == "acs-token"), None)
+        check(mount is not None and mount.get("readOnly") is True, f"{name}: the token mount is read-only")
+    off = render()
+    for name in ("nms-api", "nms-worker"):
+        pod = find(off, "Deployment", name)["spec"]["template"]["spec"]
+        check(all(v["name"] != "acs-token" for v in pod["volumes"]), f"{name}: no ACS token without acs.enabled")
+
+
 def test_no_service_links():
     docs = render("acs.enabled=true")
     pod = find(docs, "Deployment", "fc-acs")["spec"]["template"]["spec"]
@@ -180,6 +201,7 @@ def test_network_policy():
 test_disabled()
 test_enabled()
 test_load_balancer()
+test_nms_gets_the_acs_url_and_token()
 test_no_service_links()
 test_plain_http_off()
 test_network_policy()

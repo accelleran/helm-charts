@@ -195,3 +195,33 @@ Usage: include "firecell-nms.backend.schemaCheck" (dict "root" . "name" "wait-fo
   resources:
     {{- toYaml .root.Values.backend.initResources | nindent 4 }}
 {{- end }}
+
+{{/*
+What nms-api and nms-worker need to call fc-acs: its in-cluster URL and the
+northbound token, mounted from the generated Secret fc-acs. Only with acs.enabled.
+*/}}
+{{- define "firecell-nms.acs.clientEnv" -}}
+{{- if .Values.acs.enabled }}
+- name: FIRECELL_NMS_NG_ACS_URL
+  value: "http://fc-acs:8080"
+- name: FIRECELL_NMS_NG_ACS_TOKEN_FILE
+  value: /etc/firecell-nms/acs/northbound-token
+{{- end }}
+{{- end }}
+
+{{- define "firecell-nms.acs.clientMount" -}}
+{{- if .Values.acs.enabled }}
+- {name: acs-token, mountPath: /etc/firecell-nms/acs, readOnly: true}
+{{- end }}
+{{- end }}
+
+{{- define "firecell-nms.acs.clientVolume" -}}
+{{- if .Values.acs.enabled }}
+- name: acs-token
+  secret:
+    secretName: fc-acs
+    items:
+      - {key: northbound-token, path: northbound-token}
+    defaultMode: 0440
+{{- end }}
+{{- end }}
