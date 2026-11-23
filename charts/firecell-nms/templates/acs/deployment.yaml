@@ -1,0 +1,130 @@
+{{- if .Values.acs.enabled }}
+{{- $acs := .Values.acs }}
+{{- /*
+fc-acs, the TR-069 ACS. One pod, replaced only after the old one is gone
+(Recreate). Its init container creates the ACS database and user on nms-db,
+idempotently, on every start; fc-acs migrates its own schema. The MySQL root
+password reaches that init container only, as an environment variable: the
+main container sees nothing of the backend Secret.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fc-acs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: fc-acs
+    app.kubernetes.io/component: fc-acs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: fc-acs
+  template:
+    metadata:
+      labels:
+        app: fc-acs
+        app.kubernetes.io/component: fc-acs
+        app.kubernetes.io/part-of: firecell-nms
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "firecell-nms.backend.podSecurityContext" . | nindent 8 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: create-database
+          image: {{ include "firecell-nms.image" (dict "global" .Values.global "image" .Values.backend.database.image "name" "backend.database.image") | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command:
+            - bash
+            - -ec
+            - |
+              # mysqladmin ping succeeds once nms-db answers on TCP, even
+              # with access denied, so it waits without credentials.
+              until mysqladmin ping -h nms-db -P 3306 --silent; do
+                echo "waiting for nms-db:3306"
+                sleep 5
+              done
+              # Passwords stay off the command line: root's through
+              # MYSQL_PWD, the ACS user's inside the SQL on stdin.
+              acs_pw=$(printf '%s' "$ACS_DATABASE_PASSWORD" | sed -e 's/[\\'"'"']/\\&/g')
+              MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -h nms-db -P 3306 -u root --batch <<SQL
+              CREATE DATABASE IF NOT EXISTS firecell_acs;
+              CREATE USER IF NOT EXISTS 'acs'@'%';
+              ALTER USER 'acs'@'%' IDENTIFIED BY '${acs_pw}';
+              GRANT ALL ON firecell_acs.* TO 'acs'@'%';
+              FLUSH PRIVILEGES;
+              SQL
+              echo "database firecell_acs and user acs ready"
+          securityContext:
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "firecell-nms.backend.secretName" . }}
+                  key: database-root-password
+            - name: ACS_DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fc-acs
+                  key: database-password
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+          resources:
+            {{- toYaml .Values.backend.initResources | nindent 12 }}
+      containers:
+        - name: fc-acs
+          image: {{ include "firecell-nms.image" (dict "global" .Values.global "image" $acs.image "name" "acs.image") | quote }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          securityContext:
+            {{- include "firecell-nms.backend.containerSecurityContext" . | nindent 12 }}
+          env:
+            - name: FC_ACS_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: fc-acs
+                  key: database-url
+            - name: FC_ACS_NORTHBOUND_TOKEN_FILE
+              value: /etc/fc-acs/secrets/northbound-token
+            - name: FC_ACS_CREDENTIAL_KEY_FILE
+              value: /etc/fc-acs/secrets/credential-key
+            - name: FC_ACS_LOG_LEVEL
+              value: {{ $acs.logLevel | quote }}
+            # Where fc-acs sends fault notifications (the NMS FCAPS ingest).
+            - name: FC_ACS_NMS_URL
+              value: {{ include "firecell-nms.backend.url" . | quote }}
+          ports:
+            - {name: southbound, containerPort: 7547}
+            - {name: northbound, containerPort: 8080}
+          readinessProbe:
+            httpGet: {path: /api/v1/ready, port: northbound}
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /api/v1/health, port: northbound}
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            {{- toYaml $acs.resources | nindent 12 }}
+          volumeMounts:
+            - {name: secrets, mountPath: /etc/fc-acs/secrets, readOnly: true}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        # Only the token and the credential key; the database URL comes as
+        # environment, and nothing of the backend Secret is mounted.
+        - name: secrets
+          secret:
+            secretName: fc-acs
+            defaultMode: 0440
+            items:
+              - {key: northbound-token, path: northbound-token}
+              - {key: credential-key, path: credential-key}
+        - {name: tmp, emptyDir: {}}
+{{- end }}

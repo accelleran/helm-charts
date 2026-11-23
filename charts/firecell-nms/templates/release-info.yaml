@@ -13,6 +13,7 @@ renders a pod.
       "backend/database.yaml"
       "front/deployment.yaml"
       "victoria-metrics/deployment.yaml"
+      "acs/deployment.yaml"
 }}
 apiVersion: v1
 kind: ConfigMap

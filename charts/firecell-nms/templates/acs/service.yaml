@@ -1,0 +1,54 @@
+{{- if .Values.acs.enabled }}
+{{- $sb := .Values.acs.southbound }}
+# The ACS northbound API, for the NMS only.
+apiVersion: v1
+kind: Service
+metadata:
+  name: fc-acs
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: fc-acs
+    app.kubernetes.io/component: fc-acs
+spec:
+  type: ClusterIP
+  selector:
+    app: fc-acs
+  ports:
+    - {name: northbound, port: 8080, targetPort: northbound}
+---
+# Where CPE reach the ACS (CWMP over HTTP). A NodePort by default, keeping
+# the client address (Local); a LoadBalancer on acs.southbound.loadBalancerIP
+# when set.
+apiVersion: v1
+kind: Service
+metadata:
+  name: fc-acs-southbound
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app: fc-acs
+    app.kubernetes.io/component: fc-acs
+  {{- with $sb.loadBalancerIP }}
+  annotations:
+    lbipam.cilium.io/ips: {{ . | quote }}
+  {{- end }}
+spec:
+  {{- if $sb.loadBalancerIP }}
+  type: LoadBalancer
+  loadBalancerIP: {{ $sb.loadBalancerIP | quote }}
+  externalTrafficPolicy: Cluster
+  {{- else }}
+  type: NodePort
+  externalTrafficPolicy: Local
+  {{- end }}
+  selector:
+    app: fc-acs
+  ports:
+    - name: southbound
+      port: 7547
+      targetPort: southbound
+      {{- if not $sb.loadBalancerIP }}
+      nodePort: {{ $sb.nodePort }}
+      {{- end }}
+{{- end }}
