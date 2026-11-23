@@ -171,7 +171,7 @@ acs:
     # -- Image registry host. Replaced by global.imageRegistry when set.
     registry: docker.io
     # -- Image repository path, including the org (kept when the registry is rewritten).
-    repository: accelleran/fc-acs
+    repository: accelleran/nms-fc-acs
     # -- Image tag.
     tag: "6.0.0"
     # -- Optional. When set, used as registry/repository@digest instead of :tag.
