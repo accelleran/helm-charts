@@ -164,14 +164,20 @@ snssais:
 {{- end }}
 
 ############## NF-specific configuration
-{{- if and (has (lower (toString $v.coreConfig.amf.enableNssf)) (list "yes" "true" "on")) (not $v.nssf.enabled) }}
+{{- /* coreConfig.amf.enableNssf empty or unset: follow nssf.enabled (an NSSF that is deployed
+       is used by the AMF); any other value, including a YAML false, is taken as given. */}}
+{{- $enableNssf := $v.coreConfig.amf.enableNssf }}
+{{- if or (kindIs "invalid" $enableNssf) (and (kindIs "string" $enableNssf) (eq $enableNssf "")) }}
+{{- $enableNssf = ternary "yes" "no" (eq (toString $v.nssf.enabled) "true") }}
+{{- end }}
+{{- if and (has (lower (toString $enableNssf)) (list "yes" "true" "on")) (not $v.nssf.enabled) }}
 {{- fail "coreConfig.amf.enableNssf needs nssf.enabled true: the chart gives the AMF the NSSF peer (shared config nfs.nssf) only with the NSSF block, else the AMF calls its built-in default oai-nssf:80 with API v1" }}
 {{- end }}
 amf:
   amf_name: {{ $v.coreConfig.amf.name | quote }}
   support_features_options:
     enable_simple_scenario: {{ $v.coreConfig.amf.enableSimpleScenario }}
-    enable_nssf: {{ $v.coreConfig.amf.enableNssf }}
+    enable_nssf: {{ $enableNssf }}
     enable_smf_selection: {{ $v.coreConfig.amf.enableSmfSelection }}
     release_all_pdu_sessions: {{ $v.coreConfig.amf.releaseAllPduSessions }}
     enable_ims: {{ $v.coreConfig.amf.enableIms }}
