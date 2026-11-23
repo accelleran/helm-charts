@@ -174,10 +174,10 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 
 ## 6. Support Logs
 
-The backend builds support bundles from the per-node log stores of the [`firecell-node-logs`](../firecell-node-logs) chart:
+The backend builds support bundles from the per-node log stores, which the [`logs` stage of the Firecell platform](https://github.com/accelleran/galaxy/tree/fcdevelop/firecell-6-flux/recipe/logs) runs (VictoriaLogs and vlagent on every node):
 
-- It finds the store of each node from the EndpointSlices of Service `supportLogs.logStore.service` (`vlogs-node`) in `supportLogs.logStore.namespace` (`firecell-logs`), port `supportLogs.logStore.port` (9428). The firecell-node-logs chart grants ServiceAccount `nms` that read access and lets this namespace through its NetworkPolicy.
-- It changes store retention by writing ConfigMap `supportLogs.retention.configMap` (`firecell-node-logs-overrides`) in `supportLogs.retention.configMapNamespace` (`flux-system`), which Flux merges into the firecell-node-logs HelmRelease values. The access to it comes with the Flux recipe, not this chart.
+- It finds the store of each node from the EndpointSlices of Service `supportLogs.logStore.service` (`vlogs-node`) in `supportLogs.logStore.namespace` (`firecell-logs`), port `supportLogs.logStore.port` (9428). That stage grants ServiceAccount `nms` that read access and lets this namespace through its NetworkPolicy.
+- It changes store retention by writing ConfigMap `supportLogs.retention.configMap` (`firecell-node-logs-overrides`) in `supportLogs.retention.configMapNamespace` (`flux-system`), which the stage substitutes into the store flags. The access to it comes with the Flux recipe, not this chart.
 - A worker builds each bundle in an emptyDir mounted at `supportLogs.bundles.dir` (`/var/lib/nms/bundles`, at most `supportLogs.bundles.scratchSizeLimit`) and keeps the finished archive in the NMS database, in 4 MiB parts; any API replica streams it. The bundles kept together are capped at `supportLogs.bundles.storeMaxBytes` (1 GiB), the oldest going first. No volume ties the API and worker pods to one node, so they spread freely.
 - Keeping bundles in the database is the first-phase answer. The plan is shared storage every pod can mount (Longhorn or another ReadWriteMany volume); bringing that into every edge install is a larger change than support bundles justify today.
 
@@ -217,11 +217,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.controlPlane.resources.limits.memory | string | `"1Gi"` |  |
 | backend.controlPlane.resources.requests.cpu | string | `"100m"` |  |
 | backend.controlPlane.resources.requests.memory | string | `"256Mi"` |  |
-| backend.database.image | object | `{"digest":"","registry":"docker.io","repository":"library/mysql","tag":"8.4.11"}` | Backend MySQL image. |
+| backend.database.image | object | `{"digest":"","registry":"docker.io","repository":"library/mysql","tag":"8.4.13"}` | Backend MySQL image. |
 | backend.database.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | backend.database.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | backend.database.image.repository | string | `"library/mysql"` | Image repository path, including the org (kept when the registry is rewritten). |
-| backend.database.image.tag | string | `"8.4.11"` | MySQL image tag. |
+| backend.database.image.tag | string | `"8.4.13"` | MySQL image tag. |
 | backend.database.name | string | `"firecell_nms"` | Database the backend uses; `database-url` must name it. |
 | backend.database.resources.limits.cpu | string | `"2"` |  |
 | backend.database.resources.limits.memory | string | `"2Gi"` |  |
@@ -277,16 +277,16 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | supportLogs.bundles.dir | string | `"/var/lib/nms/bundles"` | Where the worker builds a bundle (an emptyDir). |
 | supportLogs.bundles.scratchSizeLimit | string | `"5Gi"` | Size limit of that emptyDir. A bundle is at most 2 GiB before compression by default, written once uncompressed and once packed. |
 | supportLogs.bundles.storeMaxBytes | int | `1073741824` | Finished bundles kept in the database together, in bytes; the oldest go first. Each also expires after a day. |
-| supportLogs.logStore.namespace | string | `"firecell-logs"` | Namespace of the firecell-node-logs release. |
+| supportLogs.logStore.namespace | string | `"firecell-logs"` | Namespace of the per-node log stores. |
 | supportLogs.logStore.port | int | `9428` | Port of every store. |
 | supportLogs.logStore.service | string | `"vlogs-node"` | Headless Service of the stores; the backend reads its EndpointSlices to find the store of each node. |
-| supportLogs.retention.configMap | string | `"firecell-node-logs-overrides"` | ConfigMap the backend writes store retention overrides to (Flux merges it into the firecell-node-logs HelmRelease values). |
+| supportLogs.retention.configMap | string | `"firecell-node-logs-overrides"` | ConfigMap the backend writes store retention overrides to (the platform's logs stage substitutes it into the store flags). |
 | supportLogs.retention.configMapNamespace | string | `"flux-system"` | Namespace of that ConfigMap. |
-| victoriaMetrics.image | object | `{"digest":"","registry":"docker.io","repository":"victoriametrics/victoria-metrics","tag":"v1.93.4"}` | VictoriaMetrics image. |
+| victoriaMetrics.image | object | `{"digest":"","registry":"docker.io","repository":"victoriametrics/victoria-metrics","tag":"v1.156.0"}` | VictoriaMetrics image. |
 | victoriaMetrics.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | victoriaMetrics.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | victoriaMetrics.image.repository | string | `"victoriametrics/victoria-metrics"` | Image repository path, including the org (kept when the registry is rewritten). |
-| victoriaMetrics.image.tag | string | `"v1.93.4"` | VictoriaMetrics image tag. |
+| victoriaMetrics.image.tag | string | `"v1.156.0"` | VictoriaMetrics image tag. |
 | victoriaMetrics.maxConcurrentInserts | int | `16` |  |
 | victoriaMetrics.maxLabelsPerTimeseries | int | `50` |  |
 | victoriaMetrics.resources.limits.cpu | string | `"500m"` |  |

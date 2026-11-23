@@ -81,7 +81,7 @@ cuCp:
   # -- Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict).
   extraConfig:
     log:
-      # stdout, so the node's log collector (firecell-node-logs) keeps the
+      # stdout, so the node's log collector (platform logs stage) keeps the
       # CU-CP log across pod restarts. /tmp/logs (an emptyDir) still holds the pcaps.
       filename: stdout
       all_level: warning
@@ -163,7 +163,7 @@ cuUp:
         gtpu:
           ignore_ue_ambr: true
     log:
-      # stdout, so the node's log collector (firecell-node-logs) keeps the
+      # stdout, so the node's log collector (platform logs stage) keeps the
       # CU-UP log across pod restarts. /tmp/logs (an emptyDir) still holds the pcaps.
       filename: stdout
       all_level: warning

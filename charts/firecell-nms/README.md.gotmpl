@@ -175,10 +175,10 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 
 ## 6. Support Logs
 
-The backend builds support bundles from the per-node log stores of the [`firecell-node-logs`](../firecell-node-logs) chart:
+The backend builds support bundles from the per-node log stores, which the [`logs` stage of the Firecell platform](https://github.com/accelleran/galaxy/tree/fcdevelop/firecell-6-flux/recipe/logs) runs (VictoriaLogs and vlagent on every node):
 
-- It finds the store of each node from the EndpointSlices of Service `supportLogs.logStore.service` (`vlogs-node`) in `supportLogs.logStore.namespace` (`firecell-logs`), port `supportLogs.logStore.port` (9428). The firecell-node-logs chart grants ServiceAccount `nms` that read access and lets this namespace through its NetworkPolicy.
-- It changes store retention by writing ConfigMap `supportLogs.retention.configMap` (`firecell-node-logs-overrides`) in `supportLogs.retention.configMapNamespace` (`flux-system`), which Flux merges into the firecell-node-logs HelmRelease values. The access to it comes with the Flux recipe, not this chart.
+- It finds the store of each node from the EndpointSlices of Service `supportLogs.logStore.service` (`vlogs-node`) in `supportLogs.logStore.namespace` (`firecell-logs`), port `supportLogs.logStore.port` (9428). That stage grants ServiceAccount `nms` that read access and lets this namespace through its NetworkPolicy.
+- It changes store retention by writing ConfigMap `supportLogs.retention.configMap` (`firecell-node-logs-overrides`) in `supportLogs.retention.configMapNamespace` (`flux-system`), which the stage substitutes into the store flags. The access to it comes with the Flux recipe, not this chart.
 - A worker builds each bundle in an emptyDir mounted at `supportLogs.bundles.dir` (`/var/lib/nms/bundles`, at most `supportLogs.bundles.scratchSizeLimit`) and keeps the finished archive in the NMS database, in 4 MiB parts; any API replica streams it. The bundles kept together are capped at `supportLogs.bundles.storeMaxBytes` (1 GiB), the oldest going first. No volume ties the API and worker pods to one node, so they spread freely.
 - Keeping bundles in the database is the first-phase answer. The plan is shared storage every pod can mount (Longhorn or another ReadWriteMany volume); bringing that into every edge install is a larger change than support bundles justify today.
 
