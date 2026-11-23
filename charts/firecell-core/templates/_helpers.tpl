@@ -538,7 +538,8 @@ conditions of the NF Deployment templates.
 */}}
 {{- define "firecell-5gc.nmsDeployments" -}}
 {{- $names := list -}}
-{{- range $nf := list "amf" "smf" "pcf" "udr" "udm" "nrf" "ausf" -}}
+{{- /* eir, nef and nssf: deployed only when enabled (feature-wave NFs; EIR and NEF have FCAPS) */ -}}
+{{- range $nf := list "amf" "smf" "pcf" "udr" "udm" "nrf" "ausf" "eir" "nef" "nssf" -}}
 {{- if (index $.Values $nf).enabled -}}
 {{- $names = append $names (printf "oai-%s" $nf) -}}
 {{- end -}}

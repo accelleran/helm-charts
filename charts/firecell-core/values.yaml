@@ -159,8 +159,8 @@ mysql:
   enabled: true
   image: mysql:8.4
   # Full image reference, winning over registry + image composition.
-  # image is "mysql:8.3" (includes a tag); without this override the chart
-  # would ask Hub for accelleran/mysql:8.3.
+  # image is "mysql:8.4" (includes a tag); without this override the chart
+  # would ask Hub for accelleran/mysql:8.4.
   imageOverride: "docker.io/library/mysql:8.4"
   # Extra SQL run once at first initialisation of the data directory, after the chart's own
   # scripts (a docker-entrypoint-initdb.d file, so it does not run on an existing volume).
@@ -612,7 +612,7 @@ nef:
 
 # --- NSSF (Network Slice Selection Function, cn5g-nssf) ---
 # Off by default: the cn5g-nssf image is not published yet. Nnssf_NSSelection (TS 29.531) for
-# the AMF with coreConfig.amf.enableNssf "yes". The AMF asks the NSSF only (from the AMF code,
+# the AMF with coreConfig.amf.enableNssf "yes" (the default "" follows nssf.enabled). The AMF asks the NSSF only (from the AMF code,
 # not lab-run): at registration, when it cannot serve the UE's requested / subscribed S-NSSAIs
 # (AMF reallocation), and, with coreConfig.amf.enableSmfSelection "yes", for the NRF that finds
 # the SMF of a PDU session. The chart writes the NSSF's libconfig file and slice file itself (a
@@ -1175,6 +1175,10 @@ ims:
   strictSecrets: false
   # Kamailio CSCFs — hostNetwork IPs must exist on the node before Ready.
   ueImsSubnet: "14.1.1.0/25"
+  # Set it with the Kamailio P-CSCF: the next hop to ueImsSubnet (the UPF's N6 side), passed
+  # as UPF_N6_GW. Empty: the P-CSCF adds no route to ueImsSubnet (it warns at start-up, and
+  # NOTES.txt warns at install); SIP replies reach the UEs only if the node routes that subnet.
+  # Older kamailio-ims images stop at start-up when it is empty.
   upfN6Gateway: ""
   rtpengine:
     enabled: false
@@ -1569,8 +1573,9 @@ coreConfig:
     enableSimpleScenario: "no"
     # "yes": the AMF uses the NSSF (amf.support_features_options.enable_nssf); needs
     # nssf.enabled, which gives the AMF the NSSF peer (shared config nfs.nssf). The render
-    # fails without it.
-    enableNssf: "no"
+    # fails without it. Empty (the default): follows nssf.enabled, so deploying the NSSF also
+    # makes the AMF use it. "no" keeps the AMF off the NSSF while the NSSF runs.
+    enableNssf: ""
     enableSmfSelection: "no"
     releaseAllPduSessions: "no"
     enableIms: "yes"

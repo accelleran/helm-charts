@@ -38,6 +38,12 @@ IMS engine: asterisk. For Kamailio + Cx-on-UDR (chart default), omit examples/va
 IMS engine: kamailio (default) — P/I/S-CSCF + Cx. CX_SOT={{ .Values.ims.cxGateway.cxSot | default "udr" }}.
 Ensure hostNetwork IPs (.205–.208) and kamailio-ims / ims-cx-gateway images are available.
 Asterisk-only: layer examples/values-ims-asterisk.yaml.
+{{- if not .Values.ims.upfN6Gateway }}
+WARNING: ims.upfN6Gateway is empty. The P-CSCF adds no route to ims.ueImsSubnet
+({{ .Values.ims.ueImsSubnet }}), so SIP replies reach the UEs only if the node already routes
+that subnet. Set ims.upfN6Gateway to the next hop on the UPF's N6 side. Older kamailio-ims
+images stop at start-up without it.
+{{- end }}
 {{- end }}
 
 {{- if include "firecell-5gc.ipv6UserPlane" . }}
