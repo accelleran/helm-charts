@@ -137,10 +137,15 @@ def test_load_balancer():
     check(all("nodePort" not in p for p in sb["spec"]["ports"]), "no fixed nodePort on the LoadBalancer")
 
 
+# Every process that asks the ACS: the API (routes), the worker, and the
+# control plane (TR-069 supervision, the PM collector, the TR-069 sync).
+WORKLOADS = (("Deployment", "nms-api"), ("Deployment", "nms-worker"), ("StatefulSet", "nms-control-plane"))
+
+
 def test_nms_gets_the_acs_url_and_token():
     docs = render("acs.enabled=true")
-    for name in ("nms-api", "nms-worker"):
-        pod = find(docs, "Deployment", name)["spec"]["template"]["spec"]
+    for kind, name in WORKLOADS:
+        pod = find(docs, kind, name)["spec"]["template"]["spec"]
         main = pod["containers"][0]
         env = {e["name"]: e.get("value") for e in main.get("env", [])}
         check(env.get("FIRECELL_NMS_NG_ACS_URL") == "http://fc-acs:8080", f"{name}: FIRECELL_NMS_NG_ACS_URL")
@@ -153,8 +158,8 @@ def test_nms_gets_the_acs_url_and_token():
         mount = next((m for m in main["volumeMounts"] if m["name"] == "acs-token"), None)
         check(mount is not None and mount.get("readOnly") is True, f"{name}: the token mount is read-only")
     off = render()
-    for name in ("nms-api", "nms-worker"):
-        pod = find(off, "Deployment", name)["spec"]["template"]["spec"]
+    for kind, name in WORKLOADS:
+        pod = find(off, kind, name)["spec"]["template"]["spec"]
         check(all(v["name"] != "acs-token" for v in pod["volumes"]), f"{name}: no ACS token without acs.enabled")
 
 
@@ -189,7 +194,8 @@ def test_network_policy():
         rules = acs_np["spec"]["ingress"]
         north = next(r for r in rules if r["ports"][0]["port"] == 8080)
         labels = sorted(p["podSelector"]["matchLabels"]["app"] for p in north["from"])
-        check(labels == ["nms-api", "nms-worker"], f"8080 from nms-api and nms-worker only (got {labels})")
+        check(labels == ["nms-api", "nms-control-plane", "nms-worker"],
+              f"8080 from nms-api, nms-worker and nms-control-plane only (got {labels})")
         south = next(r for r in rules if r["ports"][0]["port"] == 7547)
         check("from" not in south, "7547 from anywhere")
         south_ports = sorted(p["port"] for p in south["ports"])
