@@ -1,6 +1,6 @@
 {{- $hooks := .Values.hooks | default dict }}
 {{- $cleanup := $hooks.postDelete | default dict }}
-{{- if and ($hooks.enabled | default false) ($cleanup.enabled | default true) }}
+{{- if and ($hooks.enabled | default false) (eq (include "firecell-5gc.flag" (list $cleanup.enabled true)) "true") }}
 apiVersion: batch/v1
 kind: Job
 metadata:

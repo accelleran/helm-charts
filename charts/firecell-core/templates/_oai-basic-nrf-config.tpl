@@ -566,7 +566,7 @@ smf:
     secondary_ipv4: {{ $v.coreConfig.dns.secondaryIpv4 | quote }}
     {{- include "firecell-5gc.optionalKeys" (dict "indent" 4 "pairs" (list (list "primary_ipv6" $v.coreConfig.dns.primaryIpv6) (list "secondary_ipv6" $v.coreConfig.dns.secondaryIpv6))) }}
   ims:
-    pcscf_ipv4: {{ $v.coreConfig.ims.pcscfIpv4 | quote }}
+    pcscf_ipv4: {{ include "firecell-5gc.pcscfIpv4" $ctx | quote }}
     pcscf_ipv6: {{ $v.coreConfig.ims.pcscfIpv6 | quote }}
   {{- if $ipv6On }}
   {{- /* cn5g-smf smf_ipv6_options (P23-c, P23-g): only the keys set in
@@ -704,13 +704,13 @@ upf:
   {{- /* Multus macvlan: XDP_REDIRECT net1→net2 drops UL in the pod netns. Use
        upf.multus.enableBpfDatapath (default false). hostNetwork uses upf.enableBpfDatapath. */}}
   {{- $upfMultus := and (not ($v.upf.hostNetwork | default false)) (($v.upf.multus).enabled | default false) }}
-  {{- $bpfRaw := ternary (dig "enableBpfDatapath" false ($v.upf.multus | default dict)) ($v.upf.enableBpfDatapath | default true) $upfMultus }}
+  {{- $bpfRaw := ternary (dig "enableBpfDatapath" false ($v.upf.multus | default dict)) (include "firecell-5gc.flag" (list $v.upf.enableBpfDatapath true)) $upfMultus }}
   {{- $bpfOn := false }}
   {{- if kindIs "bool" $bpfRaw }}{{ $bpfOn = $bpfRaw }}{{ else if or (eq ($bpfRaw | toString | lower) "false") (eq ($bpfRaw | toString | lower) "no") (eq ($bpfRaw | toString) "0") }}{{ $bpfOn = false }}{{ else }}{{ $bpfOn = true }}{{ end }}
   support_features:
     enable_bpf_datapath: {{ if $bpfOn }}yes{{ else }}no{{ end }}
     enable_qos: {{ if $bpfOn }}yes{{ else }}no{{ end }}
-    enable_snat: yes
+    enable_snat: {{ if eq (include "firecell-5gc.flag" (list $v.upf.enableSnat true)) "true" }}yes{{ else }}no{{ end }}
     enable_eth_pdu: {{ if ($v.upf.oaiEnableEthPdu | default false) }}yes{{ else }}no{{ end }}
     {{- if $v.upf.oaiEnableEthPdu }}
     eth_dl_broadcast_enabled: {{ if $v.upf.ethDlBroadcastEnabled }}yes{{ else }}no{{ end }}

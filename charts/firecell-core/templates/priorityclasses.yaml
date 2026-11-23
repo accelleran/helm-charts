@@ -1,4 +1,4 @@
-{{- if (.Values.priorityClasses | default dict).create | default true }}
+{{- if eq (include "firecell-5gc.flag" (list (.Values.priorityClasses | default dict).create true)) "true" }}
 # PriorityClasses for 5G Core components
 # Higher value = higher scheduling priority
 # preemptionPolicy: Never = No pod eviction, only affects scheduling order

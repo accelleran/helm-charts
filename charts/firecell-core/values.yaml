@@ -1025,6 +1025,13 @@ upf:
   # matches downlink traffic to the Framed-Route prefixes the SMF signals for a PDU
   # session (TS 29.244 Framed-Route IE). Default off.
   enableFramedRouting: false
+  # OAI UPF: source NAT of the UE traffic to the UPF's N6 address (cn5g-upf
+  # support_features.enable_snat), for the Multus and the hostNetwork UPF;
+  # upf.instances[].enableSnat overrides it per hostNetwork instance. One switch for
+  # every DNN: the UPF has no per-DNN setting. Behind SNAT the P-CSCF sees every UE as
+  # the N6 address, so a Kamailio IMS DNN needs it off and a route back to the UE
+  # subnet (ims.upfN6Gateway).
+  enableSnat: true
   # Optional overrides for hostnet ConfigMap (see docs/developer/oai-upf-ebpf-hostnet.md)
   oaiHostNet:
     stubInterface: ""            # Else sbiInterface, else eno8303
@@ -1248,8 +1255,12 @@ ims:
       limits:
         memory: 256Mi
         cpu: 500m
+  # ims.{pcscf,icscf,scscf,cxGateway}.ip: the node addresses the Kamailio CSCFs and the Cx
+  # gateway listen on (hostNetwork). No default: each site sets its own. Left empty, the
+  # chart prints a warning at install and the post-flight hook skips that probe; the CSCF
+  # cannot serve UEs until the address is set.
   pcscf:
-    ip: "192.168.31.205"
+    ip: ""
     hostNetwork: true
     privileged: true
     bindPort: 5060
@@ -1272,14 +1283,14 @@ ims:
       pcfUri: ""
       pcfHttpVersion: ""
   icscf:
-    ip: "192.168.31.206"
+    ip: ""
     hostNetwork: true
     # SIP port of the I-CSCF (ICSCF_PORT of the I-CSCF and of the P-CSCFs, cn5g-ims #7): it listens
     # on ip:bindPort and the P-CSCF sends REGISTER there. An IMS image before cn5g-ims 8b131c8
     # ignores ICSCF_PORT and keeps 4060.
     bindPort: 4060
   scscf:
-    ip: "192.168.31.207"
+    ip: ""
     hostNetwork: true
     bindPort: 6060
     # Seconds a P-CSCF that did not answer a terminating request stays non-reachable, without a
@@ -1288,7 +1299,7 @@ ims:
     pcscfDownSeconds: ""
   cxGateway:
     enabled: true
-    ip: "192.168.31.208"
+    ip: ""
     hostNetwork: true
     port: 3868
     image: ims-cx-gateway
@@ -1629,10 +1640,12 @@ coreConfig:
 
   # IMS P-CSCF
   ims:
-    # A valid IPv4 address, never "": the SMF refuses an empty or malformed value at start.
-    # 0.0.0.0 means "no IPv4 P-CSCF", e.g. for an IPv6-only IMS DNN: the SMF then sends no
-    # P-CSCF IPv4 container (cn5g-smf L4-11-2).
-    pcscfIpv4: "192.168.31.205"
+    # The P-CSCF IPv4 address the SMF gives the UEs. The SMF refuses an empty or malformed
+    # value at start, so the chart never renders "": empty (default) renders ims.pcscf.ip
+    # when the IMS is on, else 0.0.0.0 (firecell-5gc.pcscfIpv4). 0.0.0.0 means "no IPv4
+    # P-CSCF", e.g. for an IPv6-only IMS DNN: the SMF then sends no P-CSCF IPv4 container
+    # (cn5g-smf L4-11-2).
+    pcscfIpv4: ""
     # Empty (default) or "::" means no IPv6 P-CSCF: the SMF sends no IPv6 container. To offer
     # one, set the P-CSCF's global IPv6 address, not a link-local one (RFC 4291 2.5.6:
     # link-local addresses are not valid outside their link). A malformed address makes the
@@ -1875,10 +1888,8 @@ nms:
     secretName: sbi-tls-nms
 
 # --- Helm Lifecycle Hooks (Standalone Atomic Install / Upgrade / Uninstall) ---
-# FIXME(limitation): preFlight.enabled, postFlight.enabled and postDelete.enabled cannot switch a
-# hook off: the templates read them with "| default true", and Sprig's default treats false as
-# empty (pre-existing). With hooks.enabled true all three are rendered; hooks.enabled false
-# switches all of them off.
+# preFlight.enabled, postFlight.enabled and postDelete.enabled switch one hook off each
+# (false is kept since the firecell-5gc.flag helper); hooks.enabled false switches all off.
 hooks:
   enabled: true
   preFlight:

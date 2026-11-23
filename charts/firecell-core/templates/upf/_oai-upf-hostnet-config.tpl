@@ -107,7 +107,7 @@ ue_dns:
   {{- include "firecell-5gc.optionalKeys" (dict "indent" 2 "pairs" (list (list "primary_ipv6" $v.coreConfig.dns.primaryIpv6) (list "secondary_ipv6" $v.coreConfig.dns.secondaryIpv6))) }}
 
 ims:
-  pcscf_ipv4: {{ $v.coreConfig.ims.pcscfIpv4 | quote }}
+  pcscf_ipv4: {{ include "firecell-5gc.pcscfIpv4" $root | quote }}
   pcscf_ipv6: {{ $v.coreConfig.ims.pcscfIpv6 | quote }}
 
 dnns:
@@ -127,7 +127,7 @@ upf:
     enable_urr: {{ $v.coreConfig.smf.enableQer }}
     enable_bar: no
     enable_mar: no
-    enable_snat: {{ if ($inst.enableSnat | default $v.upf.enableSnat | default true) }}yes{{ else }}no{{ end }}
+    enable_snat: {{ if eq (include "firecell-5gc.flag" (list (ternary $inst.enableSnat $v.upf.enableSnat (hasKey ($inst | default dict) "enableSnat")) true)) "true" }}yes{{ else }}no{{ end }}
     enable_fr: {{ if $v.upf.enableFramedRouting }}yes{{ else }}no{{ end }}
     enable_eth_pdu: {{ if $v.upf.oaiEnableEthPdu }}yes{{ else }}no{{ end }}
     {{- if $v.upf.oaiEnableEthPdu }}
