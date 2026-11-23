@@ -24,6 +24,10 @@ spec:
         role: active
       annotations:
         {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
+        {{- if .Values.amf.multus.enabled }}
+        # eth0 = pod CNI (SBI). net1 = NGAP toward a RAN on a layer-2 underlay.
+        k8s.v1.cni.cncf.io/networks: '[{"name":"{{ .Values.amf.multus.nadName }}","namespace":"{{ .Values.global.namespace }}","interface":"net1"}]'
+        {{- end }}
     spec:
       priorityClassName: {{ .Values.amf.priorityClassName }}
       initContainers:
