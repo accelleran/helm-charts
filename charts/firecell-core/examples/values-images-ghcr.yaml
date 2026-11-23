@@ -1,8 +1,9 @@
-# Pull cn5g NF images from GHCR instead of the Docker Hub defaults.
+# Pull cn5g NF images of a pull request (or edge) from GHCR instead of the release tags.
 #
 # cn5g CI publishes GHCR tags pr-<NUMBER> / pr-<NUMBER>-<sha> on pull requests,
-# and edge on master. Empty NF imageTags fall back to global.pkgVersion — set
-# that to the tag you want when layering this file:
+# and edge on master. The chart's defaults name each NF's release tag; this file
+# empties them, so every NF falls back to global.pkgVersion — set that to the tag
+# you want when layering this file:
 #
 #   helm upgrade --install firecell-core ./charts/firecell-core \
 #     -n firecell-core \
@@ -21,3 +22,20 @@ global:
     - name: ghcr-regcred
   # Override at install time, e.g. --set global.pkgVersion=pr-<NUMBER>
   # pkgVersion: pr-<NUMBER>
+
+# Empty NF tags: global.pkgVersion applies (the chart defaults are the release tags).
+# The IMS images (ims.imageTag, ims.cxGateway.imageTag, ims.rxN5Iwf.imageTag) keep their release
+# tags on purpose: pr-<NUMBER> is a cn5g NF PR tag, and cn5g-ims PR images are not published
+# under it. Set those three tags too to try an IMS build.
+nrf: {imageTag: ""}
+udr: {imageTag: ""}
+udm: {imageTag: ""}
+ausf: {imageTag: ""}
+eir: {imageTag: ""}
+nef: {imageTag: ""}
+nssf: {imageTag: ""}
+amf: {imageTag: ""}
+smf: {imageTag: ""}
+pcf: {imageTag: ""}
+udsf: {imageTag: ""}
+upf: {oaiImageTag: ""}
