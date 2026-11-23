@@ -114,6 +114,21 @@ jobs:
           --config etc/ct.yaml
           --charts ${{ needs.vars.outputs.charts_to_lint }}
 
+      # helm template tests a chart keeps in tests/*-test.py (firecell-nms:
+      # tests/acs-render-test.py). They need no cluster.
+      - name: Run chart render tests
+        run: |
+          pip install --quiet pyyaml
+          charts="${{ needs.vars.outputs.charts_to_lint }}"
+          for chart in ${charts//,/ } ; do
+              for t in "${chart}"/tests/*-test.py ; do
+                  [ -f "$t" ] || continue
+                  echo "::group::${t}"
+                  python3 "$t"
+                  echo "::endgroup::"
+              done
+          done
+
   test-charts:
     name: Test Charts
     needs:

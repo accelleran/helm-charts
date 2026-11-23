@@ -77,7 +77,9 @@ def test_enabled():
     check(env["FC_ACS_LOG_LEVEL"]["value"] == "info", "log level info")
     check(env["FC_ACS_NMS_URL"]["value"] == "http://nms-api.firecell-nms.svc.cluster.local:8080", "NMS URL is nms-api:8080")
     ports = {p["name"]: p["containerPort"] for p in main["ports"]}
-    check(ports == {"southbound": 7547, "northbound": 8080}, f"ports southbound 7547, northbound 8080 (got {ports})")
+    check(ports == {"southbound": 7547, "southbound-http": 7548, "northbound": 8080},
+          f"ports southbound 7547, southbound-http 7548, northbound 8080 (got {ports})")
+    check(env["FC_ACS_SOUTHBOUND_HTTP_PORT"]["value"] == "7548", "plain-HTTP listener on 7548 by default")
     check(main["livenessProbe"]["httpGet"]["path"] == "/api/v1/health", "liveness GET /api/v1/health")
     check(main["readinessProbe"]["httpGet"]["path"] == "/api/v1/ready", "readiness GET /api/v1/ready")
     check(main["securityContext"]["readOnlyRootFilesystem"] is True, "read-only root filesystem")
@@ -113,8 +115,9 @@ def test_enabled():
           "Service fc-acs ClusterIP 8080")
     sb = find(docs, "Service", "fc-acs-southbound")
     check(sb["spec"]["type"] == "NodePort", "southbound defaults to NodePort")
-    check(sb["spec"]["ports"][0]["nodePort"] == 30547 and sb["spec"]["ports"][0]["port"] == 7547,
-          "southbound NodePort 30547 on port 7547")
+    node_ports = {p["port"]: p.get("nodePort") for p in sb["spec"]["ports"]}
+    check(node_ports == {7547: 30547, 7548: 30548},
+          f"southbound NodePorts 30547 on 7547 and 30548 on 7548 (got {node_ports})")
     check(sb["spec"]["externalTrafficPolicy"] == "Local", "NodePort keeps externalTrafficPolicy Local")
 
     info = find(docs, "ConfigMap", "t-release-info")
@@ -129,7 +132,22 @@ def test_load_balancer():
     check(sb["spec"].get("loadBalancerIP") == "192.0.2.10", "loadBalancerIP set")
     check(sb["metadata"].get("annotations", {}).get("lbipam.cilium.io/ips") == "192.0.2.10", "Cilium LB-IPAM annotation set")
     check(sb["spec"]["externalTrafficPolicy"] == "Cluster", "LoadBalancer uses externalTrafficPolicy Cluster")
-    check("nodePort" not in sb["spec"]["ports"][0], "no fixed nodePort on the LoadBalancer")
+    ports = sorted(p["port"] for p in sb["spec"]["ports"])
+    check(ports == [7547, 7548], f"LoadBalancer carries 7547 and 7548 (got {ports})")
+    check(all("nodePort" not in p for p in sb["spec"]["ports"]), "no fixed nodePort on the LoadBalancer")
+
+
+def test_plain_http_off():
+    docs = render("acs.enabled=true", "acs.southbound.plainHttp=false", "networkPolicy.enabled=true")
+    # Random Secret data and the release-info digests could contain the digits by chance.
+    text = json.dumps([d for d in docs if d["kind"] in ("Deployment", "Service", "NetworkPolicy")])
+    check("7548" not in text and "30548" not in text, "plainHttp=false: no port 7548 and no NodePort 30548")
+    check("southbound-http" not in text, "plainHttp=false: no southbound-http port")
+    main = find(docs, "Deployment", "fc-acs")["spec"]["template"]["spec"]["containers"][0]
+    env = {e["name"]: e.get("value") for e in main["env"]}
+    check(env.get("FC_ACS_SOUTHBOUND_HTTP_PORT") == "0", "plainHttp=false: FC_ACS_SOUTHBOUND_HTTP_PORT is 0")
+    sb = find(docs, "Service", "fc-acs-southbound")
+    check([p["nodePort"] for p in sb["spec"]["ports"]] == [30547], "plainHttp=false: only NodePort 30547")
 
 
 def test_network_policy():
@@ -146,6 +164,8 @@ def test_network_policy():
         check(labels == ["nms-api", "nms-worker"], f"8080 from nms-api and nms-worker only (got {labels})")
         south = next(r for r in rules if r["ports"][0]["port"] == 7547)
         check("from" not in south, "7547 from anywhere")
+        south_ports = sorted(p["port"] for p in south["ports"])
+        check(south_ports == [7547, 7548], f"7547 and 7548 from anywhere (got {south_ports})")
     off = render("acs.enabled=true")
     check(not [d for d in off if d["kind"] == "NetworkPolicy"], "no NetworkPolicy while networkPolicy.enabled is false")
 
@@ -153,6 +173,7 @@ def test_network_policy():
 test_disabled()
 test_enabled()
 test_load_balancer()
+test_plain_http_off()
 test_network_policy()
 if failures:
     sys.exit(f"{len(failures)} check(s) failed")

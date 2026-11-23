@@ -95,6 +95,9 @@ spec:
               value: /etc/fc-acs/secrets/northbound-token
             - name: FC_ACS_CREDENTIAL_KEY_FILE
               value: /etc/fc-acs/secrets/credential-key
+            # 0 turns the plain-HTTP southbound listener off.
+            - name: FC_ACS_SOUTHBOUND_HTTP_PORT
+              value: {{ if $acs.southbound.plainHttp }}"7548"{{ else }}"0"{{ end }}
             - name: FC_ACS_LOG_LEVEL
               value: {{ $acs.logLevel | quote }}
             # Where fc-acs sends fault notifications (the NMS FCAPS ingest).
@@ -102,6 +105,9 @@ spec:
               value: {{ include "firecell-nms.backend.url" . | quote }}
           ports:
             - {name: southbound, containerPort: 7547}
+            {{- if $acs.southbound.plainHttp }}
+            - {name: southbound-http, containerPort: 7548}
+            {{- end }}
             - {name: northbound, containerPort: 8080}
           readinessProbe:
             httpGet: {path: /api/v1/ready, port: northbound}

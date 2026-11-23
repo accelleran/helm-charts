@@ -73,7 +73,7 @@ spec:
 {{- if .Values.acs.enabled }}
 ---
 # fc-acs: its northbound API (8080) for the NMS API and workers only; CWMP
-# (7547) from anywhere, since CPE connect from outside the cluster.
+# (7547, and 7548 for plain HTTP) from anywhere, since CPE connect from outside the cluster.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -102,5 +102,9 @@ spec:
     - ports:
         - protocol: TCP
           port: 7547
+        {{- if .Values.acs.southbound.plainHttp }}
+        - protocol: TCP
+          port: 7548
+        {{- end }}
 {{- end }}
 {{- end }}
