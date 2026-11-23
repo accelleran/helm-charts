@@ -71,6 +71,35 @@ dict: registry, image, imageTag, pkgVersion
 OAI nfs.*.host for SBI peers. hostNetwork SMF/UPF must use cluster DNS (not /etc/hosts pod IPs).
 dict: ctx (root), name (service short name e.g. oai-udm), clusterDNS (bool)
 */}}
+{{/*
+A boolean value with a default that an explicit false keeps. Sprig's "default" treats false
+as empty, so "x | default true" turned an explicit false into true (helm-charts #1912 review:
+ims.pcscf.hostNetwork=false rendered hostNetwork: true).
+list: value, default. Unset (nil) or "": the default. Strings false/no/0 (any case): false.
+Renders "true" or "false".
+*/}}
+{{- define "firecell-5gc.flag" -}}
+{{- $v := index . 0 -}}
+{{- $d := index . 1 -}}
+{{- if or (kindIs "invalid" $v) (eq (toString $v) "") -}}{{ ternary "true" "false" (eq (toString $d) "true") }}
+{{- else if kindIs "bool" $v -}}{{ ternary "true" "false" $v }}
+{{- else if has (lower (toString $v)) (list "false" "no" "0") -}}false
+{{- else -}}true
+{{- end -}}
+{{- end }}
+
+{{/*
+The P-CSCF IPv4 address for the SMF (and the hostNetwork UPF config): coreConfig.ims.pcscfIpv4,
+else ims.pcscf.ip when the IMS is on, else 0.0.0.0 ("no IPv4 P-CSCF"). Never "": the SMF
+refuses an empty value at start.
+*/}}
+{{- define "firecell-5gc.pcscfIpv4" -}}
+{{- $v := .Values -}}
+{{- $ip := ($v.coreConfig.ims).pcscfIpv4 | default "" -}}
+{{- if and (not $ip) $v.ims.enabled -}}{{- $ip = $v.ims.pcscf.ip | default "" -}}{{- end -}}
+{{- $ip | default "0.0.0.0" -}}
+{{- end }}
+
 {{- define "firecell-5gc.oaiSbiHost" -}}
 {{- $ctx := .ctx -}}
 {{- $name := .name -}}

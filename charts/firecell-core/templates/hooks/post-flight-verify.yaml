@@ -1,6 +1,6 @@
 {{- $hooks := .Values.hooks | default dict }}
 {{- $post := $hooks.postFlight | default dict }}
-{{- if and ($hooks.enabled | default false) ($post.enabled | default true) }}
+{{- if and ($hooks.enabled | default false) (eq (include "firecell-5gc.flag" (list $post.enabled true)) "true") }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -317,15 +317,17 @@ spec:
                      node address its headless Service resolves to (hostNetwork), so the address is
                      probed. Without an ip the Service name is probed. */}}
               {{- $cscfs := list
-                    (dict "svc" "ims-pcscf" "ip" (.Values.ims.pcscf.ip | default .Values.coreConfig.ims.pcscfIpv4) "port" (.Values.ims.pcscf.bindPort | default 5060) "desc" "IMS P-CSCF SIP")
-                    (dict "svc" "ims-icscf" "ip" .Values.ims.icscf.ip "port" (.Values.ims.icscf.bindPort | default 4060) "desc" "IMS I-CSCF SIP")
-                    (dict "svc" "ims-scscf" "ip" .Values.ims.scscf.ip "port" (.Values.ims.scscf.bindPort | default 6060) "desc" "IMS S-CSCF SIP") }}
+                    (dict "svc" "ims-pcscf" "ip" (.Values.ims.pcscf.ip | default .Values.coreConfig.ims.pcscfIpv4) "port" (.Values.ims.pcscf.bindPort | default 5060) "desc" "IMS P-CSCF SIP" "hostNet" (eq (include "firecell-5gc.flag" (list .Values.ims.pcscf.hostNetwork true)) "true"))
+                    (dict "svc" "ims-icscf" "ip" .Values.ims.icscf.ip "port" (.Values.ims.icscf.bindPort | default 4060) "desc" "IMS I-CSCF SIP" "hostNet" (eq (include "firecell-5gc.flag" (list .Values.ims.icscf.hostNetwork true)) "true"))
+                    (dict "svc" "ims-scscf" "ip" .Values.ims.scscf.ip "port" (.Values.ims.scscf.bindPort | default 6060) "desc" "IMS S-CSCF SIP" "hostNet" (eq (include "firecell-5gc.flag" (list .Values.ims.scscf.hostNetwork true)) "true")) }}
               {{- if .Values.ims.cxGateway.enabled }}
-              {{- $cscfs = append $cscfs (dict "svc" "ims-cx-gateway" "ip" .Values.ims.cxGateway.ip "port" (.Values.ims.cxGateway.port | default 3868) "desc" "IMS Cx gateway Diameter") }}
+              {{- $cscfs = append $cscfs (dict "svc" "ims-cx-gateway" "ip" .Values.ims.cxGateway.ip "port" (.Values.ims.cxGateway.port | default 3868) "desc" "IMS Cx gateway Diameter" "hostNet" (eq (include "firecell-5gc.flag" (list .Values.ims.cxGateway.hostNetwork true)) "true")) }}
               {{- end }}
               {{- range $c := $cscfs }}
               {{- if $c.ip }}
               wait_tcp_addr "{{ $c.ip }}" "{{ $c.port }}" "{{ $c.desc }}"
+              {{- else if $c.hostNet }}
+              echo "[post-flight] WARNING: {{ $c.desc }} skipped: no ims.<x>.ip set (hostNetwork, the chart has no default)"
               {{- else }}
               wait_tcp_service "{{ $c.svc }}" "{{ $c.port }}" "{{ $c.desc }}"
               {{- end }}
@@ -347,7 +349,7 @@ spec:
               {{- end }}
 
               # 2. Verify NRF NF-instance registrations (/nnrf-nfm/v1/nf-instances)
-              {{- if and .Values.nrf.enabled (eq (.Values.coreConfig.registerNf | default "yes") "yes") ($post.verifyNrfRegistrations | default true) }}
+              {{- if and .Values.nrf.enabled (eq (.Values.coreConfig.registerNf | default "yes") "yes") (eq (include "firecell-5gc.flag" (list $post.verifyNrfRegistrations true)) "true") }}
               {{- if not .Values.global.sbi.tls.enabled }}
               echo "[post-flight] Verifying NF registrations in NRF (http://oai-nrf:8080/nnrf-nfm/v1/nf-instances)..."
               {{- end }}
@@ -503,7 +505,7 @@ spec:
               echo "[post-flight]   OK: oai-amf has a ready endpoint with NGAP SCTP port 38412"
               {{- end }}
 
-              {{- if and .Values.smf.enabled .Values.upf.enabled ($post.verifyPfcpAssociation | default true) }}
+              {{- if and .Values.smf.enabled .Values.upf.enabled (eq (include "firecell-5gc.flag" (list $post.verifyPfcpAssociation true)) "true") }}
               echo "[post-flight] Checking SMF pod logs via Kubernetes API for PFCP N4 association..."
               _try=0
               PFCP_OK=0
@@ -666,7 +668,7 @@ spec:
                 fi
                 echo "[post-flight:datapath]   OK: Policy routing table ${TABLE} verified (from ${N6_IP} via ${N6_GW})"
 
-                if [ "{{ $.Values.upf.injectCiliumPodRoute | default true }}" = "true" ] && ip link show cilium_host >/dev/null 2>&1; then
+                if [ "{{ include "firecell-5gc.flag" (list $.Values.upf.injectCiliumPodRoute true) }}" = "true" ] && ip link show cilium_host >/dev/null 2>&1; then
                   _podcidr=$(ip route show | awk '/dev cilium_host/ && $1 ~ /\// {print $1; exit}')
                   if [ -n "${_podcidr}" ]; then
                     if ! ip route show table "${TABLE}" | grep -q "dev cilium_host"; then

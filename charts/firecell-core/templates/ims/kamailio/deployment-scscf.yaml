@@ -25,7 +25,7 @@ spec:
         role: active
     spec:
       priorityClassName: {{ .Values.ims.priorityClassName | default .Values.ims.priorityClassName }}
-      hostNetwork: {{ .Values.ims.scscf.hostNetwork | default true }}
+      hostNetwork: {{ include "firecell-5gc.flag" (list .Values.ims.scscf.hostNetwork true) }}
       dnsPolicy: ClusterFirstWithHostNet
       initContainers:
         {{- if .Values.ims.cxGateway.enabled }}

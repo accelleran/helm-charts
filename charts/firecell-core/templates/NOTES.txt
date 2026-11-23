@@ -36,7 +36,20 @@ IMS engine: asterisk. For Kamailio + Cx-on-UDR (chart default), omit examples/va
 {{- else if .Values.ims.enabled }}
 
 IMS engine: kamailio (default) — P/I/S-CSCF + Cx. CX_SOT={{ .Values.ims.cxGateway.cxSot | default "udr" }}.
-Ensure hostNetwork IPs (.205–.208) and kamailio-ims / ims-cx-gateway images are available.
+Ensure the kamailio-ims / ims-cx-gateway images are available.
+{{- $imsNoIp := list }}
+{{- range $k := list "pcscf" "icscf" "scscf" }}
+{{- if not (index $.Values.ims $k).ip }}{{ $imsNoIp = append $imsNoIp (printf "ims.%s.ip" $k) }}{{ end }}
+{{- end }}
+{{- if and .Values.ims.cxGateway.enabled (not .Values.ims.cxGateway.ip) }}{{ $imsNoIp = append $imsNoIp "ims.cxGateway.ip" }}{{ end }}
+{{- if $imsNoIp }}
+WARNING: {{ join ", " $imsNoIp }} not set. The chart has no default for these
+addresses (the node addresses the CSCFs listen on): set them for this site. Until then
+the IMS cannot serve UEs and the post-flight hook skips those probes.
+{{- if not .Values.coreConfig.ims.pcscfIpv4 }}{{ if not .Values.ims.pcscf.ip }}
+The SMF gives UEs no IPv4 P-CSCF (pcscf_ipv4 0.0.0.0).
+{{- end }}{{ end }}
+{{- end }}
 Asterisk-only: layer examples/values-ims-asterisk.yaml.
 {{- if not .Values.ims.upfN6Gateway }}
 WARNING: ims.upfN6Gateway is empty. The P-CSCF adds no route to ims.ueImsSubnet

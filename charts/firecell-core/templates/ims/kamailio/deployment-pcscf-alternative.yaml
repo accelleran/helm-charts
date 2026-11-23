@@ -37,7 +37,7 @@ spec:
         role: active
     spec:
       priorityClassName: {{ .Values.ims.priorityClassName | default .Values.ims.priorityClassName }}
-      hostNetwork: {{ .Values.ims.pcscf.hostNetwork | default true }}
+      hostNetwork: {{ include "firecell-5gc.flag" (list .Values.ims.pcscf.hostNetwork true) }}
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: pcscf
@@ -50,7 +50,7 @@ spec:
               mkdir -p /var/run/kamailio_pcscf
               exec /firecell-entrypoint.sh
           securityContext:
-            privileged: {{ .Values.ims.pcscf.privileged | default true }}
+            privileged: {{ include "firecell-5gc.flag" (list .Values.ims.pcscf.privileged true) }}
             capabilities:
               add:
                 - NET_ADMIN

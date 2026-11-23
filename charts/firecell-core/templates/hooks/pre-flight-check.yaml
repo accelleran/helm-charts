@@ -1,6 +1,6 @@
 {{- $hooks := .Values.hooks | default dict }}
 {{- $pre := $hooks.preFlight | default dict }}
-{{- if and ($hooks.enabled | default false) ($pre.enabled | default true) }}
+{{- if and ($hooks.enabled | default false) (eq (include "firecell-5gc.flag" (list $pre.enabled true)) "true") }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -83,7 +83,7 @@ spec:
               echo "[pre-flight]   OK: Cluster DNS (${DNS_SERVER}) resolves kubernetes.default.svc.cluster.local"
 
               # 2. SCTP kernel module / protocol support (required by AMF NGAP port 38412/SCTP)
-              {{- if and .Values.amf.enabled ($pre.requireSctp | default true) }}
+              {{- if and .Values.amf.enabled (eq (include "firecell-5gc.flag" (list $pre.requireSctp true)) "true") }}
               echo "[pre-flight] 2/4 Checking kernel SCTP support for AMF N2/NGAP..."
               if [ ! -d /sys/module/sctp ] && [ ! -e /proc/net/sctp/eps ]; then
                 modprobe sctp 2>/dev/null || true
@@ -171,7 +171,7 @@ spec:
 
               # 4. N6 Gateway reachability check
               {{- $n6gw := .Values.upf.remoteN6Gw | default "" | toString | trim }}
-              {{- if and .Values.upf.enabled .Values.upf.hostNetwork ($pre.verifyGateway | default true) }}
+              {{- if and .Values.upf.enabled .Values.upf.hostNetwork (eq (include "firecell-5gc.flag" (list $pre.verifyGateway true)) "true") }}
               {{- $gwInstances := .Values.upf.instances }}
               {{- if not $gwInstances }}
               {{- $gwInstances = list (dict "remoteN6Gw" $n6gw) }}

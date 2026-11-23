@@ -23,7 +23,7 @@ spec:
         app: ims-cx-gateway
         tier: core-network
     spec:
-      hostNetwork: {{ .Values.ims.cxGateway.hostNetwork | default true }}
+      hostNetwork: {{ include "firecell-5gc.flag" (list .Values.ims.cxGateway.hostNetwork true) }}
       dnsPolicy: ClusterFirstWithHostNet
       securityContext:
         # The image runs as uid 10001; the group lets it read the 0440 secret files.
