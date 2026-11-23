@@ -141,7 +141,9 @@ spec:
               # Callback URIs are longer than the varchar(50) of older schemas (an AMF
               # deregCallbackUri is ~85 characters); widen them in databases created
               # before oai_db.sql had varchar(255). Only columns still narrower are
-              # altered, so this is a no-op on later upgrades.
+              # altered, so this is a no-op on later upgrades. The pre-upgrade Job
+              # (hooks.dbUpgrade, pre-upgrade-db.yaml) does this before the NFs change;
+              # kept here for upgrades with that Job off.
               for tc in Amf3GppAccessRegistration.deregCallbackUri Amf3GppAccessRegistration.pcscfRestorationCallbackUri SdmSubscriptions.callbackReference SmfRegistrations.deregCallbackUri SmfRegistrations.pcscfRestorationCallbackUri; do
                 t="${tc%%.*}"; c="${tc#*.}"
                 COL=$(mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -N -e "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_schema='${MYSQL_DB}' AND table_name='${t}' AND column_name='${c}' AND character_maximum_length < 255;" 2>/dev/null || true)

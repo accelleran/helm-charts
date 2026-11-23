@@ -1,0 +1,80 @@
+{{- /*
+Pre-upgrade database step (helm-charts #1912 review, rd-able upgrade from 0.1.0): the MySQL init
+scripts run only on an empty data directory, so an existing oai_db misses what later chart
+versions add. Before the NFs of the new release start, this Job:
+- widens the callback URI columns of older schemas to varchar(255) (only columns still narrower;
+  the post-flight hook keeps the same step as a fallback when this Job is off);
+- creates MbsSubscriptionData (sql/oai_db-5mbs.sql, CREATE TABLE IF NOT EXISTS).
+Every statement is a no-op on a database that already has them. Upgrades only (an install
+gets a fresh data directory and the init scripts), and only with the chart's MySQL.
+*/}}
+{{- $hooks := .Values.hooks | default dict }}
+{{- $dbu := $hooks.dbUpgrade | default dict }}
+{{- if and ($hooks.enabled | default false) .Values.mysql.enabled (eq (include "firecell-5gc.flag" (list $dbu.enabled true)) "true") }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "firecell-5gc.fullname" . }}-db-upgrade
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app.kubernetes.io/component: db-upgrade
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-8"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $dbu.backoffLimit | default 1 }}
+  activeDeadlineSeconds: {{ $dbu.timeoutSeconds | default 180 }}
+  template:
+    metadata:
+      labels:
+        {{- include "firecell-5gc.labels" . | nindent 8 }}
+        app.kubernetes.io/component: db-upgrade
+    spec:
+      restartPolicy: Never
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: db-upgrade
+          image: {{ .Values.mysql.imageOverride | default (printf "%s/%s" .Values.global.imageRegistry .Values.mysql.image) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secrets
+                  key: root-password
+            - name: MYSQL_DB
+              value: {{ .Values.mysql.database | default "oai_db" | quote }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "[db-upgrade] Waiting for MySQL (mysql:3306)..."
+              tries=0
+              until mysqladmin ping -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" --silent >/dev/null 2>&1; do
+                tries=$((tries + 1))
+                if [ "${tries}" -ge 40 ]; then
+                  echo "[db-upgrade] FATAL: MySQL did not answer; the upgrade stops before the NFs change" >&2
+                  exit 1
+                fi
+                sleep 3
+              done
+              for tc in Amf3GppAccessRegistration.deregCallbackUri Amf3GppAccessRegistration.pcscfRestorationCallbackUri SdmSubscriptions.callbackReference SmfRegistrations.deregCallbackUri SmfRegistrations.pcscfRestorationCallbackUri; do
+                t="${tc%%.*}"; c="${tc#*.}"
+                COL=$(mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -N -e "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_schema='${MYSQL_DB}' AND table_name='${t}' AND column_name='${c}' AND character_maximum_length < 255;")
+                [ -n "${COL}" ] || continue
+                NN=""; [ "${COL}" = "NO" ] && NN=" NOT NULL"
+                echo "[db-upgrade] Widening ${t}.${c} to varchar(255)"
+                mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" -e "ALTER TABLE \`${t}\` MODIFY \`${c}\` varchar(255)${NN};"
+              done
+              echo "[db-upgrade] Creating MbsSubscriptionData if missing"
+              mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" <<'FIRECELL_DB_UPGRADE_SQL'
+{{ .Files.Get "sql/oai_db-5mbs.sql" | indent 14 }}
+              FIRECELL_DB_UPGRADE_SQL
+              echo "[db-upgrade] OK"
+{{- end }}
