@@ -31,6 +31,9 @@ spec:
         app.kubernetes.io/part-of: firecell-nms
     spec:
       automountServiceAccountToken: false
+      # Service links would inject FC_ACS_SOUTHBOUND_PORT=tcp://... for the
+      # fc-acs-southbound Service, which collides with the ACS's own settings.
+      enableServiceLinks: false
       securityContext:
         {{- include "firecell-nms.backend.podSecurityContext" . | nindent 8 }}
       {{- with .Values.global.imagePullSecrets }}

@@ -137,6 +137,13 @@ def test_load_balancer():
     check(all("nodePort" not in p for p in sb["spec"]["ports"]), "no fixed nodePort on the LoadBalancer")
 
 
+def test_no_service_links():
+    docs = render("acs.enabled=true")
+    pod = find(docs, "Deployment", "fc-acs")["spec"]["template"]["spec"]
+    check(pod.get("enableServiceLinks") is False,
+          "enableServiceLinks is false (no FC_ACS_SOUTHBOUND_PORT=tcp://... from the Service)")
+
+
 def test_plain_http_off():
     docs = render("acs.enabled=true", "acs.southbound.plainHttp=false", "networkPolicy.enabled=true")
     # Random Secret data and the release-info digests could contain the digits by chance.
@@ -173,6 +180,7 @@ def test_network_policy():
 test_disabled()
 test_enabled()
 test_load_balancer()
+test_no_service_links()
 test_plain_http_off()
 test_network_policy()
 if failures:
