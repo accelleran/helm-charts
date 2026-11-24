@@ -11,8 +11,12 @@ metadata:
     tier: core-network
   {{- if eq $amfSvcType "LoadBalancer" }}
   annotations:
+    {{- if eq (include "firecell-5gc.lbProvider" .) "cilium" }}
+    lbipam.cilium.io/ips: {{ .Values.network.amfExternalIP | quote }}
+    {{- else }}
     metallb.universe.tf/address-pool: firecell-cp-pool
     metallb.universe.tf/loadBalancerIPs: {{ .Values.network.amfExternalIP }}
+    {{- end }}
   {{- end }}
 spec:
   {{- /*
@@ -24,7 +28,7 @@ spec:
   */}}
   type: {{ $amfSvcType }}
   {{- if eq $amfSvcType "LoadBalancer" }}
-  externalTrafficPolicy: {{ .Values.network.amfExternalTrafficPolicy | default "Local" }}
+  externalTrafficPolicy: {{ .Values.network.amfExternalTrafficPolicy | default (ternary "Cluster" "Local" (eq (include "firecell-5gc.lbProvider" .) "cilium")) }}
   {{- end }}
   ports:
     - name: sbi

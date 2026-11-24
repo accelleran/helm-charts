@@ -31,6 +31,7 @@ spec:
         {{- if .Values.pcf.waitForMysql }}
         {{- include "firecell-5gc.waitForMysql" . | nindent 8 }}
         {{- end }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.pcf "indent" 6) }}
       containers:
         - name: pcf
           image: {{ .Values.pcf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.pcf.image "imageTag" .Values.pcf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

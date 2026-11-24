@@ -27,6 +27,7 @@ spec:
       priorityClassName: {{ .Values.fcAcsAgent.priorityClassName }}
       initContainers:
         {{- include "firecell-5gc.waitForMysql" . | nindent 8 }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.fcAcsAgent "indent" 6) }}
       containers:
         - name: fc-acs-agent
           image: {{ .Values.fcAcsAgent.imageOverride | default (include "firecell-5gc.image" (dict "registry" .Values.global.imageRegistry "image" .Values.fcAcsAgent.image "tag" (.Values.fcAcsAgent.imageTag | default .Values.global.pkgVersion))) }}

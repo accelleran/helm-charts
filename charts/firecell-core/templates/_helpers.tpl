@@ -997,3 +997,31 @@ may differ from the Service name: it must be in the certificate too.
 {{- int64 . -}}
 {{- end -}}
 {{- end }}
+
+{{/*
+Load balancer provider for type LoadBalancer Services: "metallb" (default) or
+"cilium" (network.loadBalancer.provider).
+*/}}
+{{- define "firecell-5gc.lbProvider" -}}
+{{- $p := dig "loadBalancer" "provider" "metallb" (.Values.network | default dict) -}}
+{{- if not (has $p (list "metallb" "cilium")) -}}
+{{- fail (printf "network.loadBalancer.provider must be metallb or cilium, got %q" $p) -}}
+{{- end -}}
+{{- $p -}}
+{{- end -}}
+
+{{/*
+Pod placement (nodeSelector, tolerations) for one NF's pod spec. The NF's own
+values win; when empty, global.nodeSelector / global.tolerations apply.
+Renders nothing when both are empty, so the default render is unchanged.
+Usage (pod spec at indent 6):
+  {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.amf "indent" 6) }}
+*/}}
+{{- define "firecell-5gc.placement" -}}
+{{- $nf := .nf | default dict -}}
+{{- $g := .root.Values.global -}}
+{{- $out := dict -}}
+{{- with (dig "nodeSelector" nil $nf | default $g.nodeSelector) }}{{- $_ := set $out "nodeSelector" . -}}{{- end -}}
+{{- with (dig "tolerations" nil $nf | default $g.tolerations) }}{{- $_ := set $out "tolerations" . -}}{{- end -}}
+{{- if $out }}{{- toYaml $out | nindent (int .indent) }}{{- end -}}
+{{- end -}}

@@ -43,6 +43,7 @@ spec:
               readOnly: true
             - name: ims-config
               mountPath: /workdir
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.ims "indent" 6) }}
       containers:
         - name: ims
           image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}

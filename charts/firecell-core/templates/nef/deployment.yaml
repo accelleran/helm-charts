@@ -38,6 +38,7 @@ spec:
       initContainers:
         {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
       {{- end }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.nef "indent" 6) }}
       containers:
         - name: nef
           image: {{ $nef.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" $nef.image "imageTag" $nef.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

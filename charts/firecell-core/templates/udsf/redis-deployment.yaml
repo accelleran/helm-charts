@@ -22,6 +22,7 @@ spec:
         tier: udsf
         role: active
     spec:
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" (dig "redis" dict $.Values.udsf) "indent" 6) }}
       containers:
         - name: redis
           image: {{ .Values.udsf.redis.imageOverride | default .Values.udsf.redis.image }}

@@ -31,6 +31,7 @@ spec:
         {{- if .Values.ims.cxGateway.enabled }}
         {{- include "firecell-5gc.waitForMysql" . | nindent 8 }}
         {{- end }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.ims "indent" 6) }}
       containers:
         - name: scscf
           image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}

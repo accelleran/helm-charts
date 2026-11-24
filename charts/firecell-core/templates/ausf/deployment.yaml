@@ -28,6 +28,7 @@ spec:
       priorityClassName: {{ .Values.ausf.priorityClassName }}
       initContainers:
         {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.ausf "indent" 6) }}
       containers:
         - name: ausf
           image: {{ .Values.ausf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.ausf.image "imageTag" .Values.ausf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

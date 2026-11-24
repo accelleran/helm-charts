@@ -10,8 +10,12 @@ metadata:
     tier: core-network
   {{- if eq (.Values.fcAcsAgent.serviceType | default "LoadBalancer") "LoadBalancer" }}
   annotations:
+    {{- if eq (include "firecell-5gc.lbProvider" .) "cilium" }}
+    lbipam.cilium.io/ips: {{ required "network.acsExternalIP must be set for the fc-acs-agent LoadBalancer Service (or set fcAcsAgent.serviceType=ClusterIP)" .Values.network.acsExternalIP | quote }}
+    {{- else }}
     metallb.universe.tf/address-pool: firecell-cp-pool
     metallb.universe.tf/loadBalancerIPs: {{ required "network.acsExternalIP must be set for the fc-acs-agent LoadBalancer Service (or set fcAcsAgent.serviceType=ClusterIP)" .Values.network.acsExternalIP }}
+    {{- end }}
   {{- end }}
 spec:
   type: {{ .Values.fcAcsAgent.serviceType | default "LoadBalancer" }}

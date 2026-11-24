@@ -31,6 +31,7 @@ spec:
         {{- if .Values.udr.waitForMysql }}
         {{- include "firecell-5gc.waitForMysql" . | nindent 8 }}
         {{- end }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.udr "indent" 6) }}
       containers:
         - name: udr
           image: {{ .Values.udr.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.udr.image "imageTag" .Values.udr.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
