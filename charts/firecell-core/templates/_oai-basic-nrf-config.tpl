@@ -36,7 +36,13 @@ log_level:
 register_nf:
   general: {{ $v.coreConfig.registerNf }}
 
-{{/* TLS needs HTTP/2: the NFs refuse tls.enable_tls with http_version 1. */ -}}
+{{/* TLS needs HTTP/2: the NFs refuse tls.enable_tls with http_version 1. So does OAuth2 (the
+     token check is in the HTTP/2 server; the AMF exits with oauth2.enable and http_version 1):
+     with TLS off, OAuth2 needs coreConfig.httpVersion 2, else the render fails here instead of
+     the NFs at start. */ -}}
+{{- if and $v.global.sbi.oauth2.enabled (not $v.global.sbi.tls.enabled) (ne (int $v.coreConfig.httpVersion) 2) }}
+{{- fail "global.sbi.oauth2.enabled needs HTTP/2: set global.sbi.tls.enabled true (HTTP/2 over TLS) or coreConfig.httpVersion 2, or switch global.sbi.oauth2.enabled off; the NFs refuse OAuth2 with http_version 1 at start" }}
+{{- end }}
 http_version: {{ if $v.global.sbi.tls.enabled }}2{{ else }}{{ $v.coreConfig.httpVersion }}{{ end }}
 http_request_timeout: {{ $v.coreConfig.httpRequestTimeoutMs }}
 {{- if $v.global.sbi.tls.enabled }}
