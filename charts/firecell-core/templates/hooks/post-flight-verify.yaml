@@ -357,22 +357,33 @@ spec:
               {{- end }}
               EXPECTED_NFS=""
               {{- if .Values.udr.enabled }}
-              EXPECTED_NFS="${EXPECTED_NFS} udr:UDR"
+              EXPECTED_NFS="${EXPECTED_NFS} udr:UDR:8080:yes"
               {{- end }}
               {{- if .Values.udm.enabled }}
-              EXPECTED_NFS="${EXPECTED_NFS} udm:UDM"
+              EXPECTED_NFS="${EXPECTED_NFS} udm:UDM:8080:yes"
               {{- end }}
               {{- if .Values.ausf.enabled }}
-              EXPECTED_NFS="${EXPECTED_NFS} ausf:AUSF"
+              EXPECTED_NFS="${EXPECTED_NFS} ausf:AUSF:8080:yes"
               {{- end }}
               {{- if .Values.pcf.enabled }}
-              EXPECTED_NFS="${EXPECTED_NFS} pcf:PCF"
+              EXPECTED_NFS="${EXPECTED_NFS} pcf:PCF:8080:yes"
               {{- end }}
               {{- if .Values.amf.enabled }}
-              EXPECTED_NFS="${EXPECTED_NFS} amf:AMF"
+              EXPECTED_NFS="${EXPECTED_NFS} amf:AMF:8080:yes"
               {{- end }}
               {{- if .Values.smf.enabled }}
-              EXPECTED_NFS="${EXPECTED_NFS} smf:SMF"
+              EXPECTED_NFS="${EXPECTED_NFS} smf:SMF:8080:yes"
+              {{- end }}
+              {{- /* EIR, NEF and NSSF: their own SBI ports (the NEF's HTTP/2 port, which also serves TLS;
+                     nc -z only opens the connection), and the NRF check only when they register. */}}
+              {{- if .Values.eir.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} eir:5G_EIR:{{ .Values.eir.config.listenPort }}:{{ ternary "yes" "no" (eq (include "firecell-5gc.flag" (list .Values.eir.config.nrfEnabled true)) "true") }}"
+              {{- end }}
+              {{- if .Values.nef.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} nef:NEF:{{ .Values.nef.config.sbiHttp2Port }}:{{ ternary "yes" "no" (eq (include "firecell-5gc.flag" (list .Values.nef.config.nrf.register true)) "true") }}"
+              {{- end }}
+              {{- if .Values.nssf.enabled }}
+              EXPECTED_NFS="${EXPECTED_NFS} nssf:NSSF:{{ .Values.nssf.config.http2Port }}:{{ ternary "yes" "no" (eq (include "firecell-5gc.flag" (list .Values.nssf.config.nrf.register true)) "true") }}"
               {{- end }}
 {{- if .Values.global.sbi.tls.enabled }}
 
@@ -386,7 +397,8 @@ spec:
                 MISSING=""
                 for entry in ${EXPECTED_NFS}; do
                   nf="${entry%%:*}"
-                  tcp_probe "oai-${nf}.${NS}.svc.cluster.local" 8080 || MISSING="${MISSING} oai-${nf}(sbi)"
+                  port=$(echo "${entry}" | cut -d: -f3)
+                  tcp_probe "oai-${nf}.${NS}.svc.cluster.local" "${port}" || MISSING="${MISSING} oai-${nf}(sbi)"
                 done
                 if [ -z "${MISSING}" ]; then
                   SBI_OK=1
@@ -408,11 +420,14 @@ spec:
                   MISSING=""
                   for entry in ${EXPECTED_NFS}; do
                     nf="${entry%%:*}"
-                    nftype="${entry##*:}"
-                    if ! tcp_probe "oai-${nf}.${NS}.svc.cluster.local" 8080; then
+                    nftype=$(echo "${entry}" | cut -d: -f2)
+                    port=$(echo "${entry}" | cut -d: -f3)
+                    registers=$(echo "${entry}" | cut -d: -f4)
+                    if ! tcp_probe "oai-${nf}.${NS}.svc.cluster.local" "${port}"; then
                       MISSING="${MISSING} oai-${nf}(sbi)"
                       continue
                     fi
+                    [ "${registers}" = "yes" ] || continue
                     NF_TYPE_JSON=$(http_get "http://oai-nrf.${NS}.svc.cluster.local:8080/nnrf-nfm/v1/nf-instances?nf-type=${nftype}")
                     if [ -z "${NF_TYPE_JSON}" ] || ! echo "${NF_TYPE_JSON}" | grep -qiE '(/nf-instances/[0-9a-fA-F-]+|"nfInstanceId"|"href"[[:space:]]*:[[:space:]]*"[^"]+/nf-instances/)'; then
                       MISSING="${MISSING} ${nftype}"

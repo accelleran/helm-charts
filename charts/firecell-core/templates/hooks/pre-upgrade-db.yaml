@@ -74,7 +74,7 @@ spec:
               done
               echo "[db-upgrade] Creating MbsSubscriptionData if missing"
               mysql -h mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" "${MYSQL_DB}" <<'FIRECELL_DB_UPGRADE_SQL'
-{{ .Files.Get "sql/oai_db-5mbs.sql" | indent 14 }}
+{{ .Files.Get "sql/oai_db-5mbs.sql" | replace "USE oai_db;" "-- (database: mysql.database, selected on the command line)" | indent 14 }}
               FIRECELL_DB_UPGRADE_SQL
               echo "[db-upgrade] OK"
 {{- end }}
