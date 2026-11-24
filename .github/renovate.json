@@ -50,6 +50,18 @@
     },
     {
       "customType": "regex",
+      "description": "Version keys in chart values that are the tag of an image named elsewhere, e.g. firecell-core global.pkgVersion, the shared tag of every cn5g-* image.",
+      "datasourceTemplate": "docker",
+      "managerFilePatterns": [
+        "/(^|/)values\\.y[a]?ml$/"
+      ],
+      "matchStrings": [
+        "#\\s?renovate: image=(?<depName>.*?)( versioning=(?<versioning>.*?))?( extract_version=(?<extractVersion>.*?))?\\s+[\\w\\-]*[vV]ersion:\\s?\"?(?<currentValue>[\\w+\\.\\-]*)\"?"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}docker{{/if}}"
+    },
+    {
+      "customType": "regex",
       "datasourceTemplate": "helm",
       "managerFilePatterns": [
         "/(^|/)values\\.y[a]?ml$/"

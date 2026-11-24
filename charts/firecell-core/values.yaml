@@ -14,7 +14,9 @@ global:
   imagePullSecrets:
     - name: dockerhub-regcred
 
-  # Package version — default image tag when an NF imageTag is empty
+  # Package version — default image tag when an NF imageTag is empty.
+  # Renovate tracks it against cn5g-amf; every cn5g-* image ships this tag.
+  # renovate: image=docker.io/accelleran/cn5g-amf
   pkgVersion: "6.0.0"
 
   # Timezone for all NF containers
