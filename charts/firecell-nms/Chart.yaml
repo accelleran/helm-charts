@@ -3,4 +3,5 @@ name: firecell-nms
 description: Firecell NMS — frontend, backend and VictoriaMetrics
 type: application
 version: 0.2.1
+# renovate: image=docker.io/accelleran/nms-backend
 appVersion: "6.0.0"
