@@ -27,7 +27,7 @@ backend:
     # -- Image repository path, including the org (kept when the registry is rewritten).
     repository: accelleran/nms-backend
     # -- Image tag.
-    tag: "6.0.0"
+    tag: "6.0.1"
     # -- Optional. When set, used as registry/repository@digest instead of :tag.
     digest: ""
   # -- Secret with the backend credentials, created before install; the
@@ -254,7 +254,7 @@ front:
     # -- Image repository path, including the org (kept when the registry is rewritten).
     repository: accelleran/nms-frontend
     # -- Image tag.
-    tag: "6.0.0"
+    tag: "6.0.1"
     # -- Optional. When set, used as registry/repository@digest instead of :tag.
     digest: ""
   # -- Where nginx sends /api/. Empty: the in-chart nms-api Service.
