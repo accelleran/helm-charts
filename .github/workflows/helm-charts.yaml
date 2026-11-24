@@ -33,6 +33,8 @@ jobs:
       charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
       # renovate: github_repository=helm/helm versioning=semver extract_version=^v(?<version>.*)$
       helm_version: 4.3.2
+      # renovate: github_repository=helm-unittest/helm-unittest versioning=semver extract_version=^v(?<version>.*)$
+      helm_unittest_version: 1.2.1
     timeout-minutes: 2
     steps:
       - name: Expose variables
@@ -114,19 +116,22 @@ jobs:
           --config etc/ct.yaml
           --charts ${{ needs.vars.outputs.charts_to_lint }}
 
-      # helm template tests a chart keeps in tests/*-test.py (firecell-nms:
-      # tests/acs-render-test.py). They need no cluster.
-      - name: Run chart render tests
+      # helm-unittest suites a chart keeps in tests/*_test.yaml (firecell-nms:
+      # the fc-acs suites). They need no cluster.
+      - name: Install helm-unittest
+        run: >-
+          helm plugin install https://github.com/helm-unittest/helm-unittest
+          --version "v${{ needs.vars.outputs.helm_unittest_version }}"
+          --verify=false
+
+      - name: Run chart unit tests
         run: |
-          pip install --quiet pyyaml
           charts="${{ needs.vars.outputs.charts_to_lint }}"
           for chart in ${charts//,/ } ; do
-              for t in "${chart}"/tests/*-test.py ; do
-                  [ -f "$t" ] || continue
-                  echo "::group::${t}"
-                  python3 "$t"
-                  echo "::endgroup::"
-              done
+              compgen -G "${chart}/tests/*_test.yaml" > /dev/null || continue
+              echo "::group::${chart}"
+              helm unittest "${chart}"
+              echo "::endgroup::"
           done
 
   test-charts:

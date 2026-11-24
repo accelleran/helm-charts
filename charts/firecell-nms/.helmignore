@@ -23,5 +23,5 @@ CHANGELOG.md
 RELEASE_NOTES.md
 README.md.gotmpl
 .ct-install-ignore
-# Chart render tests, not part of the package
+# helm-unittest suites, not part of the package
 tests/
