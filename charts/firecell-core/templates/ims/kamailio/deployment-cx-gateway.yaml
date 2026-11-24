@@ -90,6 +90,10 @@ spec:
         {{- if $split }}
         {{- include "firecell-5gc.imsSecretVolume" (dict "root" . "name" "cx-provision-secrets" "withRoot" true "keys" (list "cx-db-password")) | nindent 8 }}
         {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
