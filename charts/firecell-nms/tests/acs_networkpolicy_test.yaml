@@ -1,0 +1,74 @@
+suite: fc-acs NetworkPolicy
+release:
+  name: t
+  namespace: firecell-nms
+templates:
+  - templates/networkpolicy.yaml
+set:
+  acs.enabled: true
+  networkPolicy.enabled: true
+tests:
+  - it: lets fc-acs reach the nms-api FCAPS ingest
+    documentSelector:
+      path: metadata.name
+      value: nms-api
+    asserts:
+      - contains:
+          path: spec.ingress[0].from
+          content:
+            podSelector:
+              matchLabels:
+                app: fc-acs
+
+  - it: admits the northbound API from nms-api, nms-worker and nms-control-plane only
+    documentSelector:
+      path: metadata.name
+      value: fc-acs
+    asserts:
+      # Two rules only (northbound, CWMP): an extra rule, with or without
+      # ports, would open fc-acs to more peers than the list below.
+      - lengthEqual:
+          path: spec.ingress
+          count: 2
+      - equal:
+          path: spec.podSelector.matchLabels
+          value: {app: fc-acs}
+      # equal on the whole list: an extra, missing or reordered peer fails.
+      - equal:
+          path: spec.ingress[?(@.ports[0].port == 8080)].from
+          value:
+            - podSelector: {matchLabels: {app: nms-api}}
+            - podSelector: {matchLabels: {app: nms-worker}}
+            - podSelector: {matchLabels: {app: nms-control-plane}}
+
+  - it: admits CWMP on 7547 and 7548 from anywhere
+    documentSelector:
+      path: metadata.name
+      value: fc-acs
+    asserts:
+      - notExists:
+          path: spec.ingress[?(@.ports[0].port == 7547)].from
+      - equal:
+          path: spec.ingress[?(@.ports[0].port == 7547)].ports
+          value:
+            - {protocol: TCP, port: 7547}
+            - {protocol: TCP, port: 7548}
+
+  - it: drops 7548 with acs.southbound.plainHttp=false
+    set:
+      acs.southbound.plainHttp: false
+    documentSelector:
+      path: metadata.name
+      value: fc-acs
+    asserts:
+      - equal:
+          path: spec.ingress[?(@.ports[0].port == 7547)].ports
+          value:
+            - {protocol: TCP, port: 7547}
+
+  - it: renders no NetworkPolicy while networkPolicy.enabled is false
+    set:
+      networkPolicy.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

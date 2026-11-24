@@ -1,0 +1,194 @@
+suite: fc-acs Deployment
+release:
+  name: t
+  namespace: firecell-nms
+templates:
+  - templates/acs/deployment.yaml
+set:
+  acs.enabled: true
+  # Not the defaults, so the tests check where each value comes from and
+  # survive Renovate bumping the image tags in values.yaml.
+  acs.image.tag: acs-under-test
+  backend.database.image.tag: db-under-test
+  backend.existingSecret: backend-secret-under-test
+tests:
+  - it: runs one replica, replaced with Recreate
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: fc-acs
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+
+  - it: labels the pod app=fc-acs, which the Services and the NetworkPolicy select
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value: {app: fc-acs}
+      - equal:
+          path: spec.template.metadata.labels.app
+          value: fc-acs
+
+  - it: has no service links (no FC_ACS_SOUTHBOUND_PORT=tcp://... from the Service)
+    asserts:
+      - equal:
+          path: spec.template.spec.enableServiceLinks
+          value: false
+
+  - it: runs as non-root with a read-only root filesystem
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: keeps the MySQL root password and the backend Secret out of the main container
+    asserts:
+      # One container and one init container: the checks below by name cover
+      # the whole pod, and a sidecar or a second init container fails here.
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 1
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env[?(@.valueFrom.secretKeyRef.key == "database-root-password")]
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env[?(@.valueFrom.secretKeyRef.name == "backend-secret-under-test")]
+      - notExists:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].envFrom
+      - notExists:
+          path: spec.template.spec.volumes[?(@.secret.secretName == "backend-secret-under-test")]
+      - notExists:
+          path: spec.template.spec.volumes[?(@.projected)]
+
+  - it: configures the main container
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].image
+          value: docker.io/accelleran/nms-fc-acs:acs-under-test
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env
+          content:
+            name: FC_ACS_DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: fc-acs
+                key: database-url
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env
+          content:
+            name: FC_ACS_NORTHBOUND_TOKEN_FILE
+            value: /etc/fc-acs/secrets/northbound-token
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env
+          content:
+            name: FC_ACS_CREDENTIAL_KEY_FILE
+            value: /etc/fc-acs/secrets/credential-key
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env
+          content:
+            name: FC_ACS_LOG_LEVEL
+            value: info
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env
+          content:
+            name: FC_ACS_NMS_URL
+            value: http://nms-api.firecell-nms.svc.cluster.local:8080
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env
+          content:
+            name: FC_ACS_SOUTHBOUND_HTTP_PORT
+            value: "7548"
+
+  - it: listens on southbound 7547, southbound-http 7548 and northbound 8080
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].ports
+          value:
+            - {name: southbound, containerPort: 7547}
+            - {name: southbound-http, containerPort: 7548}
+            - {name: northbound, containerPort: 8080}
+
+  - it: probes health and readiness on the northbound API
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].livenessProbe.httpGet
+          value: {path: /api/v1/health, port: northbound}
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].readinessProbe.httpGet
+          value: {path: /api/v1/ready, port: northbound}
+
+  - it: mounts only northbound-token and credential-key of Secret fc-acs, where the env points
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == "secrets")].secret.secretName
+          value: fc-acs
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == "secrets")].secret.items
+          value:
+            - {key: northbound-token, path: northbound-token}
+            - {key: credential-key, path: credential-key}
+      # The *_FILE paths above are /etc/fc-acs/secrets/<item path>.
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].volumeMounts[?(@.name == "secrets")]
+          value: {name: secrets, mountPath: /etc/fc-acs/secrets, readOnly: true}
+
+  - it: creates the database from an init container on the nms-db image
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name == "create-database")].image
+          value: docker.io/library/mysql:db-under-test
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == "create-database")].env
+          content:
+            name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: backend-secret-under-test
+                key: database-root-password
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name == "create-database")].env
+          content:
+            name: ACS_DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: fc-acs
+                key: database-password
+
+  - it: passes the root password through MYSQL_PWD, not argv
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[?(@.name == "create-database")].command[2]
+          pattern: MYSQL_PWD="\$MYSQL_ROOT_PASSWORD" mysql
+      # That is its only use, and no mysql option carries a password.
+      - notMatchRegex:
+          path: spec.template.spec.initContainers[?(@.name == "create-database")].command[2]
+          pattern: (?s)MYSQL_ROOT_PASSWORD.*MYSQL_ROOT_PASSWORD
+      - notMatchRegex:
+          path: spec.template.spec.initContainers[?(@.name == "create-database")].command[2]
+          pattern: \s(-p|--password)
+
+  - it: turns the plain-HTTP listener off with acs.southbound.plainHttp=false
+    set:
+      acs.southbound.plainHttp: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].env
+          content:
+            name: FC_ACS_SOUTHBOUND_HTTP_PORT
+            value: "0"
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "fc-acs")].ports
+          value:
+            - {name: southbound, containerPort: 7547}
+            - {name: northbound, containerPort: 8080}

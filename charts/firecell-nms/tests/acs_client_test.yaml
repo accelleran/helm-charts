@@ -1,0 +1,53 @@
+# Every process that asks the ACS: the API (routes), the worker, and the
+# control plane (TR-069 supervision, the PM collector, the TR-069 sync).
+suite: fc-acs clients (nms-api, nms-worker, nms-control-plane)
+release:
+  name: t
+  namespace: firecell-nms
+templates:
+  - templates/*.yaml
+  - templates/*/*.yaml
+set:
+  acs.enabled: true
+tests:
+  - it: nms-api gets the ACS URL and the northbound token
+    template: templates/backend/api.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts: &client
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIRECELL_NMS_NG_ACS_URL
+            value: http://fc-acs:8080
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIRECELL_NMS_NG_ACS_TOKEN_FILE
+            value: /etc/firecell-nms/acs/northbound-token
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == "acs-token")].secret.secretName
+          value: fc-acs
+      - equal:
+          path: spec.template.spec.volumes[?(@.name == "acs-token")].secret.items
+          value:
+            - {key: northbound-token, path: northbound-token}
+      # FIRECELL_NMS_NG_ACS_TOKEN_FILE is <mountPath>/<item path>.
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[?(@.name == "acs-token")]
+          value: {name: acs-token, mountPath: /etc/firecell-nms/acs, readOnly: true}
+
+  - it: nms-worker gets the ACS URL and the northbound token
+    template: templates/backend/worker.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts: *client
+
+  - it: nms-control-plane gets the ACS URL and the northbound token
+    template: templates/backend/control-plane.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts: *client

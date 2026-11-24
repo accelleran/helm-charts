@@ -1,0 +1,88 @@
+suite: fc-acs disabled (the default)
+release:
+  name: t
+  namespace: firecell-nms
+templates:
+  - templates/*.yaml
+  - templates/*/*.yaml
+tests:
+  - it: renders no fc-acs object
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/acs/deployment.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/acs/secret.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/acs/service.yaml
+
+  - it: release-info does not mention fc-acs
+    template: templates/release-info.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["release.json"]
+          pattern: fc-acs
+
+  - it: renders no fc-acs NetworkPolicy
+    set:
+      networkPolicy.enabled: true
+    template: templates/networkpolicy.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+      - containsDocument:
+          kind: NetworkPolicy
+          apiVersion: networking.k8s.io/v1
+          name: fc-acs
+        not: true
+
+  - it: the nms-api NetworkPolicy does not admit fc-acs
+    set:
+      networkPolicy.enabled: true
+    template: templates/networkpolicy.yaml
+    documentSelector:
+      path: metadata.name
+      value: nms-api
+    asserts:
+      - notContains:
+          path: spec.ingress[0].from
+          content:
+            podSelector:
+              matchLabels:
+                app: fc-acs
+
+  - it: nms-api gets no ACS URL, token or mount
+    template: templates/backend/api.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts: &noClient
+      # Every container, init containers included: none may mount or name the ACS.
+      - notExists:
+          path: spec.template.spec.volumes[?(@.name == "acs-token")]
+      - notExists:
+          path: spec.template.spec.containers[*].volumeMounts[?(@.name == "acs-token")]
+      - notExists:
+          path: spec.template.spec.initContainers[*].volumeMounts[?(@.name == "acs-token")]
+      - notExists:
+          path: spec.template.spec.containers[*].env[?(@.name == "FIRECELL_NMS_NG_ACS_URL")]
+      - notExists:
+          path: spec.template.spec.containers[*].env[?(@.name == "FIRECELL_NMS_NG_ACS_TOKEN_FILE")]
+      - notExists:
+          path: spec.template.spec.initContainers[*].env[?(@.name == "FIRECELL_NMS_NG_ACS_URL")]
+
+  - it: nms-worker gets no ACS URL, token or mount
+    template: templates/backend/worker.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts: *noClient
+
+  - it: nms-control-plane gets no ACS URL, token or mount
+    template: templates/backend/control-plane.yaml
+    documentSelector:
+      path: kind
+      value: StatefulSet
+    asserts: *noClient
