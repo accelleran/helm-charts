@@ -22,7 +22,7 @@ global:
   # imageTag is empty (the NFs name their release tags). Renovate tracks it against cn5g-amf;
   # every cn5g-* image ships this tag.
   # renovate: image=docker.io/accelleran/cn5g-amf
-  pkgVersion: "6.0.0"
+  pkgVersion: "6.0.1"
 
   # Timezone for all NF containers
   timezone: Europe/Paris
