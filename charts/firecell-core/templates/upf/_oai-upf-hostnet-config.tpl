@@ -202,6 +202,13 @@ upf:
     {{- include "firecell-5gc.upfDeleteSessionsOnSmfRestart" $v.upf }}
     # cn5g-upf v5.1.0.x sizes m_arp_table from support_features (not datapath_configuration).
     max_arp_entries: 256
+{{- if and $n9On (ne $schema "legacy") }}
+    # m_upf_interfaces holds N3, N6, N4 and, with n9.enabled, N9. cn5g-upf reads
+    # max_upf_interfaces from support_features only (default 3); it does not parse
+    # datapath_configuration, so the value there is ignored. Without this the UPF
+    # aborts at start: "The key cannot be updated in map: m_upf_interfaces (errno: 7)".
+    max_upf_interfaces: 4
+{{- end }}
 {{- if eq $schema "legacy" }}
     # Legacy cn5g-upf v5.1.0.x reads BPF map sizes from support_features.
     max_upf_interfaces: 4
