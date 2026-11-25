@@ -1998,6 +1998,15 @@ hooks:
     intervalSeconds: 4
     verifyNrfRegistrations: true
     verifyPfcpAssociation: true
+    # hostNetwork UPF datapath Job (<release>-postflight-datapath): per UPF instance,
+    # the N3 IP on its N3 interface, the PFCP macvlan address and the N6 policy
+    # routing table. The Job runs on ONE node (upf.nodeSelector) and checks every
+    # instance there: with upf.instances[] placed on other nodes (per-instance
+    # nodeSelector), set this to false or the hook fails. false skips only those
+    # per-instance checks; the PFCP/GTP-U socket check stays (it needs a UPF on
+    # the Job's node). Default true; left commented so the values digest in
+    # <release>-release-info does not change for existing installs.
+    # verifyUpfDatapath: true
   # Pre-upgrade database step (templates/hooks/pre-upgrade-db.yaml), chart MySQL only: widens
   # the callback URI columns of older schemas to varchar(255) and creates MbsSubscriptionData,
   # which the init scripts add only on an empty data directory. No-op on an up-to-date DB.
@@ -2008,6 +2017,14 @@ hooks:
     enabled: true
     image: ""
     timeoutSeconds: 90
+    # true (as before): helm uninstall deletes each UPF instance's N3 interface when
+    # it is a macvlan or is named upf-n3, also with autoCreateN3Macvlan false.
+    # false: delete it only when autoCreateN3Macvlan is true, so N3 macvlans the
+    # host provisions (e.g. galaxy host_macvlans) survive an uninstall. Note that
+    # the UPF init also creates the N3 macvlan when it is missing; with false such
+    # a macvlan stays after uninstall unless autoCreateN3Macvlan is true.
+    # Default true; left commented so the values digest does not change.
+    # deleteHostN3Macvlan: true
 
 # --- Image Pull Secret ---
 # Pre-create before helm install (GHCR, private packages; the name is kept from older versions):

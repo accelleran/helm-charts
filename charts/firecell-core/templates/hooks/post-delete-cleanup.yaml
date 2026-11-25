@@ -148,9 +148,17 @@ spec:
                     echo "[post-delete] Removing N3 VIP ${N3_IP}/32 from ${N3_IF}..."
                     ip addr del "${N3_IP}/32" dev "${N3_IF}" 2>/dev/null || true
                   fi
+                {{- if eq (include "firecell-5gc.flag" (list $cleanup.deleteHostN3Macvlan true)) "true" }}
                 elif [ "${AUTO_N3_MAC}" = "true" ] || [ "${N3_IF}" = "upf-n3" ] || ( ip -d link show "${N3_IF}" 2>/dev/null | grep -q "macvlan" ); then
                   echo "[post-delete] Deleting N3 macvlan interface ${N3_IF}..."
                   ip link del "${N3_IF}" 2>/dev/null || true
+                {{- else }}
+                elif [ "${AUTO_N3_MAC}" = "true" ]; then
+                  echo "[post-delete] Deleting N3 macvlan interface ${N3_IF}..."
+                  ip link del "${N3_IF}" 2>/dev/null || true
+                elif [ "${N3_IF}" = "upf-n3" ] || ( ip -d link show "${N3_IF}" 2>/dev/null | grep -q "macvlan" ); then
+                  echo "[post-delete] Keeping N3 macvlan ${N3_IF} and its addresses: autoCreateN3Macvlan is false and hooks.postDelete.deleteHostN3Macvlan is false (host-provisioned netdev)"
+                {{- end }}
                 elif [ -n "${N3_IP}" ]; then
                   echo "[post-delete] Removing N3 VIP ${N3_IP}/32 from ${N3_IF}..."
                   ip addr del "${N3_IP}/32" dev "${N3_IF}" 2>/dev/null || true
