@@ -36740,6 +36740,25 @@ entries:
   firecell-du:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-11-25T10:36:17.802545102Z"
+    description: Firecell RAN on Ocudu - one O-RAN 7.2 O-DU per release, with DPDK
+      fronthaul, O-RU M-plane and O1 NETCONF
+    digest: 7502bf8f4d29d1585eee46cb8da2fe7093107bd6eff8e97486647725741b3f51
+    keywords:
+    - 5g
+    - ran
+    - o-ran
+    - ocudu
+    - du
+    - dpdk
+    - netconf
+    name: firecell-du
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-du-0.2.1/firecell-du-0.2.1.tgz
+    version: 0.2.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-10-30T12:56:32.339447762Z"
     description: Firecell RAN on Ocudu - one O-RAN 7.2 O-DU per release, with DPDK
       fronthaul, O-RU M-plane and O1 NETCONF
@@ -40121,4 +40140,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/zitadel-10.0.4/zitadel-10.0.4.tgz
     version: 10.0.4
-generated: "2026-11-25T10:02:26.53179922Z"
+generated: "2026-11-25T10:36:17.803485036Z"
