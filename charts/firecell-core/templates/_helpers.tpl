@@ -663,6 +663,39 @@ single UPF).
 {{- end }}
 
 {{/*
+Per-NF log level overrides: coreConfig.logLevelPerNf, a map NF -> level, rendered as
+extra keys under log_level: next to general. cn5g-common-src nf_features_config reads
+log_level.general, then log_level.<nf name>, the NF key winning. Allowed: the NFs that
+read the chart's shared config (firecell-common-config) or the hostNetwork UPF config:
+amf, ausf, nrf, pcf, smf, udm, udr, upf. The NSSF has its own config
+(nssf.config.logLevel); the UDSF does not read the shared config. Levels as the NF
+validates them (LOG_LVL_VALIDATOR_REGEX): debug, info, warning, error, off.
+dict keys: ctx (root context), only (optional: render just this NF's key), indent.
+Renders nothing when the map is empty, so existing configs are unchanged.
+*/}}
+{{- define "firecell-5gc.logLevelPerNf" -}}
+{{- $m := .ctx.Values.coreConfig.logLevelPerNf | default dict -}}
+{{- if not (kindIs "map" $m) -}}
+{{- fail (printf "coreConfig.logLevelPerNf must be a map such as {smf: debug} (got %v)" $m) -}}
+{{- end -}}
+{{- $nfs := list "amf" "ausf" "nrf" "pcf" "smf" "udm" "udr" "upf" -}}
+{{- $levels := list "debug" "info" "warning" "error" "off" -}}
+{{- range $nf, $lvl := $m -}}
+{{- if not (has $nf $nfs) -}}
+{{- fail (printf "coreConfig.logLevelPerNf: unknown NF %q (the OAI NFs read log_level.<nf> for %s)" $nf (join ", " $nfs)) -}}
+{{- end -}}
+{{- if not (has ($lvl | toString) $levels) -}}
+{{- fail (printf "coreConfig.logLevelPerNf.%s: %q is not one of %s" $nf ($lvl | toString) (join ", " $levels)) -}}
+{{- end -}}
+{{- end -}}
+{{- range $nf, $lvl := $m -}}
+{{- if or (not $.only) (eq $.only $nf) }}
+{{ printf "%s: %s" $nf ($lvl | toString) | indent (int $.indent) }}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 "true" when FCAPS (the MnS producer and its intent ConfigMap) is on for one UPF:
 the instance's fcaps.enabled when that key is set, else upf.fcaps.enabled (read
 as before: any non-empty value is on). Empty string when off.

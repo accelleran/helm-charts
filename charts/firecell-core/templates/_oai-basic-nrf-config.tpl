@@ -31,6 +31,7 @@
 # Log level for all the NFs
 log_level:
   general: {{ $v.coreConfig.logLevel }}
+  {{- include "firecell-5gc.logLevelPerNf" (dict "ctx" $ctx "indent" 2) }}
 
 # If you enable registration, the other NFs will use the NRF discovery mechanism
 register_nf:

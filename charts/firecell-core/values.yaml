@@ -1554,6 +1554,13 @@ coreConfig:
   # debug dumps key material (Kamf, KNASint, NAS cipher keys, XRES, ...) from
   # the OAI NFs; use it only for troubleshooting.
   logLevel: info
+  # Per-NF override of logLevel, e.g. {smf: debug} to get the SMF debug lines
+  # without every NF's key material. Rendered as log_level.<nf> next to
+  # log_level.general; the NF key wins. NFs: amf, ausf, nrf, pcf, smf, udm, udr,
+  # upf (the hostNetwork UPF config gets the upf key only; the NSSF has
+  # nssf.config.logLevel). Levels: debug, info, warning, error, off.
+  # Default empty; left commented so the release-info values digest is unchanged.
+  # logLevelPerNf: {smf: debug}
   registerNf: "yes"
   httpVersion: 1
 

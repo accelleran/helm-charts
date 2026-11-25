@@ -67,6 +67,7 @@
 {{- $schema := $v.upf.configSchema | default "mr97" | toString | lower -}}
 log_level:
   general: {{ $v.coreConfig.logLevel }}
+  {{- include "firecell-5gc.logLevelPerNf" (dict "ctx" $root "only" "upf" "indent" 2) }}
 register_nf:
   {{- /* Per-instance registerNf (yes/no) wins over coreConfig.registerNf. */}}
   general: {{ if hasKey ($inst | default dict) "registerNf" }}{{ if eq (include "firecell-5gc.flag" (list $inst.registerNf true)) "true" }}yes{{ else }}no{{ end }}{{ else }}{{ $v.coreConfig.registerNf }}{{ end }}
