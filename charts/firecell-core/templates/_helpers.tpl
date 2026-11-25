@@ -670,8 +670,9 @@ load when that is the N3 or the N9 address. The chart fails earlier, from what i
 knows: the interface names the UPF config gets (same coalesce chains as the two
 config templates), and the N3/N4 addresses when both are set in the values. Two
 different interfaces that carry the same address are left to the UPF check. N9 is
-not checked: the UPF compares N4 with N9 only with n9.enabled, which the chart
-never writes.
+not checked here: with an instance's n9.enabled the hostNetwork UPF config template
+(firecell-5gc.oaiUpfHostnetConfig) already fails when the N9 interface is the N3,
+N6, N4 or SBI one, which covers N4 = N9 by interface name.
 dict keys: ctx, inst, appName.
 */}}
 {{- define "firecell-5gc.upfN4N3Check" -}}

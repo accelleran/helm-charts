@@ -1136,6 +1136,29 @@ upf:
   #     nodeSelector: {site: edge}
   #     tolerations: []
   #     affinity: {}
+  #     # hostNetwork only. Framed routing (support_features.enable_fr) for this
+  #     # instance; unset = upf.enableFramedRouting.
+  #     enableFramedRouting: false
+  #     # hostNetwork only. N9 (UPF-to-UPF GTP-U, UL CL / branching point).
+  #     # Unset: the UPF config gets n9.interface_name and port only, and the
+  #     # UPF default enabled: false applies. With enabled: true the UPF needs
+  #     # N9 on its own netdev with its own IPv4 address (n9Interface, not the
+  #     # N3/N6/N4/SBI one; the render fails otherwise). The chart does not
+  #     # create that netdev or its address: provision it on the host.
+  #     n9Interface: upf-n9
+  #     n9:
+  #       enabled: true
+  #       # GTP-U addresses of the peer UPFs (on a UL CL: the PSA's N3 address).
+  #       # A FAR whose outer header creation address is listed leaves on N9;
+  #       # any other leaves on local N6.
+  #       peers: ["10.x.x.z"]
+  #       # Rendered only for the keys set here; unset keys keep the UPF
+  #       # defaults (enable_fast_path false, require_fallback_far true,
+  #       # ulcl_force_local_on_gap false).
+  #       failover:
+  #         enableFastPath: false        # -> enable_fast_path
+  #         requireFallbackFar: true     # -> require_fallback_far
+  #         ulclForceLocalOnGap: false   # -> ulcl_force_local_on_gap
 
 # --- IMS (Kamailio + Cx-on-UDR default; Asterisk via examples/values-ims-asterisk.yaml) ---
 ims:
