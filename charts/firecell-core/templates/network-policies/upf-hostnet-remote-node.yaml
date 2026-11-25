@@ -1,0 +1,61 @@
+{{- /*
+hostNetwork UPF instances (upf.instances[]) on a node other than the SMF's reach
+core pods with the Cilium identity "remote-node": host traffic to a pod IP leaves
+through cilium_host and is SNATed to that node's cilium_host address. cp-isolation
+admits pods and namespaces only, so Cilium drops it (fc-ha 25 Nov: UDP from the
+edge UPF's PFCP address to the SMF pod, "Policy denied ... remote-node"). Replies
+to SMF-initiated PFCP pass as established flows; UPF-initiated messages (Heartbeat
+Request, Session Report Request for DL data / usage) do not.
+Allowed here, on top of cp-isolation (Cilium ORs the allow rules):
+  - remote-node -> app=oai-smf UDP 8805 (PFCP);
+  - remote-node -> app=oai-nrf TCP <nrf.sbiPort> only when an instance registers
+    with the NRF (registerNf unset or yes): wait-for-nrf and the NRF client.
+Rendered only with the Cilium provider, hostNetwork UPF and upf.instances set.
+*/}}
+{{- if and .Values.networkPolicies.enabled .Values.upf.enabled .Values.upf.hostNetwork .Values.upf.instances (eq ((.Values.network).loadBalancer).provider "cilium") }}
+{{- $anyRegisters := false }}
+{{- range .Values.upf.instances }}
+{{- if or (not (hasKey . "registerNf")) (eq (include "firecell-5gc.flag" (list .registerNf true)) "true") }}
+{{- $anyRegisters = true }}
+{{- end }}
+{{- end }}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: upf-hostnet-to-smf-pfcp
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: oai-smf
+  ingress:
+    - fromEntities:
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "8805"
+              protocol: UDP
+{{- if and $anyRegisters .Values.nrf.enabled }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: upf-hostnet-to-nrf
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+      app: oai-nrf
+  ingress:
+    - fromEntities:
+        - remote-node
+      toPorts:
+        - ports:
+            - port: {{ .Values.nrf.sbiPort | default 8080 | quote }}
+              protocol: TCP
+{{- end }}
+{{- end }}

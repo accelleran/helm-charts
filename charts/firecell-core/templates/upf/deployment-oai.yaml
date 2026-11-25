@@ -132,7 +132,12 @@ spec:
       {{- end }}
       {{- end }}
       initContainers:
+        {{- /* An instance with registerNf "no" never calls the NRF: no wait-for-nrf
+               (a hostNetwork UPF on another node cannot reach the NRF pod unless
+               upf-hostnet-remote-node.yaml opens it). */}}
+        {{- if or (not (hasKey ($inst | default dict) "registerNf")) (eq (include "firecell-5gc.flag" (list $inst.registerNf true)) "true") }}
         {{- include "firecell-5gc.waitForNrf" $ | nindent 8 }}
+        {{- end }}
         {{- if $upfMultus }}
         {{- $n6gwMultus := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
         {{- $n3ArpList := $upfMultusN3.arpWarmIPs | default list }}
