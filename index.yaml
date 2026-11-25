@@ -36798,6 +36798,16 @@ entries:
     version: 0.1.0
   firecell-nms:
   - apiVersion: v2
+    appVersion: 6.0.1
+    created: "2026-11-25T09:40:01.688252992Z"
+    description: Firecell NMS — frontend, backend and VictoriaMetrics
+    digest: cd529642ddb95aa4e731268ecd98d6b318976495c72fd5a61b35c691df7ac6d2
+    name: firecell-nms
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-nms-0.2.2/firecell-nms-0.2.2.tgz
+    version: 0.2.2
+  - apiVersion: v2
     appVersion: 6.0.0
     created: "2026-11-05T20:10:09.263881571Z"
     description: Firecell NMS — frontend, backend and VictoriaMetrics
@@ -40093,4 +40103,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/zitadel-10.0.4/zitadel-10.0.4.tgz
     version: 10.0.4
-generated: "2026-11-13T13:54:04.869412964Z"
+generated: "2026-11-25T09:40:02.022961253Z"
