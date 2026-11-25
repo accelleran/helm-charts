@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.1](https://github.com/accelleran/helm-charts/compare/firecell-cu-0.2.0...firecell-cu-0.2.1) (2026-11-25)
+
+
+### Features
+
+* **firecell-core,firecell-cu,firecell-du,firecell-nms:** Write a release-info ConfigMap ([10e3484](https://github.com/accelleran/helm-charts/commit/10e3484a062e8e84fd7b2ea61b590d10f2780518))
+* **firecell-cu,firecell-du:** Log to stdout by default ([f8c5b8d](https://github.com/accelleran/helm-charts/commit/f8c5b8d7e716606f7d86a6acc4ec8bee747e1cfb))
+* **firecell-cu,firecell-du:** NetconfVerbosity sets the netopeer2 log level ([d201997](https://github.com/accelleran/helm-charts/commit/d201997506b9e103238440581ee851905c3c74c7))
+
+
+### Bug Fixes
+
+* **deps:** Update docker.io/accelleran/ran docker tag to v0.2.0 ([497e93c](https://github.com/accelleran/helm-charts/commit/497e93cf852c54582c0391458b433de792c7b89f))
+* **firecell-cu,firecell-nms:** Align the CU-UP gNB ID and the NMS seed with the other charts' defaults ([#1879](https://github.com/accelleran/helm-charts/issues/1879)) ([eeb9241](https://github.com/accelleran/helm-charts/commit/eeb9241b1c513e6cbdd2ccd71c806d596d89bbe5))
+
 ## [0.2.0](https://github.com/accelleran/helm-charts/compare/firecell-cu-0.1.0...firecell-cu-0.2.0) (2026-11-05)
 
 
