@@ -1139,6 +1139,15 @@ upf:
   #     # names its peer by that peer's upfs[].host (pfcpHost / hostPfcpIP) in
   #     # endpointFqdn or ipv4EndpointAddresses, so with smfUpfInfo set the
   #     # host must be set (the render fails otherwise).
+  #     # hostNetwork only. NRF registration of this UPF (register_nf.general);
+  #     # unset = coreConfig.registerNf. A registered UPF is named in the SMF by
+  #     # its NRF profile's fqdn, else its last ipv4Addresses (cn5g-upf: the
+  #     # address of nfs.upf.n4.interface_name). When that is not this
+  #     # instance's upfs[].host (pfcpHost / hostPfcpIP), the SMF adds a second
+  #     # UPF entry with the NRF profile's upf_info, which has no interfaces or
+  #     # DNAIs. A UL CL instance (smfUpfInfo) should therefore not register
+  #     # ("no"), or register only with an N4 address (or fqdn) equal to pfcpHost.
+  #     registerNf: "no"
   #     # FCAPS for this instance: enabled replaces upf.fcaps.enabled (MnS env,
   #     # port, intent ConfigMap mount, Service port mns); every other fcaps
   #     # setting stays UPF-wide. Not with upf.fcaps.intentMode pvc.

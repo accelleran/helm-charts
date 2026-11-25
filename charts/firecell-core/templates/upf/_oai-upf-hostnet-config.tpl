@@ -68,7 +68,8 @@
 log_level:
   general: {{ $v.coreConfig.logLevel }}
 register_nf:
-  general: {{ $v.coreConfig.registerNf }}
+  {{- /* Per-instance registerNf (yes/no) wins over coreConfig.registerNf. */}}
+  general: {{ if hasKey ($inst | default dict) "registerNf" }}{{ if eq (include "firecell-5gc.flag" (list $inst.registerNf true)) "true" }}yes{{ else }}no{{ end }}{{ else }}{{ $v.coreConfig.registerNf }}{{ end }}
 http_version: {{ if $v.global.sbi.tls.enabled }}2{{ else }}{{ $v.coreConfig.httpVersion }}{{ end }}
 {{- if $v.global.sbi.tls.enabled }}
 # SBI TLS (global.sbi.tls): the UPF is a client of the NRF only
