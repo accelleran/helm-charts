@@ -663,6 +663,23 @@ single UPF).
 {{- end }}
 
 {{/*
+"true" when FCAPS (the MnS producer and its intent ConfigMap) is on for one UPF:
+the instance's fcaps.enabled when that key is set, else upf.fcaps.enabled (read
+as before: any non-empty value is on). Empty string when off.
+dict keys: ctx (root context), inst (upf.instances entry, or the single-UPF dict).
+*/}}
+{{- define "firecell-5gc.upfFcapsOn" -}}
+{{- $f := .inst.fcaps | default dict -}}
+{{- if not (kindIs "map" $f) -}}
+{{- fail (printf "upf.instances[] oai-upf%s: fcaps must be a map {enabled} (got %v)" (.inst.suffix | default "" | toString) $f) -}}
+{{- end -}}
+{{- if hasKey $f "enabled" -}}
+{{- if eq (include "firecell-5gc.flag" (list $f.enabled false)) "true" }}true{{ end -}}
+{{- else if (.ctx.Values.upf.fcaps | default dict).enabled -}}true
+{{- end -}}
+{{- end }}
+
+{{/*
 N4 != N3 (user decision Q7, 9 Nov 2026: N4 and N3 shall not share an IP address).
 Mirrors cn5g-upf cp_relay_config_error (P23-e): with enable_cp_relay on, the UPF
 opens its N4-u GTP-U endpoint (UDP 2152) on the N4 IPv4 address and refuses to

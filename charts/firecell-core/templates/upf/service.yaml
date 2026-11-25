@@ -13,6 +13,7 @@
 {{- end }}
 {{- range $i, $inst := $instances }}
 {{- $appName := printf "oai-upf%s" (($inst.suffix | default "" | toString)) }}
+{{- $fcapsOn := include "firecell-5gc.upfFcapsOn" (dict "ctx" $ "inst" $inst) }}
 ---
 apiVersion: v1
 kind: Service
@@ -52,7 +53,7 @@ spec:
       port: 8805
       targetPort: 8805
       protocol: UDP
-    {{- if ($.Values.upf.fcaps.enabled | default false) }}
+    {{- if $fcapsOn }}
     # The NMS reaches the MnS producer through this port. The UPF Service is
     # already a LoadBalancer for GTP-U; the in-cluster ClusterIP of the same
     # object is what the NMS uses.

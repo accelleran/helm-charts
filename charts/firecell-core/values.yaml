@@ -1098,8 +1098,10 @@ upf:
       # Must equal nf_instance.instance_name for the UPF NE in the NMS. A
       # mismatch mounts EMPTY and the UPF reverts to its seed with nothing
       # logged: `optional: true` cannot tell a missing ConfigMap from a
-      # misnamed one. First slice is one NE (`upf-1` / `oai-upf`); extra
-      # hostNetwork instances need their own NE and ConfigMap.
+      # misnamed one. This name is used by the single UPF and by an instance
+      # with suffix "". An upf.instances[] entry with a suffix always mounts
+      # `oai-upf<suffix>-cm-intent` (its Deployment name + -cm-intent), so its
+      # NMS NE needs instance_name `oai-upf<suffix>`.
       name: oai-upf-cm-intent
       optional: true
     # Hashed raw for seedSha256 — the only signal covering parameters no
@@ -1137,6 +1139,14 @@ upf:
   #     # names its peer by that peer's upfs[].host (pfcpHost / hostPfcpIP) in
   #     # endpointFqdn or ipv4EndpointAddresses, so with smfUpfInfo set the
   #     # host must be set (the render fails otherwise).
+  #     # FCAPS for this instance: enabled replaces upf.fcaps.enabled (MnS env,
+  #     # port, intent ConfigMap mount, Service port mns); every other fcaps
+  #     # setting stays UPF-wide. Not with upf.fcaps.intentMode pvc.
+  #     fcaps: {enabled: true}
+  #     # healthz sidecar port; default 9090 + list index. With hostNetwork and
+  #     # FCAPS on, the second instance's default 9091 is the MnS port: set
+  #     # another free host port for it.
+  #     healthPort: 9092
   #     smfUpfInfo:
   #       interfaceUpfInfoList:
   #         - {interfaceType: N3, networkInstance: access.oai.org, ipv4EndpointAddresses: ["10.x.x.x"]}
