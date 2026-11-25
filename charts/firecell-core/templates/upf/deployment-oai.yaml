@@ -23,10 +23,17 @@
 {{- range $idx, $inst := $instances }}
 {{- $suffix := ($inst.suffix | default "" | toString) }}
 {{- $healthPort := add 9090 $idx }}
+{{- /* Per-instance healthz port: on hostNetwork the default 9090+idx gives the second
+       instance 9091, which is the MnS port (FCAPS_MNS_LISTEN_HOST 0.0.0.0). */}}
+{{- with $inst.healthPort }}{{ $healthPort = int . }}{{ end }}
 {{- $appName := printf "oai-upf%s" $suffix }}
 {{- $cmName := printf "firecell-oai-upf%s-hostnet" $suffix }}
 {{- $fcaps := $.Values.upf.fcaps | default dict }}
-{{- $fcapsOn := $fcaps.enabled | default false }}
+{{- /* Instance fcaps.enabled wins over upf.fcaps.enabled; the other fcaps settings stay UPF-wide. */}}
+{{- $fcapsOn := include "firecell-5gc.upfFcapsOn" (dict "ctx" $ "inst" $inst) }}
+{{- if and $fcapsOn (hasKey ($inst.fcaps | default dict) "enabled") (eq ($fcaps.intentMode | default "configmap") "pvc") (or $suffix (not $fcaps.enabled)) }}
+{{- fail (printf "%s: fcaps.enabled per instance is not supported with upf.fcaps.intentMode pvc: the chart creates only oai-upf-cm-state (templates/upf/pvc.yaml), for the single UPF with upf.fcaps.enabled" $appName) }}
+{{- end }}
 {{- $cmIntent := dig "intentConfigMap" "name" (printf "%s-cm-intent" $appName) $fcaps }}
 {{- if $suffix }}
 {{- $cmIntent = printf "%s-cm-intent" $appName }}
@@ -95,15 +102,16 @@ spec:
     spec:
       priorityClassName: firecell-prio-high
       terminationGracePeriodSeconds: 30
-      {{- with ($.Values.upf.nodeSelector | default $.Values.global.nodeSelector) }}
+      {{- /* An instance's own placement replaces the UPF-level one, which replaces the global one. */}}
+      {{- with ($inst.nodeSelector | default ($.Values.upf.nodeSelector | default $.Values.global.nodeSelector)) }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with ($.Values.upf.tolerations | default $.Values.global.tolerations) }}
+      {{- with ($inst.tolerations | default ($.Values.upf.tolerations | default $.Values.global.tolerations)) }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with $.Values.upf.affinity }}
+      {{- with ($inst.affinity | default $.Values.upf.affinity) }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -124,7 +132,12 @@ spec:
       {{- end }}
       {{- end }}
       initContainers:
+        {{- /* An instance with registerNf "no" never calls the NRF: no wait-for-nrf
+               (a hostNetwork UPF on another node cannot reach the NRF pod unless
+               upf-hostnet-remote-node.yaml opens it). */}}
+        {{- if or (not (hasKey ($inst | default dict) "registerNf")) (eq (include "firecell-5gc.flag" (list $inst.registerNf true)) "true") }}
         {{- include "firecell-5gc.waitForNrf" $ | nindent 8 }}
+        {{- end }}
         {{- if $upfMultus }}
         {{- $n6gwMultus := coalesce $inst.remoteN6Gw $.Values.upf.remoteN6Gw "" | toString | trim }}
         {{- $n3ArpList := $upfMultusN3.arpWarmIPs | default list }}

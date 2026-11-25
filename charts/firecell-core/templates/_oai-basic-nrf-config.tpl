@@ -31,6 +31,7 @@
 # Log level for all the NFs
 log_level:
   general: {{ $v.coreConfig.logLevel }}
+  {{- include "firecell-5gc.logLevelPerNf" (dict "ctx" $ctx "indent" 2) }}
 
 # If you enable registration, the other NFs will use the NRF discovery mechanism
 register_nf:
@@ -511,6 +512,16 @@ smf:
   {{- range $v.upf.instances }}
   {{- $upfInst := . }}
   {{- if dig "inSmfPool" true $upfInst }}
+  {{- if $upfInst.smfUpfInfo }}
+  {{- if not (kindIs "map" $upfInst.smfUpfInfo) }}
+  {{- fail (printf "upf.instances[] oai-upf%s: smfUpfInfo must be a map (the SMF upfs[].upf_info, TS 29.510 UpfInfo), got %s" ($upfInst.suffix | default "" | toString) (kindOf $upfInst.smfUpfInfo)) }}
+  {{- end }}
+  {{- /* The SMF finds an N9 edge by comparing an N9 item's endpointFqdn or ipv4EndpointAddresses
+         with the peer's upfs[].host, so that host must be known. */}}
+  {{- if not ($upfInst.pfcpHost | default $upfInst.hostPfcpIP) }}
+  {{- fail (printf "upf.instances[] oai-upf%s: smfUpfInfo needs pfcpHost or hostPfcpIP: it becomes the SMF upfs[].host, which the peer's N9 items (endpointFqdn) must name" ($upfInst.suffix | default "" | toString)) }}
+  {{- end }}
+  {{- end }}
     - host: {{ $upfInst.pfcpHost | default $upfInst.hostPfcpIP }}
       port: 8805
       config:
@@ -523,8 +534,12 @@ smf:
         {{- if $ipv6On }}
         enable_cp_relay: {{ if include "firecell-5gc.upfCpRelay" (dict "ctx" $ctx "inst" $upfInst) }}yes{{ else }}no{{ end }}
         {{- end }}
-      {{- /* Per-UPF dnnUpfInfoList on static pool entry (OAI-SMF DNN match; top-level nssai breaks fcdevelop). */}}
-      {{- if $upfInst.dnns }}
+      {{- /* smfUpfInfo: the whole upf_info, verbatim (interfaces, DNAIs, NWI map for UL CL).
+             Otherwise per-UPF dnnUpfInfoList on static pool entry (OAI-SMF DNN match; top-level nssai breaks fcdevelop). */}}
+      {{- if $upfInst.smfUpfInfo }}
+      upf_info:
+        {{- toYaml $upfInst.smfUpfInfo | nindent 8 }}
+      {{- else if $upfInst.dnns }}
       upf_info:
         sNssaiUpfInfoList:
           {{- if $upfInst.nssai }}

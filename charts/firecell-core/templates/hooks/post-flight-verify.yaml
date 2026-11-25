@@ -642,6 +642,11 @@ spec:
                   "hostPfcpIP"      .Values.upf.hostPfcpIP
               ) }}
               {{- end }}
+              {{- /* FIXME(chart): this Job runs on one node (upf.nodeSelector) and checks every
+                     instance there, so instances placed on other nodes (per-instance nodeSelector)
+                     fail it. The real fix is one Job per instance with that instance's placement.
+                     Until then hooks.postFlight.verifyUpfDatapath: false skips checks 1-3. */}}
+              {{- if eq (include "firecell-5gc.flag" (list $post.verifyUpfDatapath true)) "true" }}
               {{- range $idx, $inst := $instances }}
               N3_IF="{{ coalesce $inst.n3Interface $.Values.upf.n3Interface }}"
               N3_IP="{{ coalesce $inst.n3IP $.Values.upf.n3IP }}"
@@ -700,6 +705,9 @@ spec:
                   fi
                 fi
               fi
+              {{- end }}
+              {{- else }}
+              echo "[post-flight:datapath]   SKIP: per-instance N3 IP, PFCP macvlan and N6 policy-routing checks (hooks.postFlight.verifyUpfDatapath false)"
               {{- end }}
 
               # 4. Verify UPF PFCP UDP port 8805 (0x2265) and GTP-U UDP port 2152 (0x0868) are bound

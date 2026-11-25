@@ -18,6 +18,43 @@
 {{- $n4 := coalesce $inst.hostPfcpMacvlan $inst.n4Interface $v.upf.hostPfcpMacvlan $v.upf.n4Interface "eno1" -}}
 {{- $n9 := coalesce $inst.n9Interface $v.upf.n9Interface $n3 -}}
 {{- $n6gw := coalesce $inst.remoteN6Gw $v.upf.remoteN6Gw "" -}}
+{{- /* Per-instance N9 (UL CL): instance key n9 {enabled, peers, failover}. Unset: the
+       n9 block keeps only interface_name and port, so the UPF defaults apply
+       (enabled false). */ -}}
+{{- $n9cfg := $inst.n9 | default dict -}}
+{{- if not (kindIs "map" $n9cfg) -}}
+{{- fail (printf "%s: n9 must be a map {enabled, peers, failover} (got %v)" $appName $n9cfg) -}}
+{{- end -}}
+{{- range $k, $_ := $n9cfg -}}
+{{- if not (has $k (list "enabled" "peers" "failover")) -}}
+{{- fail (printf "%s: unknown key n9.%s (allowed: enabled, peers, failover)" $appName $k) -}}
+{{- end -}}
+{{- end -}}
+{{- range $k, $_ := ($n9cfg.failover | default dict) -}}
+{{- if not (has $k (list "enableFastPath" "requireFallbackFar" "ulclForceLocalOnGap")) -}}
+{{- fail (printf "%s: unknown key n9.failover.%s (allowed: enableFastPath, requireFallbackFar, ulclForceLocalOnGap)" $appName $k) -}}
+{{- end -}}
+{{- end -}}
+{{- $n9On := eq (include "firecell-5gc.flag" (list (get $n9cfg "enabled") false)) "true" -}}
+{{- $n9Peers := list -}}
+{{- range ($n9cfg.peers | default list) -}}
+{{- $peer := . -}}
+{{- if kindIs "map" . }}{{ $peer = .addr4 }}{{ end -}}
+{{- $peer = $peer | default "" | toString | trim -}}
+{{- if not (regexMatch "^[0-9]{1,3}([.][0-9]{1,3}){3}$" $peer) -}}
+{{- fail (printf "%s: n9.peers entries must be IPv4 addresses (the peer UPFs' N3/N9 GTP-U addresses), got %q" $appName $peer) -}}
+{{- end -}}
+{{- $n9Peers = append $n9Peers $peer -}}
+{{- end -}}
+{{- if $n9On -}}
+{{- /* Mirrors cn5g-upf validate_n9: N9 needs its own netdev (XDP attaches one program
+       per netdev) with its own IPv4 address; the address is not visible here. */ -}}
+{{- range $other := list (list "n3" $n3) (list "n6" $n6) (list "n4" $n4) (list "sbi" $sbi) -}}
+{{- if eq $n9 (index $other 1) -}}
+{{- fail (printf "%s: n9.enabled needs N9 on its own netdev, but the N9 interface %q is the %s interface; set n9Interface (or upf.n9Interface) to a dedicated netdev with its own IPv4 address" $appName $n9 (index $other 0)) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
 {{- $instSliceSd := "" -}}
 {{- if $inst.nssai }}
 {{- $instSliceSd = $inst.nssai.sd | default "" | toString -}}
@@ -30,8 +67,10 @@
 {{- $schema := $v.upf.configSchema | default "mr97" | toString | lower -}}
 log_level:
   general: {{ $v.coreConfig.logLevel }}
+  {{- include "firecell-5gc.logLevelPerNf" (dict "ctx" $root "only" "upf" "indent" 2) }}
 register_nf:
-  general: {{ $v.coreConfig.registerNf }}
+  {{- /* Per-instance registerNf (yes/no) wins over coreConfig.registerNf. */}}
+  general: {{ if hasKey ($inst | default dict) "registerNf" }}{{ if eq (include "firecell-5gc.flag" (list $inst.registerNf true)) "true" }}yes{{ else }}no{{ end }}{{ else }}{{ $v.coreConfig.registerNf }}{{ end }}
 http_version: {{ if $v.global.sbi.tls.enabled }}2{{ else }}{{ $v.coreConfig.httpVersion }}{{ end }}
 {{- if $v.global.sbi.tls.enabled }}
 # SBI TLS (global.sbi.tls): the UPF is a client of the NRF only
@@ -89,8 +128,29 @@ nfs:
       interface_name: {{ $n6 | quote }}
       nwi: {{ $nwi | quote }}
     n9:
+      {{- if $inst.n9 }}
+      enabled: {{ $n9On }}
+      {{- end }}
       interface_name: {{ $n9 | quote }}
       port: 2152
+      {{- if $n9Peers }}
+      # GTP-U addresses of the peer UPFs: a FAR whose outer header creation
+      # address is one of them leaves on N9, any other on local N6.
+      peers:
+      {{- range $n9Peers }}
+        - addr4: {{ . | quote }}
+      {{- end }}
+      {{- end }}
+      {{- with ($n9cfg.failover | default dict) }}
+      {{- $fo := . }}
+      {{- $foKeys := list (list "enableFastPath" "enable_fast_path") (list "requireFallbackFar" "require_fallback_far") (list "ulclForceLocalOnGap" "ulcl_force_local_on_gap") }}
+      failover:
+      {{- range $foKeys }}
+      {{- if hasKey $fo (index . 0) }}
+        {{ index . 1 }}: {{ include "firecell-5gc.flag" (list (get $fo (index . 0)) false) }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
 
 snssais:
 {{- range $v.coreConfig.nssai }}
@@ -128,7 +188,7 @@ upf:
     enable_bar: no
     enable_mar: no
     enable_snat: {{ if eq (include "firecell-5gc.flag" (list (ternary $inst.enableSnat $v.upf.enableSnat (hasKey ($inst | default dict) "enableSnat")) true)) "true" }}yes{{ else }}no{{ end }}
-    enable_fr: {{ if $v.upf.enableFramedRouting }}yes{{ else }}no{{ end }}
+    enable_fr: {{ if hasKey ($inst | default dict) "enableFramedRouting" }}{{ if eq (include "firecell-5gc.flag" (list $inst.enableFramedRouting false)) "true" }}yes{{ else }}no{{ end }}{{ else if $v.upf.enableFramedRouting }}yes{{ else }}no{{ end }}
     enable_eth_pdu: {{ if $v.upf.oaiEnableEthPdu }}yes{{ else }}no{{ end }}
     {{- if $v.upf.oaiEnableEthPdu }}
     eth_dl_broadcast_enabled: {{ if $v.upf.ethDlBroadcastEnabled }}yes{{ else }}no{{ end }}
@@ -142,6 +202,13 @@ upf:
     {{- include "firecell-5gc.upfDeleteSessionsOnSmfRestart" $v.upf }}
     # cn5g-upf v5.1.0.x sizes m_arp_table from support_features (not datapath_configuration).
     max_arp_entries: 256
+{{- if and $n9On (ne $schema "legacy") }}
+    # m_upf_interfaces holds N3, N6, N4 and, with n9.enabled, N9. cn5g-upf reads
+    # max_upf_interfaces from support_features only (default 3); it does not parse
+    # datapath_configuration, so the value there is ignored. Without this the UPF
+    # aborts at start: "The key cannot be updated in map: m_upf_interfaces (errno: 7)".
+    max_upf_interfaces: 4
+{{- end }}
 {{- if eq $schema "legacy" }}
     # Legacy cn5g-upf v5.1.0.x reads BPF map sizes from support_features.
     max_upf_interfaces: 4

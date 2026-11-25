@@ -663,6 +663,56 @@ single UPF).
 {{- end }}
 
 {{/*
+Per-NF log level overrides: coreConfig.logLevelPerNf, a map NF -> level, rendered as
+extra keys under log_level: next to general. cn5g-common-src nf_features_config reads
+log_level.general, then log_level.<nf name>, the NF key winning. Allowed: the NFs that
+read the chart's shared config (firecell-common-config) or the hostNetwork UPF config:
+amf, ausf, nrf, pcf, smf, udm, udr, upf. The NSSF has its own config
+(nssf.config.logLevel); the UDSF does not read the shared config. Levels as the NF
+validates them (LOG_LVL_VALIDATOR_REGEX): debug, info, warning, error, off.
+dict keys: ctx (root context), only (optional: render just this NF's key), indent.
+Renders nothing when the map is empty, so existing configs are unchanged.
+*/}}
+{{- define "firecell-5gc.logLevelPerNf" -}}
+{{- $m := .ctx.Values.coreConfig.logLevelPerNf | default dict -}}
+{{- if not (kindIs "map" $m) -}}
+{{- fail (printf "coreConfig.logLevelPerNf must be a map such as {smf: debug} (got %v)" $m) -}}
+{{- end -}}
+{{- $nfs := list "amf" "ausf" "nrf" "pcf" "smf" "udm" "udr" "upf" -}}
+{{- $levels := list "debug" "info" "warning" "error" "off" -}}
+{{- range $nf, $lvl := $m -}}
+{{- if not (has $nf $nfs) -}}
+{{- fail (printf "coreConfig.logLevelPerNf: unknown NF %q (the OAI NFs read log_level.<nf> for %s)" $nf (join ", " $nfs)) -}}
+{{- end -}}
+{{- if not (has ($lvl | toString) $levels) -}}
+{{- fail (printf "coreConfig.logLevelPerNf.%s: %q is not one of %s" $nf ($lvl | toString) (join ", " $levels)) -}}
+{{- end -}}
+{{- end -}}
+{{- range $nf, $lvl := $m -}}
+{{- if or (not $.only) (eq $.only $nf) }}
+{{ printf "%s: %s" $nf ($lvl | toString) | indent (int $.indent) }}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+"true" when FCAPS (the MnS producer and its intent ConfigMap) is on for one UPF:
+the instance's fcaps.enabled when that key is set, else upf.fcaps.enabled (read
+as before: any non-empty value is on). Empty string when off.
+dict keys: ctx (root context), inst (upf.instances entry, or the single-UPF dict).
+*/}}
+{{- define "firecell-5gc.upfFcapsOn" -}}
+{{- $f := .inst.fcaps | default dict -}}
+{{- if not (kindIs "map" $f) -}}
+{{- fail (printf "upf.instances[] oai-upf%s: fcaps must be a map {enabled} (got %v)" (.inst.suffix | default "" | toString) $f) -}}
+{{- end -}}
+{{- if hasKey $f "enabled" -}}
+{{- if eq (include "firecell-5gc.flag" (list $f.enabled false)) "true" }}true{{ end -}}
+{{- else if (.ctx.Values.upf.fcaps | default dict).enabled -}}true
+{{- end -}}
+{{- end }}
+
+{{/*
 N4 != N3 (user decision Q7, 9 Nov 2026: N4 and N3 shall not share an IP address).
 Mirrors cn5g-upf cp_relay_config_error (P23-e): with enable_cp_relay on, the UPF
 opens its N4-u GTP-U endpoint (UDP 2152) on the N4 IPv4 address and refuses to
@@ -670,8 +720,9 @@ load when that is the N3 or the N9 address. The chart fails earlier, from what i
 knows: the interface names the UPF config gets (same coalesce chains as the two
 config templates), and the N3/N4 addresses when both are set in the values. Two
 different interfaces that carry the same address are left to the UPF check. N9 is
-not checked: the UPF compares N4 with N9 only with n9.enabled, which the chart
-never writes.
+not checked here: with an instance's n9.enabled the hostNetwork UPF config template
+(firecell-5gc.oaiUpfHostnetConfig) already fails when the N9 interface is the N3,
+N6, N4 or SBI one, which covers N4 = N9 by interface name.
 dict keys: ctx, inst, appName.
 */}}
 {{- define "firecell-5gc.upfN4N3Check" -}}

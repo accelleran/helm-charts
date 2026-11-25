@@ -1098,8 +1098,10 @@ upf:
       # Must equal nf_instance.instance_name for the UPF NE in the NMS. A
       # mismatch mounts EMPTY and the UPF reverts to its seed with nothing
       # logged: `optional: true` cannot tell a missing ConfigMap from a
-      # misnamed one. First slice is one NE (`upf-1` / `oai-upf`); extra
-      # hostNetwork instances need their own NE and ConfigMap.
+      # misnamed one. This name is used by the single UPF and by an instance
+      # with suffix "". An upf.instances[] entry with a suffix always mounts
+      # `oai-upf<suffix>-cm-intent` (its Deployment name + -cm-intent), so its
+      # NMS NE needs instance_name `oai-upf<suffix>`.
       name: oai-upf-cm-intent
       optional: true
     # Hashed raw for seedSha256 — the only signal covering parameters no
@@ -1128,7 +1130,72 @@ upf:
   #     dnns: ["oai"]                     # per-UPF DNN steering (e.g. oai/oai2)
   #     hostPfcpMacvlan: "smf-pfcp-mac"   # unique per instance
   #     hostPfcpIP: "10.x.x.y"            # PFCP source IP (not in any MetalLB pool)
-  #     pfcpHost: "10.x.x.y"
+  #     pfcpHost: "10.x.x.y"              # SMF upf_pool[]/upfs[].host; empty = hostPfcpIP
+  #     # The SMF's upfs[].upf_info for this UPF, written verbatim (camelCase
+  #     # TS 29.510 UpfInfo). Replaces the sNssai/dnns upf_info built from
+  #     # dnns/nssai. Needed for UL CL: the SMF builds its UPF graph from
+  #     # interfaceUpfInfoList (N3/N6/N9 items with networkInstance) and the
+  #     # DNAI-to-NWI map; the UPF's NRF profile carries neither. An N9 item
+  #     # names its peer by that peer's upfs[].host (pfcpHost / hostPfcpIP) in
+  #     # endpointFqdn or ipv4EndpointAddresses, so with smfUpfInfo set the
+  #     # host must be set (the render fails otherwise).
+  #     # hostNetwork only. NRF registration of this UPF (register_nf.general);
+  #     # unset = coreConfig.registerNf. A registered UPF is named in the SMF by
+  #     # its NRF profile's fqdn, else its last ipv4Addresses (cn5g-upf: the
+  #     # address of nfs.upf.n4.interface_name). When that is not this
+  #     # instance's upfs[].host (pfcpHost / hostPfcpIP), the SMF adds a second
+  #     # UPF entry with the NRF profile's upf_info, which has no interfaces or
+  #     # DNAIs. A UL CL instance (smfUpfInfo) should therefore not register
+  #     # ("no"), or register only with an N4 address (or fqdn) equal to pfcpHost.
+  #     registerNf: "no"
+  #     # FCAPS for this instance: enabled replaces upf.fcaps.enabled (MnS env,
+  #     # port, intent ConfigMap mount, Service port mns); every other fcaps
+  #     # setting stays UPF-wide. Not with upf.fcaps.intentMode pvc.
+  #     fcaps: {enabled: true}
+  #     # healthz sidecar port; default 9090 + list index. With hostNetwork and
+  #     # FCAPS on, the second instance's default 9091 is the MnS port: set
+  #     # another free host port for it.
+  #     healthPort: 9092
+  #     smfUpfInfo:
+  #       interfaceUpfInfoList:
+  #         - {interfaceType: N3, networkInstance: access.oai.org, ipv4EndpointAddresses: ["10.x.x.x"]}
+  #         - {interfaceType: N9, networkInstance: internet.oai.org, endpointFqdn: "<peer pfcpHost>", ipv4EndpointAddresses: ["<own N9 IP>"]}
+  #       sNssaiUpfInfoList:
+  #         - sNssai: {sst: 1, sd: "000001"}   # quote sd, or YAML reads 1
+  #           dnnUpfInfoList:
+  #             - dnn: oai
+  #               dnaiList: [access, internet]
+  #               dnaiNwInstanceList: {access: access.oai.org, internet: internet.oai.org}
+  #     # Placement of this instance's pod. Each key, when set, replaces
+  #     # upf.nodeSelector / upf.tolerations / upf.affinity, which in turn fall
+  #     # back to global.nodeSelector / global.tolerations (affinity has no
+  #     # global value). Use it to put each hostNetwork UPF on its own site node.
+  #     nodeSelector: {site: edge}
+  #     tolerations: []
+  #     affinity: {}
+  #     # hostNetwork only. Framed routing (support_features.enable_fr) for this
+  #     # instance; unset = upf.enableFramedRouting.
+  #     enableFramedRouting: false
+  #     # hostNetwork only. N9 (UPF-to-UPF GTP-U, UL CL / branching point).
+  #     # Unset: the UPF config gets n9.interface_name and port only, and the
+  #     # UPF default enabled: false applies. With enabled: true the UPF needs
+  #     # N9 on its own netdev with its own IPv4 address (n9Interface, not the
+  #     # N3/N6/N4/SBI one; the render fails otherwise). The chart does not
+  #     # create that netdev or its address: provision it on the host.
+  #     n9Interface: upf-n9
+  #     n9:
+  #       enabled: true
+  #       # GTP-U addresses of the peer UPFs (on a UL CL: the PSA's N3 address).
+  #       # A FAR whose outer header creation address is listed leaves on N9;
+  #       # any other leaves on local N6.
+  #       peers: ["10.x.x.z"]
+  #       # Rendered only for the keys set here; unset keys keep the UPF
+  #       # defaults (enable_fast_path false, require_fallback_far true,
+  #       # ulcl_force_local_on_gap false).
+  #       failover:
+  #         enableFastPath: false        # -> enable_fast_path
+  #         requireFallbackFar: true     # -> require_fallback_far
+  #         ulclForceLocalOnGap: false   # -> ulcl_force_local_on_gap
 
 # --- IMS (Kamailio + Cx-on-UDR default; Asterisk via examples/values-ims-asterisk.yaml) ---
 ims:
@@ -1487,6 +1554,13 @@ coreConfig:
   # debug dumps key material (Kamf, KNASint, NAS cipher keys, XRES, ...) from
   # the OAI NFs; use it only for troubleshooting.
   logLevel: info
+  # Per-NF override of logLevel, e.g. {smf: debug} to get the SMF debug lines
+  # without every NF's key material. Rendered as log_level.<nf> next to
+  # log_level.general; the NF key wins. NFs: amf, ausf, nrf, pcf, smf, udm, udr,
+  # upf (the hostNetwork UPF config gets the upf key only; the NSSF has
+  # nssf.config.logLevel). Levels: debug, info, warning, error, off.
+  # Default empty; left commented so the release-info values digest is unchanged.
+  # logLevelPerNf: {smf: debug}
   registerNf: "yes"
   httpVersion: 1
 
@@ -1940,6 +2014,15 @@ hooks:
     intervalSeconds: 4
     verifyNrfRegistrations: true
     verifyPfcpAssociation: true
+    # hostNetwork UPF datapath Job (<release>-postflight-datapath): per UPF instance,
+    # the N3 IP on its N3 interface, the PFCP macvlan address and the N6 policy
+    # routing table. The Job runs on ONE node (upf.nodeSelector) and checks every
+    # instance there: with upf.instances[] placed on other nodes (per-instance
+    # nodeSelector), set this to false or the hook fails. false skips only those
+    # per-instance checks; the PFCP/GTP-U socket check stays (it needs a UPF on
+    # the Job's node). Default true; left commented so the values digest in
+    # <release>-release-info does not change for existing installs.
+    # verifyUpfDatapath: true
   # Pre-upgrade database step (templates/hooks/pre-upgrade-db.yaml), chart MySQL only: widens
   # the callback URI columns of older schemas to varchar(255) and creates MbsSubscriptionData,
   # which the init scripts add only on an empty data directory. No-op on an up-to-date DB.
@@ -1950,6 +2033,14 @@ hooks:
     enabled: true
     image: ""
     timeoutSeconds: 90
+    # true (as before): helm uninstall deletes each UPF instance's N3 interface when
+    # it is a macvlan or is named upf-n3, also with autoCreateN3Macvlan false.
+    # false: delete it only when autoCreateN3Macvlan is true, so N3 macvlans the
+    # host provisions (e.g. galaxy host_macvlans) survive an uninstall. Note that
+    # the UPF init also creates the N3 macvlan when it is missing; with false such
+    # a macvlan stays after uninstall unless autoCreateN3Macvlan is true.
+    # Default true; left commented so the values digest does not change.
+    # deleteHostN3Macvlan: true
 
 # --- Image Pull Secret ---
 # Pre-create before helm install (GHCR, private packages; the name is kept from older versions):
