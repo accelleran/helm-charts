@@ -36631,6 +36631,24 @@ entries:
   firecell-cu:
   - apiVersion: v2
     appVersion: 0.1.0
+    created: "2026-11-25T10:02:26.529646225Z"
+    description: Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service
+      DUs (firecell-du) attach to
+    digest: 7a41a5c78ee884478e939c2282c5c6b8ccfa4e7291206cce17c9b2b5c75aed67
+    keywords:
+    - 5g
+    - ran
+    - o-ran
+    - ocudu
+    - cu-cp
+    - cu-up
+    name: firecell-cu
+    type: application
+    urls:
+    - https://github.com/accelleran/helm-charts/releases/download/firecell-cu-0.2.1/firecell-cu-0.2.1.tgz
+    version: 0.2.1
+  - apiVersion: v2
+    appVersion: 0.1.0
     created: "2026-11-05T15:54:21.818992024Z"
     description: Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service
       DUs (firecell-du) attach to
@@ -40103,4 +40121,4 @@ entries:
     urls:
     - https://github.com/accelleran/helm-charts/releases/download/zitadel-10.0.4/zitadel-10.0.4.tgz
     version: 10.0.4
-generated: "2026-11-25T09:40:02.022961253Z"
+generated: "2026-11-25T10:02:26.53179922Z"
