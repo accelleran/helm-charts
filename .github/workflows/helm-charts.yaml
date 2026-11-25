@@ -117,7 +117,7 @@ jobs:
           --charts ${{ needs.vars.outputs.charts_to_lint }}
 
       # helm-unittest suites a chart keeps in tests/*_test.yaml (firecell-nms:
-      # the fc-acs suites). They need no cluster.
+      # the fc-acs suites). They need no cluster; a chart without suites passes.
       - name: Install helm-unittest
         run: >-
           helm plugin install https://github.com/helm-unittest/helm-unittest
@@ -127,12 +127,7 @@ jobs:
       - name: Run chart unit tests
         run: |
           charts="${{ needs.vars.outputs.charts_to_lint }}"
-          for chart in ${charts//,/ } ; do
-              compgen -G "${chart}/tests/*_test.yaml" > /dev/null || continue
-              echo "::group::${chart}"
-              helm unittest "${chart}"
-              echo "::endgroup::"
-          done
+          helm unittest ${charts//,/ }
 
   test-charts:
     name: Test Charts
