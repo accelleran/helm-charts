@@ -1128,7 +1128,25 @@ upf:
   #     dnns: ["oai"]                     # per-UPF DNN steering (e.g. oai/oai2)
   #     hostPfcpMacvlan: "smf-pfcp-mac"   # unique per instance
   #     hostPfcpIP: "10.x.x.y"            # PFCP source IP (not in any MetalLB pool)
-  #     pfcpHost: "10.x.x.y"
+  #     pfcpHost: "10.x.x.y"              # SMF upf_pool[]/upfs[].host; empty = hostPfcpIP
+  #     # The SMF's upfs[].upf_info for this UPF, written verbatim (camelCase
+  #     # TS 29.510 UpfInfo). Replaces the sNssai/dnns upf_info built from
+  #     # dnns/nssai. Needed for UL CL: the SMF builds its UPF graph from
+  #     # interfaceUpfInfoList (N3/N6/N9 items with networkInstance) and the
+  #     # DNAI-to-NWI map; the UPF's NRF profile carries neither. An N9 item
+  #     # names its peer by that peer's upfs[].host (pfcpHost / hostPfcpIP) in
+  #     # endpointFqdn or ipv4EndpointAddresses, so with smfUpfInfo set the
+  #     # host must be set (the render fails otherwise).
+  #     smfUpfInfo:
+  #       interfaceUpfInfoList:
+  #         - {interfaceType: N3, networkInstance: access.oai.org, ipv4EndpointAddresses: ["10.x.x.x"]}
+  #         - {interfaceType: N9, networkInstance: internet.oai.org, endpointFqdn: "<peer pfcpHost>", ipv4EndpointAddresses: ["<own N9 IP>"]}
+  #       sNssaiUpfInfoList:
+  #         - sNssai: {sst: 1, sd: "000001"}   # quote sd, or YAML reads 1
+  #           dnnUpfInfoList:
+  #             - dnn: oai
+  #               dnaiList: [access, internet]
+  #               dnaiNwInstanceList: {access: access.oai.org, internet: internet.oai.org}
   #     # Placement of this instance's pod. Each key, when set, replaces
   #     # upf.nodeSelector / upf.tolerations / upf.affinity, which in turn fall
   #     # back to global.nodeSelector / global.tolerations (affinity has no
