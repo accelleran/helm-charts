@@ -143,6 +143,11 @@ The following table lists the configurable parameters of the Firecell Core chart
 
 {{ template "chart.valuesTable" . }}
 
+### 4.1 Multiple hostNetwork UPFs (`upf.instances[]`)
+With `upf.hostNetwork: true`, each entry of `upf.instances[]` renders its own UPF: Deployment and Service `oai-upf<suffix>`, ConfigMap `firecell-oai-upf<suffix>-hostnet`, and one entry in the SMF `upf_pool` and `upfs` (unless `inSmfPool: false`). An instance key that is not set falls back to the `upf.*` key of the same name. With `upf.instances` empty the chart renders the single UPF, as before.
+
+- **Placement:** `nodeSelector`, `tolerations` and `affinity` of an instance replace `upf.nodeSelector` / `upf.tolerations` / `upf.affinity`, which fall back to `global.nodeSelector` / `global.tolerations`. This puts each UPF on its own node, for example a central and an edge site.
+
 ## 5. Maintenance & Troubleshooting
 - **Check Release Status:**
   ```bash

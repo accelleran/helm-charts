@@ -95,15 +95,16 @@ spec:
     spec:
       priorityClassName: firecell-prio-high
       terminationGracePeriodSeconds: 30
-      {{- with ($.Values.upf.nodeSelector | default $.Values.global.nodeSelector) }}
+      {{- /* An instance's own placement replaces the UPF-level one, which replaces the global one. */}}
+      {{- with ($inst.nodeSelector | default ($.Values.upf.nodeSelector | default $.Values.global.nodeSelector)) }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with ($.Values.upf.tolerations | default $.Values.global.tolerations) }}
+      {{- with ($inst.tolerations | default ($.Values.upf.tolerations | default $.Values.global.tolerations)) }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with $.Values.upf.affinity }}
+      {{- with ($inst.affinity | default $.Values.upf.affinity) }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}

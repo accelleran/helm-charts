@@ -1129,6 +1129,13 @@ upf:
   #     hostPfcpMacvlan: "smf-pfcp-mac"   # unique per instance
   #     hostPfcpIP: "10.x.x.y"            # PFCP source IP (not in any MetalLB pool)
   #     pfcpHost: "10.x.x.y"
+  #     # Placement of this instance's pod. Each key, when set, replaces
+  #     # upf.nodeSelector / upf.tolerations / upf.affinity, which in turn fall
+  #     # back to global.nodeSelector / global.tolerations (affinity has no
+  #     # global value). Use it to put each hostNetwork UPF on its own site node.
+  #     nodeSelector: {site: edge}
+  #     tolerations: []
+  #     affinity: {}
 
 # --- IMS (Kamailio + Cx-on-UDR default; Asterisk via examples/values-ims-asterisk.yaml) ---
 ims:
