@@ -27,12 +27,16 @@ metadata:
   annotations:
     {{- /* SR-IOV multi-UPF: each VIP lives in its own per-VF pool (firecell-up-pool-N),
            announced on that UPF's own VF, so gNB ARP resolves to the correct VF. */}}
+    {{- if eq (include "firecell-5gc.lbProvider" $) "cilium" }}
+    lbipam.cilium.io/ips: {{ $inst.n3IP | quote }}
+    {{- else }}
     {{- if $.Values.network.metallb.upInstances }}
     metallb.universe.tf/address-pool: firecell-up-pool-{{ $i }}
     {{- else }}
     metallb.universe.tf/address-pool: firecell-up-pool
     {{- end }}
     metallb.universe.tf/loadBalancerIPs: {{ $inst.n3IP }}
+    {{- end }}
   {{- end }}
 spec:
   type: {{ $.Values.upf.serviceType | default "LoadBalancer" }}

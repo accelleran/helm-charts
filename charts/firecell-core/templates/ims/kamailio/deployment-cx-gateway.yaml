@@ -51,6 +51,7 @@ spec:
               mountPath: /run/secrets/ims
               readOnly: true
         {{- end }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.ims "indent" 6) }}
       containers:
         - name: cx-gateway
           # Diameter Cx peer for S-CSCF SAR/MAR. CX_SOT=udr hydrates from oai_db on Cx lookup.

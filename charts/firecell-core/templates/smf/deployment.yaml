@@ -84,6 +84,7 @@ spec:
               ip addr show dev "${_MAC}" || true
               echo "[smf-pfcp-init] done"
         {{- end }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.smf "indent" 6) }}
       containers:
         - name: smf
           image: {{ .Values.smf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.smf.image "imageTag" .Values.smf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

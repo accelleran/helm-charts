@@ -30,6 +30,7 @@ spec:
       priorityClassName: {{ .Values.ims.priorityClassName | default .Values.ims.priorityClassName }}
       hostNetwork: {{ include "firecell-5gc.flag" (list .Values.ims.pcscf.hostNetwork true) }}
       dnsPolicy: ClusterFirstWithHostNet
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.ims "indent" 6) }}
       containers:
         - name: pcscf
           image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}

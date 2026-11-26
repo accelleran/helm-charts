@@ -37,6 +37,7 @@ spec:
                 sleep 3
               done
               echo "Redis is reachable!"
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.udsf "indent" 6) }}
       containers:
         - name: udsf
           image: {{ .Values.udsf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.udsf.image "imageTag" .Values.udsf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

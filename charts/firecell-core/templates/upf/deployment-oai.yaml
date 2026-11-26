@@ -95,11 +95,11 @@ spec:
     spec:
       priorityClassName: firecell-prio-high
       terminationGracePeriodSeconds: 30
-      {{- with $.Values.upf.nodeSelector }}
+      {{- with ($.Values.upf.nodeSelector | default $.Values.global.nodeSelector) }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with $.Values.upf.tolerations }}
+      {{- with ($.Values.upf.tolerations | default $.Values.global.tolerations) }}
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}

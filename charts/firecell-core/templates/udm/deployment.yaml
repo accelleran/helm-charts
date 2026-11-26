@@ -28,6 +28,7 @@ spec:
       priorityClassName: {{ .Values.udm.priorityClassName }}
       initContainers:
         {{- include "firecell-5gc.waitForNrf" . | nindent 8 }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.udm "indent" 6) }}
       containers:
         - name: udm
           image: {{ .Values.udm.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.udm.image "imageTag" .Values.udm.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

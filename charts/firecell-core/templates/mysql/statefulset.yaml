@@ -23,6 +23,7 @@ spec:
         tier: database
         role: active
     spec:
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.mysql "indent" 6) }}
       containers:
         - name: mysql
           image: {{ .Values.mysql.imageOverride | default (printf "%s/%s" .Values.global.imageRegistry .Values.mysql.image) }}

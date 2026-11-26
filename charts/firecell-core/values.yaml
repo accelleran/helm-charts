@@ -14,6 +14,14 @@ global:
   # The busybox used by every initContainer in this chart. Composed from
   # imageRegistry when unset; name it in full to pull it from anywhere else.
   busyboxImage: docker.io/library/busybox:1.38.0-glibc
+  # Pod placement for every NF Deployment/StatefulSet (not the hook Jobs).
+  # An NF's own <nf>.nodeSelector / <nf>.tolerations (udsf.redis.* for the
+  # UDSF Redis, ims.* for all IMS pods) replaces these when set. Empty renders
+  # nothing, so pods go wherever the scheduler puts them. Example, a
+  # multi-node site that keeps the core on its central node:
+  #   nodeSelector: {site: central}
+  nodeSelector: {}
+  tolerations: []
   imagePullPolicy: IfNotPresent
   imagePullSecrets:
     - name: dockerhub-regcred
@@ -131,6 +139,16 @@ namespace:
 # Both can point to the same interface for single-NIC lab setups,
 # but assign IPs from different ranges so MetalLB distinguishes pools.
 network:
+  # Who serves type LoadBalancer Services (AMF N2 VIP, fc-acs-agent, UPF):
+  #   metallb: metallb.universe.tf annotations (and the pools below when
+  #            metallb.enabled);
+  #   cilium:  lbipam.cilium.io/ips annotations. The CiliumLoadBalancerIPPool
+  #            and CiliumL2AnnouncementPolicy belong to the platform, not this
+  #            chart; set metallb.enabled: false. The AMF Service then
+  #            defaults to externalTrafficPolicy Cluster (see
+  #            amfExternalTrafficPolicy).
+  loadBalancer:
+    provider: metallb
   metallb:
     enabled: true
     cp:
@@ -150,6 +168,11 @@ network:
   # gNB resolves the headless oai-amf-n2 Service and NGAP is pod-to-pod;
   # amfExternalIP is then unused and the address can be returned to the pool.
   amfServiceType: LoadBalancer
+  # AMF LoadBalancer externalTrafficPolicy. Empty: Local with MetalLB, Cluster
+  # with Cilium. Cilium elects the node that announces the VIP among the
+  # L2 announcement policy's nodes, independently of where the AMF pod runs,
+  # so Local can leave the VIP on a node without an AMF endpoint.
+  amfExternalTrafficPolicy: ""
 
   # External IPs — always override from sites/*/site.yaml generated values
   amfExternalIP: "192.0.2.101"

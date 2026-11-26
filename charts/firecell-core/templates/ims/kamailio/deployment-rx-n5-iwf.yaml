@@ -62,6 +62,7 @@ spec:
       securityContext:
         fsGroup: 10001
       {{- end }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.ims "indent" 6) }}
       containers:
         - name: rx-n5-iwf
           image: {{ $iwf.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry $iwf.image $iwf.imageTag) }}

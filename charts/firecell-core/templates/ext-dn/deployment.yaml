@@ -33,6 +33,7 @@ spec:
       {{- end }}
     spec:
       priorityClassName: {{ .Values.extDn.priorityClassName }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.extDn "indent" 6) }}
       containers:
         - name: ext-dn
           image: {{ .Values.extDn.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.extDn.image .Values.extDn.imageTag) }}

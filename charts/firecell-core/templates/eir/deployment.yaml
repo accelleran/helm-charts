@@ -40,6 +40,7 @@ spec:
                 echo "MySQL not ready, retrying in 5s..."
                 sleep 5
               done
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.eir "indent" 6) }}
       containers:
         - name: eir
           image: {{ .Values.eir.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.eir.image "imageTag" .Values.eir.imageTag "pkgVersion" .Values.global.pkgVersion)) }}

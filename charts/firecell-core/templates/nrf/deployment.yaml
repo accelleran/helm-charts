@@ -26,6 +26,7 @@ spec:
         {{- include "firecell-5gc.configChecksum" . | nindent 8 }}
     spec:
       priorityClassName: {{ .Values.nrf.priorityClassName }}
+      {{- include "firecell-5gc.placement" (dict "root" $ "nf" $.Values.nrf "indent" 6) }}
       containers:
         - name: nrf
           image: {{ .Values.nrf.imageOverride | default (include "firecell-5gc.nfImage" (dict "registry" .Values.global.imageRegistry "image" .Values.nrf.image "imageTag" .Values.nrf.imageTag "pkgVersion" .Values.global.pkgVersion)) }}
