@@ -47,6 +47,14 @@ backend:
   # Helm / HelmRelease timeout above it.
   progressDeadlineSeconds: 1200
 
+  # The token Grafana presents on POST /api/alarms/webhook. The Secret is created
+  # by the installer, never by the chart, and mounted optional: while it does not
+  # exist nothing is mounted and the webhook takes posts without a token; once it
+  # exists every post needs it (the backend reads the file again, no restart).
+  alarmWebhookToken:
+    # -- Secret with key `token` (one token per line, for rotation).
+    secretName: nms-alarm-webhook-token
+
   api:
     # -- API replicas (at least 2).
     replicas: 2
@@ -313,7 +321,8 @@ front:
   # built-in console, `<nms-api>/ui`.
   cmUrl: ""
   # -- VictoriaMetrics base URL for the Device Performance charts
-  # (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics.
+  # (/metrics-api/query and /metrics-api/query_range -> <metricsUrl>/api/v1/query(_range);
+  # every other /metrics-api/ path is 404). Empty: the in-chart VictoriaMetrics.
   metricsUrl: ""
   # -- External Grafana base URL (the chart has no Grafana of its own). The UI
   # links to <origin>/grafana/...; /grafana/ redirects there, path and query

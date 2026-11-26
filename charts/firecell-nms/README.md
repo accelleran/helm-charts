@@ -189,6 +189,14 @@ Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object
 - A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
+### 5.1 Alarm ingest and the webhook token
+
+`nms-front` answers 404 for `/api/alarms/webhook` and `/api/fcaps/`: Grafana and the NFs post to the `nms-api` Service directly, and a browser has no reason to reach them, so a signed-in user cannot inject an alarm through the gateway.
+
+`/metrics-api/` forwards only `/metrics-api/query` and `/metrics-api/query_range` (the Device Performance charts) to VictoriaMetrics; every other path under it is 404. VictoriaMetrics has no authentication of its own, and the rest of its `/api/v1/` writes and deletes: a written `nms_alarm_active` series would raise an alarm through Grafana, and `admin/tsdb/delete_series` would erase PM history.
+
+The alarm webhook token Secret (`backend.alarmWebhookToken.secretName`, default `nms-alarm-webhook-token`, key `token`) is created by the installer, never by the chart. It is mounted into nms-api only, at `/var/run/secrets/nms/alarm-webhook/token` (mode 0440 with the pod's fsGroup), with `optional: true`, so a release without it starts unchanged and the webhook takes posts without a token. Once the file exists every webhook post needs `Authorization: Bearer <token>` (one token per line, for rotation); the backend reads it again without a restart. Grafana's contact point must send the same token.
+
 ## 6. Support Logs
 
 The backend builds support bundles from the per-node log stores, which the [`logs` stage of the Firecell platform](https://github.com/accelleran/galaxy/tree/fcdevelop/firecell-6-flux/recipe/logs) runs (VictoriaLogs and vlagent on every node):
@@ -245,6 +253,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | acs.southbound.loadBalancerIP | string | `""` | When set, fc-acs-southbound is a LoadBalancer on this address (loadBalancerIP and the Cilium LB-IPAM annotation) instead of a NodePort. |
 | acs.southbound.nodePort | int | `30547` | NodePort of fc-acs-southbound when loadBalancerIP is empty. |
 | acs.southbound.plainHttp | bool | `true` | Open the plain-HTTP listener (port 7548) for CPE that cannot do TLS; each device must still be allowed to use it in the ACS. False sets FC_ACS_SOUTHBOUND_HTTP_PORT to 0 and exposes no port 7548. |
+| backend.alarmWebhookToken.secretName | string | `"nms-alarm-webhook-token"` | Secret with key `token` (one token per line, for rotation). |
 | backend.api.replicas | int | `2` | API replicas (at least 2). |
 | backend.api.resources.limits.cpu | string | `"1"` |  |
 | backend.api.resources.limits.memory | string | `"1Gi"` |  |
@@ -312,7 +321,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | front.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | front.image.repository | string | `"accelleran/nms-frontend"` | Image repository path, including the org (kept when the registry is rewritten). |
 | front.image.tag | string | `"6.0.0"` | Image tag. |
-| front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics. |
+| front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/query and /metrics-api/query_range -> <metricsUrl>/api/v1/query(_range); every other /metrics-api/ path is 404). Empty: the in-chart VictoriaMetrics. |
 | front.resources.limits.cpu | string | `"200m"` |  |
 | front.resources.limits.memory | string | `"128Mi"` |  |
 | front.resources.requests.cpu | string | `"50m"` |  |

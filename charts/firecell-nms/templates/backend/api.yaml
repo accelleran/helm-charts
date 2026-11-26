@@ -63,6 +63,8 @@ spec:
           env:
             {{- include "firecell-nms.backend.env" . | nindent 12 }}
             {{- include "firecell-nms.acs.clientEnv" . | nindent 12 }}
+            - name: FIRECELL_NMS_NG_ALARM_WEBHOOK_TOKEN_FILE
+              value: {{ printf "%s/token" (include "firecell-nms.backend.alarmWebhookTokenDir" .) | quote }}
           ports:
             - {name: http, containerPort: 8080}
           startupProbe:
@@ -83,6 +85,9 @@ spec:
             - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
             {{- include "firecell-nms.acs.clientMount" . | nindent 12 }}
+            - name: alarm-webhook-token
+              mountPath: {{ include "firecell-nms.backend.alarmWebhookTokenDir" . }}
+              readOnly: true
       volumes:
         - name: kubeconfig
           configMap:
@@ -90,6 +95,11 @@ spec:
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}
         {{- include "firecell-nms.acs.clientVolume" . | nindent 8 }}
+        - name: alarm-webhook-token
+          secret:
+            secretName: {{ $be.alarmWebhookToken.secretName }}
+            optional: true
+            defaultMode: 0440
 ---
 # The API, the FCAPS notification receiver and the Grafana alert webhook
 # (/api/alarms/webhook) all listen here.
