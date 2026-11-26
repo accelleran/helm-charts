@@ -139,3 +139,42 @@ subjects:
   - kind: ServiceAccount
     name: nms
     namespace: {{ .Release.Namespace }}
+{{- with .Values.backend.branding.configMap }}
+---
+# The site's logos and colours (backend.branding.configMap): nms-api writes
+# this one ConfigMap in its own namespace with kubectl create / replace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nms-branding
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: backend
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames: [{{ . | quote }}]
+    verbs: ["get", "update", "delete"]
+  # Kubernetes does not narrow create by name.
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nms-branding
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: backend
+subjects:
+  - kind: ServiceAccount
+    name: nms
+    namespace: {{ $.Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nms-branding
+{{- end }}

@@ -146,6 +146,20 @@ The install completes in one pass, with or without `--wait`, which also makes it
 
 Bootstrap seeds the catalogue only when it is empty: `backend.config.seedDnnsJson` and `seedSliceJson` matter on the first install only.
 
+### 3.1 Site Logos
+
+A site's logos and colours are set in the NMS itself: CM console, **Branding**, backed by `/api/branding` (SI and above).
+
+- **Storage.** The NMS keeps them in the ConfigMap `backend.branding.configMap` (default `nms-branding`) in the release namespace.
+- **Readers.** The console's sidebar loads the logos through the API. The Flux recipe's OIDC ensure loop copies them to Zitadel's sign-in pages.
+- **No install-time input.** Nothing is set at install time. The chart never creates or deletes the ConfigMap, so upgrades keep a site's branding.
+- **RBAC.** The chart gives nms-api (ServiceAccount `nms`) a Role `nms-branding`:
+  - `get`, `update` and `delete` on that one ConfigMap;
+  - `create` on ConfigMaps in the namespace, because Kubernetes cannot narrow create by name.
+- **Opting out.** Set `backend.branding.configMap: ""` to turn the feature off; the API then answers 503 for changes and 404 for logos, and the console shows the Firecell ones.
+
+File names, sizes and checks: nms-frontend `docs/LOGO_CUSTOMIZATION.md`.
+
 ## 4. Upgrades and Rollbacks
 
 - **Migrations run once, before new pods serve.** On an upgrade that changes the backend image, the old control plane stops first. That takes up to `backend.terminationGracePeriodSeconds` (660s by default), while it finishes in-flight work. The new control plane then migrates. New API and worker pods wait for the migrated schema; until then the old pods keep serving.
@@ -267,6 +281,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.auth.userManagement.projectGrantId | string | `""` | Project grant to the Users organisation. Empty: from auth.configMap. |
 | backend.auth.userManagement.projectOrgId | string | `""` | Organisation that owns the project (Firecell). Empty: from auth.configMap. |
 | backend.auth.userManagement.usersOrgId | string | `""` | Users organisation id. Empty: from auth.configMap. |
+| backend.branding.configMap | string | `"nms-branding"` | ConfigMap where the NMS keeps the site's logos and colours (CM console Branding, /api/branding); the console's sidebar reads them through the API, and the Flux recipe's OIDC ensure loop copies them to Zitadel's sign-in pages. The chart never creates it, so upgrades keep it. nms-api may get, update and delete it, and create ConfigMaps in the namespace (Kubernetes cannot narrow create by name). Empty turns the feature off. |
 | backend.config.allowedWsOriginsJson | string | `"[]"` | JSON string array of allowed WebSocket origins. |
 | backend.config.cmConfigMapKey | string | `"cm.json"` |  |
 | backend.config.defaultPlmn | string | `"00101"` |  |
