@@ -30,7 +30,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: icscf
-          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}
+          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image (.Values.ims.imageTag | default .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command: ["/bin/bash", "-lc"]
           args:

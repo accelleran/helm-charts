@@ -64,7 +64,7 @@ spec:
       {{- end }}
       containers:
         - name: rx-n5-iwf
-          image: {{ $iwf.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry $iwf.image $iwf.imageTag) }}
+          image: {{ $iwf.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry $iwf.image ($iwf.imageTag | default .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           # The image runs as uid 10001; it writes only the Rx session map (state.volume).
           securityContext:

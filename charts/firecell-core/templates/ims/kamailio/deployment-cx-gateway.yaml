@@ -1,6 +1,6 @@
 {{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "kamailio") .Values.ims.cxGateway.enabled }}
 {{- $imsDomain := include "firecell-5gc.imsDomain" . }}
-{{- $image := .Values.ims.cxGateway.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.cxGateway.image .Values.ims.cxGateway.imageTag) }}
+{{- $image := .Values.ims.cxGateway.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.cxGateway.image (.Values.ims.cxGateway.imageTag | default .Values.global.pkgVersion)) }}
 {{- $split := eq (.Values.ims.cxGateway.mode | default "split") "split" }}
 apiVersion: apps/v1
 kind: Deployment

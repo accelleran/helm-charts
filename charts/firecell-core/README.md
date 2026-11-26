@@ -430,7 +430,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.cxGateway.hostNetwork | bool | `true` |  |
 | ims.cxGateway.image | string | `"ims-cx-gateway"` |  |
 | ims.cxGateway.imageOverride | string | `""` |  |
-| ims.cxGateway.imageTag | string | `"latest"` |  |
+| ims.cxGateway.imageTag | string | `""` |  |
 | ims.cxGateway.ip | string | `""` |  |
 | ims.cxGateway.mode | string | `"split"` |  |
 | ims.cxGateway.port | int | `3868` |  |
@@ -446,7 +446,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.icscf.ip | string | `""` |  |
 | ims.image | string | `"kamailio-ims"` |  |
 | ims.imageOverride | string | `""` |  |
-| ims.imageTag | string | `"latest"` |  |
+| ims.imageTag | string | `""` |  |
 | ims.mysqlHost | string | `""` |  |
 | ims.pcscf.alternative.bindPort | string | `""` |  |
 | ims.pcscf.alternative.enabled | bool | `false` |  |
@@ -475,7 +475,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.rxN5Iwf.epcDomain | string | `""` |  |
 | ims.rxN5Iwf.image | string | `"rx-n5-iwf"` |  |
 | ims.rxN5Iwf.imageOverride | string | `""` |  |
-| ims.rxN5Iwf.imageTag | string | `"latest"` |  |
+| ims.rxN5Iwf.imageTag | string | `""` |  |
 | ims.rxN5Iwf.logLevel | string | `"INFO"` |  |
 | ims.rxN5Iwf.notifyPort | int | `8080` |  |
 | ims.rxN5Iwf.notifyUri | string | `""` |  |
