@@ -347,6 +347,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | victoriaMetrics.resources.requests.cpu | string | `"100m"` |  |
 | victoriaMetrics.resources.requests.memory | string | `"256Mi"` |  |
 | victoriaMetrics.retentionPeriod | string | `"7d"` |  |
+| victoriaMetrics.searchLatencyOffset | string | `""` | How far back from now a query stops (VictoriaMetrics -search.latencyOffset). Empty: VictoriaMetrics' default, 30s, which hides the newest 30 s of samples from every query, so every Grafana alarm rule sees a change about 30 s late. The NMS writes its samples directly (no scrape delay), so a few seconds are enough; the installer sets it (for example "5s"). |
 | victoriaMetrics.storage | string | `"20Gi"` | Size of PVC nms-vm-data. |
 
 ## 9. Upgrading from 0.1.x
