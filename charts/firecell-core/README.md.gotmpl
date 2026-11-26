@@ -125,7 +125,7 @@ helm uninstall firecell-core --namespace firecell-core
 With `mysql.keepSecretOnUninstall: true`, the Secrets `mysql-secrets` and `ims-db-credentials` stay after `helm uninstall`. A new install under the same release name and namespace takes them over; delete them first to install under another release name.
 
 ### 3.5 NMS Access
-With `nms.rbac` (the default), the chart grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` (default `firecell-nms`) what the NMS needs in this namespace:
+With `nms.rbac` (the default), the chart grants ServiceAccounts `nms` and `nms-control-plane` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` (default `firecell-nms`) what the NMS needs in this namespace:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-core-<nms namespace>`: reads of pods and their logs, events, and Deployments, ReplicaSets, StatefulSets and DaemonSets; ConfigMaps (read and the intent writes).
 - Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for the NF Deployments this release renders (`oai-amf`, `oai-smf`, `oai-pcf`, `oai-udr`, `oai-udm`, `oai-nrf`, `oai-ausf`, `udsf.serviceName`, and `oai-upf<suffix>` per UPF instance), so the NMS can restart, stop and start them.

@@ -62,7 +62,7 @@ those DUs are not compared for VF, CPU or NIC clashes. A DPDK DU with pinned CPU
 pinned to a host anyway.
 
 ### 2.2 NMS Access
-With `nms.rbac` (the default), each release grants ServiceAccount `nms` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs for its DU:
+With `nms.rbac` (the default), each release grants ServiceAccounts `nms` and `nms-control-plane` of the [`firecell-nms`](../firecell-nms) release in `nms.namespace` what the NMS needs for its DU:
 
 - RoleBinding `<release>-nms` to the firecell-nms chart's ClusterRole `nms-ran-<nms namespace>`: reads of pods and their logs, ConfigMaps, events, and Deployments, ReplicaSets, StatefulSets and DaemonSets.
 - Role and RoleBinding `<release>-nms-lifecycle`: get, patch and update on `deployments` and `deployments/scale` for Deployment `<name>` only, so the NMS can restart, stop and start this DU.

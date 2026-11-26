@@ -19,6 +19,10 @@ subjects:
   - kind: ServiceAccount
     name: nms
     namespace: {{ $nmsNs }}
+  # The NMS control plane's own account (firecell-nms chart).
+  - kind: ServiceAccount
+    name: nms-control-plane
+    namespace: {{ $nmsNs }}
 ---
 # Restart (rollout restart patches the pod template), stop and start (scale)
 # of this DU's Deployment, by name.
@@ -49,5 +53,9 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: nms
+    namespace: {{ $nmsNs }}
+  # The NMS control plane's own account (firecell-nms chart).
+  - kind: ServiceAccount
+    name: nms-control-plane
     namespace: {{ $nmsNs }}
 {{- end }}
