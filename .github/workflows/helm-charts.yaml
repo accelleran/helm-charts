@@ -33,6 +33,8 @@ jobs:
       charts_to_test_matrix: ${{ steps.list-charts.outputs.charts_to_test_matrix }}
       # renovate: github_repository=helm/helm versioning=semver extract_version=^v(?<version>.*)$
       helm_version: 4.3.2
+      # renovate: github_repository=helm-unittest/helm-unittest versioning=semver extract_version=^v(?<version>.*)$
+      helm_unittest_version: 1.2.1
     timeout-minutes: 2
     steps:
       - name: Expose variables
@@ -113,6 +115,19 @@ jobs:
           lint
           --config etc/ct.yaml
           --charts ${{ needs.vars.outputs.charts_to_lint }}
+
+      # helm-unittest suites a chart keeps in tests/*_test.yaml (firecell-nms:
+      # the fc-acs suites). They need no cluster; a chart without suites passes.
+      - name: Install helm-unittest
+        run: >-
+          helm plugin install https://github.com/helm-unittest/helm-unittest
+          --version "v${{ needs.vars.outputs.helm_unittest_version }}"
+          --verify=false
+
+      - name: Run chart unit tests
+        run: |
+          charts="${{ needs.vars.outputs.charts_to_lint }}"
+          helm unittest ${charts//,/ }
 
   test-charts:
     name: Test Charts

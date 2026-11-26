@@ -94,6 +94,8 @@ spec:
             - configMapRef: {name: nms-config}
           env:
             {{- include "firecell-nms.backend.env" . | nindent 12 }}
+            {{- /* Supervision of TR-069 devices, the PM collector and the TR-069 sync ask the ACS from here. */}}
+            {{- include "firecell-nms.acs.clientEnv" . | nindent 12 }}
           readinessProbe:
             exec:
               command: ["python", "-c", "import os; os.kill(1, 0)"]
@@ -108,9 +110,11 @@ spec:
           volumeMounts:
             - {name: kubeconfig, mountPath: /etc/firecell-nms/kubeconfig, readOnly: true}
             - {name: tmp, mountPath: /tmp}
+            {{- include "firecell-nms.acs.clientMount" . | nindent 12 }}
       volumes:
         - name: kubeconfig
           configMap:
             name: nms-kubeconfig
             defaultMode: 0444
         - {name: tmp, emptyDir: {}}
+        {{- include "firecell-nms.acs.clientVolume" . | nindent 8 }}

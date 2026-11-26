@@ -1,0 +1,83 @@
+suite: fc-acs Services
+release:
+  name: t
+  namespace: firecell-nms
+templates:
+  - templates/acs/service.yaml
+set:
+  acs.enabled: true
+tests:
+  - it: routes both Services to the fc-acs pod
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.selector
+          value: {app: fc-acs}
+
+  - it: exposes the northbound API as ClusterIP 8080
+    documentSelector:
+      path: metadata.name
+      value: fc-acs
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.ports
+          value:
+            - {name: northbound, port: 8080, targetPort: northbound}
+
+  - it: exposes the southbound as NodePorts 30547 and 30548 by default
+    documentSelector:
+      path: metadata.name
+      value: fc-acs-southbound
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+      - equal:
+          path: spec.ports
+          value:
+            - {name: southbound, port: 7547, targetPort: southbound, nodePort: 30547}
+            - {name: southbound-http, port: 7548, targetPort: southbound-http, nodePort: 30548}
+
+  - it: exposes the southbound as a LoadBalancer when loadBalancerIP is set
+    set:
+      acs.southbound.loadBalancerIP: 192.0.2.10
+    documentSelector:
+      path: metadata.name
+      value: fc-acs-southbound
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+      - equal:
+          path: spec.loadBalancerIP
+          value: 192.0.2.10
+      - equal:
+          path: metadata.annotations["lbipam.cilium.io/ips"]
+          value: 192.0.2.10
+      - equal:
+          path: spec.externalTrafficPolicy
+          value: Local
+      - equal:
+          path: spec.ports
+          value:
+            - {name: southbound, port: 7547, targetPort: southbound}
+            - {name: southbound-http, port: 7548, targetPort: southbound-http}
+
+  - it: drops port 7548 and NodePort 30548 with acs.southbound.plainHttp=false
+    set:
+      acs.southbound.plainHttp: false
+    documentSelector:
+      path: metadata.name
+      value: fc-acs-southbound
+    asserts:
+      - equal:
+          path: spec.ports
+          value:
+            - {name: southbound, port: 7547, targetPort: southbound, nodePort: 30547}

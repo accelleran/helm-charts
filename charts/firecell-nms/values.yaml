@@ -167,6 +167,45 @@ backend:
   # e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL.
   extraEnv: []
 
+# --- TR-069 ACS ---
+# fc-acs, the TR-069 auto-configuration server for CPE that speak CWMP. The
+# chart carries only what it needs to reach its database: its own database
+# and user on nms-db (created by an init container), and Secret fc-acs with
+# generated credentials. Everything else is configured at runtime.
+acs:
+  # -- Deploy fc-acs (Deployment, Services fc-acs and fc-acs-southbound,
+  # Secret fc-acs).
+  enabled: false
+  # -- fc-acs image.
+  image:
+    # -- Image registry host. Replaced by global.imageRegistry when set.
+    registry: docker.io
+    # -- Image repository path, including the org (kept when the registry is rewritten).
+    repository: accelleran/nms-fc-acs
+    # -- Image tag.
+    tag: "v6.0.1"
+    # -- Optional. When set, used as registry/repository@digest instead of :tag.
+    digest: ""
+  # -- Log level of fc-acs (FC_ACS_LOG_LEVEL).
+  logLevel: info
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 512Mi}
+  # Service fc-acs-southbound, where CPE reach the ACS (CWMP, port 7547,
+  # and plain HTTP on 7548).
+  southbound:
+    # -- NodePort of fc-acs-southbound when loadBalancerIP is empty.
+    nodePort: 30547
+    # -- Open the plain-HTTP listener (port 7548) for CPE that cannot do
+    # TLS; each device must still be allowed to use it in the ACS. False
+    # sets FC_ACS_SOUTHBOUND_HTTP_PORT to 0 and exposes no port 7548.
+    plainHttp: true
+    # -- NodePort of the plain-HTTP listener when loadBalancerIP is empty.
+    httpNodePort: 30548
+    # -- When set, fc-acs-southbound is a LoadBalancer on this address
+    # (loadBalancerIP and the Cilium LB-IPAM annotation) instead of a NodePort.
+    loadBalancerIP: ""
+
 # --- The 5GC and RAN namespaces the backend manages ---
 rbac:
   # -- Namespace of the 5GC NFs: CM intent ConfigMaps, the default southbound
@@ -215,8 +254,9 @@ supportLogs:
 
 # --- NetworkPolicies for the gateway identity headers ---
 networkPolicy:
-  # -- Restrict who reaches the API (nms-api, port 8080) and nms-front
-  # (port 80). Needed for backend.config.trustGatewayHeaders.
+  # -- Restrict who reaches the API (nms-api, port 8080), nms-front
+  # (port 80) and, with acs.enabled, fc-acs (port 8080). Needed for
+  # backend.config.trustGatewayHeaders.
   enabled: false
   # -- app.kubernetes.io/name label of the oauth2-proxy pods in this namespace.
   oauth2ProxyLabel: oauth2-proxy

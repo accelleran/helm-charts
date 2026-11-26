@@ -1,0 +1,25 @@
+suite: fc-acs in release-info
+release:
+  name: t
+  namespace: firecell-nms
+templates:
+  - templates/*.yaml
+  - templates/*/*.yaml
+set:
+  acs.enabled: true
+  # Not the defaults, so the test survives Renovate bumping the tags.
+  acs.image.tag: acs-under-test
+  backend.database.image.tag: db-under-test
+tests:
+  - it: lists the fc-acs and create-database images
+    template: templates/release-info.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: t-release-info
+      - matchRegex:
+          path: data["release.json"]
+          pattern: '"fc-acs/fc-acs":"docker\.io/accelleran/nms-fc-acs:acs-under-test"'
+      - matchRegex:
+          path: data["release.json"]
+          pattern: '"fc-acs/create-database":"docker\.io/library/mysql:db-under-test"'

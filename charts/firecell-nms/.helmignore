@@ -23,3 +23,5 @@ CHANGELOG.md
 RELEASE_NOTES.md
 README.md.gotmpl
 .ct-install-ignore
+# helm-unittest suites, not part of the package
+tests/

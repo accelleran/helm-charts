@@ -15,6 +15,7 @@ The Network Management System (NMS) provides the dashboard and the REST API for 
 - **Backend:** the API (`nms-api`, two or more replicas), the job workers (`nms-worker`), and exactly one control plane (`nms-control-plane`: supervision, reconciliation, subscriptions, audits).
 - **Persistence:** the backend's MySQL (`nms-db`).
 - **Metrics:** VictoriaMetrics, where the backend writes PM reports and alarm gauges.
+- **TR-069 ACS (optional):** `fc-acs`, off unless `acs.enabled` (see [TR-069 ACS](#7-tr-069-acs)).
 
 Not included: Grafana (use grafana-operator or any Grafana with a datasource on `nms-victoria-metrics`), an Ingress (route to `nms-front` with your gateway), the namespace, the platform monitor and anything from the 5G Core.
 
@@ -34,6 +35,8 @@ Names are fixed, not derived from the release name, so other releases can rely o
 | `nms-api` | 8080 | API, `/healthz`, FCAPS notification receiver, Grafana alert webhook `/api/alarms/webhook` |
 | `nms-db` | 3306 | Backend MySQL |
 | `nms-victoria-metrics` | 8430 | VictoriaMetrics (Prometheus API) |
+| `fc-acs` | 8080 | ACS northbound API, for the NMS (only with `acs.enabled`) |
+| `fc-acs-southbound` | 7547, 7548 | CWMP for the CPE, and plain HTTP on 7548 with `acs.southbound.plainHttp`: NodePorts `acs.southbound.nodePort` (30547) and `acs.southbound.httpNodePort` (30548), or a LoadBalancer on `acs.southbound.loadBalancerIP` (only with `acs.enabled`) |
 
 ## 2. Before Installation
 
@@ -202,13 +205,33 @@ The API, worker and control plane get these settings as `FIRECELL_NMS_NG_LOG_STO
 
 Every install and upgrade also writes ConfigMap `<release>-release-info` (label `firecell.io/release-info: "true"`) in the release namespace, for the NMS support bundles and drift checks, since the NMS reads no Helm release Secret. `release.json` holds the release, namespace, chart (`<name>-<version>`), appVersion, revision, render time (`renderedAt`, UTC), a SHA-256 digest of the values (`valuesDigest`) and the image of every container the chart renders (`images`, keyed `<workload>/<container>`, taken from the rendered pods themselves). `history.json` keeps up to 20 earlier `release.json` records, newest first, read back from the live ConfigMap with `lookup`; it starts empty after `helm template` or a client-side dry run. Neither holds any values content or anything from a Secret. `helm rollback` reapplies the stored manifest of the target revision, so the record and its history roll back with it.
 
-## 7. Configuration Parameters
+## 7. TR-069 ACS
+
+`fc-acs`, the TR-069 auto-configuration server, runs next to the backend when `acs.enabled` is true; a site's recipe needs nothing else, optionally `acs.southbound.loadBalancerIP`. The chart carries only what it needs before it reaches its database; everything else is configured at runtime through its API.
+
+- **Database.** fc-acs keeps its data in database `firecell_acs` on `nms-db`, as MySQL user `acs`. Its `create-database` init container (the `nms-db` image) waits for `nms-db`, then creates the database and the user if missing and sets the user's password and privileges, on every start. Only this init container gets `database-root-password` from `backend.existingSecret`, as an environment variable; the fc-acs container and the pod volumes never see the backend Secret.
+- **Secret `fc-acs`.** Generated on the first install and read back with `lookup` on every upgrade, so the values never change; kept on uninstall (`helm.sh/resource-policy: keep`). `helm template` and client-side dry runs cannot read it and show fresh random values.
+
+| Key | Content |
+|-----|---------|
+| `database-password` | Password of MySQL user `acs` (32 random characters). |
+| `database-url` | `mysql+pymysql://acs:<database-password>@nms-db:3306/firecell_acs`, as `FC_ACS_DATABASE_URL`. |
+| `northbound-token` | Token of the northbound API (32 random characters), mounted at `/etc/fc-acs/secrets/northbound-token` (`FC_ACS_NORTHBOUND_TOKEN_FILE`). |
+| `credential-key` | Key that encrypts device credentials and the TLS private key at rest in the ACS database. Losing it means re-bootstrapping every device's credentials. 48 random characters, mounted at `/etc/fc-acs/secrets/credential-key` (`FC_ACS_CREDENTIAL_KEY_FILE`). |
+
+- **Environment.** Besides the three above, `FC_ACS_LOG_LEVEL` (`acs.logLevel`), `FC_ACS_SOUTHBOUND_HTTP_PORT` (7548, or 0 when `acs.southbound.plainHttp` is false) and `FC_ACS_NMS_URL` (the `nms-api` Service, where fc-acs posts faults to the FCAPS ingest).
+- **Ports and probes.** `southbound` 7547 (CWMP), `southbound-http` 7548 (plain HTTP for CPE that cannot do TLS, each one allowed in the ACS itself; only with `acs.southbound.plainHttp`) and `northbound` 8080 (API; liveness `GET /api/v1/health`, readiness `GET /api/v1/ready`). One replica, replaced with `Recreate`.
+- **NMS side.** With `acs.enabled`, nms-api, nms-worker and nms-control-plane (TR-069 supervision, PM collection and sync) get `FIRECELL_NMS_NG_ACS_URL` (`http://fc-acs:8080`) and `FIRECELL_NMS_NG_ACS_TOKEN_FILE`, the northbound token mounted read-only from Secret `fc-acs` (that key only).
+- **Southbound Service.** `fc-acs-southbound` is a NodePort on `acs.southbound.nodePort` (30547) and, for plain HTTP, `acs.southbound.httpNodePort` (30548) with `externalTrafficPolicy: Local`, so fc-acs sees the CPE address. With `acs.southbound.loadBalancerIP` set it is a LoadBalancer on that address (`loadBalancerIP` and the Cilium LB-IPAM annotation `lbipam.cilium.io/ips`) with `externalTrafficPolicy: Local` too: on the single-node appliance the announcing node holds the pod, and the ACS rate-limits by source address, so the CPE address must not be rewritten to the node address.
+- **NetworkPolicies.** With `networkPolicy.enabled`, fc-acs accepts 8080 from the `nms-api`, `nms-worker` and `nms-control-plane` pods only and 7547 (and 7548 with `acs.southbound.plainHttp`) from anywhere, and the `nms-api` policy admits fc-acs on 8080.
+
+## 8. Configuration Parameters
 
 The following table lists the configurable parameters of the firecell-nms chart and their default values.
 
 {{ template "chart.valuesTable" . }}
 
-## 8. Upgrading from 0.1.x
+## 9. Upgrading from 0.1.x
 
 There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 

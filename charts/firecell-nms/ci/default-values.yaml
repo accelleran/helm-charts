@@ -1,0 +1,3 @@
+# CI values for ct lint: the chart defaults (fc-acs off). With files in ci/,
+# ct lints only those, so the defaults need a file of their own.
+{}
