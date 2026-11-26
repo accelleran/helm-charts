@@ -19,6 +19,10 @@ data:
   {{- with $be.endpoints.extdnProbe }}
   FIRECELL_NMS_NG_EXTDN_PROBE_URL: {{ . | quote }}
   {{- end }}
+  {{- with $be.branding.configMap }}
+  FIRECELL_NMS_NG_BRANDING_CONFIGMAP: {{ . | quote }}
+  FIRECELL_NMS_NG_BRANDING_NAMESPACE: {{ $.Release.Namespace | quote }}
+  {{- end }}
   FIRECELL_NMS_NG_ALLOWED_WS_ORIGINS_JSON: {{ $be.config.allowedWsOriginsJson | quote }}
   FIRECELL_NMS_NG_DEFAULT_SNSSAIS_JSON: {{ $be.config.defaultSnssaisJson | quote }}
   FIRECELL_NMS_NG_DEFAULT_PLMN: {{ $be.config.defaultPlmn | quote }}
