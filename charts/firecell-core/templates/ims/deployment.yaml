@@ -45,7 +45,7 @@ spec:
               mountPath: /workdir
       containers:
         - name: ims
-          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image .Values.ims.imageTag) }}
+          image: {{ .Values.ims.imageOverride | default (printf "%s/%s:%s" .Values.global.imageRegistry .Values.ims.image (.Values.ims.imageTag | default .Values.global.pkgVersion)) }}
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - /usr/sbin/asterisk

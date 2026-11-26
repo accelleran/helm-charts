@@ -1112,7 +1112,9 @@ ims:
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
   imageOverride: ""
-  imageTag: latest
+  # Empty: global.pkgVersion (cn5g-ims publishes kamailio-ims, ims-cx-gateway and rx-n5-iwf
+  # with the same release tag as the cn5g-* NFs).
+  imageTag: ""
   priorityClassName: firecell-prio-support
   registrationExpires: "3600"
   # Empty → templates default to mysql.<namespace>.svc.cluster.local (works for
@@ -1200,7 +1202,8 @@ ims:
     enabled: false
     image: rx-n5-iwf
     imageOverride: ""
-    imageTag: latest
+    # Empty: global.pkgVersion.
+    imageTag: ""
     # Diameter realm of the Rx link (EPC_DOMAIN), given to the IWF and to the P-CSCFs. Empty: each
     # derives epc.mnc<MNC>.mcc<MCC>.3gppnetwork.org from coreConfig.mcc / mnc, the same value.
     epcDomain: ""
@@ -1304,7 +1307,8 @@ ims:
     port: 3868
     image: ims-cx-gateway
     imageOverride: ""
-    imageTag: latest
+    # Empty: global.pkgVersion.
+    imageTag: ""
     # udr = oai_db SoT (Cx-on-UDR); legacy = pyHSS DB + seed
     cxSot: udr
     # split: an init container with CX_MODE=provision (MySQL root password:

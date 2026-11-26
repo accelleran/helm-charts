@@ -21,3 +21,13 @@ global:
     - name: ghcr-regcred
   # Override at install time, e.g. --set global.pkgVersion=pr-<NUMBER>
   # pkgVersion: pr-<NUMBER>
+
+# pr-<NUMBER> is a cn5g NF tag; cn5g-ims publishes no image under it. Pin the IMS
+# images to the rc-02 IMS build (it has CX_MODE, which ims.cxGateway.mode split
+# needs); set these three to try another IMS build.
+ims:
+  imageTag: v6.x-rc-02-0535d42f
+  rxN5Iwf:
+    imageTag: v6.x-rc-02-0535d42f
+  cxGateway:
+    imageTag: v6.x-rc-02-0535d42f
