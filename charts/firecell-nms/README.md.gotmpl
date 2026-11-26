@@ -177,6 +177,18 @@ File names, sizes and checks: nms-frontend `docs/LOGO_CUSTOMIZATION.md`.
 
 ## 5. Gateway Identity
 
+### JWT mode (`backend.auth`)
+
+With `backend.auth.enabled=true` the API validates the Zitadel access token itself: oauth2-proxy forwards it as `X-Forwarded-Access-Token` (`pass_access_token`), machine callers send `Authorization: Bearer`. The API checks the signature against Zitadel's keys, the issuer, the project audience (`projectId`) and the client (`clientIds`, the `azp` claim), then introspects the token with its own API app (`introspection`) for the current roles. A forged `X-Forwarded-User` is ignored in this mode, so it cannot be combined with `backend.config.trustGatewayHeaders` (the render fails).
+
+- The ids Zitadel only knows at runtime can come from a ConfigMap (`backend.auth.configMap`, keys `project-id`, `client-ids-json`, `introspection-client-id`, `users-org-id`, `project-org-id`, `project-grant-id`). The Flux recipe's OIDC ensure loop writes it. A value set in `backend.auth` wins.
+- `backend.auth.introspection.existingSecret` holds the introspection app's Zitadel JSON key, `backend.auth.caBundle.existingSecret` the CA of Zitadel's certificate when it is not in the system trust store.
+- `backend.auth.userManagement` turns on `/api/admin/users`: the API manages Users-organisation accounts with the service account key in `userManagement.existingSecret`.
+- Only the `nms-api` pods get these settings and keys.
+- Roles are the five NMS roles (`basic_viewer`, `ot_manager`, `it_manager`, `si`, `super_admin`); each includes the ones below it. The installed `operator` key ranks as `si`, `viewer` as `basic_viewer`. See the backend's `docs/identity-and-preferences.md`.
+
+### Header mode (`backend.config.trustGatewayHeaders`)
+
 Behind oauth2-proxy, set `backend.config.trustGatewayHeaders=true` and `networkPolicy.enabled=true` (the first without the second fails the render). The backend then believes `X-Forwarded-User` / `-Groups` without checking a token, so the NetworkPolicies decide who can send them:
 
 - `nms-api`: port 8080 from `nms-front`, oauth2-proxy (`app.kubernetes.io/name: <networkPolicy.oauth2ProxyLabel>`), every pod in `rbac.coreNamespace` (NFs post FCAPS notifications without a token) and `networkPolicy.extraFrom`. Add the Grafana that posts alerts and the platform monitor there.
@@ -186,8 +198,8 @@ Anything else that connects to `nms-front` or `nms-api` directly, such as a read
 
 Roles come only from `X-Forwarded-Groups`. The backend reads it as a JSON object whose keys are the role names, which is the shape of Zitadel's project roles claim (`urn:zitadel:iam:org:project:roles`), for example `{"operator": {"<org-id>": "<domain>"}}`:
 
-- Reads need only an authenticated user. Writes need the `operator` role.
-- A missing, empty or malformed header means no roles, so every write answers 403 `this action needs the 'operator' role`, even for a Zitadel admin.
+- Reads need only an authenticated user. Each write needs its lowest NMS role (as in JWT mode); the installed `operator` key ranks as `si`.
+- A missing, empty or malformed header means no roles, so every write answers 403, even for a Zitadel admin.
 - For the header to carry roles, users need a grant of the project's roles in Zitadel, Zitadel has to put the roles claim into the token (assert roles on authentication), and oauth2-proxy has to read that claim as its groups (`oidc_groups_claim`).
 
 ## 6. Support Logs
