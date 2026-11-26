@@ -27,8 +27,7 @@ created: namespace {{ include "firecell-5gc.nmsNamespace" . }} does not exist. C
 the NMS), then run helm upgrade again. Without it the NMS-NG cannot reach the core over mutual TLS.
 {{- end }}
 
-Ensure the image pull Secret (global.imagePullSecrets, default dockerhub-regcred) holds
-GHCR credentials (ghcr.io/accelleran packages are private) and is pre-created
+Ensure Secret dockerhub-regcred (or your configured imagePullSecrets) is pre-created
 in namespace {{ .Values.global.namespace }} before installation.
 
 {{- if and .Values.ims.enabled (eq (.Values.ims.engine | default "kamailio") "asterisk") }}

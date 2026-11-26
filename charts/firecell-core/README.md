@@ -51,19 +51,16 @@ MetalLB is **optional**. The chart ships `templates/metallb-pool.yaml` only when
    ```bash
    sudo modprobe sctp
    ```
-2. Pre-create the container registry secret in the target namespace (e.g. `firecell-core`).
-   The images come from `ghcr.io/accelleran` (private packages; a token with `read:packages`),
-   each NF at its release tag (`v6.x-rc-02-<commit>`, its `imageTag` in `values.yaml`). The
-   secret keeps its old default name, `dockerhub-regcred` (`global.imagePullSecrets`):
+2. Pre-create the container registry secret in the target namespace (e.g. `firecell-core`):
    ```bash
    kubectl create namespace firecell-core
    kubectl create secret docker-registry dockerhub-regcred \
-     --docker-server=ghcr.io \
+     --docker-server=https://index.docker.io/v1/ \
      --docker-username=<USERNAME> \
      --docker-password=<TOKEN> \
      --namespace firecell-core
    ```
-3. To try a cn5g **PR build from GHCR** instead of the release tags, layer
+3. To try a cn5g **PR build from GHCR** instead of the Hub defaults, layer
    [`examples/values-images-ghcr.yaml`](examples/values-images-ghcr.yaml) and set
    `global.pkgVersion` to the PR tag (`pr-<NUMBER>`):
    ```bash
@@ -96,7 +93,6 @@ helm upgrade --repo https://accelleran.github.io/helm-charts firecell-core firec
 
 #### Upgrading from an earlier chart version (0.1.0, 0.2.0)
 Check these before `helm upgrade`. Each one changes what an existing install gets.
-- **Images.** They come from `ghcr.io/accelleran` at each NF's release tag (`v6.x-rc-02-<commit>`), no longer from Docker Hub. The pull secret (`global.imagePullSecrets`, default name `dockerhub-regcred`) must hold GHCR credentials.
 - **IMS addresses.** `ims.{pcscf,icscf,scscf,cxGateway}.ip` have no defaults any more; an install that relied on `192.168.31.205`–`.208` must set them. Without `ims.pcscf.ip` or `coreConfig.ims.pcscfIpv4` the SMF gives UEs no IPv4 P-CSCF (`0.0.0.0`), and the chart prints a warning.
 - **Database.** With the chart's MySQL, the pre-upgrade Job `<release>-db-upgrade` (`hooks.dbUpgrade`) widens the callback URI columns of older schemas to `varchar(255)` and creates `MbsSubscriptionData`. Its statements change nothing on a database that already has them. With an external database, run the same changes by hand (`sql/oai_db-5mbs.sql` and the `ALTER TABLE`s in `templates/hooks/pre-upgrade-db.yaml`).
 - **SBI TLS and OAuth2 are on** (`global.sbi.tls.enabled`, `global.sbi.oauth2.enabled`). Turning TLS on in a running core needs a maintenance window in which the UEs register again. The released Firecell NMS provisions over cleartext HTTP/1.1 without a token, so a core it manages needs both set to `false`.
@@ -163,7 +159,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | amf.headlessN2.serviceName | string | `"oai-amf-n2"` |  |
 | amf.image | string | `"cn5g-amf"` |  |
 | amf.imageOverride | string | `""` |  |
-| amf.imageTag | string | `"v6.x-rc-02-f985f309"` |  |
+| amf.imageTag | string | `""` |  |
 | amf.ports[0].containerPort | int | `80` |  |
 | amf.ports[0].name | string | `"sbi"` |  |
 | amf.ports[0].protocol | string | `"TCP"` |  |
@@ -197,7 +193,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ausf.fcaps.seedConfigPath | string | `"/openair-ausf/etc/config.yaml"` |  |
 | ausf.image | string | `"cn5g-ausf"` |  |
 | ausf.imageOverride | string | `""` |  |
-| ausf.imageTag | string | `"v6.x-rc-02-61491d71"` |  |
+| ausf.imageTag | string | `""` |  |
 | ausf.ports[0].containerPort | int | `80` |  |
 | ausf.ports[0].name | string | `"sbi"` |  |
 | ausf.ports[0].protocol | string | `"TCP"` |  |
@@ -339,7 +335,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | eir.fcaps.mnsPort | int | `9091` |  |
 | eir.image | string | `"cn5g-eir"` |  |
 | eir.imageOverride | string | `""` |  |
-| eir.imageTag | string | `"v6.x-rc-02-66ea8c4c"` |  |
+| eir.imageTag | string | `""` |  |
 | eir.priorityClassName | string | `"firecell-prio-normal"` |  |
 | eir.resources.limits.cpu | string | `"1000m"` |  |
 | eir.resources.limits.memory | string | `"1Gi"` |  |
@@ -384,9 +380,9 @@ The following table lists the configurable parameters of the Firecell Core chart
 | global.busyboxImage | string | `"docker.io/library/busybox:1.38.0-glibc"` |  |
 | global.imagePullPolicy | string | `"IfNotPresent"` |  |
 | global.imagePullSecrets[0].name | string | `"dockerhub-regcred"` |  |
-| global.imageRegistry | string | `"ghcr.io/accelleran"` |  |
+| global.imageRegistry | string | `"docker.io/accelleran"` |  |
 | global.namespace | string | `"firecell-core"` |  |
-| global.pkgVersion | string | `"6.0.0"` |  |
+| global.pkgVersion | string | `"6.0.1"` |  |
 | global.sbi.oauth2.enabled | bool | `true` |  |
 | global.sbi.oauth2.keySource | string | `"helm"` |  |
 | global.sbi.oauth2.publicKeySecret | string | `"nrf-oauth2-public-key"` |  |
@@ -434,7 +430,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.cxGateway.hostNetwork | bool | `true` |  |
 | ims.cxGateway.image | string | `"ims-cx-gateway"` |  |
 | ims.cxGateway.imageOverride | string | `""` |  |
-| ims.cxGateway.imageTag | string | `"v6.x-rc-02-0535d42f"` |  |
+| ims.cxGateway.imageTag | string | `"latest"` |  |
 | ims.cxGateway.ip | string | `""` |  |
 | ims.cxGateway.mode | string | `"split"` |  |
 | ims.cxGateway.port | int | `3868` |  |
@@ -450,7 +446,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.icscf.ip | string | `""` |  |
 | ims.image | string | `"kamailio-ims"` |  |
 | ims.imageOverride | string | `""` |  |
-| ims.imageTag | string | `"v6.x-rc-02-0535d42f"` |  |
+| ims.imageTag | string | `"latest"` |  |
 | ims.mysqlHost | string | `""` |  |
 | ims.pcscf.alternative.bindPort | string | `""` |  |
 | ims.pcscf.alternative.enabled | bool | `false` |  |
@@ -479,7 +475,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | ims.rxN5Iwf.epcDomain | string | `""` |  |
 | ims.rxN5Iwf.image | string | `"rx-n5-iwf"` |  |
 | ims.rxN5Iwf.imageOverride | string | `""` |  |
-| ims.rxN5Iwf.imageTag | string | `"v6.x-rc-02-0535d42f"` |  |
+| ims.rxN5Iwf.imageTag | string | `"latest"` |  |
 | ims.rxN5Iwf.logLevel | string | `"INFO"` |  |
 | ims.rxN5Iwf.notifyPort | int | `8080` |  |
 | ims.rxN5Iwf.notifyUri | string | `""` |  |
@@ -563,7 +559,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | nef.fcaps.mnsPort | int | `9091` |  |
 | nef.image | string | `"cn5g-nef"` |  |
 | nef.imageOverride | string | `""` |  |
-| nef.imageTag | string | `"v6.x-rc-02-643513b8"` |  |
+| nef.imageTag | string | `""` |  |
 | nef.priorityClassName | string | `"firecell-prio-normal"` |  |
 | nef.resources.limits.cpu | string | `"1000m"` |  |
 | nef.resources.limits.memory | string | `"1Gi"` |  |
@@ -606,7 +602,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | nrf.fcaps.seedConfigPath | string | `"/openair-nrf/etc/config.yaml"` |  |
 | nrf.image | string | `"cn5g-nrf"` |  |
 | nrf.imageOverride | string | `""` |  |
-| nrf.imageTag | string | `"v6.x-rc-02-1d130774"` |  |
+| nrf.imageTag | string | `""` |  |
 | nrf.ports[0].containerPort | int | `80` |  |
 | nrf.ports[0].name | string | `"sbi"` |  |
 | nrf.ports[0].protocol | string | `"TCP"` |  |
@@ -629,7 +625,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | nssf.enabled | bool | `false` |  |
 | nssf.image | string | `"cn5g-nssf"` |  |
 | nssf.imageOverride | string | `""` |  |
-| nssf.imageTag | string | `"v6.x-rc-02-d9f7b4ad"` |  |
+| nssf.imageTag | string | `""` |  |
 | nssf.priorityClassName | string | `"firecell-prio-normal"` |  |
 | nssf.resources.limits.cpu | string | `"500m"` |  |
 | nssf.resources.limits.memory | string | `"512Mi"` |  |
@@ -653,7 +649,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | pcf.fcaps.seedConfigPath | string | `"/openair-pcf/etc/config.yaml"` |  |
 | pcf.image | string | `"cn5g-pcf"` |  |
 | pcf.imageOverride | string | `""` |  |
-| pcf.imageTag | string | `"v6.x-rc-02-26c302d3"` |  |
+| pcf.imageTag | string | `""` |  |
 | pcf.ports[0].containerPort | int | `80` |  |
 | pcf.ports[0].name | string | `"sbi"` |  |
 | pcf.ports[0].protocol | string | `"TCP"` |  |
@@ -687,7 +683,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | smf.hostPfcpMacvlan | string | `"smf-n4-mac"` |  |
 | smf.image | string | `"cn5g-smf"` |  |
 | smf.imageOverride | string | `""` |  |
-| smf.imageTag | string | `"v6.x-rc-02-2aefe25d"` |  |
+| smf.imageTag | string | `""` |  |
 | smf.mnsInterface | string | `""` |  |
 | smf.multus.cniType | string | `"ipvlan"` |  |
 | smf.multus.enabled | bool | `false` |  |
@@ -734,7 +730,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udm.fcaps.seedConfigPath | string | `"/openair-udm/etc/config.yaml"` |  |
 | udm.image | string | `"cn5g-udm"` |  |
 | udm.imageOverride | string | `""` |  |
-| udm.imageTag | string | `"v6.x-rc-02-54d302a9"` |  |
+| udm.imageTag | string | `""` |  |
 | udm.ports[0].containerPort | int | `80` |  |
 | udm.ports[0].name | string | `"sbi"` |  |
 | udm.ports[0].protocol | string | `"TCP"` |  |
@@ -765,7 +761,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udr.fcaps.seedConfigPath | string | `"/openair-udr/etc/config.yaml"` |  |
 | udr.image | string | `"cn5g-udr"` |  |
 | udr.imageOverride | string | `""` |  |
-| udr.imageTag | string | `"v6.x-rc-02-775aa976"` |  |
+| udr.imageTag | string | `""` |  |
 | udr.ports[0].containerPort | int | `8080` |  |
 | udr.ports[0].name | string | `"http"` |  |
 | udr.ports[0].protocol | string | `"TCP"` |  |
@@ -789,7 +785,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udsf.host | string | `"oai-udsf"` |  |
 | udsf.image | string | `"cn5g-udsf"` |  |
 | udsf.imageOverride | string | `""` |  |
-| udsf.imageTag | string | `"v6.x-rc-02-a7ca93e8"` |  |
+| udsf.imageTag | string | `""` |  |
 | udsf.redis.image | string | `"redis:7-alpine"` |  |
 | udsf.redis.imageOverride | string | `""` |  |
 | udsf.redis.port | int | `6379` |  |
@@ -865,7 +861,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.oaiHostNet.stubInterface | string | `""` |  |
 | upf.oaiImage | string | `"cn5g-upf"` |  |
 | upf.oaiImageOverride | string | `""` |  |
-| upf.oaiImageTag | string | `"v6.x-rc-02-31eeb618"` |  |
+| upf.oaiImageTag | string | `""` |  |
 | upf.pfcpHost | string | `""` |  |
 | upf.pfcpNodeIdFqdn | string | `""` |  |
 | upf.privileged | bool | `true` |  |
