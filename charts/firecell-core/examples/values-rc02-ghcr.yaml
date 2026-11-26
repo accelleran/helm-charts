@@ -1,6 +1,4 @@
 # The v6.0 rc-02 integration images on GHCR, one tag per NF: v6.x-rc-02-<integration/v6.x-rc-02 commit>.
-# The chart defaults now name the same release tags (values.yaml); this file stays for installs that
-# pin them explicitly.
 # Layer it on top of your site values:
 #
 #   helm upgrade --install firecell-core ./charts/firecell-core -n firecell-core \

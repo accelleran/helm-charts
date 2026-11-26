@@ -5,12 +5,8 @@ global:
   # Namespace for all resources
   namespace: firecell-core
 
-  # GHCR, where the release images are published (no release image is on Docker Hub).
-  # The GHCR packages are private: pre-create a docker-registry pull secret with GHCR
-  # credentials (a token with read:packages) and name it in imagePullSecrets (the default
-  # name is kept from older chart versions). Each NF names its release tag in its
-  # imageTag (v6.x-rc-02-<commit> of the Release 6.x-rc02 image).
-  imageRegistry: ghcr.io/accelleran
+  # Docker Hub — pre-create a docker-registry pull secret before helm install
+  imageRegistry: docker.io/accelleran
   # The busybox used by every initContainer in this chart. Composed from
   # imageRegistry when unset; name it in full to pull it from anywhere else.
   busyboxImage: docker.io/library/busybox:1.38.0-glibc
@@ -18,9 +14,8 @@ global:
   imagePullSecrets:
     - name: dockerhub-regcred
 
-  # Package version: the app.kubernetes.io/version label, and the image tag of an NF whose
-  # imageTag is empty (the NFs name their release tags). Renovate tracks it against cn5g-amf;
-  # every cn5g-* image ships this tag.
+  # Package version — default image tag when an NF imageTag is empty.
+  # Renovate tracks it against cn5g-amf; every cn5g-* image ships this tag.
   # renovate: image=docker.io/accelleran/cn5g-amf
   pkgVersion: "6.0.1"
 
@@ -192,7 +187,7 @@ udsf:
   enabled: true
   image: cn5g-udsf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-a7ca93e8"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   serviceName: oai-udsf
@@ -255,7 +250,7 @@ nrf:
   enabled: true
   image: cn5g-nrf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-1d130774"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-crit
@@ -302,7 +297,7 @@ udr:
   enabled: true
   image: cn5g-udr
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-775aa976"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-crit
@@ -352,7 +347,7 @@ udm:
   enabled: true
   image: cn5g-udm
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-54d302a9"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
@@ -416,7 +411,7 @@ ausf:
   enabled: true
   image: cn5g-ausf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-61491d71"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
@@ -470,7 +465,7 @@ eir:
   enabled: true
   image: cn5g-eir
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-66ea8c4c"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
@@ -553,7 +548,7 @@ nef:
   enabled: true
   image: cn5g-nef
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-643513b8"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
@@ -627,7 +622,7 @@ nssf:
   enabled: false
   image: cn5g-nssf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-d9f7b4ad"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
@@ -672,7 +667,7 @@ amf:
   enabled: true
   image: cn5g-amf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-f985f309"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   # Kubernetes Service type for oai-amf (NGAP must be reachable off-cluster).
@@ -747,7 +742,7 @@ smf:
   enabled: true
   image: cn5g-smf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-2aefe25d"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-high
@@ -842,7 +837,7 @@ pcf:
   enabled: true
   image: cn5g-pcf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  imageTag: "v6.x-rc-02-26c302d3"
+  imageTag: ""
   # Full image reference, winning over registry + image + tag composition.
   imageOverride: ""
   priorityClassName: firecell-prio-normal
@@ -897,7 +892,7 @@ upf:
   enabled: true
   oaiImage: cn5g-upf
   # Used as-is with imageRegistry. Empty: global.pkgVersion.
-  oaiImageTag: "v6.x-rc-02-31eeb618"
+  oaiImageTag: ""
   # Full reference for the OAI UPF, winning over registry + oaiImage + oaiImageTag.
   oaiImageOverride: ""
   # Kubernetes Service type for the GTP-U Service(s).
@@ -1117,7 +1112,7 @@ ims:
   # Same escape hatch every NF has: the composition glues on imageRegistry,
   # so an image published anywhere else cannot be named without it.
   imageOverride: ""
-  imageTag: "v6.x-rc-02-0535d42f"
+  imageTag: latest
   priorityClassName: firecell-prio-support
   registrationExpires: "3600"
   # Empty → templates default to mysql.<namespace>.svc.cluster.local (works for
@@ -1205,7 +1200,7 @@ ims:
     enabled: false
     image: rx-n5-iwf
     imageOverride: ""
-    imageTag: "v6.x-rc-02-0535d42f"
+    imageTag: latest
     # Diameter realm of the Rx link (EPC_DOMAIN), given to the IWF and to the P-CSCFs. Empty: each
     # derives epc.mnc<MNC>.mcc<MCC>.3gppnetwork.org from coreConfig.mcc / mnc, the same value.
     epcDomain: ""
@@ -1309,7 +1304,7 @@ ims:
     port: 3868
     image: ims-cx-gateway
     imageOverride: ""
-    imageTag: "v6.x-rc-02-0535d42f"
+    imageTag: latest
     # udr = oai_db SoT (Cx-on-UDR); legacy = pyHSS DB + seed
     cxSot: udr
     # split: an init container with CX_MODE=provision (MySQL root password:
@@ -1929,8 +1924,8 @@ hooks:
     timeoutSeconds: 90
 
 # --- Image Pull Secret ---
-# Pre-create before helm install (GHCR, private packages; the name is kept from older versions):
+# Pre-create before helm install (Docker Hub):
 #   kubectl create secret docker-registry dockerhub-regcred \
-#     --docker-server=ghcr.io \
+#     --docker-server=https://index.docker.io/v1/ \
 #     --docker-username=<user> --docker-password=<token> \
 #     -n firecell-core
