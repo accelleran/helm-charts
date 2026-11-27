@@ -490,6 +490,19 @@ true/false in any case. Pass (dict "v" <value> "key" <values path>).
 {{- end }}
 
 {{/*
+The O1 NETCONF password as the element reads it: trailing newlines (\n, \r\n,
+any number) removed, so a value from --set-file or "password: |" works. The element
+takes the first line and strips \r, ignores blank lines after it and refuses a
+second non-blank line; a newline left inside the value is refused by
+firecell-du.o1NetconfCheck. Pass the raw value; "" when unset.
+*/}}
+{{- define "firecell-du.o1NetconfPassword" -}}
+{{- if kindIs "string" . -}}
+{{- regexReplaceAll "[\r\n]+$" . "" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
 Refuses O1 NETCONF values the element would not take, so the mistake shows at
 render time and not as a silent "NETCONF off" (or a wrong credential) later.
 The rules are those of the image's docker/o1/entrypoint.sh (accelleran/ocudu#724).
@@ -541,16 +554,23 @@ The rules are those of the image's docker/o1/entrypoint.sh (accelleran/ocudu#724
 {{- end }}
 {{- end }}
 {{- with $n.password }}
-{{- if regexMatch "^[[:space:]]*$" . }}
+{{- /* With key lines too, the element drops the password before checking it; the
+chart still checks it on purpose, so a value the element would refuse on its own is
+not left waiting in the Secret. */}}
+{{- $pw := include "firecell-du.o1NetconfPassword" . }}
+{{- if regexMatch "^[[:space:]]*$" $pw }}
 {{- fail (printf "%s.password is blank (the element refuses it)" $p) }}
 {{- end }}
-{{- if or (contains "\n" .) (contains "\r" .) (gt (len .) 256) }}
-{{- fail (printf "%s.password: one line of at most 256 characters (the element refuses a longer one)" $p) }}
+{{- if or (contains "\n" $pw) (contains "\r" $pw) }}
+{{- fail (printf "%s.password: one line only (a line break inside the password; the element refuses a second line)" $p) }}
 {{- end }}
-{{- if and (regexMatch "^\\$[0-9a-z]{1,4}\\$" .) (not (or (hasPrefix "$6$" .) (hasPrefix "$5$" .))) }}
+{{- if gt (len $pw) 256 }}
+{{- fail (printf "%s.password: at most 256 characters (the element refuses a longer one)" $p) }}
+{{- end }}
+{{- if and (regexMatch "^\\$[0-9a-z]{1,4}\\$" $pw) (not (or (hasPrefix "$6$" $pw) (hasPrefix "$5$" $pw))) }}
 {{- fail (printf "%s.password looks like a crypt hash of an unsupported type; give a $6$/$5$ hash or the clear password (the element would take the hash itself as the password)" $p) }}
 {{- end }}
-{{- if and (or (hasPrefix "$6$" .) (hasPrefix "$5$" .)) (not (regexMatch "^(\\$5\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{43}|\\$6\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{86})$" .)) }}
+{{- if and (or (hasPrefix "$6$" $pw) (hasPrefix "$5$" $pw)) (not (regexMatch "^(\\$5\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{43}|\\$6\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{86})$" $pw)) }}
 {{- fail (printf "%s.password starts like a $6$/$5$ crypt hash but is not a valid one (the element refuses it)" $p) }}
 {{- end }}
 {{- end }}
@@ -638,7 +658,7 @@ Pod annotation that rolls the pod when a chart-made O1 NETCONF Secret changes
 {{- if include "firecell-du.o1NetconfOwnSecret" . }}
 {{- $n := .netconf }}
 # The element reads the NETCONF credential once at start; roll the pod when it changes.
-checksum/o1-netconf-secret: {{ toJson (dict "name" (include "firecell-du.o1NetconfSecret" .) "username" $n.username "password" $n.password "keys" (include "firecell-du.o1NetconfKeys" $n.authorizedKeys)) | sha256sum }}
+checksum/o1-netconf-secret: {{ toJson (dict "name" (include "firecell-du.o1NetconfSecret" .) "username" $n.username "password" (include "firecell-du.o1NetconfPassword" $n.password) "keys" (include "firecell-du.o1NetconfKeys" $n.authorizedKeys)) | sha256sum }}
 {{- end }}
 {{- end }}
 
@@ -730,7 +750,7 @@ stringData:
   {{- with $n.username }}
   username: {{ . | quote }}
   {{- end }}
-  {{- with $n.password }}
+  {{- with include "firecell-du.o1NetconfPassword" $n.password }}
   password: {{ . | quote }}
   {{- end }}
   {{- with $n.authorizedKeys }}
