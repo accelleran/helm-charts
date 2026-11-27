@@ -48,6 +48,10 @@ spec:
               {{- end }}
           {{- if $c.o1.enabled }}
           env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
             - name: O1_ENABLED
               value: "true"
             - name: NETCONF_VERBOSITY

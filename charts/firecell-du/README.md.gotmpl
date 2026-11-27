@@ -84,7 +84,8 @@ With `o1.enabled`, the DU takes its NETCONF login from a Secret mounted read-onl
 - The element reads the Secret at start only. A chart-made Secret rolls the pod when its values change; after changing an `existingSecret`, restart the pod in a maintenance window.
 - An element that has used a Secret keeps NETCONF off when the Secret is dropped from the values. To go back to the lab login, set `o1.netconf.requireSecret: false` and remove the Secret values.
 - The NMS needs the same user and password (firecell-nms `backend.extraEnv`); restart its backend pods after a change.
-- `o1.netconf.group` (`O1_NETCONF_GROUP`), `o1.netconf.nacm` (`O1_NACM_ENABLED`) and `o1.netconf.listenAddress` (`NETCONF_LISTEN_ADDRESS`) are passed only when set.
+- `o1.netconf.group` (`O1_NETCONF_GROUP`) and `o1.netconf.nacm` (`O1_NACM_ENABLED`) are passed only when set.
+- NETCONF listens on the pod IP (`NETCONF_LISTEN_ADDRESS`), not on every address, so it is not reachable on the Multus interfaces, which a NetworkPolicy does not filter. The NMS reaches it through the Service as before. `o1.netconf.listenAddress` overrides it (`0.0.0.0`: all addresses, the image default). `kubectl port-forward` to port 830 no longer works, since it connects to the pod's localhost. With `ru.vendor: aw2s` the DU is in the host network, so its pod IP is the node's address; limit port 830 to the NMS with the node firewall.
 
 ## 3. Node prerequisites
 - `ofh.mode: dpdk`: VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).

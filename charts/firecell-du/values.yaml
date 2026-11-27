@@ -293,7 +293,7 @@ o1:
     group: ""
     # -- (bool) Access control (O1_NACM_ENABLED). Unset: the image default, true. false turns NACM off, as in RC2.
     nacm: null
-    # -- Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the image default, 0.0.0.0. An aw2s DU runs on the host network: set the node's management address there.
+    # -- Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the pod IP, so NETCONF is not open on the Multus interfaces (M-plane, fronthaul, F1-U), which a NetworkPolicy does not filter; the NMS reaches it through the Service. With ru.vendor aw2s (host network) the pod IP is the node's address. 0.0.0.0 restores the image default (all addresses).
     listenAddress: ""
   ueMetrics:
     # -- Publish per-UE PM (/ocudu-performance gnb-du-id and ue-metrics) for the NMS UE dashboard. Needs o1.enabled. Turns on scheduler metrics (metrics.layers.enable_sched).

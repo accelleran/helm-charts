@@ -52,7 +52,8 @@ With `cuCp.o1.enabled` and `cuUp.o1.enabled`, each of the CU-CP and the CU-UP ta
 - The element reads the Secret at start only. A chart-made Secret rolls the pod when its values change; after changing an `existingSecret`, restart the pod in a maintenance window.
 - An element that has used a Secret keeps NETCONF off when the Secret is dropped from the values. To go back to the lab login, set `cuCp.o1.netconf.requireSecret: false` and remove the Secret values.
 - The NMS needs the same user and password (firecell-nms `backend.extraEnv`); restart its backend pods after a change.
-- `cuCp.o1.netconf.group` (`O1_NETCONF_GROUP`), `cuCp.o1.netconf.nacm` (`O1_NACM_ENABLED`) and `cuCp.o1.netconf.listenAddress` (`NETCONF_LISTEN_ADDRESS`) are passed only when set.
+- `cuCp.o1.netconf.group` (`O1_NETCONF_GROUP`) and `cuCp.o1.netconf.nacm` (`O1_NACM_ENABLED`) are passed only when set.
+- NETCONF listens on the pod IP (`NETCONF_LISTEN_ADDRESS`), not on every address, so it is not reachable on the Multus interfaces, which a NetworkPolicy does not filter. The NMS reaches it through the Service as before. `cuCp.o1.netconf.listenAddress` overrides it (`0.0.0.0`: all addresses, the image default). `kubectl port-forward` to port 830 no longer works, since it connects to the pod's localhost.
 
 ## 3. Node prerequisites
 - Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
@@ -74,7 +75,7 @@ With `cuCp.o1.enabled` and `cuUp.o1.enabled`, each of the CU-CP and the CU-UP ta
 | cuCp.o1.netconf.authorizedKeys | string | `""` | NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-cp-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used. |
 | cuCp.o1.netconf.existingSecret | string | `""` | Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-CP reads it at start only: restart it after changing the Secret. |
 | cuCp.o1.netconf.group | string | `""` | NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator. |
-| cuCp.o1.netconf.listenAddress | string | `""` | Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the image default, 0.0.0.0. |
+| cuCp.o1.netconf.listenAddress | string | `""` | Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the pod IP, so NETCONF is not open on the Multus interfaces (CU-UP N3 and F1-U), which a NetworkPolicy does not filter; the NMS reaches it through the Service. 0.0.0.0 restores the image default (all addresses). |
 | cuCp.o1.netconf.nacm | bool | `nil` | Access control (O1_NACM_ENABLED). Unset: the image default, true. false turns NACM off, as in RC2. |
 | cuCp.o1.netconf.password | string | `""` | Password of a chart-made Secret cu-cp-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes. |
 | cuCp.o1.netconf.requireSecret | bool | `nil` | O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted. |
@@ -108,7 +109,7 @@ With `cuCp.o1.enabled` and `cuUp.o1.enabled`, each of the CU-CP and the CU-UP ta
 | cuUp.o1.netconf.authorizedKeys | string | `""` | NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-up-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used. |
 | cuUp.o1.netconf.existingSecret | string | `""` | Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-UP reads it at start only: restart it after changing the Secret. |
 | cuUp.o1.netconf.group | string | `""` | NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator. |
-| cuUp.o1.netconf.listenAddress | string | `""` | Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the image default, 0.0.0.0. |
+| cuUp.o1.netconf.listenAddress | string | `""` | Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the pod IP, so NETCONF is not open on the Multus interfaces (CU-UP N3 and F1-U), which a NetworkPolicy does not filter; the NMS reaches it through the Service. 0.0.0.0 restores the image default (all addresses). |
 | cuUp.o1.netconf.nacm | bool | `nil` | Access control (O1_NACM_ENABLED). Unset: the image default, true. false turns NACM off, as in RC2. |
 | cuUp.o1.netconf.password | string | `""` | Password of a chart-made Secret cu-up-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes. |
 | cuUp.o1.netconf.requireSecret | bool | `nil` | O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted. |

@@ -150,7 +150,7 @@ checksum/o1-netconf-secret: {{ toJson (dict "name" (include "firecell-cu.o1Netco
 {{- end }}
 
 {{/*
-O1 NETCONF env for the O1 container. O1_REQUIRE_SECRET: "true" when a Secret is
+O1 NETCONF env for the O1 container. NETCONF_LISTEN_ADDRESS: o1.netconf.listenAddress, else the pod IP. O1_REQUIRE_SECRET: "true" when a Secret is
 mounted (a lost Secret then keeps NETCONF off), else o1.netconf.requireSecret
 when set (false: the deliberate way back to the lab login), else not set, so
 the element's own mark (a Secret was used before) still keeps NETCONF off when
@@ -191,10 +191,11 @@ Same argument as firecell-cu.o1NetconfSecret.
 - name: O1_NACM_ENABLED
   value: {{ $n.nacm | toString | quote }}
 {{- end }}
-{{- with $n.listenAddress }}
+{{- /* The pod IP, not the image's 0.0.0.0: that would also open NETCONF on the
+Multus interfaces (DU mplane0 and fronthaul, CU-UP N3), which a NetworkPolicy
+does not filter. Needs POD_IP earlier in the same env list. */}}
 - name: NETCONF_LISTEN_ADDRESS
-  value: {{ . | toString | quote }}
-{{- end }}
+  value: {{ $n.listenAddress | default "$(POD_IP)" | toString | quote }}
 {{- end }}
 
 {{/*

@@ -53,7 +53,8 @@ With `cuCp.o1.enabled` and `cuUp.o1.enabled`, each of the CU-CP and the CU-UP ta
 - The element reads the Secret at start only. A chart-made Secret rolls the pod when its values change; after changing an `existingSecret`, restart the pod in a maintenance window.
 - An element that has used a Secret keeps NETCONF off when the Secret is dropped from the values. To go back to the lab login, set `cuCp.o1.netconf.requireSecret: false` and remove the Secret values.
 - The NMS needs the same user and password (firecell-nms `backend.extraEnv`); restart its backend pods after a change.
-- `cuCp.o1.netconf.group` (`O1_NETCONF_GROUP`), `cuCp.o1.netconf.nacm` (`O1_NACM_ENABLED`) and `cuCp.o1.netconf.listenAddress` (`NETCONF_LISTEN_ADDRESS`) are passed only when set.
+- `cuCp.o1.netconf.group` (`O1_NETCONF_GROUP`) and `cuCp.o1.netconf.nacm` (`O1_NACM_ENABLED`) are passed only when set.
+- NETCONF listens on the pod IP (`NETCONF_LISTEN_ADDRESS`), not on every address, so it is not reachable on the Multus interfaces, which a NetworkPolicy does not filter. The NMS reaches it through the Service as before. `cuCp.o1.netconf.listenAddress` overrides it (`0.0.0.0`: all addresses, the image default). `kubectl port-forward` to port 830 no longer works, since it connects to the pod's localhost.
 
 ## 3. Node prerequisites
 - Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
