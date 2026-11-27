@@ -182,6 +182,9 @@ The rules are those of the image's docker/o1/entrypoint.sh (accelleran/ocudu#724
 {{- if or (contains "\n" .) (contains "\r" .) (gt (len .) 256) }}
 {{- fail (printf "%s.password: one line of at most 256 characters (the element refuses a longer one)" $p) }}
 {{- end }}
+{{- if and (regexMatch "^\\$[0-9a-z]{1,4}\\$" .) (not (or (hasPrefix "$6$" .) (hasPrefix "$5$" .))) }}
+{{- fail (printf "%s.password looks like a crypt hash of an unsupported type; give a $6$/$5$ hash or the clear password (the element would take the hash itself as the password)" $p) }}
+{{- end }}
 {{- if and (or (hasPrefix "$6$" .) (hasPrefix "$5$" .)) (not (regexMatch "^\\$[56]\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{43,86}$" .)) }}
 {{- fail (printf "%s.password starts like a $6$/$5$ crypt hash but is not a valid one (the element refuses it)" $p) }}
 {{- end }}

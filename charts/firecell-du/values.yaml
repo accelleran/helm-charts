@@ -283,7 +283,7 @@ o1:
     existingSecret: ""
     # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret <name>-o1-netconf. Empty: netconf.
     username: ""
-    # -- Password of a chart-made Secret <name>-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
+    # -- Password of a chart-made Secret <name>-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash; another crypt form such as $y$, $1$, $2b$ or $sha1$ is refused). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
     password: ""
     # -- NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret <name>-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
     authorizedKeys: ""
