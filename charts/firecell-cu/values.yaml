@@ -67,17 +67,17 @@ cuCp:
     netconfVerbosity: warning
     # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp.
     statePath: ""
-    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Empty: the host directory; then pin the CU-CP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
+    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Moving an existing CU from statePath to a claim starts from an empty folder (new host key, lost O1 overlay and mark) unless the files are copied in first. Empty: the host directory; then pin the CU-CP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
     stateClaim: ""
     # NETCONF login and access control (KI-026). With nothing set the CU-CP keeps the lab
-    # login netconf/netconf (group operator) and logs a WARNING. Needs an image that reads
-    # /etc/ocudu/o1-netconf (RC3 or later); see the README of the image's docker/o1.
+    # login netconf/netconf (group operator) and logs a WARNING. Needs an RC3 or later image: an RC2
+    # image ignores all of these and keeps netconf/netconf with NACM off (README, O1 NETCONF Login).
     netconf:
       # -- Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-CP reads it at start only: restart it after changing the Secret.
       existingSecret: ""
       # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret cu-cp-o1-netconf. Empty: netconf.
       username: ""
-      # -- Password of a chart-made Secret cu-cp-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes.
+      # -- Password of a chart-made Secret cu-cp-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
       password: ""
       # -- NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-cp-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
       authorizedKeys: ""
@@ -156,17 +156,17 @@ cuUp:
     netconfVerbosity: warning
     # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up.
     statePath: ""
-    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Empty: the host directory; then pin the CU-UP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
+    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Moving an existing CU from statePath to a claim starts from an empty folder (new host key, lost O1 overlay and mark) unless the files are copied in first. Empty: the host directory; then pin the CU-UP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
     stateClaim: ""
     # NETCONF login and access control (KI-026). With nothing set the CU-UP keeps the lab
-    # login netconf/netconf (group operator) and logs a WARNING. Needs an image that reads
-    # /etc/ocudu/o1-netconf (RC3 or later); see the README of the image's docker/o1.
+    # login netconf/netconf (group operator) and logs a WARNING. Needs an RC3 or later image: an RC2
+    # image ignores all of these and keeps netconf/netconf with NACM off (README, O1 NETCONF Login).
     netconf:
       # -- Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-UP reads it at start only: restart it after changing the Secret.
       existingSecret: ""
       # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret cu-up-o1-netconf. Empty: netconf.
       username: ""
-      # -- Password of a chart-made Secret cu-up-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes.
+      # -- Password of a chart-made Secret cu-up-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
       password: ""
       # -- NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-up-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
       authorizedKeys: ""

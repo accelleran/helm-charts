@@ -276,14 +276,14 @@ o1:
   # -- netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info.
   netconfVerbosity: warning
   # NETCONF login and access control (KI-026). With nothing set the element keeps the lab
-  # login netconf/netconf (group operator) and logs a WARNING. Needs an image that reads
-  # /etc/ocudu/o1-netconf (RC3 or later); see the README of the image's docker/o1.
+  # login netconf/netconf (group operator) and logs a WARNING. Needs an RC3 or later image: an RC2
+  # image ignores all of these and keeps netconf/netconf with NACM off (README, O1 NETCONF Login).
   netconf:
     # -- Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The element reads it at start only: restart it after changing the Secret.
     existingSecret: ""
     # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret <name>-o1-netconf. Empty: netconf.
     username: ""
-    # -- Password of a chart-made Secret <name>-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes.
+    # -- Password of a chart-made Secret <name>-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
     password: ""
     # -- NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret <name>-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
     authorizedKeys: ""
