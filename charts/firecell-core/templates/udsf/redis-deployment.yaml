@@ -1,4 +1,8 @@
 {{- if .Values.udsf.enabled }}
+{{- $p := .Values.udsf.redis.persistence | default dict }}
+{{- if and $p.appendonly (not (has ($p.volume | default "emptyDir") (list "emptyDir" "pvc"))) }}
+{{- fail (printf "udsf.redis.persistence.volume must be emptyDir or pvc, got %v" $p.volume) }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,10 +32,25 @@ spec:
           imagePullPolicy: {{ .Values.global.imagePullPolicy }}
           command:
             - redis-server
+            - --dir
+            - /data
             - --save
             - ""
+            {{- if $p.appendonly }}
+            - --appendonly
+            - "yes"
+            - --appendfsync
+            - {{ $p.appendfsync | default "everysec" | quote }}
+            {{- else }}
             - --appendonly
             - "no"
+            {{- end }}
+            {{- with .Values.udsf.redis.maxmemory }}
+            - --maxmemory
+            - {{ . | quote }}
+            {{- end }}
+            - --maxmemory-policy
+            - noeviction
           ports:
             - name: redis
               containerPort: {{ .Values.udsf.redis.port }}
@@ -48,6 +67,24 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.udsf.redis.resources | nindent 12 }}
+          {{- if $p.appendonly }}
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+          {{- end }}
+      {{- if $p.appendonly }}
+      volumes:
+        - name: redis-data
+          {{- if eq ($p.volume | default "emptyDir") "pvc" }}
+          persistentVolumeClaim:
+            claimName: udsf-redis-data
+          {{- else }}
+          emptyDir:
+            {{- with $p.size }}
+            sizeLimit: {{ . }}
+            {{- end }}
+          {{- end }}
+      {{- end }}
       {{- with .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

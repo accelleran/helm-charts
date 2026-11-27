@@ -1,0 +1,25 @@
+{{- /*
+Claim for the UDSF Redis append-only file, only with
+udsf.redis.persistence.volume: pvc. With the default emptyDir no claim is made.
+*/ -}}
+{{- $p := .Values.udsf.redis.persistence | default dict }}
+{{- if and .Values.udsf.enabled $p.appendonly (eq ($p.volume | default "emptyDir") "pvc") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: udsf-redis-data
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    {{- include "firecell-5gc.labels" . | nindent 4 }}
+    app: udsf-redis
+    tier: udsf
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ $p.size | default "1Gi" }}
+  {{- with $p.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+{{- end }}

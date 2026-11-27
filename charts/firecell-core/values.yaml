@@ -211,6 +211,31 @@ udsf:
       limits:
         memory: 256Mi
         cpu: 500m
+    # Every AMF and SMF context the UDSF stores lives in this Redis. Without persistence a
+    # Redis restart (OOM kill, liveness kill, pod restart) loses all of them.
+    persistence:
+      # Append-only file in /data. false: the 0.3.0 behaviour (--appendonly no, no volume).
+      appendonly: true
+      # Redis appendfsync: always | everysec | no.
+      appendfsync: everysec
+      # Where /data lives:
+      # - emptyDir: survives container restarts in the same pod (OOM kill, liveness kill).
+      #   Lost when the pod is deleted or rescheduled, on a node reboot, and on the upgrade
+      #   that first applies it (Recreate).
+      # - pvc: a ReadWriteOnce claim (udsf-redis-data) that survives pod deletion.
+      volume: emptyDir
+      # emptyDir sizeLimit or PVC request. The append-only file and its rewrite need room for
+      # about twice the data set.
+      size: 1Gi
+      # pvc only. Empty: the cluster default StorageClass.
+      storageClass: ""
+    # Redis maxmemory. The policy is always noeviction: an eviction policy would drop UE
+    # contexts or NF leases without an error; with noeviction a full Redis rejects writes
+    # instead. Keep it well below resources.limits.memory (about 60 %): an append-only-file
+    # rewrite forks, and its copy-on-write pages count against the same limit. Raise both for
+    # large UE counts (docs/capacity-sizing.md). Empty: no maxmemory (Redis grows until the
+    # container limit kills it).
+    maxmemory: 160mb
   resources:
     requests:
       memory: 128Mi
