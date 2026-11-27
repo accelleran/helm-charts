@@ -72,8 +72,11 @@ spec:
             httpGet: {path: /healthz, port: http}
             periodSeconds: 5
             failureThreshold: 30
+          {{- /* JWT mode: /readyz also waits for the mounted OIDC ids, so a pod
+          without them stays out of the Service and holds the rollout. Older
+          images have no /readyz; JWT mode needs a newer one anyway. */}}
           readinessProbe:
-            httpGet: {path: /healthz, port: http}
+            httpGet: {path: {{ ternary "/readyz" "/healthz" $be.auth.enabled }}, port: http}
             periodSeconds: 5
             failureThreshold: 3
           livenessProbe:
