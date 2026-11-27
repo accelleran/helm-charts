@@ -188,6 +188,10 @@ acs:
     digest: ""
   # -- Log level of fc-acs (FC_ACS_LOG_LEVEL).
   logLevel: info
+  # -- Base URL CPEs upload PM files to (FC_ACS_PM_UPLOAD_BASE_URL), the CPE-facing address of the
+  # plain-HTTP or CWMP listener, e.g. http://<node-ip>:<NodePort>. Empty: fc-acs builds it from each CPE's
+  # Host header, which lacks the port on some CPEs (the Askey) behind a non-default port.
+  pmUploadBaseUrl: ""
   resources:
     requests: {cpu: 100m, memory: 256Mi}
     limits: {cpu: "1", memory: 512Mi}

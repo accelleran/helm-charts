@@ -192,3 +192,21 @@ tests:
           value:
             - {name: southbound, containerPort: 7547}
             - {name: northbound, containerPort: 8080}
+
+  - it: sets no FC_ACS_PM_UPLOAD_BASE_URL by default (fc-acs builds the URL from each CPE's Host header)
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FC_ACS_PM_UPLOAD_BASE_URL
+          any: true
+
+  - it: sets FC_ACS_PM_UPLOAD_BASE_URL from acs.pmUploadBaseUrl
+    set:
+      acs.pmUploadBaseUrl: http://192.168.30.179:30558
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FC_ACS_PM_UPLOAD_BASE_URL
+            value: http://192.168.30.179:30558

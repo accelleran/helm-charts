@@ -103,6 +103,11 @@ spec:
               value: {{ if $acs.southbound.plainHttp }}"7548"{{ else }}"0"{{ end }}
             - name: FC_ACS_LOG_LEVEL
               value: {{ $acs.logLevel | quote }}
+            {{- if $acs.pmUploadBaseUrl }}
+            # Where CPEs upload PM files; empty: from each CPE's Host header.
+            - name: FC_ACS_PM_UPLOAD_BASE_URL
+              value: {{ $acs.pmUploadBaseUrl | quote }}
+            {{- end }}
             # Where fc-acs sends fault notifications (the NMS FCAPS ingest).
             - name: FC_ACS_NMS_URL
               value: {{ include "firecell-nms.backend.url" . | quote }}
