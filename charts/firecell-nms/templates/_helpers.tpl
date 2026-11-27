@@ -280,8 +280,6 @@ JWT-mode environment of the API container (backend.auth). Empty when off.
 {{- if $um.enabled }}
 - name: FIRECELL_NMS_NG_ZITADEL_API_URL
   value: {{ $um.apiUrl | default $auth.issuer | quote }}
-{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_PROJECT_ORG_ID" $um.projectOrgId "project-org-id") }}
-{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_PROJECT_GRANT_ID" $um.projectGrantId "project-grant-id") }}
 - name: FIRECELL_NMS_NG_ZITADEL_SERVICE_ACCOUNT_KEY_FILE
   value: /etc/firecell-nms/oidc/user-manager/{{ $um.key }}
 {{- end }}

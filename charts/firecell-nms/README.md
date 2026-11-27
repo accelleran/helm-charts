@@ -180,9 +180,9 @@ File names, sizes and checks: nms-frontend `docs/LOGO_CUSTOMIZATION.md`.
 
 With `backend.auth.enabled=true` the API validates the Zitadel access token itself: oauth2-proxy forwards it as `X-Forwarded-Access-Token` (`pass_access_token`), machine callers send `Authorization: Bearer`. The API checks the signature against Zitadel's keys, the issuer, the project audience (`projectId`) and the client (`clientIds`, the `azp` claim), then introspects the token with its own API app (`introspection`) for the current roles. A forged `X-Forwarded-User` is ignored in this mode, so it cannot be combined with `backend.config.trustGatewayHeaders` (the render fails).
 
-- The ids Zitadel only knows at runtime can come from a ConfigMap (`backend.auth.configMap`, keys `project-id`, `client-ids-json`, `project-org-id`, `project-grant-id`). The Flux recipe's OIDC ensure loop writes it. A value set in `backend.auth` wins.
+- The ids Zitadel only knows at runtime can come from a ConfigMap (`backend.auth.configMap`, keys `project-id`, `client-ids-json`). The Flux recipe's OIDC ensure loop writes it. A value set in `backend.auth` wins.
 - `backend.auth.introspection.existingSecret` holds the introspection app's Zitadel JSON key (the API reads the app's client id from it), `backend.auth.caBundle.existingSecret` the CA of Zitadel's certificate when it is not in the system trust store.
-- `backend.auth.userManagement` turns on `/api/admin/users`: the API manages Users-organisation accounts with the service account key in `userManagement.existingSecret`. It finds the Users organisation from that service account.
+- `backend.auth.userManagement` turns on `/api/admin/users`: the API manages Users-organisation accounts with the service account key in `userManagement.existingSecret`. It finds the Users organisation, the project's owner and the project grant from that service account.
 - Only the `nms-api` pods get these settings and keys.
 - Roles are the five NMS roles (`basic_viewer`, `ot_manager`, `it_manager`, `si`, `super_admin`); each includes the ones below it. The installed `operator` key ranks as `si`, `viewer` as `basic_viewer`. See the backend's `docs/identity-and-preferences.md`.
 
@@ -264,7 +264,7 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.api.resources.requests.memory | string | `"256Mi"` |  |
 | backend.auth.caBundle | object | `{"existingSecret":"","key":"ca.crt"}` | Secret with the CA that signs Zitadel's certificate (the Gateway's), key `caBundle.key`. Empty: the system trust store. |
 | backend.auth.clientIds | list | `[]` | Client ids (azp) whose tokens are accepted, e.g. the oauth2-proxy app. |
-| backend.auth.configMap | string | `""` | ConfigMap holding the ids Zitadel only knows at runtime, under the keys `project-id`, `client-ids-json`, `project-org-id`, `project-grant-id`. The Flux recipe's OIDC ensure loop writes it. A value set below wins over the ConfigMap. |
+| backend.auth.configMap | string | `""` | ConfigMap holding the ids Zitadel only knows at runtime, under the keys `project-id` and `client-ids-json`. The Flux recipe's OIDC ensure loop writes it. A value set below wins over the ConfigMap. |
 | backend.auth.enabled | bool | `false` | Turn JWT mode on. Cannot be combined with backend.config.trustGatewayHeaders. |
 | backend.auth.introspection.cacheSeconds | int | `15` | Seconds one token's introspection answer is reused. |
 | backend.auth.introspection.existingSecret | string | `""` | Secret with the API app's Zitadel JSON key, the one it introspects tokens with. It carries the app's client id. Required when enabled. |
@@ -277,8 +277,6 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.auth.userManagement.enabled | bool | `false` | Turn the user screens on. Needs auth.enabled. |
 | backend.auth.userManagement.existingSecret | string | `""` | Secret with the service account's Zitadel JSON key. Required when enabled. |
 | backend.auth.userManagement.key | string | `"key.json"` |  |
-| backend.auth.userManagement.projectGrantId | string | `""` | Project grant to the Users organisation. Empty: from auth.configMap. |
-| backend.auth.userManagement.projectOrgId | string | `""` | Organisation that owns the project (Firecell). Empty: from auth.configMap. |
 | backend.branding.configMap | string | `"nms-branding"` | ConfigMap where the NMS keeps the site's logos and colours (CM console Branding, /api/branding); the console's sidebar reads them through the API, and the Flux recipe's OIDC ensure loop copies them to Zitadel's sign-in pages. The chart never creates it, so upgrades keep it. nms-api may get, update and delete it, and create ConfigMaps in the namespace (Kubernetes cannot narrow create by name). Empty turns the feature off. |
 | backend.config.allowedWsOriginsJson | string | `"[]"` | JSON string array of allowed WebSocket origins. |
 | backend.config.cmConfigMapKey | string | `"cm.json"` |  |

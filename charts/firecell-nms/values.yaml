@@ -177,9 +177,8 @@ backend:
     # -- Signing keys. Empty: `<issuer>/oauth/v2/keys`.
     jwksUrl: ""
     # -- ConfigMap holding the ids Zitadel only knows at runtime, under the keys
-    # `project-id`, `client-ids-json`, `project-org-id`, `project-grant-id`.
-    # The Flux recipe's
-    # OIDC ensure loop writes it. A value set below wins over the ConfigMap.
+    # `project-id` and `client-ids-json`. The Flux recipe's OIDC ensure loop
+    # writes it. A value set below wins over the ConfigMap.
     configMap: ""
     # -- Zitadel project id the token audience must contain.
     projectId: ""
@@ -206,10 +205,6 @@ backend:
       enabled: false
       # -- Zitadel API base URL. Empty: the issuer.
       apiUrl: ""
-      # -- Organisation that owns the project (Firecell). Empty: from auth.configMap.
-      projectOrgId: ""
-      # -- Project grant to the Users organisation. Empty: from auth.configMap.
-      projectGrantId: ""
       # -- Secret with the service account's Zitadel JSON key. Required when enabled.
       existingSecret: ""
       key: key.json
