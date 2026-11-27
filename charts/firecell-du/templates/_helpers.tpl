@@ -523,7 +523,7 @@ O1 NETCONF env for the O1 container. NETCONF_LISTEN_ADDRESS: o1.netconf.listenAd
 mounted (a lost Secret then keeps NETCONF off), else o1.netconf.requireSecret
 when set (false: the deliberate way back to the lab login), else not set, so
 the element's own mark (a Secret was used before) still keeps NETCONF off when
-the Secret is dropped from the values. The others only when set.
+the Secret is dropped from the values. The others (group, nacm, keepRsaHostKey) only when set.
 Same argument as firecell-du.o1NetconfSecret.
 */}}
 {{- define "firecell-du.o1NetconfEnv" -}}
@@ -559,6 +559,13 @@ Same argument as firecell-du.o1NetconfSecret.
 {{- end }}
 - name: O1_NACM_ENABLED
   value: {{ $n.nacm | toString | quote }}
+{{- end }}
+{{- if include "firecell-du.isSet" $n.keepRsaHostKey }}
+{{- if not (kindIs "bool" $n.keepRsaHostKey) }}
+{{- fail (printf "o1.netconf.keepRsaHostKey %q: use true or false" (toString $n.keepRsaHostKey)) }}
+{{- end }}
+- name: O1_HOSTKEY_KEEP_RSA
+  value: {{ $n.keepRsaHostKey | toString | quote }}
 {{- end }}
 {{- /* The pod IP, not the image's 0.0.0.0: that would also open NETCONF on the
 Multus interfaces (DU mplane0 and fronthaul, CU-UP N3), which a NetworkPolicy

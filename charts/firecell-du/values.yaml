@@ -293,6 +293,8 @@ o1:
     group: ""
     # -- (bool) Access control (O1_NACM_ENABLED). Unset: the image default, true. false turns NACM off, as in RC2.
     nacm: null
+    # -- (bool) Keep the RSA SSH host key on the node folder (O1_HOSTKEY_KEEP_RSA) instead of the per-element ECDSA key the RC3 image makes at its first start. For a site that cannot restart or re-pin its NMS yet; the RSA key is the image's, shared by every element of that image. Unset: the image default, false.
+    keepRsaHostKey: null
     # -- Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the pod IP, so NETCONF is not open on the Multus interfaces (M-plane, fronthaul, F1-U), which a NetworkPolicy does not filter; the NMS reaches it through the Service. With ru.vendor aw2s (host network) the pod IP is the node's address. 0.0.0.0 restores the image default (all addresses).
     listenAddress: ""
   ueMetrics:
