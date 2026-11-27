@@ -123,6 +123,8 @@ cuUp:
   cpus: ""
   # -- CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads).
   nofThreads: 3
+  # -- Render cu_up.supported_plmns from gnb.plmn and gnb.slices (sst, sd): the PLMN and slices the CU-UP advertises in its E1 Setup (TS 37.483 9.2.1.4), the same as the CU-CP sends at NG Setup. Needs an ocuup that knows the option: it refuses to start without it, while older images refuse it as an unknown key, so keep false for those.
+  supportedPlmns: false
   o1:
     # -- NETCONF (netopeer2) on the CU-UP, so the NMS registers and manages it over O1. Needs an image whose ocuup carries the O1 service; renders Service cu-up:830.
     enabled: false

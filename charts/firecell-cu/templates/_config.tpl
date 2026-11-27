@@ -3,12 +3,7 @@ CU-CP Ocudu config (YAML).
 */}}
 {{- define "firecell-cu.cuCpConfig" -}}
 {{- $v := .Values -}}
-{{- $slices := list -}}
-{{- range $v.gnb.slices }}
-{{- $s := dict "sst" .sst -}}
-{{- if hasKey . "sd" }}{{ $_ := set $s "sd" .sd }}{{ end }}
-{{- $slices = append $slices $s -}}
-{{- end }}
+{{- $slices := include "firecell-cu.slices" . | fromJsonArray -}}
 {{- $amf := dict
   "addrs" $v.amf.addr
   "port" $v.amf.port
@@ -79,6 +74,20 @@ CU-CP Ocudu config (YAML).
 {{- end }}
 
 {{/*
+gnb.slices as the Ocudu slice list (sst, optional sd), JSON array. Shared by the CU-CP TAI slice support list and the
+CU-UP supported PLMNs, so both interfaces advertise the same slices.
+*/}}
+{{- define "firecell-cu.slices" -}}
+{{- $slices := list -}}
+{{- range .Values.gnb.slices }}
+{{- $s := dict "sst" .sst -}}
+{{- if hasKey . "sd" }}{{ $_ := set $s "sd" .sd }}{{ end }}
+{{- $slices = append $slices $s -}}
+{{- end }}
+{{- $slices | toJson -}}
+{{- end }}
+
+{{/*
 CU-UP Ocudu config (YAML). __POD_IP__ is filled in at container start.
 */}}
 {{- define "firecell-cu.cuUpConfig" -}}
@@ -98,6 +107,13 @@ CU-UP Ocudu config (YAML). __POD_IP__ is filled in at container start.
     "e1ap" (dict "addrs" (include "firecell-cu.cuCpAddress" .) "bind_addrs" "0.0.0.0")
     "ngu" (dict "socket" (list (dict "bind_addr" $nguBind)))
     "f1u" (dict "socket" (list (dict "bind_addr" $f1uBind)))) -}}
+{{- if $v.cuUp.supportedPlmns }}
+{{- /* TS 37.483 9.2.1.4: the PLMNs (with their slices) the CU-UP serves, sent in the GNB-CU-UP E1 SETUP REQUEST. Same
+     PLMN and slices as the CU-CP advertises at NG Setup. */ -}}
+{{- $_ := set $base.cu_up "supported_plmns" (list (dict
+  "plmn" (toString $v.gnb.plmn)
+  "slices" (include "firecell-cu.slices" . | fromJsonArray))) -}}
+{{- end }}
 {{- $o1 := $v.cuUp.o1 | default dict -}}
 {{- if $o1.enabled }}
 {{- $_ := set $base "o1" (dict
