@@ -1,0 +1,17 @@
+{{- $auth := .Values.backend.auth }}
+{{- if and $auth.enabled $auth.configMap.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ required "backend.auth.configMap.name is required when backend.auth.enabled" $auth.configMap.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "firecell-nms.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+data:
+  project-id: {{ required "backend.auth.configMap.projectId is required when backend.auth.configMap.create" $auth.configMap.projectId | quote }}
+  {{- if not $auth.configMap.clientIds }}
+  {{- fail "backend.auth.configMap.clientIds is required when backend.auth.configMap.create" }}
+  {{- end }}
+  client-ids-json: {{ $auth.configMap.clientIds | toStrings | toJson | quote }}
+{{- end }}

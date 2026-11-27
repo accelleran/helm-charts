@@ -184,6 +184,15 @@ backend:
       # ids, azp, whose tokens are accepted). The Flux recipe's OIDC ensure
       # loop writes it.
       name: nms-oidc
+      # -- Render the ConfigMap from the two values below, for tests or
+      # installs without the Flux recipe. Never together with the recipe's
+      # ensure loop: both write the same ConfigMap and Helm reverts the
+      # loop's writes on upgrade.
+      create: false
+      # -- Project id (`project-id`). Required when create.
+      projectId: ""
+      # -- Client ids (`client-ids-json`). Required when create.
+      clientIds: []
     introspection:
       # -- Secret with the API app's Zitadel JSON key, the one it introspects
       # tokens with. It carries the app's client id. Required when enabled.
