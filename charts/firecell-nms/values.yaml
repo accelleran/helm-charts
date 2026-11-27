@@ -176,14 +176,14 @@ backend:
     issuer: ""
     # -- Signing keys. Empty: `<issuer>/oauth/v2/keys`.
     jwksUrl: ""
-    # -- ConfigMap holding the ids Zitadel only knows at runtime, under the keys
-    # `project-id` and `client-ids-json`. The Flux recipe's OIDC ensure loop
-    # writes it. A value set below wins over the ConfigMap.
-    configMap: ""
-    # -- Zitadel project id the token audience must contain.
-    projectId: ""
-    # -- Client ids (azp) whose tokens are accepted, e.g. the oauth2-proxy app.
-    clientIds: []
+    # The ids Zitadel only knows at runtime. The API reads them from this
+    # ConfigMap, mounted as files, and picks up changes without a restart.
+    configMap:
+      # -- ConfigMap with the keys `project-id` (the project id the token
+      # audience must contain) and `client-ids-json` (JSON list of the client
+      # ids, azp, whose tokens are accepted). The Flux recipe's OIDC ensure
+      # loop writes it.
+      name: nms-oidc
     introspection:
       # -- Secret with the API app's Zitadel JSON key, the one it introspects
       # tokens with. It carries the app's client id. Required when enabled.
