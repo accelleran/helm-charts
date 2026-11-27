@@ -338,7 +338,7 @@ extraConfig:
       upper_phy:
         pdsch_processor_type: flexible
       ofh:
-        enable_busy_waiting: true
+        enable_busy_waiting: false
   log:
     # stdout, so the node's log collector (platform logs stage) keeps the DU
     # log across pod restarts. A file under /tmp/logs (an emptyDir, which
