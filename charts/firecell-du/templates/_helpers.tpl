@@ -459,3 +459,153 @@ netopeer2 log level for NETCONF_VERBOSITY: error, warning, info, debug or 0-3. P
 {{- end -}}
 {{- $v -}}
 {{- end }}
+
+{{/*
+O1 NETCONF credential Secret mounted at /etc/ocudu/o1-netconf, or "" for none:
+o1.netconf.existingSecret, else <name>-o1-netconf when the chart makes it
+(username, password or authorizedKeys set). Pass (dict "netconf" <o1.netconf> "name" <element name>).
+*/}}
+{{- define "firecell-du.o1NetconfSecret" -}}
+{{- $n := .netconf | default dict -}}
+{{- $own := or $n.username $n.password $n.authorizedKeys -}}
+{{- if $n.existingSecret -}}
+{{- if $own -}}
+{{- fail "o1.netconf: set existingSecret, or username/password/authorizedKeys for a chart-made Secret, not both" -}}
+{{- end -}}
+{{- $n.existingSecret -}}
+{{- else if $own -}}
+{{- if not (or $n.password $n.authorizedKeys) -}}
+{{- fail "o1.netconf: a chart-made Secret needs password or authorizedKeys (the element refuses a Secret with neither)" -}}
+{{- end -}}
+{{- printf "%s-o1-netconf" .name -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+"true" when the chart makes the O1 NETCONF Secret. Same argument as firecell-du.o1NetconfSecret.
+*/}}
+{{- define "firecell-du.o1NetconfOwnSecret" -}}
+{{- if and (include "firecell-du.o1NetconfSecret" .) (not (dig "existingSecret" "" (.netconf | default dict))) }}true{{ end -}}
+{{- end }}
+
+{{/*
+authorized_keys file content: a string, or a list of key lines.
+*/}}
+{{- define "firecell-du.o1NetconfKeys" -}}
+{{- if kindIs "slice" . }}{{ join "\n" . }}{{ else }}{{ toString . }}{{ end -}}
+{{- end }}
+
+{{/*
+Pod annotation that rolls the pod when a chart-made O1 NETCONF Secret changes
+(the element reads it at start only). Nothing for an existingSecret.
+Same argument as firecell-du.o1NetconfSecret.
+*/}}
+{{- define "firecell-du.o1NetconfChecksum" -}}
+{{- if include "firecell-du.o1NetconfOwnSecret" . }}
+{{- $n := .netconf }}
+# The element reads the NETCONF credential once at start; roll the pod when it changes.
+checksum/o1-netconf-secret: {{ toJson (dict "name" (include "firecell-du.o1NetconfSecret" .) "username" $n.username "password" $n.password "keys" (include "firecell-du.o1NetconfKeys" $n.authorizedKeys)) | sha256sum }}
+{{- end }}
+{{- end }}
+
+{{/*
+O1 NETCONF env for the O1 container. O1_REQUIRE_SECRET: "true" when a Secret is
+mounted (a lost Secret then keeps NETCONF off), else o1.netconf.requireSecret
+when set (false: the deliberate way back to the lab login), else not set, so
+the element's own mark (a Secret was used before) still keeps NETCONF off when
+the Secret is dropped from the values. The others only when set.
+Same argument as firecell-du.o1NetconfSecret.
+*/}}
+{{- define "firecell-du.o1NetconfEnv" -}}
+{{- $n := .netconf | default dict -}}
+{{- $mounted := ne (include "firecell-du.o1NetconfSecret" .) "" -}}
+{{- $req := "" -}}
+{{- if include "firecell-du.isSet" $n.requireSecret -}}
+{{- $req = toString $n.requireSecret | lower -}}
+{{- if not (has $req (list "true" "false")) -}}
+{{- fail (printf "o1.netconf.requireSecret %q: use true or false" $req) -}}
+{{- end -}}
+{{- if and $mounted (eq $req "false") -}}
+{{- fail "o1.netconf.requireSecret cannot be false while a NETCONF Secret is mounted" -}}
+{{- end -}}
+{{- end -}}
+{{- if $mounted -}}
+{{- $req = "true" -}}
+{{- end }}
+{{- with $req }}
+- name: O1_REQUIRE_SECRET
+  value: {{ . | quote }}
+{{- end }}
+{{- with $n.group }}
+{{- if not (has (toString .) (list "admin" "operator" "read-only")) }}
+{{- fail (printf "o1.netconf.group %q: use admin, operator or read-only" (toString .)) }}
+{{- end }}
+- name: O1_NETCONF_GROUP
+  value: {{ . | toString | quote }}
+{{- end }}
+{{- if include "firecell-du.isSet" $n.nacm }}
+{{- if not (kindIs "bool" $n.nacm) }}
+{{- fail (printf "o1.netconf.nacm %q: use true or false" (toString $n.nacm)) }}
+{{- end }}
+- name: O1_NACM_ENABLED
+  value: {{ $n.nacm | toString | quote }}
+{{- end }}
+{{- with $n.listenAddress }}
+- name: NETCONF_LISTEN_ADDRESS
+  value: {{ . | toString | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+O1 NETCONF Secret volume mount, or nothing. Same argument as firecell-du.o1NetconfSecret.
+*/}}
+{{- define "firecell-du.o1NetconfMount" -}}
+{{- if include "firecell-du.o1NetconfSecret" . }}
+- name: o1-netconf
+  mountPath: /etc/ocudu/o1-netconf
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{/*
+O1 NETCONF Secret volume, or nothing. optional: a deleted Secret leaves the
+folder empty and only NETCONF off; the pod (and the radio) still starts.
+Same argument as firecell-du.o1NetconfSecret.
+*/}}
+{{- define "firecell-du.o1NetconfVolume" -}}
+{{- with include "firecell-du.o1NetconfSecret" . }}
+- name: o1-netconf
+  secret:
+    secretName: {{ . }}
+    optional: true
+    defaultMode: 0400
+{{- end }}
+{{- end }}
+
+{{/*
+Chart-made O1 NETCONF Secret, or nothing. Pass (dict "netconf" <o1.netconf> "name" <element name>
+"namespace" <ns> "labels" <labels YAML>).
+*/}}
+{{- define "firecell-du.o1NetconfSecretObject" -}}
+{{- if include "firecell-du.o1NetconfOwnSecret" . }}
+{{- $n := .netconf }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "firecell-du.o1NetconfSecret" . }}
+  namespace: {{ .namespace }}
+  labels:
+    {{- .labels | nindent 4 }}
+type: Opaque
+stringData:
+  {{- with $n.username }}
+  username: {{ . | toString | quote }}
+  {{- end }}
+  {{- with $n.password }}
+  password: {{ . | toString | quote }}
+  {{- end }}
+  {{- with $n.authorizedKeys }}
+  authorized_keys: {{ include "firecell-du.o1NetconfKeys" . | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}

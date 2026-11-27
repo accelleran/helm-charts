@@ -70,6 +70,21 @@ Every DU release adds its own pair, so the NMS can manage all the DUs in the nam
 
 Every install and upgrade also writes ConfigMap `<release>-release-info` (label `firecell.io/release-info: "true"`) in the release namespace, for the NMS support bundles and drift checks, since the NMS reads no Helm release Secret. `release.json` holds the release, namespace, chart (`<name>-<version>`), appVersion, revision, render time (`renderedAt`, UTC), a SHA-256 digest of the values (`valuesDigest`) and the image of every container the chart renders (`images`, keyed `<workload>/<container>`, taken from the rendered pods themselves). `history.json` keeps up to 20 earlier `release.json` records, newest first, read back from the live ConfigMap with `lookup`; it starts empty after `helm template` or a client-side dry run. Neither holds any values content or anything from a Secret. `helm rollback` reapplies the stored manifest of the target revision, so the record and its history roll back with it.
 
+### 2.3 O1 NETCONF Login
+With `o1.enabled`, the DU takes its NETCONF login from a Secret mounted read-only at `/etc/ocudu/o1-netconf` (an RC3 or later image; an older image ignores it):
+
+| Setup | Values | Login |
+|-------|--------|-------|
+| None (default) | nothing | Lab login `netconf`/`netconf` in group `operator`, with a start-up WARNING |
+| One Secret per RAN namespace (recommended) | `o1.netconf.existingSecret: <secret>` | User and password from the Secret (keys `username`, `password`); the lab login is removed |
+| Chart-made Secret | `o1.netconf.password` and/or `o1.netconf.authorizedKeys`, optional `o1.netconf.username` | As above, from Secret `<name>-o1-netconf` |
+
+- The Secret is mounted with `optional: true`: a deleted Secret does not stop the pod, only NETCONF. The chart sets `O1_REQUIRE_SECRET=true` whenever it mounts a Secret, so a lost Secret keeps NETCONF off instead of bringing the lab login back.
+- The element reads the Secret at start only. A chart-made Secret rolls the pod when its values change; after changing an `existingSecret`, restart the pod in a maintenance window.
+- An element that has used a Secret keeps NETCONF off when the Secret is dropped from the values. To go back to the lab login, set `o1.netconf.requireSecret: false` and remove the Secret values.
+- The NMS needs the same user and password (firecell-nms `backend.extraEnv`); restart its backend pods after a change.
+- `o1.netconf.group` (`O1_NETCONF_GROUP`), `o1.netconf.nacm` (`O1_NACM_ENABLED`) and `o1.netconf.listenAddress` (`NETCONF_LISTEN_ADDRESS`) are passed only when set.
+
 ## 3. Node prerequisites
 - `ofh.mode: dpdk`: VFs created and bound to `vfio-pci` before kubelet starts; one VF per DU (`ofh.vfPciAddr`).
 - `ofh.mode: dpdk`: 2 MiB hugepages, at least `hugepages2Mi` per DU on the node (`vm.nr_hugepages`); restart kubelet after changing them.
@@ -143,6 +158,14 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 | nms.rbac | bool | `true` | Let the NMS read pods here, and restart, stop and start this DU's Deployment. |
 | nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
 | o1.enabled | bool | `false` | Run netopeer2/sysrepo (O1 NETCONF server for the NMS) in the DU container. |
+| o1.netconf.authorizedKeys | string | `""` | NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret <name>-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used. |
+| o1.netconf.existingSecret | string | `""` | Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The element reads it at start only: restart it after changing the Secret. |
+| o1.netconf.group | string | `""` | NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator. |
+| o1.netconf.listenAddress | string | `""` | Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the image default, 0.0.0.0. An aw2s DU runs on the host network: set the node's management address there. |
+| o1.netconf.nacm | bool | `nil` | Access control (O1_NACM_ENABLED). Unset: the image default, true. false turns NACM off, as in RC2. |
+| o1.netconf.password | string | `""` | Password of a chart-made Secret <name>-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes. |
+| o1.netconf.requireSecret | bool | `nil` | O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted. |
+| o1.netconf.username | string | `""` | User of a chart-made Secret <name>-o1-netconf. Empty: netconf. |
 | o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | o1.port | int | `830` |  |
 | o1.restartOnColdCommit | bool | `false` |  |
