@@ -986,6 +986,12 @@ upf:
   enableBpfDatapath: true
   # Hostnet config.yaml schema: mr97 (develop @ 486acc3+) or legacy (cn5g-upf v5.1.0.x).
   configSchema: mr97
+  # PDU session cap of the UPF (cn5g-upf support_features.max_pdu_session, a u16: 1..65535).
+  # The UPF preallocates its BPF maps for this many sessions, so its memory use grows with it:
+  # raise resources.limits.memory with it (docs/capacity-sizing.md). Count every session, e.g.
+  # internet + IMS = 2 per UE. Empty: mr97 writes no key and the UPF keeps its built-in default
+  # (10000 in cn5g-upf v6.0.1); legacy writes 100, as before.
+  maxPduSession: ""
   # Runtime XDP attach (cn5g-upf UPF_XDP_ATTACH_MODE): auto | native | generic
   xdpAttachMode: auto
   # cn5g-upf support_features.delete_sessions_on_smf_restart. Empty: not written, the UPF

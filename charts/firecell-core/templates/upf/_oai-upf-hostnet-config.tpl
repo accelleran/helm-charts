@@ -28,6 +28,14 @@
 {{- end }}
 {{- $bpfRaw := dig "enableBpfDatapath" true $v.upf -}}
 {{- $schema := $v.upf.configSchema | default "mr97" | toString | lower -}}
+{{- /* upf.maxPduSession: empty keeps the old output (mr97: no support_features key, legacy: 100). */ -}}
+{{- $maxPdu := 0 -}}
+{{- if not (eq ($v.upf.maxPduSession | toString) "" "<nil>") -}}
+{{- $maxPdu = int $v.upf.maxPduSession -}}
+{{- if or (lt $maxPdu 1) (gt $maxPdu 65535) -}}
+{{- fail (printf "upf.maxPduSession must be 1..65535 (cn5g-upf max_pdu_session is a u16), got %v" $v.upf.maxPduSession) -}}
+{{- end -}}
+{{- end -}}
 log_level:
   general: {{ $v.coreConfig.logLevel }}
 register_nf:
@@ -142,11 +150,15 @@ upf:
     {{- include "firecell-5gc.upfDeleteSessionsOnSmfRestart" $v.upf }}
     # cn5g-upf v5.1.0.x sizes m_arp_table from support_features (not datapath_configuration).
     max_arp_entries: 256
+{{- if and $maxPdu (ne $schema "legacy") }}
+    # upf.maxPduSession: BPF maps are preallocated for this many PDU sessions.
+    max_pdu_session: {{ $maxPdu }}
+{{- end }}
 {{- if eq $schema "legacy" }}
     # Legacy cn5g-upf v5.1.0.x reads BPF map sizes from support_features.
     max_upf_interfaces: 4
     max_upf_redirect_interfaces: 2
-    max_pdu_session: 100
+    max_pdu_session: {{ $maxPdu | default 100 }}
     max_pdrs_per_pdu_session: 8
     max_qos_flows_per_pdu_session: 8
     max_sdf_filters_per_pdu_session: 8
@@ -207,7 +219,7 @@ upf:
     max_ethernet_packet_filters_per_session: 4
     max_redundant_transmission_params_per_session: 0
 {{- else }}
-    max_pdu_sessions: 100
+    max_pdu_sessions: {{ $maxPdu | default 100 }}
     max_pdrs_per_pdu_session: 8
     max_fars_per_pdu_session: 8
     max_qers_per_pdu_session: 8
