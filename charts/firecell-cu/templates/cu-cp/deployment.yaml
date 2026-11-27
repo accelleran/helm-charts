@@ -1,6 +1,6 @@
 {{- if .Values.cuCp.enabled }}
 {{- $c := .Values.cuCp }}
-{{- $nc := dict "netconf" $c.o1.netconf "name" "cu-cp" }}
+{{- $nc := dict "netconf" $c.o1.netconf "name" "cu-cp" "path" "cuCp.o1.netconf" "image" (include "firecell-cu.image" (dict "root" $ "image" $c.image)) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -107,7 +107,7 @@ spec:
         - name: o1-state
           {{- if $c.o1.stateClaim }}
           persistentVolumeClaim:
-            claimName: {{ $c.o1.stateClaim }}
+            claimName: {{ include "firecell-cu.o1StateClaim" (dict "v" $c.o1.stateClaim "key" "cuCp.o1.stateClaim") | quote }}
           {{- else }}
           hostPath:
             path: {{ $c.o1.statePath | default "/var/lib/firecell/ocudu/cu-cp" }}

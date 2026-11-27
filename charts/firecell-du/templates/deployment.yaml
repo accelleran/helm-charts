@@ -7,7 +7,7 @@
 {{- $sdr := eq (include "firecell-du.sdr" $i) "true" }}
 {{- $b210 := eq (include "firecell-du.ruType" $i) "uhd" }}
 {{- $generate := eq (include "firecell-du.aw2sGenerate" $i) "true" }}
-{{- $nc := dict "netconf" $i.o1.netconf "name" $i.name }}
+{{- $nc := dict "netconf" $i.o1.netconf "name" $i.name "path" "o1.netconf" "image" $img }}
 {{- $networks := list }}
 {{- if eq (include "firecell-du.ofhSocket" $i) "true" }}
 {{- $networks = append $networks (dict "name" (printf "%s-ofh" $i.name) "namespace" $ns "interface" (toString $i.ofh.interface)) }}
