@@ -39,6 +39,21 @@ The NMS and the CU can be installed in either order: the bindings grant nothing 
 
 Every install and upgrade also writes ConfigMap `<release>-release-info` (label `firecell.io/release-info: "true"`) in the release namespace, for the NMS support bundles and drift checks, since the NMS reads no Helm release Secret. `release.json` holds the release, namespace, chart (`<name>-<version>`), appVersion, revision, render time (`renderedAt`, UTC), a SHA-256 digest of the values (`valuesDigest`) and the image of every container the chart renders (`images`, keyed `<workload>/<container>`, taken from the rendered pods themselves). `history.json` keeps up to 20 earlier `release.json` records, newest first, read back from the live ConfigMap with `lookup`; it starts empty after `helm template` or a client-side dry run. Neither holds any values content or anything from a Secret. `helm rollback` reapplies the stored manifest of the target revision, so the record and its history roll back with it.
 
+### 2.2 O1 NETCONF Login
+With `cuCp.o1.enabled` and `cuUp.o1.enabled`, each of the CU-CP and the CU-UP takes its NETCONF login from a Secret mounted read-only at `/etc/ocudu/o1-netconf` (an RC3 or later image; an older image ignores it). The values below are the CU-CP's; the CU-UP has the same under `cuUp.o1.netconf`, with Secret `cu-up-o1-netconf`.
+
+| Setup | Values | Login |
+|-------|--------|-------|
+| None (default) | nothing | Lab login `netconf`/`netconf` in group `operator`, with a start-up WARNING |
+| One Secret per RAN namespace (recommended) | `cuCp.o1.netconf.existingSecret: <secret>` | User and password from the Secret (keys `username`, `password`); the lab login is removed |
+| Chart-made Secret | `cuCp.o1.netconf.password` and/or `cuCp.o1.netconf.authorizedKeys`, optional `cuCp.o1.netconf.username` | As above, from Secret `cu-cp-o1-netconf` |
+
+- The Secret is mounted with `optional: true`: a deleted Secret does not stop the pod, only NETCONF. The chart sets `O1_REQUIRE_SECRET=true` whenever it mounts a Secret, so a lost Secret keeps NETCONF off instead of bringing the lab login back.
+- The element reads the Secret at start only. A chart-made Secret rolls the pod when its values change; after changing an `existingSecret`, restart the pod in a maintenance window.
+- An element that has used a Secret keeps NETCONF off when the Secret is dropped from the values. To go back to the lab login, set `cuCp.o1.netconf.requireSecret: false` and remove the Secret values.
+- The NMS needs the same user and password (firecell-nms `backend.extraEnv`); restart its backend pods after a change.
+- `cuCp.o1.netconf.group` (`O1_NETCONF_GROUP`), `cuCp.o1.netconf.nacm` (`O1_NACM_ENABLED`) and `cuCp.o1.netconf.listenAddress` (`NETCONF_LISTEN_ADDRESS`) are passed only when set.
+
 ## 3. Node prerequisites
 - Multus with the macvlan and static IPAM plugins when `cuUp.n3.enabled`.
 - SCTP enabled in the cluster (F1-C, E1, N2).
@@ -55,7 +70,15 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 | cuCp.extraConfig | object | `{"log":{"all_level":"warning","cu_level":"info","e1ap_level":"warning","f1ap_level":"info","filename":"stdout","hex_max_size":0,"ngap_level":"info","pdcp_level":"warning","rrc_level":"info"},"metrics":{"enable_log":false},"o2":{"bind_addr":"0.0.0.0","enabled":true,"port":9093},"pcap":{"e1ap_enable":false,"e1ap_filename":"/tmp/logs/cu_cp_e1ap.pcap","f1ap_enable":false,"f1ap_filename":"/tmp/logs/cu_cp_f1ap.pcap","ngap_enable":false,"ngap_filename":"/tmp/logs/cu_cp_ngap.pcap"}}` | Raw Ocudu cu_cp YAML merged over the generated config (wins on conflict). |
 | cuCp.image | string | `""` | Image override (defaults to global.image). |
 | cuCp.nodeSelector | object | `{}` | nodeSelector override (defaults to global.nodeSelector). |
-| cuCp.o1 | object | `{"enabled":false,"netconfVerbosity":"warning","restartOnColdCommit":false,"statePath":"","ueContext":{"enabled":true,"maxUes":256,"measReport":{"intervalMs":1024,"sectorIds":[]}},"yangSearchPath":"/usr/local/yang"}` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
+| cuCp.o1 | object | `{"enabled":false,"netconf":{"authorizedKeys":"","existingSecret":"","group":"","listenAddress":"","nacm":null,"password":"","requireSecret":null,"username":""},"netconfVerbosity":"warning","restartOnColdCommit":false,"statePath":"","ueContext":{"enabled":true,"maxUes":256,"measReport":{"intervalMs":1024,"sectorIds":[]}},"yangSearchPath":"/usr/local/yang"}` | NETCONF (netopeer2) so the NMS can read /ocudu-performance ue-context. |
+| cuCp.o1.netconf.authorizedKeys | string | `""` | NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-cp-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used. |
+| cuCp.o1.netconf.existingSecret | string | `""` | Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-CP reads it at start only: restart it after changing the Secret. |
+| cuCp.o1.netconf.group | string | `""` | NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator. |
+| cuCp.o1.netconf.listenAddress | string | `""` | Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the image default, 0.0.0.0. |
+| cuCp.o1.netconf.nacm | bool | `nil` | Access control (O1_NACM_ENABLED). Unset: the image default, true. false turns NACM off, as in RC2. |
+| cuCp.o1.netconf.password | string | `""` | Password of a chart-made Secret cu-cp-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes. |
+| cuCp.o1.netconf.requireSecret | bool | `nil` | O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted. |
+| cuCp.o1.netconf.username | string | `""` | User of a chart-made Secret cu-cp-o1-netconf. Empty: netconf. |
 | cuCp.o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | cuCp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp. |
 | cuCp.o1.ueContext.enabled | bool | `true` | Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty. |
@@ -82,6 +105,14 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 | cuUp.nodeSelector | object | `{}` |  |
 | cuUp.nofThreads | int | `3` | CU-UP main pool worker threads (expert_execution.threads.main_pool.nof_threads). |
 | cuUp.o1.enabled | bool | `false` | NETCONF (netopeer2) on the CU-UP, so the NMS registers and manages it over O1. Needs an image whose ocuup carries the O1 service; renders Service cu-up:830. |
+| cuUp.o1.netconf.authorizedKeys | string | `""` | NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-up-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used. |
+| cuUp.o1.netconf.existingSecret | string | `""` | Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-UP reads it at start only: restart it after changing the Secret. |
+| cuUp.o1.netconf.group | string | `""` | NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator. |
+| cuUp.o1.netconf.listenAddress | string | `""` | Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the image default, 0.0.0.0. |
+| cuUp.o1.netconf.nacm | bool | `nil` | Access control (O1_NACM_ENABLED). Unset: the image default, true. false turns NACM off, as in RC2. |
+| cuUp.o1.netconf.password | string | `""` | Password of a chart-made Secret cu-up-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes. |
+| cuUp.o1.netconf.requireSecret | bool | `nil` | O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted. |
+| cuUp.o1.netconf.username | string | `""` | User of a chart-made Secret cu-up-o1-netconf. Empty: netconf. |
 | cuUp.o1.netconfVerbosity | string | `"warning"` | netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info. |
 | cuUp.o1.restartOnColdCommit | bool | `false` |  |
 | cuUp.o1.statePath | string | `""` | Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up. |
