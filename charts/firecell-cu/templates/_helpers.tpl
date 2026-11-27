@@ -93,3 +93,319 @@ netopeer2 log level for NETCONF_VERBOSITY: error, warning, info, debug or 0-3. P
 {{- end -}}
 {{- $v -}}
 {{- end }}
+
+{{/*
+True ("true") unless the value is null or empty. 0 and false count as set.
+*/}}
+{{- define "firecell-cu.isSet" -}}
+{{- if not (or (kindIs "invalid" .) (eq (toString .) "")) }}true{{ end -}}
+{{- end }}
+
+{{/*
+O1 NETCONF settings. Every helper below takes (dict "netconf" <o1.netconf map>
+"name" <element name> "path" <values path, e.g. o1.netconf> "image" <element image>).
+*/}}
+
+{{/*
+Image tags known to predate accelleran/ocudu#724: they ignore the NETCONF Secret
+and keep netconf/netconf with NACM off; any o1.netconf value set with
+one of them is refused. Only these exact tags are judged; any
+other tag (pr-*, edge, a digest, a later release) passes.
+*/}}
+{{- define "firecell-cu.o1NetconfPreSecretTags" -}}
+{{- toJson (list "0.1.0" "v0.1.0" "0.2.0" "v0.2.0") -}}
+{{- end }}
+
+{{/*
+"true", "false" or "" (unset) for an O1 NETCONF switch: a bool, or the string
+true/false in any case. Pass (dict "v" <value> "key" <values path>).
+*/}}
+{{- define "firecell-cu.o1NetconfBool" -}}
+{{- if include "firecell-cu.isSet" .v -}}
+{{- $b := toString .v | lower -}}
+{{- if not (and (or (kindIs "bool" .v) (kindIs "string" .v)) (has $b (list "true" "false"))) -}}
+{{- fail (printf "%s %q: use true or false" .key (toString .v)) -}}
+{{- end -}}
+{{- $b -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+The O1 NETCONF password as the element reads it: trailing newlines (\n, \r\n,
+any number) removed, so a value from --set-file or "password: |" works. The element
+takes the first line and strips \r, ignores blank lines after it and refuses a
+second non-blank line; a newline left inside the value is refused by
+firecell-cu.o1NetconfCheck. Pass the raw value; "" when unset.
+*/}}
+{{- define "firecell-cu.o1NetconfPassword" -}}
+{{- if kindIs "string" . -}}
+{{- regexReplaceAll "[\r\n]+$" . "" -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Refuses O1 NETCONF values the element would not take, so the mistake shows at
+render time and not as a silent "NETCONF off" (or a wrong credential) later.
+The rules are those of the image's docker/o1/entrypoint.sh (accelleran/ocudu#724).
+*/}}
+{{- define "firecell-cu.o1NetconfCheck" -}}
+{{- $n := .netconf | default dict -}}
+{{- $p := .path -}}
+{{- $known := list "existingSecret" "username" "password" "authorizedKeys" "requireSecret" "group" "nacm" "keepRsaHostKey" "listenAddress" -}}
+{{- range $k := keys $n | sortAlpha }}
+{{- if not (has $k $known) }}
+{{- fail (printf "%s.%s: unknown key (known: %s)" $p $k (join ", " $known)) }}
+{{- end }}
+{{- end }}
+{{- range $k := list "existingSecret" "username" "password" "group" "listenAddress" }}
+{{- $v := get $n $k }}
+{{- if and (include "firecell-cu.isSet" $v) (not (kindIs "string" $v)) }}
+{{- fail (printf "%s.%s must be a string; quote it (got %v)" $p $k $v) }}
+{{- end }}
+{{- end }}
+{{- with $n.authorizedKeys }}
+{{- $lines := list }}
+{{- if kindIs "string" . }}
+{{- $lines = splitList "\n" . }}
+{{- else if kindIs "slice" . }}
+{{- range $l := . }}
+{{- if not (kindIs "string" $l) }}
+{{- fail (printf "%s.authorizedKeys: every list item must be a string (got %v)" $p $l) }}
+{{- end }}
+{{- $lines = concat $lines (splitList "\n" $l) }}
+{{- end }}
+{{- else }}
+{{- fail (printf "%s.authorizedKeys: a string (one key per line) or a list of strings" $p) }}
+{{- end }}
+{{- $nkeys := 0 }}
+{{- range $l := $lines }}
+{{- $t := trim $l }}
+{{- if and $t (not (hasPrefix "#" $t)) }}{{ $nkeys = add1 $nkeys }}{{ end }}
+{{- if and $t (not (hasPrefix "#" $t)) (not (regexMatch "^(ssh-|ecdsa-|sk-)[^ \t]+[ \t]+[A-Za-z0-9+/]+=*([ \t].*)?$" $t)) }}
+{{- fail (printf "%s.authorizedKeys: line %q is not \"<type> <base64 key> [comment]\"; options (from=, command=, restrict, ...) are refused by the element" $p (trunc 40 $t)) }}
+{{- end }}
+{{- end }}
+{{- if and (eq $nkeys 0) (not $n.password) }}
+{{- fail (printf "%s.authorizedKeys has no key line (only blank or # lines) and there is no password: the element would keep NETCONF off" $p) }}
+{{- end }}
+{{- end }}
+{{- with $n.username }}
+{{- if or (not (regexMatch "^[A-Za-z0-9._-]{1,64}$" .)) (eq . "root") }}
+{{- fail (printf "%s.username %q: letters, digits, . _ - only, at most 64 characters, not root" $p .) }}
+{{- end }}
+{{- end }}
+{{- with $n.password }}
+{{- /* With key lines too, the element drops the password before checking it; the
+chart still checks it on purpose, so a value the element would refuse on its own is
+not left waiting in the Secret. */}}
+{{- $pw := include "firecell-cu.o1NetconfPassword" . }}
+{{- if regexMatch "^[[:space:]]*$" $pw }}
+{{- fail (printf "%s.password is blank (the element refuses it)" $p) }}
+{{- end }}
+{{- if or (contains "\n" $pw) (contains "\r" $pw) }}
+{{- fail (printf "%s.password: one line only (a line break inside the password; the element refuses a second line)" $p) }}
+{{- end }}
+{{- if gt (len $pw) 256 }}
+{{- fail (printf "%s.password: at most 256 characters (the element refuses a longer one)" $p) }}
+{{- end }}
+{{- if and (regexMatch "^\\$[0-9a-z]{1,4}\\$" $pw) (not (or (hasPrefix "$6$" $pw) (hasPrefix "$5$" $pw))) }}
+{{- fail (printf "%s.password looks like a crypt hash of an unsupported type; give a $6$/$5$ hash or the clear password (the element would take the hash itself as the password)" $p) }}
+{{- end }}
+{{- if and (or (hasPrefix "$6$" $pw) (hasPrefix "$5$" $pw)) (not (regexMatch "^(\\$5\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{43}|\\$6\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{86})$" $pw)) }}
+{{- fail (printf "%s.password starts like a $6$/$5$ crypt hash but is not a valid one (the element refuses it)" $p) }}
+{{- end }}
+{{- end }}
+{{- with $n.group }}
+{{- if not (has . (list "admin" "operator" "read-only")) }}
+{{- fail (printf "%s.group %q: use admin, operator or read-only" $p .) }}
+{{- end }}
+{{- end }}
+{{- with $n.listenAddress }}
+{{- $ok := false }}
+{{- if regexMatch "^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}$" . }}
+{{- $ok = true }}
+{{- range $o := splitList "." . }}
+{{- if gt (atoi $o) 255 }}{{ $ok = false }}{{ end }}
+{{- end }}
+{{- else if and (contains ":" .) (regexMatch "^[0-9A-Fa-f:.]{2,45}$" .) }}
+{{- $ok = true }}
+{{- end }}
+{{- if not $ok }}
+{{- fail (printf "%s.listenAddress %q: an IPv4 or IPv6 address literal (the element keeps NETCONF off otherwise)" $p .) }}
+{{- end }}
+{{- end }}
+{{- $_ := include "firecell-cu.o1NetconfBool" (dict "v" $n.requireSecret "key" (printf "%s.requireSecret" $p)) }}
+{{- $_ := include "firecell-cu.o1NetconfBool" (dict "v" $n.nacm "key" (printf "%s.nacm" $p)) }}
+{{- $_ := include "firecell-cu.o1NetconfBool" (dict "v" $n.keepRsaHostKey "key" (printf "%s.keepRsaHostKey" $p)) }}
+{{- $set := false }}
+{{- range $k, $v := $n }}{{ if include "firecell-cu.isSet" $v }}{{ $set = true }}{{ end }}{{ end }}
+{{- if $set }}
+{{- $img := toString .image }}
+{{- $tag := "" }}
+{{- if not (contains "@" $img) }}
+{{- $last := last (splitList "/" $img) }}
+{{- if contains ":" $last }}{{ $tag = last (splitList ":" $last) }}{{ end }}
+{{- end }}
+{{- if has $tag (include "firecell-cu.o1NetconfPreSecretTags" . | fromJsonArray) }}
+{{- fail (printf "%s needs an image with accelleran/ocudu#724 (RC3 or later); image %s ignores it and keeps netconf/netconf with NACM off" $p $img) }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+O1 NETCONF credential Secret mounted at /etc/ocudu/o1-netconf, or "" for none:
+existingSecret, else <name>-o1-netconf when the chart makes it (username,
+password or authorizedKeys set). Also runs firecell-cu.o1NetconfCheck.
+*/}}
+{{- define "firecell-cu.o1NetconfSecret" -}}
+{{- include "firecell-cu.o1NetconfCheck" . -}}
+{{- $n := .netconf | default dict -}}
+{{- $p := .path -}}
+{{- $own := or $n.username $n.password $n.authorizedKeys -}}
+{{- $name := "" -}}
+{{- if $n.existingSecret -}}
+{{- if $own -}}
+{{- fail (printf "%s: set existingSecret, or username/password/authorizedKeys for a chart-made Secret, not both" $p) -}}
+{{- end -}}
+{{- $name = $n.existingSecret -}}
+{{- else if $own -}}
+{{- if not (or $n.password $n.authorizedKeys) -}}
+{{- fail (printf "%s: a chart-made Secret needs password or authorizedKeys (the element refuses a Secret with neither)" $p) -}}
+{{- end -}}
+{{- $name = printf "%s-o1-netconf" .name -}}
+{{- end -}}
+{{- $name -}}
+{{- end }}
+
+{{/*
+"true" when the chart makes the O1 NETCONF Secret.
+*/}}
+{{- define "firecell-cu.o1NetconfOwnSecret" -}}
+{{- if and (include "firecell-cu.o1NetconfSecret" .) (not (dig "existingSecret" "" (.netconf | default dict))) }}true{{ end -}}
+{{- end }}
+
+{{/*
+authorized_keys file content: a string, or a list of key lines.
+*/}}
+{{- define "firecell-cu.o1NetconfKeys" -}}
+{{- if kindIs "slice" . }}{{ join "\n" . }}{{ else }}{{ toString . }}{{ end -}}
+{{- end }}
+
+{{/*
+Pod annotation that rolls the pod when a chart-made O1 NETCONF Secret changes
+(the element reads it at start only). Nothing for an existingSecret.
+*/}}
+{{- define "firecell-cu.o1NetconfChecksum" -}}
+{{- if include "firecell-cu.o1NetconfOwnSecret" . }}
+{{- $n := .netconf }}
+# The element reads the NETCONF credential once at start; roll the pod when it changes.
+checksum/o1-netconf-secret: {{ toJson (dict "name" (include "firecell-cu.o1NetconfSecret" .) "username" $n.username "password" (include "firecell-cu.o1NetconfPassword" $n.password) "keys" (include "firecell-cu.o1NetconfKeys" $n.authorizedKeys)) | sha256sum }}
+{{- end }}
+{{- end }}
+
+{{/*
+O1 NETCONF env for the O1 container.
+- O1_REQUIRE_SECRET: "true" when a Secret is mounted (a lost Secret then keeps
+  NETCONF off), else requireSecret when set (true keeps NETCONF off without a
+  Secret; false is the deliberate way back to the lab login), else not set, so
+  the element's own mark (a Secret was used before) still keeps NETCONF off
+  when the Secret is dropped from the values.
+- NETCONF_LISTEN_ADDRESS: listenAddress, else the pod IP. Not the image's
+  0.0.0.0: that would also open NETCONF on the Multus interfaces (DU mplane0
+  and fronthaul, CU-UP N3), which a NetworkPolicy does not filter. Needs POD_IP
+  earlier in the same env list.
+- group, nacm, keepRsaHostKey: only when set.
+*/}}
+{{- define "firecell-cu.o1NetconfEnv" -}}
+{{- $n := .netconf | default dict -}}
+{{- $p := .path -}}
+{{- $mounted := ne (include "firecell-cu.o1NetconfSecret" .) "" -}}
+{{- $req := include "firecell-cu.o1NetconfBool" (dict "v" $n.requireSecret "key" (printf "%s.requireSecret" $p)) -}}
+{{- if and $mounted (eq $req "false") -}}
+{{- fail (printf "%s.requireSecret cannot be false while a NETCONF Secret is mounted" $p) -}}
+{{- end -}}
+{{- if $mounted -}}
+{{- $req = "true" -}}
+{{- end }}
+{{- with $req }}
+- name: O1_REQUIRE_SECRET
+  value: {{ . | quote }}
+{{- end }}
+{{- with $n.group }}
+- name: O1_NETCONF_GROUP
+  value: {{ . | quote }}
+{{- end }}
+{{- with include "firecell-cu.o1NetconfBool" (dict "v" $n.nacm "key" (printf "%s.nacm" $p)) }}
+- name: O1_NACM_ENABLED
+  value: {{ . | quote }}
+{{- end }}
+{{- with include "firecell-cu.o1NetconfBool" (dict "v" $n.keepRsaHostKey "key" (printf "%s.keepRsaHostKey" $p)) }}
+- name: O1_HOSTKEY_KEEP_RSA
+  value: {{ . | quote }}
+{{- end }}
+- name: NETCONF_LISTEN_ADDRESS
+  value: {{ $n.listenAddress | default "$(POD_IP)" | quote }}
+{{- end }}
+
+{{/*
+O1 NETCONF Secret volume mount, or nothing.
+*/}}
+{{- define "firecell-cu.o1NetconfMount" -}}
+{{- if include "firecell-cu.o1NetconfSecret" . }}
+- name: o1-netconf
+  mountPath: /etc/ocudu/o1-netconf
+  readOnly: true
+{{- end }}
+{{- end }}
+
+{{/*
+O1 NETCONF Secret volume, or nothing. optional: a deleted Secret leaves the
+folder empty and only NETCONF off; the pod (and the radio) still starts.
+*/}}
+{{- define "firecell-cu.o1NetconfVolume" -}}
+{{- with include "firecell-cu.o1NetconfSecret" . }}
+- name: o1-netconf
+  secret:
+    secretName: {{ . | quote }}
+    optional: true
+    defaultMode: 0400
+{{- end }}
+{{- end }}
+
+{{/*
+Chart-made O1 NETCONF Secret, or nothing. The argument also carries
+"namespace" <ns> and "labels" <labels YAML>.
+*/}}
+{{- define "firecell-cu.o1NetconfSecretObject" -}}
+{{- if include "firecell-cu.o1NetconfOwnSecret" . }}
+{{- $n := .netconf }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "firecell-cu.o1NetconfSecret" . | quote }}
+  namespace: {{ .namespace }}
+  labels:
+    {{- .labels | nindent 4 }}
+type: Opaque
+stringData:
+  {{- with $n.username }}
+  username: {{ . | quote }}
+  {{- end }}
+  {{- with include "firecell-cu.o1NetconfPassword" $n.password }}
+  password: {{ . | quote }}
+  {{- end }}
+  {{- with $n.authorizedKeys }}
+  authorized_keys: {{ include "firecell-cu.o1NetconfKeys" . | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+O1 state PersistentVolumeClaim name (a string), checked. Pass (dict "v" <stateClaim> "key" <values path>).
+*/}}
+{{- define "firecell-cu.o1StateClaim" -}}
+{{- if not (kindIs "string" .v) -}}
+{{- fail (printf "%s must be a string; quote it (got %v)" .key .v) -}}
+{{- end -}}
+{{- .v -}}
+{{- end }}

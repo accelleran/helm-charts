@@ -12,6 +12,15 @@ Components:
 Attach DUs with one firecell-du release each, in this namespace:
   helm install <du-name> firecell-du -n {{ include "firecell-cu.namespace" . }} -f common.yaml -f <du-name>.yaml
 {{- end }}
+{{- range $el := list (dict "name" "cu-cp" "key" "cuCp" "on" (and .Values.cuCp.enabled .Values.cuCp.o1.enabled) "c" .Values.cuCp) (dict "name" "cu-up" "key" "cuUp" "on" (and .Values.cuUp.enabled (dig "o1" "enabled" false .Values.cuUp)) "c" .Values.cuUp) }}
+{{- $sel := $el.c.nodeSelector | default $.Values.global.nodeSelector | default dict }}
+{{- if and $el.on (not (dig "o1" "stateClaim" "" $el.c)) (not (get $sel "kubernetes.io/hostname")) }}
+
+WARNING: {{ $el.name }} keeps its O1 state (NETCONF host key, O1 overlay, Secret-in-use mark) in a host
+directory but is not pinned to a node. Moved to another node, it gets a new host key and loses that state. Set
+{{ $el.key }}.nodeSelector (kubernetes.io/hostname) or {{ $el.key }}.o1.stateClaim.
+{{- end }}
+{{- end }}
 
 Check:
   kubectl -n {{ include "firecell-cu.namespace" . }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}

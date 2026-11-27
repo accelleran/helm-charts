@@ -2,6 +2,7 @@
 {{- $c := .Values.cuUp }}
 {{- $o1 := $c.o1 | default dict }}
 {{- $img := include "firecell-cu.image" (dict "root" $ "image" $c.image) }}
+{{- $nc := dict "netconf" $o1.netconf "name" "cu-up" "path" "cuUp.o1.netconf" "image" $img }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,6 +26,9 @@ spec:
         {{- include "firecell-cu.labels" (dict "root" $ "component" "cu-up") | nindent 8 }}
       annotations:
         checksum/config: {{ include "firecell-cu.cuUpConfig" . | sha256sum }}
+        {{- if $o1.enabled }}
+        {{- with include "firecell-cu.o1NetconfChecksum" $nc | trim }}{{ . | nindent 8 }}{{ end }}
+        {{- end }}
         {{- $nets := list }}
         {{- if $c.n3.enabled }}
         {{- $nets = append $nets (dict "name" "cu-up-n3" "namespace" (include "firecell-cu.namespace" .)) }}
@@ -65,6 +69,7 @@ spec:
               value: "true"
             - name: NETCONF_VERBOSITY
               value: {{ include "firecell-cu.netconfVerbosity" $o1.netconfVerbosity | quote }}
+            {{- with include "firecell-cu.o1NetconfEnv" $nc | trim }}{{ . | nindent 12 }}{{ end }}
             {{- end }}
           command:
             {{- if $o1.enabled }}
@@ -126,6 +131,7 @@ spec:
             {{- if $o1.enabled }}
             - name: o1-state
               mountPath: /var/lib/ocudu
+            {{- with include "firecell-cu.o1NetconfMount" $nc | trim }}{{ . | nindent 12 }}{{ end }}
             {{- end }}
       volumes:
         - name: config
@@ -135,8 +141,14 @@ spec:
           emptyDir: {}
         {{- if $o1.enabled }}
         - name: o1-state
+          {{- if $o1.stateClaim }}
+          persistentVolumeClaim:
+            claimName: {{ include "firecell-cu.o1StateClaim" (dict "v" $o1.stateClaim "key" "cuUp.o1.stateClaim") | quote }}
+          {{- else }}
           hostPath:
             path: {{ $o1.statePath | default "/var/lib/firecell/ocudu/cu-up" }}
             type: DirectoryOrCreate
+          {{- end }}
+        {{- with include "firecell-cu.o1NetconfVolume" $nc | trim }}{{ . | nindent 8 }}{{ end }}
         {{- end }}
 {{- end }}

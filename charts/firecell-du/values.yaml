@@ -275,6 +275,28 @@ o1:
   restartOnColdCommit: false
   # -- netopeer2 log level: error, warning, info (a few [INF] lines per NMS request) or debug; 0-3 also accepted. Images built before the entrypoint read NETCONF_VERBOSITY always log at info.
   netconfVerbosity: warning
+  # NETCONF login and access control (KI-026). With nothing set the element keeps the lab
+  # login netconf/netconf (group operator) and logs a WARNING. Needs an RC3 or later image: an RC2
+  # image ignores all of these and keeps netconf/netconf with NACM off (README, O1 NETCONF Login).
+  netconf:
+    # -- Existing Secret (a quoted string) mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The element reads it at start only: restart it after changing the Secret.
+    existingSecret: ""
+    # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret <name>-o1-netconf. Empty: netconf.
+    username: ""
+    # -- Password of a chart-made Secret <name>-o1-netconf (clear text on one line, at most 256 characters, trailing newlines from --set-file removed, or a $6$/$5$ crypt hash; another crypt form such as $y$, $1$, $2b$ or $sha1$ is refused). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
+    password: ""
+    # -- NMS public keys (OpenSSH lines: ed25519 or ECDSA recommended; ssh-rsa and sk- keys are accepted too) of a chart-made Secret <name>-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
+    authorizedKeys: ""
+    # -- (bool) O1_REQUIRE_SECRET (true or false only, also as a string; yes/no and 1/0 are refused). The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); requireSecret: true without a Secret keeps NETCONF off; false is the deliberate way back to the lab login: set it when dropping a Secret, since the element's mark that a Secret was used lives in its node folder only. false is refused while a Secret is mounted.
+    requireSecret: null
+    # -- NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator.
+    group: ""
+    # -- (bool) Access control (O1_NACM_ENABLED; true or false only, also as a string; yes/no and 1/0 are refused). Unset: the image default, true. false turns NACM off, as in RC2.
+    nacm: null
+    # -- (bool) Keep the RSA SSH host key (O1_HOSTKEY_KEEP_RSA; true or false only, also as a string; yes/no and 1/0 are refused) instead of the per-element ECDSA key of an RC3 image. For a site that cannot restart or re-pin its NMS yet. Works before or after the first RC3 start: an RSA key that start retired is brought back. On a new element with no key file it writes the image's RSA key, shared by every element of that image, to the node folder. Unset: the image default, false.
+    keepRsaHostKey: null
+    # -- Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the pod IP, so NETCONF is not open on the Multus interfaces (M-plane, fronthaul, F1-U), which a NetworkPolicy does not filter; the NMS reaches it through the Service. With ru.vendor aw2s (host network) the pod IP is the node's address. 0.0.0.0 restores the image default (all addresses).
+    listenAddress: ""
   ueMetrics:
     # -- Publish per-UE PM (/ocudu-performance gnb-du-id and ue-metrics) for the NMS UE dashboard. Needs o1.enabled. Turns on scheduler metrics (metrics.layers.enable_sched).
     enabled: true

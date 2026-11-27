@@ -67,6 +67,30 @@ cuCp:
     netconfVerbosity: warning
     # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp.
     statePath: ""
+    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Moving an existing CU from statePath to a claim starts from an empty folder (new host key, lost O1 overlay and mark) unless the files are copied in first; then delete the old host directory, which holds private host keys. The claim must exist before install; otherwise the pod stays Pending (and, for the CU-CP, the whole RAN with it). The CU-CP and the CU-UP need different claims. Empty: the host directory; then pin the CU-CP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
+    stateClaim: ""
+    # NETCONF login and access control (KI-026). With nothing set the CU-CP keeps the lab
+    # login netconf/netconf (group operator) and logs a WARNING. Needs an RC3 or later image: an RC2
+    # image ignores all of these and keeps netconf/netconf with NACM off (README, O1 NETCONF Login).
+    netconf:
+      # -- Existing Secret (a quoted string) mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-CP reads it at start only: restart it after changing the Secret.
+      existingSecret: ""
+      # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret cu-cp-o1-netconf. Empty: netconf.
+      username: ""
+      # -- Password of a chart-made Secret cu-cp-o1-netconf (clear text on one line, at most 256 characters, trailing newlines from --set-file removed, or a $6$/$5$ crypt hash; another crypt form such as $y$, $1$, $2b$ or $sha1$ is refused). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
+      password: ""
+      # -- NMS public keys (OpenSSH lines: ed25519 or ECDSA recommended; ssh-rsa and sk- keys are accepted too) of a chart-made Secret cu-cp-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
+      authorizedKeys: ""
+      # -- (bool) O1_REQUIRE_SECRET (true or false only, also as a string; yes/no and 1/0 are refused). The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); requireSecret: true without a Secret keeps NETCONF off; false is the deliberate way back to the lab login: set it when dropping a Secret, since the element's mark that a Secret was used lives in its state folder only (the node folder, or the claim with stateClaim). false is refused while a Secret is mounted.
+      requireSecret: null
+      # -- NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator.
+      group: ""
+      # -- (bool) Access control (O1_NACM_ENABLED; true or false only, also as a string; yes/no and 1/0 are refused). Unset: the image default, true. false turns NACM off, as in RC2.
+      nacm: null
+      # -- (bool) Keep the RSA SSH host key (O1_HOSTKEY_KEEP_RSA; true or false only, also as a string; yes/no and 1/0 are refused) instead of the per-element ECDSA key of an RC3 image. For a site that cannot restart or re-pin its NMS yet. Works before or after the first RC3 start: an RSA key that start retired is brought back. On a new element with no key file it writes the image's RSA key, shared by every element of that image, to the node folder. Unset: the image default, false.
+      keepRsaHostKey: null
+      # -- Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the pod IP (the CU-CP has no Multus interface today; the pod IP keeps it so if one is added); the NMS reaches it through the Service. 0.0.0.0 restores the image default (all addresses).
+      listenAddress: ""
     ueContext:
       # -- Publish per-UE identity (/ocudu-performance ue-context) for the NMS UE dashboard. Needs cuCp.o1.enabled. Turns on CU-CP RRC metrics (metrics.layers.enable_rrc), without which the list stays empty.
       enabled: true
@@ -132,6 +156,30 @@ cuUp:
     netconfVerbosity: warning
     # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up.
     statePath: ""
+    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Moving an existing CU from statePath to a claim starts from an empty folder (new host key, lost O1 overlay and mark) unless the files are copied in first; then delete the old host directory, which holds private host keys. The claim must exist before install; otherwise the pod stays Pending (and, for the CU-CP, the whole RAN with it). The CU-CP and the CU-UP need different claims. Empty: the host directory; then pin the CU-UP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
+    stateClaim: ""
+    # NETCONF login and access control (KI-026). With nothing set the CU-UP keeps the lab
+    # login netconf/netconf (group operator) and logs a WARNING. Needs an RC3 or later image: an RC2
+    # image ignores all of these and keeps netconf/netconf with NACM off (README, O1 NETCONF Login).
+    netconf:
+      # -- Existing Secret (a quoted string) mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-UP reads it at start only: restart it after changing the Secret.
+      existingSecret: ""
+      # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret cu-up-o1-netconf. Empty: netconf.
+      username: ""
+      # -- Password of a chart-made Secret cu-up-o1-netconf (clear text on one line, at most 256 characters, trailing newlines from --set-file removed, or a $6$/$5$ crypt hash; another crypt form such as $y$, $1$, $2b$ or $sha1$ is refused). The pod rolls when it changes. Prefer existingSecret: this value stays in the Helm release record, and the pod annotation holds its unsalted SHA-256; use a long random value.
+      password: ""
+      # -- NMS public keys (OpenSSH lines: ed25519 or ECDSA recommended; ssh-rsa and sk- keys are accepted too) of a chart-made Secret cu-up-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
+      authorizedKeys: ""
+      # -- (bool) O1_REQUIRE_SECRET (true or false only, also as a string; yes/no and 1/0 are refused). The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); requireSecret: true without a Secret keeps NETCONF off; false is the deliberate way back to the lab login: set it when dropping a Secret, since the element's mark that a Secret was used lives in its state folder only (the node folder, or the claim with stateClaim). false is refused while a Secret is mounted.
+      requireSecret: null
+      # -- NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator.
+      group: ""
+      # -- (bool) Access control (O1_NACM_ENABLED; true or false only, also as a string; yes/no and 1/0 are refused). Unset: the image default, true. false turns NACM off, as in RC2.
+      nacm: null
+      # -- (bool) Keep the RSA SSH host key (O1_HOSTKEY_KEEP_RSA; true or false only, also as a string; yes/no and 1/0 are refused) instead of the per-element ECDSA key of an RC3 image. For a site that cannot restart or re-pin its NMS yet. Works before or after the first RC3 start: an RSA key that start retired is brought back. On a new element with no key file it writes the image's RSA key, shared by every element of that image, to the node folder. Unset: the image default, false.
+      keepRsaHostKey: null
+      # -- Address NETCONF listens on (NETCONF_LISTEN_ADDRESS, an IPv4 or IPv6 literal). Empty: the pod IP, so NETCONF is not open on the Multus interfaces (CU-UP N3 and F1-U), which a NetworkPolicy does not filter; the NMS reaches it through the Service. 0.0.0.0 restores the image default (all addresses).
+      listenAddress: ""
   # -- RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off.
   rpsCpus: ""
   # N3 (GTP-U toward the UPF) on a secondary interface.
