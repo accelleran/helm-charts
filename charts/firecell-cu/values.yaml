@@ -67,19 +67,21 @@ cuCp:
     netconfVerbosity: warning
     # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-CP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-cp.
     statePath: ""
+    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Empty: the host directory; then pin the CU-CP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
+    stateClaim: ""
     # NETCONF login and access control (KI-026). With nothing set the CU-CP keeps the lab
     # login netconf/netconf (group operator) and logs a WARNING. Needs an image that reads
     # /etc/ocudu/o1-netconf (RC3 or later); see the README of the image's docker/o1.
     netconf:
       # -- Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-CP reads it at start only: restart it after changing the Secret.
       existingSecret: ""
-      # -- User of a chart-made Secret cu-cp-o1-netconf. Empty: netconf.
+      # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret cu-cp-o1-netconf. Empty: netconf.
       username: ""
-      # -- Password of a chart-made Secret cu-cp-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes.
+      # -- Password of a chart-made Secret cu-cp-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes.
       password: ""
       # -- NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-cp-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
       authorizedKeys: ""
-      # -- (bool) O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted.
+      # -- (bool) O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login: set it when dropping a Secret, since the element's mark that a Secret was used lives in its node folder only. false is refused while a Secret is mounted.
       requireSecret: null
       # -- NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator.
       group: ""
@@ -152,19 +154,21 @@ cuUp:
     netconfVerbosity: warning
     # -- Host directory kept across restarts (O1 overlay and NETCONF host key). Give each CU-UP on a node its own. Empty uses /var/lib/firecell/ocudu/cu-up.
     statePath: ""
+    # -- Existing PersistentVolumeClaim for the O1 state (O1 overlay, NETCONF host key, mode file) instead of the statePath host directory, so the state moves with the pod when it is rescheduled to another node. Empty: the host directory; then pin the CU-UP to one node (nodeSelector kubernetes.io/hostname), or a move to another node gives it a new host key and loses its O1 overlay.
+    stateClaim: ""
     # NETCONF login and access control (KI-026). With nothing set the CU-UP keeps the lab
     # login netconf/netconf (group operator) and logs a WARNING. Needs an image that reads
     # /etc/ocudu/o1-netconf (RC3 or later); see the README of the image's docker/o1.
     netconf:
       # -- Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The CU-UP reads it at start only: restart it after changing the Secret.
       existingSecret: ""
-      # -- User of a chart-made Secret cu-up-o1-netconf. Empty: netconf.
+      # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret cu-up-o1-netconf. Empty: netconf.
       username: ""
-      # -- Password of a chart-made Secret cu-up-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes.
+      # -- Password of a chart-made Secret cu-up-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes.
       password: ""
       # -- NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret cu-up-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
       authorizedKeys: ""
-      # -- (bool) O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted.
+      # -- (bool) O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login: set it when dropping a Secret, since the element's mark that a Secret was used lives in its node folder only. false is refused while a Secret is mounted.
       requireSecret: null
       # -- NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator.
       group: ""

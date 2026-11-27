@@ -105,9 +105,14 @@ spec:
           emptyDir: {}
         {{- if $c.o1.enabled }}
         - name: o1-state
+          {{- if $c.o1.stateClaim }}
+          persistentVolumeClaim:
+            claimName: {{ $c.o1.stateClaim }}
+          {{- else }}
           hostPath:
             path: {{ $c.o1.statePath | default "/var/lib/firecell/ocudu/cu-cp" }}
             type: DirectoryOrCreate
+          {{- end }}
         {{- with include "firecell-cu.o1NetconfVolume" $nc | trim }}{{ . | nindent 8 }}{{ end }}
         {{- end }}
 {{- end }}
