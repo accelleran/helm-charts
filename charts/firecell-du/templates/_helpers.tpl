@@ -477,6 +477,16 @@ o1.netconf.existingSecret, else <name>-o1-netconf when the chart makes it
 {{- if not (or $n.password $n.authorizedKeys) -}}
 {{- fail "o1.netconf: a chart-made Secret needs password or authorizedKeys (the element refuses a Secret with neither)" -}}
 {{- end -}}
+{{- with $n.username -}}
+{{- if or (not (regexMatch "^[A-Za-z0-9._-]{1,64}$" (toString .))) (eq (toString .) "root") -}}
+{{- fail (printf "o1.netconf.username %q: letters, digits, . _ - only, at most 64 characters, not root" (toString .)) -}}
+{{- end -}}
+{{- end -}}
+{{- with $n.password -}}
+{{- if or (contains "\n" (toString .)) (gt (len (toString .)) 256) -}}
+{{- fail "o1.netconf.password: one line of at most 256 characters (the element refuses every login with a longer one)" -}}
+{{- end -}}
+{{- end -}}
 {{- printf "%s-o1-netconf" .name -}}
 {{- end -}}
 {{- end }}

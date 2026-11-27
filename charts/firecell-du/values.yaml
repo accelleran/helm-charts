@@ -281,13 +281,13 @@ o1:
   netconf:
     # -- Existing Secret mounted at /etc/ocudu/o1-netconf (keys username, password and/or authorized_keys). Recommended: one Secret per RAN namespace, named by every element. The element reads it at start only: restart it after changing the Secret.
     existingSecret: ""
-    # -- User of a chart-made Secret <name>-o1-netconf. Empty: netconf.
+    # -- User (letters, digits, . _ -, at most 64 characters, not root) of a chart-made Secret <name>-o1-netconf. Empty: netconf.
     username: ""
-    # -- Password of a chart-made Secret <name>-o1-netconf (clear text, or a $6$/$5$ crypt hash). The pod rolls when it changes.
+    # -- Password of a chart-made Secret <name>-o1-netconf (clear text on one line, at most 256 characters, or a $6$/$5$ crypt hash). The pod rolls when it changes.
     password: ""
     # -- NMS public keys (OpenSSH, ed25519 or ECDSA) of a chart-made Secret <name>-o1-netconf: one string with one key per line, or a list. With a password too, only the keys are used.
     authorizedKeys: ""
-    # -- (bool) O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login. false is refused while a Secret is mounted.
+    # -- (bool) O1_REQUIRE_SECRET. The chart sets true whenever it mounts a Secret, so a lost Secret keeps NETCONF off. Without a Secret: unset leaves it out (an element that used a Secret before still keeps NETCONF off); true keeps NETCONF off; false is the deliberate way back to the lab login: set it when dropping a Secret, since the element's mark that a Secret was used lives in its node folder only. false is refused while a Secret is mounted.
     requireSecret: null
     # -- NACM group of the Secret's user (O1_NETCONF_GROUP): admin, operator or read-only. Empty: the image default, operator.
     group: ""
