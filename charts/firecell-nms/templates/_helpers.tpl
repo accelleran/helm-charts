@@ -266,7 +266,6 @@ JWT-mode environment of the API container (backend.auth). Empty when off.
 {{- end }}
 {{- include "firecell-nms.backend.authValue" (list . "OIDC_PROJECT_ID" $auth.projectId "project-id") }}
 {{- include "firecell-nms.backend.authValue" (list . "OIDC_CLIENT_IDS_JSON" (ternary ($auth.clientIds | toJson) "" (gt (len $auth.clientIds) 0)) "client-ids-json") }}
-{{- include "firecell-nms.backend.authValue" (list . "OIDC_INTROSPECTION_CLIENT_ID" $auth.introspection.clientId "introspection-client-id") }}
 - name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_KEY_FILE
   value: /etc/firecell-nms/oidc/introspection/{{ $auth.introspection.key }}
 - name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_CACHE_SECONDS
