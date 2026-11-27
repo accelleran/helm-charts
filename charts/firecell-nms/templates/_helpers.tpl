@@ -227,29 +227,6 @@ northbound token, mounted from the generated Secret fc-acs. Only with acs.enable
 {{- end }}
 
 {{/*
-One auth setting: the value when set, else a key of backend.auth.configMap.
-Usage: include "firecell-nms.backend.authValue" (list . "OIDC_PROJECT_ID" .Values.backend.auth.projectId "project-id")
-*/}}
-{{- define "firecell-nms.backend.authValue" -}}
-{{- $root := index . 0 }}
-{{- $name := index . 1 }}
-{{- $value := index . 2 }}
-{{- $key := index . 3 }}
-{{- $cm := $root.Values.backend.auth.configMap }}
-- name: FIRECELL_NMS_NG_{{ $name }}
-{{- if $value }}
-  value: {{ $value | quote }}
-{{- else if $cm }}
-  valueFrom:
-    configMapKeyRef:
-      name: {{ $cm }}
-      key: {{ $key }}
-{{- else }}
-{{- fail (printf "backend.auth: set the value for FIRECELL_NMS_NG_%s or backend.auth.configMap" $name) }}
-{{- end }}
-{{- end }}
-
-{{/*
 JWT-mode environment of the API container (backend.auth). Empty when off.
 */}}
 {{- define "firecell-nms.backend.authEnv" -}}
@@ -260,15 +237,10 @@ JWT-mode environment of the API container (backend.auth). Empty when off.
 {{- end }}
 - name: FIRECELL_NMS_NG_OIDC_ISSUER_URL
   value: {{ required "backend.auth.issuer is required when backend.auth.enabled" $auth.issuer | quote }}
-{{- with $auth.jwksUrl }}
-- name: FIRECELL_NMS_NG_OIDC_JWKS_URL
-  value: {{ . | quote }}
-{{- end }}
-{{- include "firecell-nms.backend.authValue" (list . "OIDC_PROJECT_ID" $auth.projectId "project-id") }}
-{{- include "firecell-nms.backend.authValue" (list . "OIDC_CLIENT_IDS_JSON" (ternary ($auth.clientIds | toJson) "" (gt (len $auth.clientIds) 0)) "client-ids-json") }}
-{{- include "firecell-nms.backend.authValue" (list . "OIDC_INTROSPECTION_CLIENT_ID" $auth.introspection.clientId "introspection-client-id") }}
+- name: FIRECELL_NMS_NG_OIDC_IDS_DIR
+  value: /etc/firecell-nms/oidc/ids
 - name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_KEY_FILE
-  value: /etc/firecell-nms/oidc/introspection/{{ $auth.introspection.key }}
+  value: /etc/firecell-nms/oidc/introspection/key.json
 - name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_CACHE_SECONDS
   value: {{ $auth.introspection.cacheSeconds | quote }}
 {{- if $auth.caBundle.existingSecret }}
@@ -281,11 +253,8 @@ JWT-mode environment of the API container (backend.auth). Empty when off.
 {{- if $um.enabled }}
 - name: FIRECELL_NMS_NG_ZITADEL_API_URL
   value: {{ $um.apiUrl | default $auth.issuer | quote }}
-{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_USERS_ORG_ID" $um.usersOrgId "users-org-id") }}
-{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_PROJECT_ORG_ID" $um.projectOrgId "project-org-id") }}
-{{- include "firecell-nms.backend.authValue" (list . "ZITADEL_PROJECT_GRANT_ID" $um.projectGrantId "project-grant-id") }}
 - name: FIRECELL_NMS_NG_ZITADEL_SERVICE_ACCOUNT_KEY_FILE
-  value: /etc/firecell-nms/oidc/user-manager/{{ $um.key }}
+  value: /etc/firecell-nms/oidc/user-manager/key.json
 {{- end }}
 {{- else if $auth.userManagement.enabled }}
 {{- fail "backend.auth.userManagement.enabled needs backend.auth.enabled" }}
@@ -298,6 +267,7 @@ Mounts and volumes for backend.auth, API container only.
 {{- define "firecell-nms.backend.authMounts" -}}
 {{- $auth := .Values.backend.auth }}
 {{- if $auth.enabled }}
+- {name: oidc-ids, mountPath: /etc/firecell-nms/oidc/ids, readOnly: true}
 - {name: oidc-introspection, mountPath: /etc/firecell-nms/oidc/introspection, readOnly: true}
 {{- if $auth.caBundle.existingSecret }}
 - {name: oidc-ca, mountPath: /etc/firecell-nms/oidc/ca, readOnly: true}
@@ -311,12 +281,17 @@ Mounts and volumes for backend.auth, API container only.
 {{- define "firecell-nms.backend.authVolumes" -}}
 {{- $auth := .Values.backend.auth }}
 {{- if $auth.enabled }}
+- name: oidc-ids
+  configMap:
+    name: {{ required "backend.auth.configMap.name is required when backend.auth.enabled" $auth.configMap.name }}
+    defaultMode: 0444
+    optional: true
 - name: oidc-introspection
   secret:
     secretName: {{ required "backend.auth.introspection.existingSecret is required when backend.auth.enabled" $auth.introspection.existingSecret }}
     defaultMode: 0440
     items:
-      - {key: {{ $auth.introspection.key }}, path: {{ $auth.introspection.key }}}
+      - {key: key.json, path: key.json}
 {{- if $auth.caBundle.existingSecret }}
 - name: oidc-ca
   secret:
@@ -331,7 +306,7 @@ Mounts and volumes for backend.auth, API container only.
     secretName: {{ required "backend.auth.userManagement.existingSecret is required when backend.auth.userManagement.enabled" $auth.userManagement.existingSecret }}
     defaultMode: 0440
     items:
-      - {key: {{ $auth.userManagement.key }}, path: {{ $auth.userManagement.key }}}
+      - {key: key.json, path: key.json}
 {{- end }}
 {{- end }}
 {{- end }}

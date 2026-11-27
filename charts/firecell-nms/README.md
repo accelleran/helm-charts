@@ -1,6 +1,6 @@
 # firecell-nms
 
-![Version: 0.2.1](https://img.shields.io/badge/Version-0.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 6.0.0](https://img.shields.io/badge/AppVersion-6.0.0-informational?style=flat-square)
+![Version: 0.2.2](https://img.shields.io/badge/Version-0.2.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 6.0.1](https://img.shields.io/badge/AppVersion-6.0.1-informational?style=flat-square)
 
 Firecell NMS — frontend, backend and VictoriaMetrics
 
@@ -178,11 +178,14 @@ File names, sizes and checks: nms-frontend `docs/LOGO_CUSTOMIZATION.md`.
 
 ### JWT mode (`backend.auth`)
 
-With `backend.auth.enabled=true` the API validates the Zitadel access token itself: oauth2-proxy forwards it as `X-Forwarded-Access-Token` (`pass_access_token`), machine callers send `Authorization: Bearer`. The API checks the signature against Zitadel's keys, the issuer, the project audience (`projectId`) and the client (`clientIds`, the `azp` claim), then introspects the token with its own API app (`introspection`) for the current roles. A forged `X-Forwarded-User` is ignored in this mode, so it cannot be combined with `backend.config.trustGatewayHeaders` (the render fails).
+With `backend.auth.enabled=true` the API validates the Zitadel access token itself: oauth2-proxy forwards it as `X-Forwarded-Access-Token` (`pass_access_token`), machine callers send `Authorization: Bearer`. The API checks the signature against Zitadel's keys, the issuer, the project audience (`project-id`) and the client (`client-ids-json`, the `azp` claim), then introspects the token with its own API app (`introspection`) for the current roles. A forged `X-Forwarded-User` is ignored in this mode, so it cannot be combined with `backend.config.trustGatewayHeaders` (the render fails).
 
-- The ids Zitadel only knows at runtime can come from a ConfigMap (`backend.auth.configMap`, keys `project-id`, `client-ids-json`, `introspection-client-id`, `users-org-id`, `project-org-id`, `project-grant-id`). The Flux recipe's OIDC ensure loop writes it. A value set in `backend.auth` wins.
-- `backend.auth.introspection.existingSecret` holds the introspection app's Zitadel JSON key, `backend.auth.caBundle.existingSecret` the CA of Zitadel's certificate when it is not in the system trust store.
-- `backend.auth.userManagement` turns on `/api/admin/users`: the API manages Users-organisation accounts with the service account key in `userManagement.existingSecret`.
+The oauth2-proxy app in Zitadel must issue JWT access tokens (token type JWT). Zitadel's default is an opaque Bearer token, which the API rejects with 401. The Flux recipe sets this.
+
+- The ids Zitadel only knows at runtime come from the ConfigMap `backend.auth.configMap.name` (default `nms-oidc`), keys `project-id` and `client-ids-json` (a JSON list). The Flux recipe's OIDC ensure loop writes it. The API reads it as files and picks up changes without a restart. Until both keys are there, the API's readiness probe (`/readyz` in JWT mode) fails, so the pod gets no traffic and a rollout keeps the old pods; the log says which key is missing. Liveness stays on `/healthz`, so a missing ConfigMap never restarts the pod.
+- Without the recipe (tests, small installs) set `backend.auth.configMap.create=true` with `backend.auth.configMap.projectId` and `backend.auth.configMap.clientIds`, and the chart renders the ConfigMap. Never combine this with the recipe's ensure loop: both write the same ConfigMap, and Helm reverts the loop's writes on every upgrade.
+- `backend.auth.introspection.existingSecret` holds the introspection app's Zitadel JSON key under `key.json` (the API reads the app's client id from it). `backend.auth.caBundle.existingSecret` holds the CA of Zitadel's certificate under `caBundle.key`, when it is not in the system trust store. The signing keys are always read from `<issuer>/oauth/v2/keys`.
+- `backend.auth.userManagement` turns on `/api/admin/users`: the API manages Users-organisation accounts with the service account key in `userManagement.existingSecret` (under `key.json`, at `userManagement.apiUrl`, default the issuer). It finds the Users organisation, the project's owner and the project grant from that service account, which needs `project.read` (`ORG_USER_MANAGER` has it).
 - Only the `nms-api` pods get these settings and keys.
 - Roles are the five NMS roles (`basic_viewer`, `ot_manager`, `it_manager`, `si`, `super_admin`); each includes the ones below it. The installed `operator` key ranks as `si`, `viewer` as `basic_viewer`. See the backend's `docs/identity-and-preferences.md`.
 
@@ -243,11 +246,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | acs.enabled | bool | `false` | Deploy fc-acs (Deployment, Services fc-acs and fc-acs-southbound, Secret fc-acs). |
-| acs.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-fc-acs","tag":"6.0.0"}` | fc-acs image. |
+| acs.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-fc-acs","tag":"v6.0.1"}` | fc-acs image. |
 | acs.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | acs.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | acs.image.repository | string | `"accelleran/nms-fc-acs"` | Image repository path, including the org (kept when the registry is rewritten). |
-| acs.image.tag | string | `"6.0.0"` | Image tag. |
+| acs.image.tag | string | `"v6.0.1"` | Image tag. |
 | acs.logLevel | string | `"info"` | Log level of fc-acs (FC_ACS_LOG_LEVEL). |
 | acs.resources.limits.cpu | string | `"1"` |  |
 | acs.resources.limits.memory | string | `"512Mi"` |  |
@@ -263,24 +266,18 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.api.resources.requests.cpu | string | `"100m"` |  |
 | backend.api.resources.requests.memory | string | `"256Mi"` |  |
 | backend.auth.caBundle | object | `{"existingSecret":"","key":"ca.crt"}` | Secret with the CA that signs Zitadel's certificate (the Gateway's), key `caBundle.key`. Empty: the system trust store. |
-| backend.auth.clientIds | list | `[]` | Client ids (azp) whose tokens are accepted, e.g. the oauth2-proxy app. |
-| backend.auth.configMap | string | `""` | ConfigMap holding the ids Zitadel only knows at runtime, under the keys `project-id`, `client-ids-json`, `introspection-client-id`, `users-org-id`, `project-org-id`, `project-grant-id`. The Flux recipe's OIDC ensure loop writes it. A value set below wins over the ConfigMap. |
+| backend.auth.configMap.clientIds | list | `[]` | Client ids (`client-ids-json`). Required when create. |
+| backend.auth.configMap.create | bool | `false` | Render the ConfigMap from the two values below, for tests or installs without the Flux recipe. Never together with the recipe's ensure loop: both write the same ConfigMap and Helm reverts the loop's writes on upgrade. |
+| backend.auth.configMap.name | string | `"nms-oidc"` | ConfigMap with the keys `project-id` (the project id the token audience must contain) and `client-ids-json` (JSON list of the client ids, azp, whose tokens are accepted). The Flux recipe's OIDC ensure loop writes it. |
+| backend.auth.configMap.projectId | string | `""` | Project id (`project-id`). Required when create. |
 | backend.auth.enabled | bool | `false` | Turn JWT mode on. Cannot be combined with backend.config.trustGatewayHeaders. |
 | backend.auth.introspection.cacheSeconds | int | `15` | Seconds one token's introspection answer is reused. |
-| backend.auth.introspection.clientId | string | `""` | Client id of the API app that introspects tokens. |
-| backend.auth.introspection.existingSecret | string | `""` | Secret with that app's Zitadel JSON key. Required when enabled. |
-| backend.auth.introspection.key | string | `"key.json"` |  |
+| backend.auth.introspection.existingSecret | string | `""` | Secret with the API app's Zitadel JSON key under `key.json`, the key it introspects tokens with. It carries the app's client id. Required when enabled. |
 | backend.auth.issuer | string | `""` | Zitadel issuer, e.g. `https://auth.<domain>`. Required when enabled. |
-| backend.auth.jwksUrl | string | `""` | Signing keys. Empty: `<issuer>/oauth/v2/keys`. |
 | backend.auth.opRevealMaxAuthAgeSeconds | int | `0` | Revealing the OP needs a sign-in at most this many seconds old. 0: no check. |
-| backend.auth.projectId | string | `""` | Zitadel project id the token audience must contain. |
 | backend.auth.userManagement.apiUrl | string | `""` | Zitadel API base URL. Empty: the issuer. |
 | backend.auth.userManagement.enabled | bool | `false` | Turn the user screens on. Needs auth.enabled. |
-| backend.auth.userManagement.existingSecret | string | `""` | Secret with the service account's Zitadel JSON key. Required when enabled. |
-| backend.auth.userManagement.key | string | `"key.json"` |  |
-| backend.auth.userManagement.projectGrantId | string | `""` | Project grant to the Users organisation. Empty: from auth.configMap. |
-| backend.auth.userManagement.projectOrgId | string | `""` | Organisation that owns the project (Firecell). Empty: from auth.configMap. |
-| backend.auth.userManagement.usersOrgId | string | `""` | Users organisation id. Empty: from auth.configMap. |
+| backend.auth.userManagement.existingSecret | string | `""` | Secret with the service account's Zitadel JSON key under `key.json`. Required when enabled. |
 | backend.branding.configMap | string | `"nms-branding"` | ConfigMap where the NMS keeps the site's logos and colours (CM console Branding, /api/branding); the console's sidebar reads them through the API, and the Flux recipe's OIDC ensure loop copies them to Zitadel's sign-in pages. The chart never creates it, so upgrades keep it. nms-api may get, update and delete it, and create ConfigMaps in the namespace (Kubernetes cannot narrow create by name). Empty turns the feature off. |
 | backend.config.allowedWsOriginsJson | string | `"[]"` | JSON string array of allowed WebSocket origins. |
 | backend.config.cmConfigMapKey | string | `"cm.json"` |  |
@@ -320,11 +317,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.endpoints.victoria | string | `""` | Where PM reports and alarm gauges are written. Empty: the in-chart VictoriaMetrics. Grafana alert rules read core_alarm_active from here and post to /api/alarms/webhook, so without it no alarm arrives. |
 | backend.existingSecret | string | `"nms-secrets"` | Secret with the backend credentials, created before install; the chart never creates it. Required keys: `database-root-password`, `database-password`, `database-url`, `network-name`, `op`, `api-tokens-json`, `default-admin-user`, `default-admin-password` (see README). |
 | backend.extraEnv | list | `[]` | Extra environment (EnvVar list) for the API, worker and control plane, e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL. |
-| backend.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-backend","tag":"6.0.0"}` | Backend image (API, worker, control plane, migration and bootstrap). |
+| backend.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-backend","tag":"6.0.1"}` | Backend image (API, worker, control plane, migration and bootstrap). |
 | backend.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | backend.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | backend.image.repository | string | `"accelleran/nms-backend"` | Image repository path, including the org (kept when the registry is rewritten). |
-| backend.image.tag | string | `"6.0.0"` | Image tag. |
+| backend.image.tag | string | `"6.0.1"` | Image tag. |
 | backend.initResources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"50m","memory":"128Mi"}}` | Resources of the check-schema, migrate, bootstrap and wait-for-schema init containers. |
 | backend.progressDeadlineSeconds | int | `1200` | Rollout deadline of the API and worker Deployments. New pods wait for the old control plane to stop and the migration to finish, so it must exceed terminationGracePeriodSeconds plus the migration time. Keep the Helm / HelmRelease timeout above it. |
 | backend.terminationGracePeriodSeconds | int | `660` | Longer than the backend's slowest lifecycle operation (600s), so workers and the control plane can finish in-flight work after SIGTERM. On an image change the new control plane, and so the migration, starts only after the old one has stopped: up to this long. |
@@ -338,11 +335,11 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | front.backendUrl | string | `""` | Where nginx sends /api/. Empty: the in-chart nms-api Service. |
 | front.cmUrl | string | `""` | Where nginx sends /nms-cm/ (the CM console). Empty: the backend's built-in console, `<nms-api>/ui`. |
 | front.grafanaUrl | string | `""` | External Grafana base URL (the chart has no Grafana of its own). The UI links to <origin>/grafana/...; /grafana/ redirects there, path and query intact. Empty leaves the location out. |
-| front.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-frontend","tag":"6.0.0"}` | NMS frontend (nginx) image. Needs a CM-enabled build that talks to the new backend. |
+| front.image | object | `{"digest":"","registry":"docker.io","repository":"accelleran/nms-frontend","tag":"6.0.1"}` | NMS frontend (nginx) image. Needs a CM-enabled build that talks to the new backend. |
 | front.image.digest | string | `""` | Optional. When set, used as registry/repository@digest instead of :tag. |
 | front.image.registry | string | `"docker.io"` | Image registry host. Replaced by global.imageRegistry when set. |
 | front.image.repository | string | `"accelleran/nms-frontend"` | Image repository path, including the org (kept when the registry is rewritten). |
-| front.image.tag | string | `"6.0.0"` | Image tag. |
+| front.image.tag | string | `"6.0.1"` | Image tag. |
 | front.metricsUrl | string | `""` | VictoriaMetrics base URL for the Device Performance charts (/metrics-api/ -> <metricsUrl>/api/v1/). Empty: the in-chart VictoriaMetrics. |
 | front.resources.limits.cpu | string | `"200m"` |  |
 | front.resources.limits.memory | string | `"128Mi"` |  |
@@ -384,5 +381,3 @@ The following table lists the configurable parameters of the firecell-nms chart 
 
 There is no in-place upgrade from 0.1.x: uninstall the 0.1.x release and install this chart fresh. Nothing is migrated from the 0.1.x database.
 
-----------------------------------------------
-Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)
