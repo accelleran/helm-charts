@@ -108,7 +108,8 @@ O1 NETCONF settings. Every helper below takes (dict "netconf" <o1.netconf map>
 
 {{/*
 Image tags known to predate accelleran/ocudu#724: they ignore the NETCONF Secret
-and keep netconf/netconf with NACM off. Only these exact tags are judged; any
+and keep netconf/netconf with NACM off; any o1.netconf value set with
+one of them is refused. Only these exact tags are judged; any
 other tag (pr-*, edge, a digest, a later release) passes.
 */}}
 {{- define "firecell-cu.o1NetconfPreSecretTags" -}}
@@ -211,13 +212,25 @@ The rules are those of the image's docker/o1/entrypoint.sh (accelleran/ocudu#724
 {{- $_ := include "firecell-cu.o1NetconfBool" (dict "v" $n.requireSecret "key" (printf "%s.requireSecret" $p)) }}
 {{- $_ := include "firecell-cu.o1NetconfBool" (dict "v" $n.nacm "key" (printf "%s.nacm" $p)) }}
 {{- $_ := include "firecell-cu.o1NetconfBool" (dict "v" $n.keepRsaHostKey "key" (printf "%s.keepRsaHostKey" $p)) }}
+{{- $set := false }}
+{{- range $k, $v := $n }}{{ if include "firecell-cu.isSet" $v }}{{ $set = true }}{{ end }}{{ end }}
+{{- if $set }}
+{{- $img := toString .image }}
+{{- $tag := "" }}
+{{- if not (contains "@" $img) }}
+{{- $last := last (splitList "/" $img) }}
+{{- if contains ":" $last }}{{ $tag = last (splitList ":" $last) }}{{ end }}
+{{- end }}
+{{- if has $tag (include "firecell-cu.o1NetconfPreSecretTags" . | fromJsonArray) }}
+{{- fail (printf "%s needs an image with accelleran/ocudu#724 (RC3 or later); image %s ignores it and keeps netconf/netconf with NACM off" $p $img) }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{/*
 O1 NETCONF credential Secret mounted at /etc/ocudu/o1-netconf, or "" for none:
 existingSecret, else <name>-o1-netconf when the chart makes it (username,
-password or authorizedKeys set). Also runs firecell-cu.o1NetconfCheck, and refuses a
-Secret with an image known to ignore it.
+password or authorizedKeys set). Also runs firecell-cu.o1NetconfCheck.
 */}}
 {{- define "firecell-cu.o1NetconfSecret" -}}
 {{- include "firecell-cu.o1NetconfCheck" . -}}
@@ -235,17 +248,6 @@ Secret with an image known to ignore it.
 {{- fail (printf "%s: a chart-made Secret needs password or authorizedKeys (the element refuses a Secret with neither)" $p) -}}
 {{- end -}}
 {{- $name = printf "%s-o1-netconf" .name -}}
-{{- end -}}
-{{- if $name -}}
-{{- $img := toString .image -}}
-{{- $tag := "" -}}
-{{- if not (contains "@" $img) -}}
-{{- $last := last (splitList "/" $img) -}}
-{{- if contains ":" $last }}{{ $tag = last (splitList ":" $last) }}{{ end -}}
-{{- end -}}
-{{- if has $tag (include "firecell-cu.o1NetconfPreSecretTags" . | fromJsonArray) -}}
-{{- fail (printf "%s needs an image with accelleran/ocudu#724 (RC3 or later); image %s ignores it and keeps netconf/netconf with NACM off" $p $img) -}}
-{{- end -}}
 {{- end -}}
 {{- $name -}}
 {{- end }}
