@@ -1658,6 +1658,8 @@ coreConfig:
   # on the SMF and every UPF (N4 must then differ from N3), the SMF N4-u port, the
   # NetworkPolicy for UDP 2152 and the UPF N6 IPv6 setup. An IPV4V6 DNN without
   # either (like "ims" below) stays IPv4-only, as before.
+  # ipv4Subnet is the UE address pool: a /25 serves 126 UEs with a session on that DNN. Size
+  # it for the UE count (docs/capacity-sizing.md); keep ims.ueImsSubnet equal to the ims pool.
   dnns:
     - dnn: "oai"
       pduSessionType: "IPV4"

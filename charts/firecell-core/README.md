@@ -788,6 +788,12 @@ The following table lists the configurable parameters of the Firecell Core chart
 | udsf.imageTag | string | `""` |  |
 | udsf.redis.image | string | `"redis:7-alpine"` |  |
 | udsf.redis.imageOverride | string | `""` |  |
+| udsf.redis.maxmemory | string | `"160mb"` |  |
+| udsf.redis.persistence.appendfsync | string | `"everysec"` |  |
+| udsf.redis.persistence.appendonly | bool | `true` |  |
+| udsf.redis.persistence.size | string | `"1Gi"` |  |
+| udsf.redis.persistence.storageClass | string | `""` |  |
+| udsf.redis.persistence.volume | string | `"emptyDir"` |  |
 | udsf.redis.port | int | `6379` |  |
 | udsf.redis.resources.limits.cpu | string | `"500m"` |  |
 | udsf.redis.resources.limits.memory | string | `"256Mi"` |  |
@@ -833,6 +839,7 @@ The following table lists the configurable parameters of the Firecell Core chart
 | upf.hostPfcpMacvlan | string | `""` |  |
 | upf.injectCiliumPodRoute | bool | `true` |  |
 | upf.instances | list | `[]` |  |
+| upf.maxPduSession | string | `""` |  |
 | upf.multus.enableBpfDatapath | bool | `false` |  |
 | upf.multus.enabled | bool | `false` |  |
 | upf.multus.n3.arpWarmIPs | list | `[]` |  |
