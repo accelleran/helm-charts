@@ -270,15 +270,12 @@ The following table lists the configurable parameters of the firecell-nms chart 
 | backend.auth.configMap.projectId | string | `""` | Project id (`project-id`). Required when create. |
 | backend.auth.enabled | bool | `false` | Turn JWT mode on. Cannot be combined with backend.config.trustGatewayHeaders. |
 | backend.auth.introspection.cacheSeconds | int | `15` | Seconds one token's introspection answer is reused. |
-| backend.auth.introspection.existingSecret | string | `""` | Secret with the API app's Zitadel JSON key, the one it introspects tokens with. It carries the app's client id. Required when enabled. |
-| backend.auth.introspection.key | string | `"key.json"` |  |
+| backend.auth.introspection.existingSecret | string | `""` | Secret with the API app's Zitadel JSON key under `key.json`, the key it introspects tokens with. It carries the app's client id. Required when enabled. |
 | backend.auth.issuer | string | `""` | Zitadel issuer, e.g. `https://auth.<domain>`. Required when enabled. |
-| backend.auth.jwksUrl | string | `""` | Signing keys. Empty: `<issuer>/oauth/v2/keys`. |
 | backend.auth.opRevealMaxAuthAgeSeconds | int | `0` | Revealing the OP needs a sign-in at most this many seconds old. 0: no check. |
 | backend.auth.userManagement.apiUrl | string | `""` | Zitadel API base URL. Empty: the issuer. |
 | backend.auth.userManagement.enabled | bool | `false` | Turn the user screens on. Needs auth.enabled. |
-| backend.auth.userManagement.existingSecret | string | `""` | Secret with the service account's Zitadel JSON key. Required when enabled. |
-| backend.auth.userManagement.key | string | `"key.json"` |  |
+| backend.auth.userManagement.existingSecret | string | `""` | Secret with the service account's Zitadel JSON key under `key.json`. Required when enabled. |
 | backend.branding.configMap | string | `"nms-branding"` | ConfigMap where the NMS keeps the site's logos and colours (CM console Branding, /api/branding); the console's sidebar reads them through the API, and the Flux recipe's OIDC ensure loop copies them to Zitadel's sign-in pages. The chart never creates it, so upgrades keep it. nms-api may get, update and delete it, and create ConfigMaps in the namespace (Kubernetes cannot narrow create by name). Empty turns the feature off. |
 | backend.config.allowedWsOriginsJson | string | `"[]"` | JSON string array of allowed WebSocket origins. |
 | backend.config.cmConfigMapKey | string | `"cm.json"` |  |

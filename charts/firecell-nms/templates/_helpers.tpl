@@ -237,14 +237,10 @@ JWT-mode environment of the API container (backend.auth). Empty when off.
 {{- end }}
 - name: FIRECELL_NMS_NG_OIDC_ISSUER_URL
   value: {{ required "backend.auth.issuer is required when backend.auth.enabled" $auth.issuer | quote }}
-{{- with $auth.jwksUrl }}
-- name: FIRECELL_NMS_NG_OIDC_JWKS_URL
-  value: {{ . | quote }}
-{{- end }}
 - name: FIRECELL_NMS_NG_OIDC_IDS_DIR
   value: /etc/firecell-nms/oidc/ids
 - name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_KEY_FILE
-  value: /etc/firecell-nms/oidc/introspection/{{ $auth.introspection.key }}
+  value: /etc/firecell-nms/oidc/introspection/key.json
 - name: FIRECELL_NMS_NG_OIDC_INTROSPECTION_CACHE_SECONDS
   value: {{ $auth.introspection.cacheSeconds | quote }}
 {{- if $auth.caBundle.existingSecret }}
@@ -258,7 +254,7 @@ JWT-mode environment of the API container (backend.auth). Empty when off.
 - name: FIRECELL_NMS_NG_ZITADEL_API_URL
   value: {{ $um.apiUrl | default $auth.issuer | quote }}
 - name: FIRECELL_NMS_NG_ZITADEL_SERVICE_ACCOUNT_KEY_FILE
-  value: /etc/firecell-nms/oidc/user-manager/{{ $um.key }}
+  value: /etc/firecell-nms/oidc/user-manager/key.json
 {{- end }}
 {{- else if $auth.userManagement.enabled }}
 {{- fail "backend.auth.userManagement.enabled needs backend.auth.enabled" }}
@@ -295,7 +291,7 @@ Mounts and volumes for backend.auth, API container only.
     secretName: {{ required "backend.auth.introspection.existingSecret is required when backend.auth.enabled" $auth.introspection.existingSecret }}
     defaultMode: 0440
     items:
-      - {key: {{ $auth.introspection.key }}, path: {{ $auth.introspection.key }}}
+      - {key: key.json, path: key.json}
 {{- if $auth.caBundle.existingSecret }}
 - name: oidc-ca
   secret:
@@ -310,7 +306,7 @@ Mounts and volumes for backend.auth, API container only.
     secretName: {{ required "backend.auth.userManagement.existingSecret is required when backend.auth.userManagement.enabled" $auth.userManagement.existingSecret }}
     defaultMode: 0440
     items:
-      - {key: {{ $auth.userManagement.key }}, path: {{ $auth.userManagement.key }}}
+      - {key: key.json, path: key.json}
 {{- end }}
 {{- end }}
 {{- end }}

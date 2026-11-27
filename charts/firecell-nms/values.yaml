@@ -174,8 +174,6 @@ backend:
     enabled: false
     # -- Zitadel issuer, e.g. `https://auth.<domain>`. Required when enabled.
     issuer: ""
-    # -- Signing keys. Empty: `<issuer>/oauth/v2/keys`.
-    jwksUrl: ""
     # The ids Zitadel only knows at runtime. The API reads them from this
     # ConfigMap, mounted as files, and picks up changes without a restart.
     configMap:
@@ -194,10 +192,10 @@ backend:
       # -- Client ids (`client-ids-json`). Required when create.
       clientIds: []
     introspection:
-      # -- Secret with the API app's Zitadel JSON key, the one it introspects
-      # tokens with. It carries the app's client id. Required when enabled.
+      # -- Secret with the API app's Zitadel JSON key under `key.json`, the
+      # key it introspects tokens with. It carries the app's client id.
+      # Required when enabled.
       existingSecret: ""
-      key: key.json
       # -- Seconds one token's introspection answer is reused.
       cacheSeconds: 15
     # -- Secret with the CA that signs Zitadel's certificate (the Gateway's),
@@ -214,9 +212,9 @@ backend:
       enabled: false
       # -- Zitadel API base URL. Empty: the issuer.
       apiUrl: ""
-      # -- Secret with the service account's Zitadel JSON key. Required when enabled.
+      # -- Secret with the service account's Zitadel JSON key under
+      # `key.json`. Required when enabled.
       existingSecret: ""
-      key: key.json
 
   # -- Extra environment (EnvVar list) for the API, worker and control plane,
   # e.g. FIRECELL_NMS_NG_ALARM_REASSERT_INTERVAL.
