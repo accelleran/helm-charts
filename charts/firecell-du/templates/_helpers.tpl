@@ -523,11 +523,16 @@ The rules are those of the image's docker/o1/entrypoint.sh (accelleran/ocudu#724
 {{- else }}
 {{- fail (printf "%s.authorizedKeys: a string (one key per line) or a list of strings" $p) }}
 {{- end }}
+{{- $nkeys := 0 }}
 {{- range $l := $lines }}
 {{- $t := trim $l }}
+{{- if and $t (not (hasPrefix "#" $t)) }}{{ $nkeys = add1 $nkeys }}{{ end }}
 {{- if and $t (not (hasPrefix "#" $t)) (not (regexMatch "^(ssh-|ecdsa-|sk-)[^ \t]+[ \t]+[A-Za-z0-9+/]+=*([ \t].*)?$" $t)) }}
 {{- fail (printf "%s.authorizedKeys: line %q is not \"<type> <base64 key> [comment]\"; options (from=, command=, restrict, ...) are refused by the element" $p (trunc 40 $t)) }}
 {{- end }}
+{{- end }}
+{{- if and (eq $nkeys 0) (not $n.password) }}
+{{- fail (printf "%s.authorizedKeys has no key line (only blank or # lines) and there is no password: the element would keep NETCONF off" $p) }}
 {{- end }}
 {{- end }}
 {{- with $n.username }}
@@ -545,7 +550,7 @@ The rules are those of the image's docker/o1/entrypoint.sh (accelleran/ocudu#724
 {{- if and (regexMatch "^\\$[0-9a-z]{1,4}\\$" .) (not (or (hasPrefix "$6$" .) (hasPrefix "$5$" .))) }}
 {{- fail (printf "%s.password looks like a crypt hash of an unsupported type; give a $6$/$5$ hash or the clear password (the element would take the hash itself as the password)" $p) }}
 {{- end }}
-{{- if and (or (hasPrefix "$6$" .) (hasPrefix "$5$" .)) (not (regexMatch "^\\$[56]\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{43,86}$" .)) }}
+{{- if and (or (hasPrefix "$6$" .) (hasPrefix "$5$" .)) (not (regexMatch "^(\\$5\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{43}|\\$6\\$(rounds=[0-9]+\\$)?[./A-Za-z0-9]{1,16}\\$[./A-Za-z0-9]{86})$" .)) }}
 {{- fail (printf "%s.password starts like a $6$/$5$ crypt hash but is not a valid one (the element refuses it)" $p) }}
 {{- end }}
 {{- end }}
