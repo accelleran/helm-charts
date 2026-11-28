@@ -91,7 +91,7 @@ backend:
       # -- Image repository path, including the org (kept when the registry is rewritten).
       repository: library/mysql
       # -- MySQL image tag.
-      tag: "8.4.13"
+      tag: "9.7.4"
       # -- Optional. When set, used as registry/repository@digest instead of :tag.
       digest: ""
     # -- Database the backend uses; `database-url` must name it.
