@@ -157,11 +157,11 @@ network:
 #   environments/values-lab-insecure-defaults.yaml
 mysql:
   enabled: true
-  image: mysql:8.4
+  image: mysql:9.7
   # Full image reference, winning over registry + image composition.
   # image is "mysql:8.4" (includes a tag); without this override the chart
   # would ask Hub for accelleran/mysql:8.4.
-  imageOverride: "docker.io/library/mysql:8.4"
+  imageOverride: "docker.io/library/mysql:9.7"
   # Extra SQL run once at first initialisation of the data directory, after the chart's own
   # scripts (a docker-entrypoint-initdb.d file, so it does not run on an existing volume).
   # Empty: nothing is added. examples/values-5gc-eth.yaml uses it for an Ethernet subscriber.
