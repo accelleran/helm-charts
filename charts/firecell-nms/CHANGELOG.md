@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.3](https://github.com/accelleran/helm-charts/compare/firecell-nms-0.2.2...firecell-nms-0.2.3) (2026-11-28)
+
+
+### Features
+
+* **firecell-nms:** Add a plain-HTTP southbound listener to fc-acs ([14efad2](https://github.com/accelleran/helm-charts/commit/14efad24f5057f42b69c1f3ef685735937d44fae))
+* **firecell-nms:** Add the optional fc-acs TR-069 ACS ([0cff35b](https://github.com/accelleran/helm-charts/commit/0cff35b314d7c77b34def9c1cda3ac4c2a1c6d18))
+* **firecell-nms:** Let nms-api keep the site's branding in the nms-branding ConfigMap ([9f5eea4](https://github.com/accelleran/helm-charts/commit/9f5eea43d58e67022148ce2e316b4b7619418ee2))
+
+
+### Bug Fixes
+
+* **deps:** Update docker.io/accelleran/nms-fc-acs docker tag to v6.0.1 ([dfc05ea](https://github.com/accelleran/helm-charts/commit/dfc05ea105e48d7ce3f4f6449f5ca7365e7325f9))
+* **firecell-nms:** Fc-acs image name and source address on the LoadBalancer ([8f3f09d](https://github.com/accelleran/helm-charts/commit/8f3f09d6d51cf0955f5fb70f6b4bc87deccb94a6))
+* **firecell-nms:** Give nms-api and nms-worker the fc-acs URL and token ([6f611dc](https://github.com/accelleran/helm-charts/commit/6f611dcc5e57721ae3ed9ed5c722387f8a79d38c))
+* **firecell-nms:** Give nms-control-plane the fc-acs URL and token ([f4f1f30](https://github.com/accelleran/helm-charts/commit/f4f1f30beca2e5396b054f4d7dc7a1774802565a))
+* **firecell-nms:** No service links in the fc-acs pod ([1ee2d3c](https://github.com/accelleran/helm-charts/commit/1ee2d3cb17283d988677c80a1daf6d4ecaaf2c15))
+
 ## [0.2.2](https://github.com/accelleran/helm-charts/compare/firecell-nms-0.2.1...firecell-nms-0.2.2) (2026-11-24)
 
 
