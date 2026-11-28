@@ -1,6 +1,6 @@
 # firecell-cu
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
+![Version: 0.2.1](https://img.shields.io/badge/Version-0.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.1.0](https://img.shields.io/badge/AppVersion-0.1.0-informational?style=flat-square)
 
 Firecell RAN on Ocudu - O-CU-CP and O-CU-UP with the F1/E1 Service DUs (firecell-du) attach to
 
@@ -88,8 +88,9 @@ Every install and upgrade also writes ConfigMap `<release>-release-info` (label 
 | cuUp.o1.yangSearchPath | string | `"/usr/local/yang"` |  |
 | cuUp.resources | object | `{}` |  |
 | cuUp.rpsCpus | string | `""` | RPS CPU mask, quoted hex as in /sys/class/net/*/queues/rx-*/rps_cpus (e.g. "3c003c" = CPUs 2-5,18-21), set on the N3 veth at start. Needs n3.cniType bridge (CU-UP next to a generic-XDP UPF); RPS has no effect on macvlan (F1-U, macvlan N3), whose receive runs in the parent NIC's softirq: pin that NIC's IRQs on the host. Use the host's NIC IRQ cores. Empty leaves RPS off. |
+| cuUp.supportedPlmns | bool | `false` | Render cu_up.supported_plmns from gnb.plmn and gnb.slices (sst, sd): the PLMN and slices the CU-UP advertises in its E1 Setup (TS 37.483 9.2.1.4), the same as the CU-CP sends at NG Setup. Needs an ocuup that knows the option: it refuses to start without it, while older images refuse it as an unknown key, so keep false for those. |
 | cuUp.tolerations | list | `[]` |  |
-| global.image | string | `"docker.io/accelleran/ran:0.1.0"` | Ocudu runtime image. Components may override it. |
+| global.image | string | `"docker.io/accelleran/ran:0.2.0"` | Ocudu runtime image. Components may override it. |
 | global.imagePullPolicy | string | `"IfNotPresent"` | Pull policy for the Ocudu image. Use Never for images imported into containerd. |
 | global.imagePullSecrets | list | `[]` | Image pull secrets for every pod. |
 | global.namespace | string | `""` | Namespace for every object. Empty uses the release namespace. |
